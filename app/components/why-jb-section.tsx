@@ -1,23 +1,29 @@
+"use client";
+
 import Image from "next/image";
+import { PiBrain, PiBrainLight } from "react-icons/pi";
+import { RxArrowTopRight } from "react-icons/rx";
+import React from "react";
 
 export default function WhyJBSection() {
+  const [hoveredLink, setHoveredLink] = React.useState(false);
   return (
-    <section className="w-full bg-white py-20">
+    <section className="w-full bg-white py-20 border-t border-slate-200" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
       <div className="mx-auto max-w-7xl px-6">
         {/* Section Header */}
         <div className="mb-16 text-center">
-          <div className="mb-3 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100">
-              🧠
+          <p className="mb-3 flex items-center justify-center gap-2 text-sm font-medium text-[#605dc8]" style={{ fontFamily: 'Geist, sans-serif' }}>
+            <PiBrainLight size={24} />
+            <span className="text-[#605dba] text-base md:text-lg font-medium">
+              Why JB
             </span>
-            Why JB
-          </div>
+          </p>
 
-          <h2 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight text-slate-900">
+          <h2 className="mx-auto max-w-3xl text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-semibold leading-tight">
             The Challenges behind hiring and career moves.
           </h2>
 
-          <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-[#252e3d]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
             We deliver people-first recruitment support that balances speed,
             clarity, and long-term alignment — helping companies hire better and
             professionals move forward with confidence.
@@ -25,11 +31,11 @@ export default function WhyJBSection() {
         </div>
 
         {/* Card Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-16 lg:gap-8">
           {/* Left Image Card */}
           <div className="relative h-64 overflow-hidden rounded-2xl md:h-full md:col-span-2 lg:col-span-4 lg:row-span-2">
             <Image
-              src="https://images.unsplash.com/photo-1542751110-97427bbecf20"
+              src="/home/imgg.png"
               alt="Abstract visual"
               fill
               className="object-cover"
@@ -38,26 +44,26 @@ export default function WhyJBSection() {
           </div>
 
           {/* Clear & Thoughtful Hiring */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 lg:p-10 md:col-span-2 lg:col-span-5">
-            <h3 className="text-3xl font-semibold text-slate-900">
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-2 md:p-4 lg:p-6 md:col-span-2 lg:col-span-8">
+            <p className="text-6xl font-semibold text-[#252e3d]">
               Clear
-              <span className="block text-xl font-semibold text-slate-800">
+              <span className="block text-3xl font-semibold text-slate-800" style={{ fontFamily: 'Geist, sans-serif' }}>
                 & Thoughtful Hiring
               </span>
-            </h3>
+            </p>
 
-            <p className="mt-6 text-base leading-relaxed text-slate-600">
+            <p className="mt-6 text-lg text-bottom leading-relaxed text-[#252e3d]">
               Built on transparent communication, realistic expectations, and
               carefully evaluated profiles.
             </p>
           </div>
 
           {/* 3x Faster Hiring */}
-          <div className="relative overflow-hidden rounded-2xl bg-indigo-600 p-6 md:p-8 lg:p-10 text-white md:col-span-2 lg:col-span-3">
-            <h3 className="text-4xl font-semibold">3x</h3>
-            <p className="mt-1 text-lg font-medium">Faster Hiring Cycles</p>
+          <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#5f5dbb] to-[#4077de] p-2 md:p-4 lg:p-6 text-white md:col-span-2 lg:col-span-4">
+            <p className="text-6xl font-semibold">3x</p>
+            <p className="mt-1 text-3xl font-medium" style={{ fontFamily: 'Geist, sans-serif' }}>Faster Hiring Cycles</p>
 
-            <p className="mt-6 text-sm leading-relaxed text-indigo-100">
+            <p className="mt-6 text-lg leading-relaxed text-white">
               Reduced time-to-hire through structured screening and role-aligned
               shortlisting.
             </p>
@@ -68,40 +74,49 @@ export default function WhyJBSection() {
             </div>
           </div>
 
-          {/* Proven Hiring Outcomes */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 lg:p-10 md:col-span-2 lg:col-span-4">
-            <h3 className="text-4xl font-semibold text-slate-900">120+</h3>
-            <p className="mt-1 text-lg font-medium text-slate-800">
+          {/* 120+ Proven Hiring Outcomes (left bottom) */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 md:p-4 lg:p-6 md:col-span-2 lg:col-span-4">
+            <p className="text-6xl font-semibold text-[#252e3d]">120+</p>
+            <p className="mt-1 text-3xl font-semibold text-[#252e3d]" style={{ fontFamily: 'Geist, sans-serif' }}>
               Proven Hiring Outcomes
             </p>
 
-            <p className="mt-6 text-sm leading-relaxed text-slate-600">
+            <p className="mt-6 text-lg leading-relaxed text-[#252e3d]">
               Consistent placements across roles, industries, and experience
               levels.
             </p>
           </div>
 
-          {/* Support That Evolves */}
-          <div className="rounded-2xl bg-slate-800 p-6 md:p-8 lg:p-10 text-white md:col-span-4 lg:col-span-8">
-            <h3 className="text-3xl font-semibold">
+          {/* Support That Evolves Over Time (right bottom) */}
+          <div className="flex flex-col justify-between rounded-2xl bg-slate-800 p-2 md:p-4 lg:p-6 text-white md:col-span-2 lg:col-span-8">
+            <p className="text-5xl font-semibold">
               Support That Evolves Over Time
-            </h3>
+            </p>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white">
               We stay involved beyond a single hire — adapting our support as
               teams grow and careers progress.
             </p>
           </div>
+          {/* Proven Hiring Outcomes */}
         </div>
 
         {/* CTA */}
         <div className="mt-12 text-right">
           <a
             href="#"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-900 hover:underline"
+            className="inline-flex items-center gap-1 text-[#2c3543] border-b border-slate-900 transition duration-300 ease-in-out text-2xl"
+            onMouseEnter={() => setHoveredLink(true)}
+            onMouseLeave={() => setHoveredLink(false)}
+            style={{ fontFamily: 'Geist, sans-serif' }}
           >
             Get to Know Us
-            <span aria-hidden>↗</span>
+            <RxArrowTopRight
+              size={20}
+              className={`transform transition-transform duration-300 ${
+                hoveredLink ? "rotate-45 translate-x-1" : "rotate-0"
+              }`}
+            />
           </a>
         </div>
       </div>

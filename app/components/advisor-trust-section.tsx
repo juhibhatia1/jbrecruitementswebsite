@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PiPlugsConnectedBold } from "react-icons/pi";
 
 export default function AdvisorTrustSection() {
   return (
@@ -7,13 +8,14 @@ export default function AdvisorTrustSection() {
       <div className="mx-auto max-w-7xl px-6 py-28">
         {/* Eyebrow */}
         <div className="mb-6 flex justify-center">
-          <span className="flex items-center gap-2 text-sm font-medium text-indigo-400">
-            ✦ Thoughtful
+          <span className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]">
+            <PiPlugsConnectedBold size={16} />
+            Thoughtful
           </span>
         </div>
 
         {/* Heading */}
-        <h2 className="mx-auto max-w-4xl text-center text-[44px] font-semibold leading-[1.15] tracking-tight">
+        <h2 className="mx-auto text-center text-[#ffffff] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
           Guidance you can trust at every stage of
           <br />
           hiring.
@@ -25,7 +27,7 @@ export default function AdvisorTrustSection() {
           <div className="lg:col-span-5">
             <div className="overflow-hidden rounded-3xl">
               <Image
-                src="https://images.unsplash.com/photo-1580489944761-15a19d654956"
+                src="/home/Picture1.png"
                 alt="Senior Recruitment Advisor"
                 width={520}
                 height={640}
@@ -57,17 +59,17 @@ export default function AdvisorTrustSection() {
             <div className="mt-8 h-px w-full bg-white/20" />
 
             {/* Metrics */}
-            <div className="mt-6 flex flex-wrap gap-8 md:gap-12 lg:gap-16">
+            <div className="mt-6 flex flex-wrap gap-8 md:gap-12 lg:gap-16 text-[#7b7b7b]">
               <div className="flex items-baseline gap-2 md:gap-3">
                 <span className="text-2xl md:text-3xl font-semibold">84%</span>
-                <span className="text-sm text-slate-300">
+                <span className="text-sm">
                   Better role alignment
                 </span>
               </div>
 
-              <div className="flex items-baseline gap-2 md:gap-3">
+              <div className="flex items-baseline gap-2 md:gap-3 text-[#7b7b7b]">
                 <span className="text-2xl md:text-3xl font-semibold">5X</span>
-                <span className="text-sm text-slate-300">
+                <span className="text-sm">
                   Honest communication
                 </span>
               </div>
@@ -86,7 +88,7 @@ export default function AdvisorTrustSection() {
               <h4 className="text-base md:text-lg font-medium">
                 Industry Recognition
               </h4>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b]">
                 Featured by The Arab Icons for leadership and impact in global
                 talent acquisition.
               </p>
@@ -102,7 +104,7 @@ export default function AdvisorTrustSection() {
               <h4 className="text-lg font-medium">
                 Ranked #1 Careers & Office creator
               </h4>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b]">
                 Recognised by Favikon as the #1 Careers & Office LinkedIn
                 creator in the United Arab Emirates.
               </p>
@@ -114,7 +116,7 @@ export default function AdvisorTrustSection() {
               <div className="mb-3 flex justify-center gap-1 text-yellow-400">
                 ★★★★★
               </div>
-              <p className="text-sm leading-relaxed text-slate-400">
+              <p className="text-sm leading-relaxed text-[#7b7b7b]">
                 “The blend of AI and creativity at Automatix transformed our
                 vision into reality. Exceptional support!”
               </p>

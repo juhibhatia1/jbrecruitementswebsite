@@ -10,7 +10,7 @@ export default function NavigationMenu() {
       {/* Hamburger/Close menu button */}
       <button 
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="relative bg-white p-2.5 md:p-4 rounded-full hover:bg-gray-100 transition-all z-50 cursor-pointer"
+        className="relative bg-white p-2.5 md:p-4 rounded-full hover:bg-gray-100 transition-all z-50 cursor-pointer border border-[#bababa]"
       >
         {isMenuOpen ? (
           // X icon

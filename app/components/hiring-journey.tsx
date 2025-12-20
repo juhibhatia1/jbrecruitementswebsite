@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CiRoute } from "react-icons/ci";
 
 const steps = [
   {
@@ -58,24 +59,22 @@ export default function HiringJourney() {
   }, []);
 
   return (
-    <section className="bg-white py-16 md:py-20 lg:py-24">
+    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#bababa]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 gap-12 md:gap-14 lg:gap-16 lg:grid-cols-12">
           {/* LEFT (Sticky) */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
-              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100">
-                  ⇄
-                </span>
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]" style={{ fontFamily: 'Geist, sans-seriff' }}>
+                <CiRoute size={20} />
                 Our Process
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+              <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
                 The Hiring Journey
               </h2>
 
-              <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg leading-relaxed text-slate-600">
+              <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg lg:text-xl leading-relaxed text-[#252e3d]">
                 We follow a clear, structured recruitment process designed to
                 create alignment, clarity, and meaningful outcomes for both
                 companies and professionals.
@@ -84,9 +83,9 @@ export default function HiringJourney() {
           </div>
 
           {/* RIGHT (Scrollable Timeline) */}
-          <div ref={containerRef} className="relative lg:col-span-8">
+          <div ref={containerRef} className="relative lg:col-span-7">
             {/* Vertical line */}
-            <div className="absolute left-[20px] md:left-[28px] top-0 h-full w-px bg-slate-200" />
+            <div className="absolute left-[20px] md:left-[28px] top-0 h-full w-px bg-black" />
 
             <div className="space-y-16 md:space-y-20 lg:space-y-24">
               {steps.map((step, index) => (
@@ -98,9 +97,9 @@ export default function HiringJourney() {
                   {/* Number */}
                   <div className="w-10 md:w-14 shrink-0 text-right">
                     <span
-                      className={`text-3xl md:text-4xl font-semibold transition-colors duration-300 ${
+                      className={`text-3xl md:text-4xl font-semibold bg-white py-1 px-2 transition-colors duration-300 ${
                         activeIndex === index
-                          ? "text-indigo-600"
+                          ? "text-[#4e6bcd]"
                           : "text-indigo-300"
                       }`}
                     >
@@ -116,11 +115,11 @@ export default function HiringJourney() {
                         : "translate-y-4 opacity-40"
                     }`}
                   >
-                    <h3 className="text-lg md:text-xl font-semibold text-slate-900">
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-slate-900" style={{ fontFamily: 'Geist, sans-seriff' }}>
                       {step.title}
                     </h3>
 
-                    <p className="mt-3 md:mt-4 text-sm md:text-base leading-relaxed text-slate-600">
+                    <p className="mt-3 md:mt-4 text-sm md:text-base lg:text-2xl leading-relaxed text-[#252e3d]">
                       {step.description}
                     </p>
                   </div>

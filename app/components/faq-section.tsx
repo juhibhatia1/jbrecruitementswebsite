@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { PiHeadsetBold } from "react-icons/pi";
+import { RxArrowTopRight } from "react-icons/rx";
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 type FAQ = {
   question: string;
@@ -16,110 +19,196 @@ const faqs: FAQ[] = [
   {
     question: "How do I get started?",
     answer:
-      "You can get started by reaching out through our contact form or booking an introductory call to discuss your hiring needs.",
+      "Simply reach out or submit your details. We’ll review them and get back to you with next steps.",
   },
   {
     question: "How long does it usually take to receive profiles?",
     answer:
-      "Timelines vary by role, but most clients receive initial profiles within 7–10 business days after alignment.",
+      "Timelines depend on the role, but we prioritise thoughtful shortlisting over volume and keep you informed at every step.",
   },
   {
     question: "What types of roles do you hire for?",
     answer:
-      "We support hiring across technical, commercial, leadership, and specialist roles across industries.",
+      "We support hiring across multiple functions and industries, focusing on quality, alignment, and long-term fit.",
   },
   {
     question: "How can JB help me in my job search?",
     answer:
-      "We focus on alignment, career direction, and transparent communication — supporting you beyond just interview preparation.",
+      "We support you with resume review, LinkedIn optimisation, interview guidance, and access to relevant opportunities.",
   },
   {
     question: "Do I need to apply for every role separately?",
     answer:
-      "No. Once we understand your profile and goals, we proactively align you with relevant opportunities.",
+      "No. Once you share your profile, we consider you for suitable roles and reach out when there’s a strong match.",
   },
   {
     question: "Will I receive feedback after interviews?",
     answer:
-      "Yes. We prioritise honest, constructive feedback to help candidates grow and make informed decisions.",
+      "Whenever possible, we share feedback and next steps so you’re never left guessing.",
+  },
+  {
+    question: "Will my information be kept confidential?",
+    answer:
+      "Yes. All personal and hiring information is handled with care and shared only with relevant parties.",
   },
 ];
 
 export default function FAQsSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [hoveredLink, setHoveredLink] = useState(false);
+
+  // Use scroll-based detection to reliably choose the FAQ closest to viewport center.
+  useEffect(() => {
+    const container = containerRef.current ?? document;
+    let ticking = false;
+
+    const computeActive = () => {
+      const items = Array.from(
+        (containerRef.current ?? document).querySelectorAll<HTMLElement>(
+          "[data-faq]"
+        )
+      );
+      if (!items.length) return;
+
+      const viewportCenter = window.innerHeight / 2;
+      let bestIndex = 0;
+      let bestDistance = Infinity;
+
+      items.forEach((el, idx) => {
+        const rect = el.getBoundingClientRect();
+        const elCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(elCenter - viewportCenter);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = idx;
+        }
+      });
+
+      setActiveIndex(bestIndex);
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(computeActive);
+      }
+    };
+
+    // run once to set initial active
+    computeActive();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   return (
     <section className="bg-white py-28">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
-          {/* LEFT */}
-          <div className="lg:col-span-4">
-            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100">
-                🎧
-              </span>
-              FAQs
-            </div>
+          {/* LEFT (sticky) */}
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-28">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]">
+                <PiHeadsetBold size={20} className="text-[#605dc8]" />
+                FAQs
+              </div>
 
-            <h2 className="text-[40px] font-semibold leading-[1.2] tracking-tight text-slate-900">
-              Answers to Common Questions
-            </h2>
+              <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
+                Answers to Common Questions
+              </h2>
 
-            <p className="mt-6 text-lg leading-relaxed text-slate-600">
-              We’ve answered some of the most common questions from hiring teams
-              and professionals to help you understand how we work and what to
-              expect.
-            </p>
-
-            {/* Help Card */}
-            <div className="mt-10 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-6 text-white">
-              <p className="text-sm font-medium">Need more help?</p>
-              <p className="mt-2 text-sm text-white/80">
-                We’re here to answer any questions you may have.
+              <p className="mt-6 text-lg leading-relaxed text-slate-600">
+                We’ve answered some of the most common questions from hiring
+                teams and professionals to help you understand how we work and
+                what to expect.
               </p>
 
-              <button className="mt-6 inline-flex items-center gap-2 text-sm font-medium">
-                Ask a Question
-                <span aria-hidden>↗</span>
-              </button>
+              {/* Help Card */}
+              <div
+                className="mt-10 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-6 text-white "
+                style={{
+                  backgroundImage: "url('/home/faq-background.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <p className="text-sm font-medium">Need more help?</p>
+                <p className="mt-2 text-sm text-white/80">
+                  We’re here to answer any questions you may have.
+                </p>
+
+                <div className="mt-12 text-right">
+                  <a
+                    href="#"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
+                    onMouseEnter={() => setHoveredLink(true)}
+                    onMouseLeave={() => setHoveredLink(false)}
+                  >
+                    Ask a Question
+                    <RxArrowTopRight
+                      size={16}
+                      className={`transform transition-transform duration-300 ${
+                        hoveredLink ? "rotate-45 translate-x-1" : "rotate-0"
+                      }`}
+                    />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="lg:col-span-8">
-            <div className="space-y-4">
+          {/* RIGHT (scrollable FAQs with animation) */}
+          <div ref={containerRef} className="lg:col-span-7">
+            <div className="space-y-6">
               {faqs.map((faq, index) => {
-                const isOpen = openIndex === index;
+                const isOpen = openIndex.includes(index);
+
+                const toggleOpen = () => {
+                  setOpenIndex((prev) => {
+                    if (prev.includes(index))
+                      return prev.filter((i) => i !== index);
+                    return [...prev, index];
+                  });
+                };
 
                 return (
                   <div
                     key={faq.question}
-                    className="rounded-xl border border-slate-200"
+                    data-faq={index}
+                    className={`rounded-xl border border-[#bababa] p-0 transform transition-all duration-500`}
                   >
                     <button
-                      onClick={() =>
-                        setOpenIndex(isOpen ? null : index)
-                      }
-                      className="flex w-full items-center justify-between px-6 py-5 text-left"
+                      onClick={toggleOpen}
+                      className="flex w-full items-center justify-between px-6 py-5 text-left cursor-pointer"
                     >
-                      <span className="text-base font-medium text-slate-900">
+                      <span className="text-base font-semibold text-[#2d3544]">
                         {faq.question}
                       </span>
 
-                      <span
-                        className={`transition-transform duration-200 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      >
-                        ▾
+                      <span className="text-slate-500 transition-transform duration-200">
+                        {isOpen ? (
+                          <FiChevronUp className="w-5 h-5" />
+                        ) : (
+                          <FiChevronDown className="w-5 h-5" />
+                        )}
                       </span>
                     </button>
 
-                    {isOpen && (
-                      <div className="px-6 pb-6 text-sm leading-relaxed text-slate-600">
-                        {faq.answer}
-                      </div>
-                    )}
+                    <div
+                      className="px-6 text-sm leading-relaxed text-[#7b7b7b] overflow-hidden transition-all duration-300"
+                      style={{
+                        maxHeight: isOpen ? "480px" : "0px",
+                        opacity: isOpen ? 1 : 0,
+                      }}
+                      aria-hidden={!isOpen}
+                    >
+                      <div className="pb-3">{faq.answer}</div>
+                    </div>
                   </div>
                 );
               })}

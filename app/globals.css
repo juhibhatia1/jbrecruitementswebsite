@@ -1,9 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
   --font-palatino: "Palatino Linotype", "Palatino", "Book Antiqua", serif;
+  --font-geist-sans: "Geist", sans-serif;
 }
 
 @theme inline {
@@ -32,18 +34,8 @@ body {
 }
 
 /* Heading styles - Geist font */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2 {
   font-family: var(--font-geist-sans), sans-serif;
-}
-
-/* Paragraph styles - Palatino Linotype */
-p {
-  font-family: var(--font-palatino);
 }
 
 /* Contact button ring and blinking dots */
