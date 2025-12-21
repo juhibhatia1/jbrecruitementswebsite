@@ -2,31 +2,32 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="relative z-20 bg-white border-t border-[#bababa]">
-      <div className="mx-auto max-w-7xl px-6 py-10">
+    <footer className="relative z-20 bg-white border-t border-[#bababa]" style={{ fontFamily: "Geist, sans-serif" }}>
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-10">
         {/* Top Row */}
-        <div className="flex flex-col gap-12 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-12 items-center md:flex-row md:items-center md:justify-between">
           {/* Left: Logo + Nav */}
-          <div>
+          <div className="flex flex-col items-center md:items-start w-full md:w-auto">
             {/* Logo */}
-            <div className="mb-8 text-5xl font-bold tracking-tight text-slate-900">
+            <div className="mb-8 text-4xl md:text-5xl font-bold tracking-tight text-black" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
               JB
             </div>
 
             {/* Navigation */}
-            <nav className="flex flex-wrap gap-8 font-medium text-base text-slate-900">
+            <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 font-medium text-base text-[#252E3D] md:justify-start">
               <Link href="/" className="hover:underline">
                 Home
               </Link>
               <Link href="/hr" className="hover:underline">
                 HR
               </Link>
-              <Link href="/careers" className="hover:underline">
-                Carrers
+              <Link href="/job-seekers" className="hover:underline">
+                Job Seekers
               </Link>
-              <Link href="/blog" className="hover:underline">
-                Blog
-              </Link>
+              
+              {/* Force line break on mobile only */}
+              <div className="w-full md:hidden"></div>
+              
               <Link href="/about" className="hover:underline">
                 About
               </Link>
@@ -37,12 +38,12 @@ export default function Footer() {
           </div>
 
           {/* Right: Social Icons */}
-          <div className="flex items-center gap-6 text-slate-700">
+          <div className="flex items-center justify-center gap-6 text-[#252E3D] w-full md:w-auto">
             {/* LinkedIn */}
             <Link
-              href="https://www.linkedin.com"
+              href="https://www.linkedin.com/in/juhiibhatia/"
               aria-label="LinkedIn"
-              className="hover:text-slate-900"
+              className="hover:text-[#252E3D]"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -97,10 +98,10 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-8 h-px w-full bg-slate-200" />
+        <div className="my-3 lg:my-4 h-px w-full bg-[#C4C4C4]" />
 
         {/* Bottom */}
-        <div className="mt-6 text-sm text-slate-900">© Copyright 2025</div>
+        <div className="text-sm lg:text-lg text-[#252E3D] text-center md:text-left">© Copyright 2025</div>
       </div>
     </footer>
   );

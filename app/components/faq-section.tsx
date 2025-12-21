@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { PiHeadsetBold } from "react-icons/pi";
 import { RxArrowTopRight } from "react-icons/rx";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import ScrollAnimation from "./ui/scroll-animation";
 
 type FAQ = {
   question: string;
@@ -107,64 +108,66 @@ export default function FAQsSection() {
   }, []);
 
   return (
-    <section className="bg-white py-28">
-      <div className="mx-auto max-w-7xl px-6">
+    <section className="bg-white py-16 md:py-28" style={{ fontFamily: "Geist, sans-seriff" }}>
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
           {/* LEFT (sticky) */}
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]">
-                <PiHeadsetBold size={20} className="text-[#605dc8]" />
-                FAQs
-              </div>
+              <ScrollAnimation variant="fadeUp">
+                <div className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
+                  <PiHeadsetBold size={20} className="text-[#605dba]" />
+                  FAQs
+                </div>
 
-              <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
-                Answers to Common Questions
-              </h2>
+                <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
+                  Answers to Common Questions
+                </h2>
 
-              <p className="mt-6 text-lg leading-relaxed text-slate-600">
-                We’ve answered some of the most common questions from hiring
-                teams and professionals to help you understand how we work and
-                what to expect.
-              </p>
-
-              {/* Help Card */}
-              <div
-                className="mt-10 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-6 text-white "
-                style={{
-                  backgroundImage: "url('/home/faq-background.png')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
-                <p className="text-sm font-medium">Need more help?</p>
-                <p className="mt-2 text-sm text-white/80">
-                  We’re here to answer any questions you may have.
+                <p className="mt-6 text-lg leading-relaxed text-[#293240]" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
+                  We’ve answered some of the most common questions from hiring
+                  teams and professionals to help you understand how we work and
+                  what to expect.
                 </p>
 
-                <div className="mt-12 text-right">
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
-                    onMouseEnter={() => setHoveredLink(true)}
-                    onMouseLeave={() => setHoveredLink(false)}
-                  >
-                    Ask a Question
-                    <RxArrowTopRight
-                      size={16}
-                      className={`transform transition-transform duration-300 ${
-                        hoveredLink ? "rotate-45 translate-x-1" : "rotate-0"
-                      }`}
-                    />
-                  </a>
+                {/* Help Card */}
+                <div
+                  className="mt-10 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-6 text-white text-right"
+                  style={{
+                    backgroundImage: "url('/home/faq-background.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <p className="text-md font-semibold">Need more help?</p>
+                  <p className="mt-2 text-sm font-normal">
+                    We’re here to answer <br/> any questions you may have.
+                  </p>
+
+                  <div className="mt-12">
+                    <a
+                      href="#"
+                      className="inline-flex items-center gap-1 text-lg font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
+                      onMouseEnter={() => setHoveredLink(true)}
+                      onMouseLeave={() => setHoveredLink(false)}
+                    >
+                      Ask a Question
+                      <RxArrowTopRight
+                        size={16}
+                        className={`transform transition-transform duration-300 ${
+                          hoveredLink ? "rotate-45 translate-x-1" : "rotate-0"
+                        }`}
+                      />
+                    </a>
+                  </div>
                 </div>
-              </div>
+              </ScrollAnimation>
             </div>
           </div>
 
           {/* RIGHT (scrollable FAQs with animation) */}
           <div ref={containerRef} className="lg:col-span-7">
-            <div className="space-y-6">
+            <ScrollAnimation variant="fadeUp" delay={0.2} className="space-y-6">
               {faqs.map((faq, index) => {
                 const isOpen = openIndex.includes(index);
 
@@ -180,13 +183,13 @@ export default function FAQsSection() {
                   <div
                     key={faq.question}
                     data-faq={index}
-                    className={`rounded-xl border border-[#bababa] p-0 transform transition-all duration-500`}
+                    className={`rounded-xl border border-[#bababa] p-0 transform transition-all hover:ring-1 hover:ring-[#293240] duration-300`}
                   >
                     <button
                       onClick={toggleOpen}
                       className="flex w-full items-center justify-between px-6 py-5 text-left cursor-pointer"
                     >
-                      <span className="text-base font-semibold text-[#2d3544]">
+                      <span className="text-base font-semibold text-[#293240]">
                         {faq.question}
                       </span>
 
@@ -212,7 +215,7 @@ export default function FAQsSection() {
                   </div>
                 );
               })}
-            </div>
+            </ScrollAnimation>
           </div>
         </div>
       </div>

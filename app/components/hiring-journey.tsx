@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CiRoute } from "react-icons/ci";
+import ScrollAnimation from "./ui/scroll-animation";
 
 const steps = [
   {
@@ -59,26 +60,28 @@ export default function HiringJourney() {
   }, []);
 
   return (
-    <section className="bg-white py-16 md:py-20 lg:py-24 border-t border-[#bababa]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
-      <div className="mx-auto max-w-7xl px-6">
+    <section className="bg-white py-12 md:py-20 lg:py-24 border-t border-[#bababa]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 gap-12 md:gap-14 lg:gap-16 lg:grid-cols-12">
           {/* LEFT (Sticky) */}
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]" style={{ fontFamily: 'Geist, sans-seriff' }}>
-                <CiRoute size={20} />
-                Our Process
-              </div>
+              <ScrollAnimation variant="fadeUp">
+                <div className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium" style={{ fontFamily: 'Geist, sans-seriff' }}>
+                  <CiRoute size={24} />
+                  Our Process
+                </div>
 
-              <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
-                The Hiring Journey
-              </h2>
+                <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
+                  The Hiring Journey
+                </h2>
 
-              <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg lg:text-xl leading-relaxed text-[#252e3d]">
-                We follow a clear, structured recruitment process designed to
-                create alignment, clarity, and meaningful outcomes for both
-                companies and professionals.
-              </p>
+                <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg lg:text-xl leading-relaxed text-[#252e3d]">
+                  We follow a clear, structured recruitment process designed to
+                  create alignment, clarity, and meaningful outcomes for both
+                  companies and professionals.
+                </p>
+              </ScrollAnimation>
             </div>
           </div>
 

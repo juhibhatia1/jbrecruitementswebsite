@@ -1,33 +1,43 @@
 import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
+import ScrollAnimation from "./ui/scroll-animation";
 
 export default function AdvisorTrustSection() {
   return (
-    <section className="bg-[#1b1b1b] text-white">
+    <section
+      className="bg-[#1b1b1b] text-white"
+      style={{ fontFamily: "Geist, sans-seriff" }}
+    >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
-      <div className="mx-auto max-w-7xl px-6 py-28">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-24">
         {/* Eyebrow */}
         <div className="mb-6 flex justify-center">
-          <span className="mb-3 flex items-center gap-2 text-sm font-medium text-[#605dc8]">
-            <PiPlugsConnectedBold size={16} />
+          <span className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
+            <PiPlugsConnectedBold size={24} />
             Thoughtful
           </span>
         </div>
 
         {/* Heading */}
-        <h2 className="mx-auto text-center text-[#ffffff] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
-          Guidance you can trust at every stage of
-          <br />
-          hiring.
-        </h2>
+        <ScrollAnimation variant="fadeUp">
+          <h2 className="mx-auto text-center text-white text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-semibold leading-tight">
+            Guidance you can trust at every stage of
+            <br />
+            hiring.
+          </h2>
+        </ScrollAnimation>
 
         {/* Content */}
-        <div className="mt-16 md:mt-20 lg:mt-24 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center">
+        <div className="mt-12 md:mt-20 lg:mt-24 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center">
           {/* Image */}
-          <div className="lg:col-span-5">
+          <ScrollAnimation
+            variant="scaleUp"
+            delay={0.2}
+            className="lg:col-span-5"
+          >
             <div className="overflow-hidden rounded-3xl">
               <Image
-                src="/home/Picture1.png"
+                src="/advisor-trust/juhi-bhatia.png"
                 alt="Senior Recruitment Advisor"
                 width={520}
                 height={640}
@@ -35,76 +45,102 @@ export default function AdvisorTrustSection() {
                 priority
               />
             </div>
-          </div>
+          </ScrollAnimation>
 
           {/* Text */}
-          <div className="lg:col-span-7">
-            <h3 className="max-w-xl text-xl md:text-2xl lg:text-[28px] font-medium leading-[1.35]">
-              Hiring Is About People, Not Just Roles.
-              <br />
-              Get Alignment Right, And Everything Else
-              <br />
-              Follows.
+          <ScrollAnimation
+            variant="slideLeft"
+            delay={0.3}
+            className="lg:col-span-7"
+          >
+            <h3 className="max-w-xl text-xl md:text-2xl lg:text-4xl font-medium leading-[1.35]">
+              Hiring Is About People, Not Just Roles. Get Alignment Right, And
+              Everything Else Follows.
             </h3>
 
             {/* Name + CTA */}
-            <div className="mt-8 flex items-center gap-4 text-sm text-slate-300">
+            <div className="mt-8 flex items-center gap-4 text-3xl text-[#c5c5c5]">
               <span>Senior Recruitment Advisor (Name)</span>
-              <button className="rounded-full bg-indigo-500 px-4 py-1.5 text-sm font-medium text-white">
+              <button className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm font-medium text-white">
                 Speak
               </button>
             </div>
 
             {/* Divider */}
-            <div className="mt-8 h-px w-full bg-white/20" />
+            <div className="mt-8 h-px w-full bg-white" />
 
             {/* Metrics */}
             <div className="mt-6 flex flex-wrap gap-8 md:gap-12 lg:gap-16 text-[#7b7b7b]">
               <div className="flex items-baseline gap-2 md:gap-3">
-                <span className="text-2xl md:text-3xl font-semibold">84%</span>
-                <span className="text-sm">
+                <span className="text-2xl md:text-3xl font-semibold text-white">
+                  84%
+                </span>
+                <span className="text-md text-[#c5c5c5]">
                   Better role alignment
                 </span>
               </div>
 
               <div className="flex items-baseline gap-2 md:gap-3 text-[#7b7b7b]">
-                <span className="text-2xl md:text-3xl font-semibold">5X</span>
-                <span className="text-sm">
+                <span className="text-2xl md:text-3xl font-semibold text-white">
+                  5X
+                </span>
+                <span className="text-md text-[#c5c5c5]">
                   Honest communication
                 </span>
               </div>
             </div>
-          </div>
+          </ScrollAnimation>
         </div>
       </div>
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
-      <div className="border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 lg:py-20">
-          <div className="grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 md:grid-cols-3">
+      <div className="pb-16 md:pb-24 lg:pb-16">
+        <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 lg:py-12">
+          <ScrollAnimation
+            variant="fadeUp"
+            delay={0.4}
+            className="grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 md:grid-cols-3"
+          >
             {/* Item 1 */}
-            <div className="text-center md:border-r md:border-white/10 md:pr-8 lg:pr-12">
-              <div className="mx-auto mb-6 h-16 w-16 bg-black" />
-              <h4 className="text-base md:text-lg font-medium">
+            <div className="text-center md:border-r md:border-white md:pr-8 lg:pr-12">
+              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+                <Image
+                  src={"/advisor-trust/arab-icons-logo.png"}
+                  alt="Arab Icons Logo"
+                  width={96}
+                  height={96}
+                />
+              </div>
+              <h4
+                className="text-base md:text-lg lg:text-2xl font-semibold"
+                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+              >
                 Industry Recognition
               </h4>
-              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b]">
+              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b] lg:text-lg">
                 Featured by The Arab Icons for leadership and impact in global
                 talent acquisition.
               </p>
             </div>
 
             {/* Item 2 */}
-            <div className="text-center md:border-r md:border-white/10 md:px-8 lg:px-12">
-              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center rounded bg-white">
-                <span className="text-base md:text-lg font-semibold text-black">
-                  Favikon
-                </span>
+            <div className="text-center md:border-r md:border-white md:px-8 lg:px-12">
+              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+                <Image
+                src={"/advisor-trust/favikon-logo.png"}
+                alt="Favikon Logo"
+                width={96}
+                height={96}
+                className="w-full "
+              />
               </div>
-              <h4 className="text-lg font-medium">
+              <h4
+                className="text-lg lg:text-2xl font-semibold"
+                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+              >
                 Ranked #1 Careers & Office creator
               </h4>
-              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b]">
+              <p className="mt-3 text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
                 Recognised by Favikon as the #1 Careers & Office LinkedIn
                 creator in the United Arab Emirates.
               </p>
@@ -113,15 +149,15 @@ export default function AdvisorTrustSection() {
             {/* Item 3 */}
             <div className="text-center md:pl-8 lg:pl-12">
               <div className="mx-auto mb-6 h-16 w-16 bg-black" />
-              <div className="mb-3 flex justify-center gap-1 text-yellow-400">
+              <div className="mb-3 flex justify-center gap-1 text-white text-xl font-semibold">
                 ★★★★★
               </div>
-              <p className="text-sm leading-relaxed text-[#7b7b7b]">
+              <p className="text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
                 “The blend of AI and creativity at Automatix transformed our
                 vision into reality. Exceptional support!”
               </p>
             </div>
-          </div>
+          </ScrollAnimation>
         </div>
       </div>
     </section>

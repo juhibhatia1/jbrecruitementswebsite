@@ -1,27 +1,37 @@
 import React from "react";
+import ScrollAnimation from "./ui/scroll-animation";
+import Link from "next/link";
+import ResumeScanner from "./ui/resume-scan";
 
 export default function HowWeHelpSection() {
   return (
-    <div className="w-full bg-gradient-to-b from-gray-50 to-white py-16 md:py-20 lg:py-24 px-6 md:px-8 lg:px-12 border-t border-[#bababa]">
+    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-20 lg:py-24 px-4 md:px-8 lg:px-12 border-t border-[#bababa]">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="flex items-center justify-between gap-5 space-x-1">
-          <div className="flex items-center gap-2 mb-10 md:mb-12">
-            <img
-              src="/home/icons8-ai-48.png"
-              alt="Help Icon"
-              className="w-6 h-6 md:w-7 md:h-7"
-            />
-            <p
-              className="text-[#605dba] text-base md:text-lg font-medium"
-              style={{ fontFamily: "Geist, sans-serif" }}
-            >
-              How We Help
-            </p>
-            <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl leading-tight font-semibold">
-              Recruitment Support Built for Real People
-            </h2>
-          </div>
+        <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
+          <ScrollAnimation variant="fadeUp">
+            <div className="grid grid-cols-3">
+              <div className="mb-8 md:mb-12 col-span-1 flex items-center gap-2">
+                <img
+                  src="/home/icons8-ai-48.png"
+                  alt="Help Icon"
+                  className="w-6 h-6 md:w-7 md:h-7"
+                />
+                <p
+                  className="text-[#605dba] text-base md:text-lg font-medium"
+                  style={{ fontFamily: "Geist, sans-serif" }}
+                >
+                  How We Help
+                </p>
+              </div>
+
+              <div className="col-span-2">
+                <h2 className="text-[#252e3d] text-2xl md:text-4xl lg:text-5xl xl:text-5xl leading-tight font-semibold">
+                  Recruitment Support Built for Real People
+                </h2>
+              </div>
+            </div>
+          </ScrollAnimation>
         </div>
 
         {/* Main Content Grid: left card, centered description, right card */}
@@ -30,7 +40,11 @@ export default function HowWeHelpSection() {
           style={{ fontFamily: "Geist, sans-serif" }}
         >
           {/* Left Column */}
-          <div className="space-y-8 lg:space-y-10 col-span-1">
+          <ScrollAnimation
+            variant="slideRight"
+            delay={0.2}
+            className="space-y-8 lg:space-y-10 col-span-1"
+          >
             {/* Chat Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg">
               {/* Chat Messages */}
@@ -98,10 +112,14 @@ export default function HowWeHelpSection() {
                 </p>
               </div>
             </div>
-          </div>
+          </ScrollAnimation>
 
           {/* Middle Column: centered description text */}
-          <div className="hidden lg:flex col-span-1 items-center justify-center px-4 md:px-6">
+          <ScrollAnimation
+            variant="fadeUp"
+            delay={0.4}
+            className="hidden lg:flex col-span-1 items-center justify-center px-4 md:px-6"
+          >
             <div className="max-w-md text-center">
               <p className="text-gray-800 text-base md:text-lg lg:text-xl leading-relaxed">
                 Experience how our people-first recruitment approach simplifies
@@ -109,75 +127,28 @@ export default function HowWeHelpSection() {
                 meaningful career moves.
               </p>
             </div>
-          </div>
+          </ScrollAnimation>
 
           {/* Right Column */}
-          <div className="space-y-6 md:space-y-8 col-span-1 flex flex-col items-end">
+          <ScrollAnimation
+            variant="slideLeft"
+            delay={0.6}
+            className="space-y-6 md:space-y-8 col-span-1 flex flex-col items-end"
+          >
             {/* Career Guidance Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full">
               {/* Resume Preview Box */}
               <div className="mb-6 md:mb-8 relative">
-                <div className="border-[3px] border-gray-200 rounded-2xl p-5 md:p-6 bg-white relative overflow-hidden">
-                  {/* Header with profile */}
-                  <div className="flex items-start gap-3 mb-5">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="h-2.5 md:h-3 bg-gray-900 rounded w-28 md:w-32 mb-2"></div>
-                      <div className="h-1.5 md:h-2 bg-gray-400 rounded w-20 md:w-24"></div>
-                    </div>
-                  </div>
-
-                  {/* Contact info section */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="space-y-1">
-                      <div className="h-2 bg-gray-900 rounded w-16"></div>
-                      <div className="h-1.5 bg-gray-300 rounded w-full"></div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="h-2 bg-gray-900 rounded w-12"></div>
-                      <div className="h-1.5 bg-gray-300 rounded w-full"></div>
-                    </div>
-                  </div>
-
-                  {/* Bullet points section */}
-                  <div className="space-y-2 mb-2">
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-gray-900 rounded-full mt-1.5 flex-shrink-0"></div>
-                      <div className="h-1.5 bg-gray-300 rounded flex-1"></div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-gray-900 rounded-full mt-1.5 flex-shrink-0"></div>
-                      <div className="h-1.5 bg-gray-300 rounded flex-1"></div>
-                    </div>
-                  </div>
-
-                  {/* Experience section */}
-                  <div className="space-y-3">
-                    <div>
-                      <div className="h-2.5 bg-gray-900 rounded w-24 mb-2"></div>
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 bg-gray-300 rounded w-full"></div>
-                        <div className="h-1.5 bg-gray-300 rounded w-11/12"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="h-2.5 bg-gray-900 rounded w-16 mb-2"></div>
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 bg-gray-300 rounded w-full"></div>
-                        <div className="h-1.5 bg-gray-300 rounded w-4/5"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Purple accent line at bottom */}
-                  <div className="absolute bottom-0 left-1/4 right-1/4 h-1 bg-indigo-600"></div>
+                <div className="">
+                  <ResumeScanner /> 
                 </div>
+                
 
                 {/* Corner brackets */}
-                <div className="absolute -top-2 -left-2 w-8 h-8 border-l-2 border-t-2 border-gray-300"></div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 border-r-2 border-t-2 border-gray-300"></div>
-                <div className="absolute -bottom-2 -left-2 w-8 h-8 border-l-2 border-b-2 border-gray-300"></div>
-                <div className="absolute -bottom-2 -right-2 w-8 h-8 border-r-2 border-b-2 border-gray-300"></div>
+                <div className="absolute -top-2 -left-2 w-4 h-4 border-l-2 border-t-2 border-gray-300"></div>
+                <div className="absolute -top-2 -right-2 w-4 h-4 border-r-2 border-t-2 border-gray-300"></div>
+                <div className="absolute -bottom-2 -left-2 w-4 h-4 border-l-2 border-b-2 border-gray-300"></div>
+                <div className="absolute -bottom-2 -right-2 w-4 h-4 border-r-2 border-b-2 border-gray-300"></div>
               </div>
 
               {/* Card Title and Description */}
@@ -193,8 +164,8 @@ export default function HowWeHelpSection() {
             </div>
             {/* Explore More pill aligned right beneath the card */}
             <div className="w-full flex justify-end">
-              <a
-                href="#"
+              <Link
+                href="/about-us"
                 className="inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-md text-gray-900 text-base md:text-lg font-semibold hover:bg-indigo-50 transition-colors"
               >
                 <span>Explore More</span>
@@ -211,9 +182,9 @@ export default function HowWeHelpSection() {
                     d="M17 8l4 4m0 0l-4 4m4-4H3"
                   />
                 </svg>
-              </a>
+              </Link>
             </div>
-          </div>
+          </ScrollAnimation>
         </div>
       </div>
     </div>
