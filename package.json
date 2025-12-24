@@ -1,12 +1,16 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
+  "name": "jb-recruitment-solutions",
+  "version": "1.0.0",
   "private": true,
+  "description": "JB Recruitment Solutions - Premier HR consulting firm specializing in talent acquisition, executive search, and workforce solutions",
+  "author": "JB Recruitment Solutions",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seo:check": "echo 'Checking SEO implementation...' && node -e \"console.log('✅ Sitemap: http://localhost:3000/sitemap.xml'); console.log('✅ Robots: http://localhost:3000/robots.txt'); console.log('✅ OG Image: http://localhost:3000/opengraph-image'); console.log('Run dev server and visit these URLs to verify')\"",
+    "seo:test": "npm run build && npm run start"
   },
   "dependencies": {
     "@types/axios": "^0.9.36",

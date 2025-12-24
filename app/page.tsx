@@ -1,28 +1,26 @@
-import HeroSection from "./components/hero";
-import HowWeHelpSection from "./components/how-we-help";
-import WhyJBSection from "./components/why-jb-section";
-import HiringJourney from "./components/hiring-journey";
-import Testimonials from "./components/testimonials";
-import AdvisorTrustSection from "./components/advisor-trust-section";
-import FAQsSection from "./components/faq-section";
-import Footer from "./components/footer";
-import FloatingNavbar from "./components/floating-navbar";
+import HeroSection from "./components/home/hero";
+import HowWeHelpSection from "./components/home/how-we-help";
+import WhyJBSection from "./components/home/why-jb-section";
+import HiringJourney from "./components/home/hiring-journey";
+import Testimonials from "./components/home/testimonials";
+import AdvisorTrustSection from "./components/home/advisor-trust-section";
+import FAQsSection from "./components/home/faq-section";
+import CoreServices from "./components/home/core-services";
 
 export default function Home() {
   return (
     <div>
-      <FloatingNavbar />
       <HeroSection />
 
       {/* Content wrapper that scrolls over the fixed hero */}
       <div className="relative z-10 bg-white">
         <HowWeHelpSection />
-        <WhyJBSection />
+        <CoreServices />
         <HiringJourney />
+        <WhyJBSection />
         <Testimonials />
         <AdvisorTrustSection />
         <FAQsSection />
-        <Footer />
       </div>
     </div>
   );

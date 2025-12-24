@@ -18,8 +18,8 @@ export default function Footer() {
               <Link href="/" className="hover:underline">
                 Home
               </Link>
-              <Link href="/hr" className="hover:underline">
-                HR
+              <Link href="/companies" className="hover:underline">
+                Companies
               </Link>
               <Link href="/job-seekers" className="hover:underline">
                 Job Seekers

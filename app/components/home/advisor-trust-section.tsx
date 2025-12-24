@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
-import ScrollAnimation from "./ui/scroll-animation";
+import ScrollAnimation from "../ui/scroll-animation";
 
 export default function AdvisorTrustSection() {
   return (
@@ -148,13 +148,20 @@ export default function AdvisorTrustSection() {
 
             {/* Item 3 */}
             <div className="text-center md:pl-8 lg:pl-12">
-              <div className="mx-auto mb-6 h-16 w-16 bg-black" />
+              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+                <Image
+                src={"/advisor-trust/favikon-logo.png"}
+                alt="Favikon Logo"
+                width={96}
+                height={96}
+                className="w-full "
+              />
+              </div>
               <div className="mb-3 flex justify-center gap-1 text-white text-xl font-semibold">
-                ★★★★★
+                Global Leadership inContent
               </div>
               <p className="text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
-                “The blend of AI and creativity at Automatix transformed our
-                vision into reality. Exceptional support!”
+                Ranked Number 1 worldwide on LinkedIn in the Careers & Office category.
               </p>
             </div>
           </ScrollAnimation>

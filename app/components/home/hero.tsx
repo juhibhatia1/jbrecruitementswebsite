@@ -10,7 +10,7 @@ export default function HeroSection() {
         {/* Background Image */}
         <img
           src="/home/hero-background.jpg"
-          alt="Hero background"
+          alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
           className="w-full h-full object-cover object-top"
         />
         {/* Dark overlay */}
@@ -41,10 +41,13 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <p className="text-gray-300 text-base md:text-lg lg:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl w-full" style={{ fontFamily: 'Geist, sans-serif' }}>
-                    We help companies hire thoughtfully and support professionals
-                    through meaningful career moves — balancing speed, clarity,
-                    and long-term fit.
+                  <p
+                    className="text-gray-300 text-base md:text-lg lg:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl w-full"
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                  >
+                    We help companies hire thoughtfully and support
+                    professionals through meaningful career moves — balancing
+                    speed, clarity, and long-term fit.
                   </p>
                 </motion.div>
 

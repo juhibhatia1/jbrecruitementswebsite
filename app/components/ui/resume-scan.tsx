@@ -9,7 +9,6 @@ export default function ResumeScanner() {
       {/* Resume Image Container */}
       <motion.div
         className="w-full will-change-transform"
-        // Resume starts at 0 and slides UP to -95%
         initial={{ y: "0%" }}
         animate={{ y: "-100%" }}
         transition={scanTransition}
@@ -28,13 +27,6 @@ export default function ResumeScanner() {
       {/* The Scanning Beam & Gradient Overlay */}
       <motion.div
         className="absolute left-0 w-full h-[150px] pointer-events-none z-10"
-        // CALCULATION FOR SYNC:
-        // Container H=275px. Image W=280px. Image Ratio=1000/600.
-        // Image H = 280 * (10/6) = ~466.67px.
-        // Image Travel (95%) = 0.95 * 466.67 = 443.33px.
-        // Beam Travel Needed = 443.33px. 
-        // Beam Start = 275px (100%). Target = 275 - 443.33 = -168.33px.
-        // Target % = -168.33 / 275 = -61.21%.
         initial={{ top: "100%" }}
         animate={{ top: "0%" }}
         transition={scanTransition}

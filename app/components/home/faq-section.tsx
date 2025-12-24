@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { PiHeadsetBold } from "react-icons/pi";
 import { RxArrowTopRight } from "react-icons/rx";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
-import ScrollAnimation from "./ui/scroll-animation";
+import ScrollAnimation from "../ui/scroll-animation";
 
 type FAQ = {
   question: string;

@@ -1,10 +1,12 @@
 import Image from "next/image";
 import ContactForm from "../components/contact-form";
-import FloatingNavbar from "../components/floating-navbar";
-import Footer from "../components/footer";
 import ScrollAnimation from "../components/ui/scroll-animation";
 import { CiMail } from "react-icons/ci";
 import { MdLocalPhone } from "react-icons/md";
+import { Metadata } from "next";
+import { contactMetadata } from "../lib/metadata";
+
+export const metadata: Metadata = contactMetadata;
 
 export default function ContactPage() {
   return (
@@ -12,7 +14,6 @@ export default function ContactPage() {
       className="min-h-screen flex flex-col bg-white"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-      <FloatingNavbar />
 
       <main className="flex-grow bg-white">
         <div className="mx-auto max-w-7xl px-6 md:px-6 py-24 md:py-32 flex items-center">
@@ -38,7 +39,7 @@ export default function ContactPage() {
               {/* Founder */}
               <div className="flex items-center gap-4 pt-4">
                 <Image
-                  src="/home/profile-pic.jpg"
+                  src="/founder.jpeg"
                   alt="Founder"
                   width={56}
                   height={56}
@@ -84,7 +85,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

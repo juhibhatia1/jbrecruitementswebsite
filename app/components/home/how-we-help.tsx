@@ -1,7 +1,7 @@
 import React from "react";
-import ScrollAnimation from "./ui/scroll-animation";
+import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
-import ResumeScanner from "./ui/resume-scan";
+import ResumeScanner from "../ui/resume-scan";
 
 export default function HowWeHelpSection() {
   return (

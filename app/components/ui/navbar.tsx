@@ -50,30 +50,35 @@ export default function NavigationMenu() {
           <div className="flex-1 flex flex-col justify-center space-y-6 md:space-y-8">
             <Link
               href="/"
+              onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-6xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               HOME
             </Link>
             <Link
-              href="/hr"
+              href="/companies"
+              onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
-              HR
+              Companies
             </Link>
             <Link
-              href="/job-seeker"
+              href="/job-seekers"
+              onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
-              JOB SEEKER
+              JOB SEEKERS
             </Link>
             <Link
-              href="#"
+              href="/about-us"
+              onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               ABOUT
             </Link>
             <Link
               href="/contact"
+              onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               CONTACT

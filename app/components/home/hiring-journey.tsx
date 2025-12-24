@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CiRoute } from "react-icons/ci";
-import ScrollAnimation from "./ui/scroll-animation";
+import ScrollAnimation from "../ui/scroll-animation";
 
 const steps = [
   {

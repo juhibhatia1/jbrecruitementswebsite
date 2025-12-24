@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { AiOutlineMessage } from "react-icons/ai";
-import ScrollAnimation from "./ui/scroll-animation";
+import ScrollAnimation from "../ui/scroll-animation";
 
 export default function Testimonials() {
   return (
