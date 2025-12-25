@@ -114,7 +114,7 @@ export const contactMetadata: Metadata = {
     title: "Contact Us - JB Recruitment Solutions",
     description:
       "Get in touch with our HR consulting experts for talent acquisition and recruitment solutions.",
-    url: `${siteUrl}/contact`,
+    url: `${siteUrl}/contact-us`,
     images: [
       {
         url: "/og-image.png",
@@ -125,7 +125,7 @@ export const contactMetadata: Metadata = {
     ],
   },
   alternates: {
-    canonical: `${siteUrl}/contact`,
+    canonical: `${siteUrl}/contact-us`,
   },
 };
 

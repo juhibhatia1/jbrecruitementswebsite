@@ -31,8 +31,8 @@ export default function Footer() {
               <Link href="/about" className="hover:underline">
                 About
               </Link>
-              <Link href="/contact" className="hover:underline">
-                Contact
+              <Link href="/contact-us" className="hover:underline">
+                Contact Us
               </Link>
             </nav>
           </div>

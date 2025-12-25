@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import NavigationMenu from "./components/ui/navbar";
-import Footer from "./components/footer";
 import FloatingNavbar from "./components/floating-navbar";
 import { RxArrowTopRight } from "react-icons/rx";
 import ScrollAnimation from "./components/ui/scroll-animation";
@@ -45,7 +43,6 @@ export default function NotFound() {
           </Link>
         </ScrollAnimation>
       </div>
-      <Footer />
     </div>
   );
 }

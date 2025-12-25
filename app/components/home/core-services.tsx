@@ -6,9 +6,11 @@ import { RxArrowTopRight } from "react-icons/rx";
 import React from "react";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CoreServices() {
   const [hoveredLink, setHoveredLink] = React.useState(false);
+  const router = useRouter();
   return (
     <section className="w-full bg-white py-12 md:py-20 border-t border-slate-200" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
       <div className="mx-auto max-w-7xl px-4 md:px-6">
@@ -96,10 +98,11 @@ export default function CoreServices() {
         <div className="mt-12 text-right">
           <Link
             href="/about-us"
-            className="inline-flex items-center gap-1 text-[#2c3543] border-b border-slate-900 transition duration-300 ease-in-out text-2xl"
+            className="inline-flex items-center gap-1 text-[#2c3543] border-b border-slate-900 transition duration-300 ease-in-out text-lg"
             onMouseEnter={() => setHoveredLink(true)}
             onMouseLeave={() => setHoveredLink(false)}
             style={{ fontFamily: 'Geist, sans-serif' }}
+            onClick={() => router.push("/about-us")}
           >
             Get to Know Us
             <RxArrowTopRight

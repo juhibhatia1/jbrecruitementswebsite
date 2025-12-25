@@ -1,4 +1,4 @@
-import JobSeekersForm from "../components/job-seekers-form";
+import JobSeekersForm from "../components/job-seekers/job-seekers-form";
 import { jobSeekersMetadata } from "../lib/metadata";
 
 export const metadata = jobSeekersMetadata;

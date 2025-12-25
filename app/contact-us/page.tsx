@@ -1,5 +1,5 @@
 import Image from "next/image";
-import ContactForm from "../components/contact-form";
+import ContactForm from "../components/contact-us/contact-form";
 import ScrollAnimation from "../components/ui/scroll-animation";
 import { CiMail } from "react-icons/ci";
 import { MdLocalPhone } from "react-icons/md";

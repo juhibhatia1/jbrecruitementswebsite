@@ -82,7 +82,7 @@ export default function StructuredData() {
         "@type": "ListItem",
         position: 2,
         name: "Contact",
-        item: "https://jbrecruitment.com/contact",
+        item: "https://jbrecruitment.com/contact-us",
       },
       {
         "@type": "ListItem",
@@ -105,12 +105,6 @@ export default function StructuredData() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(websiteSchema),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
         }}
       />
     </>

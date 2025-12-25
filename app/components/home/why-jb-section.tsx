@@ -86,7 +86,7 @@ export default function WhyJBSection() {
               {/* CTA Button */}
               <div className="pt-4">
                 <Link
-                  href="/contact"
+                  href="/contact-us"
                   className="inline-flex items-center justify-center px-8 py-3.5 bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] text-white font-semibold rounded-full transition-all duration-300 text-lg hover:shadow-[0_6px_20px_rgba(74,144,226,0.23)] hover:scale-105 ease-in-out"
                   style={{ fontFamily: "Geist, sans-serif" }}
                 >

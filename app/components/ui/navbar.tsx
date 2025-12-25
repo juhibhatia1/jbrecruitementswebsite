@@ -77,11 +77,11 @@ export default function NavigationMenu() {
               ABOUT
             </Link>
             <Link
-              href="/contact"
+              href="/contact-us"
               onClick={() => setIsMenuOpen(false)}
               className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
-              CONTACT
+              CONTACT US
             </Link>
 
             {/* Underline */}

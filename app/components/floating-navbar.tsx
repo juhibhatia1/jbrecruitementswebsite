@@ -32,7 +32,7 @@ export default function FloatingNavbar() {
             <div className="flex items-center gap-3 md:gap-4">
               <button
                 className="contact-ring relative bg-white rounded-full p-1 text-xs md:text-base font-semibold hover:bg-gray-100 transition-all cursor-pointer"
-                onClick={() => router.push("/contact")}
+                onClick={() => router.push("/contact-us")}
               >
                 <span aria-hidden className="contact-ring-outer" />
 
