@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://jbsolutions.dev-aashish.tech";
 
   return [
     {
