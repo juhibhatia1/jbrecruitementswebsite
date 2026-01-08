@@ -50,7 +50,7 @@ export default function ContactForm() {
         {/* Name + Company */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-[#605DBA]">Name</label>
+            <label className="text-sm text-[#242424] font-semibold">Name</label>
             <input
               type="text"
               placeholder="Jane Smith"
@@ -62,7 +62,7 @@ export default function ContactForm() {
           </div>
 
           <div>
-            <label className="text-sm text-[#605DBA]">Company</label>
+            <label className="text-sm text-[#242424] font-semibold">Company</label>
             <input
               type="text"
               placeholder="Nexilo"
@@ -74,7 +74,7 @@ export default function ContactForm() {
         {/* Email + Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-[#605DBA]">Email</label>
+            <label className="text-sm text-[#242424] font-semibold">Email</label>
             <input
               type="email"
               placeholder="jane@framer.com"
@@ -86,7 +86,7 @@ export default function ContactForm() {
           </div>
 
           <div>
-            <label className="text-sm text-[#605DBA]">Phone Number</label>
+            <label className="text-sm text-[#242424] font-semibold">Phone Number</label>
             <input
               type="tel"
               placeholder="+1 (777) 123-7366"
@@ -100,7 +100,7 @@ export default function ContactForm() {
 
         {/* Message */}
         <div>
-          <label className="text-sm text-[#605DBA]">Messages</label>
+          <label className="text-sm text-[#242424] font-semibold">Messages</label>
           <textarea
             placeholder="Leave your message"
             value={formData.message}

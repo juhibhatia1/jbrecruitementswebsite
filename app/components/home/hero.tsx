@@ -44,12 +44,10 @@ export default function HeroSection() {
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
                   <p
-                    className="text-gray-300 text-base md:text-lg lg:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl w-full"
+                    className="text-[#D6D6D6] text-base md:text-lg 2xl:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl w-full"
                     style={{ fontFamily: "Geist, sans-serif" }}
                   >
-                    We help companies hire thoughtfully and support
-                    professionals through meaningful career moves — balancing
-                    speed, clarity, and long-term fit.
+                    At JB, we help companies hire the right people, fast. Our process is simple, people-first, and built to deliver the talent you need, exactly when you need it.
                   </p>
                 </motion.div>
 

@@ -14,9 +14,12 @@ export default function ContactPage() {
       className="min-h-screen flex flex-col bg-white"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-
       <main className="flex-grow bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-6 py-24 md:py-32 flex items-center">
+        <div className="mx-auto max-w-7xl px-6 md:px-6 py-24 md:py-32 flex items-center relative">
+          {/* Subtle circular background blur */}
+          <div className="pointer-events-none -z-10 absolute inset-0 flex">
+            <div className="absolute left-6 top-6 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-[#eef0ff] via-[#f7f7ff] to-transparent opacity-60 blur-3xl" />
+          </div>
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             {/* LEFT CONTENT */}
             <ScrollAnimation variant="fadeUp" className="space-y-8">
@@ -37,7 +40,7 @@ export default function ContactPage() {
               </p>
 
               {/* Founder */}
-              <div className="flex items-center gap-4 pt-4">
+              {/* <div className="flex items-center gap-4 pt-4">
                 <Image
                   src="/founder.jpeg"
                   alt="Founder"
@@ -47,14 +50,14 @@ export default function ContactPage() {
                 />
                 <div>
                   <p
-                    className="font-semibold text-[#252e3d] text-lg"
-                    style={{ fontFamily: "Geist, sans-serif" }}
+                  <h4 className="font-semibold text-[#252e3d] mb-2 text-lg md:text-xl">Companies</h4>
+                  <p className="text-base text-gray-600">We help businesses hire candidates who are not just qualified, but truly aligned with their culture and goals.</p>
                   >
                     Juhi Bhatia
                   </p>
-                  <p className="text-sm text-[#252E3D]">Founder & CEO of JB</p>
-                </div>
-              </div>
+                  <h4 className="font-semibold text-[#252e3d] mb-2 text-lg md:text-xl">Job Seekers</h4>
+                  <p className="text-base text-gray-600">We support individuals throughout their career journey with tools and guidance that help them stand out and succeed.</p>
+              </div> */}
 
               {/* Contact Info */}
               <div className="space-y-6 pt-8">
@@ -62,7 +65,7 @@ export default function ContactPage() {
                   <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba]">
                     <CiMail size={24} className="text-[#605dba]" />
                   </div>
-                  <span className="text-[#252e3d] text-lg font-medium">
+                  <span className="text-[#252e3d] text-lg font-semibold">
                     juhi.bhatia1@gmail.com
                   </span>
                 </div>
@@ -71,9 +74,34 @@ export default function ContactPage() {
                   <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba]">
                     <MdLocalPhone size={24} className="text-[#605dba]" />
                   </div>
-                  <span className="text-[#252e3d] text-lg font-medium">
-                    +1 (555) 123-4567
+                  <span className="text-[#252e3d] text-lg">
+                    We assist Employers and Candidates across regions and
+                    industries, offering flexible recruitment support and
+                    consultation.
                   </span>
+                </div>
+              </div>
+
+              {/* Small Cards: Companies / Job Seekers */}
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl border p-4 shadow-sm">
+                  <h4 className="font-semibold text-[#252e3d] mb-2">
+                    Companies
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    We help businesses hire candidates who are not just
+                    qualified, but truly aligned with their culture and goals.
+                  </p>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl border p-4 shadow-sm">
+                  <h4 className="font-semibold text-[#252e3d] mb-2">
+                    Job Seekers
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    We support individuals throughout their career journey with
+                    tools and guidance that help them stand out and succeed.
+                  </p>
                 </div>
               </div>
             </ScrollAnimation>

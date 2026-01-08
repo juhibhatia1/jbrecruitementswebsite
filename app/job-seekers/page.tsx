@@ -1,4 +1,5 @@
 import JobSeekersForm from "../components/job-seekers/job-seekers-form";
+import ServicesSection from "../components/job-seekers/services-section";
 import { jobSeekersMetadata } from "../lib/metadata";
 
 export const metadata = jobSeekersMetadata;
@@ -9,7 +10,6 @@ export default function JobSeekersPage() {
       className="min-h-screen bg-[#F9F9FB] text-[#252E3D]"
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
-
       <main className="flex-grow">
         <div className="relative mx-auto max-w-7xl px-6 md:px-6 py-24 md:py-32 flex items-center">
           {/* Sun Rays Background Effect */}
@@ -35,14 +35,45 @@ export default function JobSeekersPage() {
                 Guidance
               </h1>
 
-              <p
-                className="mt-8 text-lg md:text-xl text-[#252e3d] leading-relaxed"
+              <div
+                className="mt-8 space-y-8"
                 style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
               >
-                Explore practical career advice, industry insights, and hiring
-                perspectives to help you make informed career decisions and move
-                forward with confidence.
-              </p>
+                <div>
+                  <h3 className="text-xl font-semibold text-[#252e3d] mb-3">
+                    Your Career Support Starts Here
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    JB is dedicated to helping individuals present their best
+                    selves and unlock meaningful career opportunities. Whether
+                    you're actively job hunting or exploring new possibilities,
+                    we're here to support your journey.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold text-[#252e3d] mb-2">
+                    Stay Updated With Latest Roles
+                  </h4>
+                  <p className="text-gray-700 leading-relaxed">
+                    We regularly share job opportunities across industries.
+                    Submit your resume once and receive curated opportunities
+                    that fit your experience, skills, and goals.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold text-[#252e3d] mb-3">
+                    Simple Process for Candidates
+                  </h4>
+                  <ol className="list-inside list-decimal text-gray-700 space-y-1">
+                    <li>Fill out the short form</li>
+                    <li>Upload your resume</li>
+                    <li>Get notified about suitable openings</li>
+                    <li>Receive guidance to enhance your profile</li>
+                  </ol>
+                </div>
+              </div>
             </div>
 
             {/* Right Content: Form */}
@@ -51,6 +82,7 @@ export default function JobSeekersPage() {
             </div>
           </div>
         </div>
+        <ServicesSection />
       </main>
     </div>
   );

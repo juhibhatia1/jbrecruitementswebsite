@@ -7,22 +7,18 @@ export default function ResumeScanner() {
   return (
     <div className="relative w-[220px] h-[270px] mx-auto overflow-hidden bg-white shadow-lg z-10">
       {/* Resume Image Container */}
-      <motion.div
-        className="w-full will-change-transform"
-        initial={{ y: "0%" }}
-        animate={{ y: "-100%" }}
-        transition={scanTransition}
-      >
+      {/* Static Resume Image (fixed at initial position) */}
+      <div className="w-full will-change-transform">
         {/* Replace src with your actual resume image path */}
         <Image
           src="/home/resume.jpg"
-          alt="Animated Resume"
+          alt="Resume"
           width={600}
           height={1000}
           priority
           className="w-full h-auto block select-none"
         />
-      </motion.div>
+      </div>
 
       {/* The Scanning Beam & Gradient Overlay */}
       <motion.div

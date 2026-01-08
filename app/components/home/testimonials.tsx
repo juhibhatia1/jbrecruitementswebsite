@@ -1,219 +1,185 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
 import { AiOutlineMessage } from "react-icons/ai";
-import ScrollAnimation from "../ui/scroll-animation";
+
+const testimonials = [
+  {
+    id: 1,
+    name: "Delicia Pillay",
+    role: "Head of Resourcing Sub-Saharan Africa",
+    // company: "TechFlow Inc",
+    image: "https://i.pravatar.cc/150?img=1",
+    text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
+    rating: 5,
+  },
+  {
+    id: 2,
+    name: "Nick Macleay",
+    role: "Omnia Solutions Ltd",
+    // company: "InnovateCo",
+    image: "https://i.pravatar.cc/150?img=3",
+    text: "Juhi, has helped me on a couple of recruitment assignments, they were not easy sourcing positions, and roles that she has not worked on before. Juhi was very quick, she listens to what we needed and delivered me a short list within 48 hrs and the 2 of the candidates that she short listed made 2nd and final stage interviews. I will definitely use Juhi again for my sourcing projects.",
+    rating: 5,
+  },
+  {
+    id: 3,
+    name: "Envision People",
+    role: "Recruitment Director",
+    // company: "DataSphere",
+    image: "https://i.pravatar.cc/150?img=5",
+    text: "Juhi has been supporting my recruitment drives for the last 6 months. She has worked on sourcing and first level screening of candidates. I have found Juhi to be highly proactive and has a great level of understanding the roles with basic information. I would highly recommend Juhi as a recruiter or resourcer for any roles in the UK or Europe regions.",
+    rating: 5,
+  },
+  {
+    id: 4,
+    name: "Mohammed Barakat",
+    role: "Human Resources Director Assoc",
+    // company: "StartupHub",
+    image: "https://i.pravatar.cc/150?img=7",
+    text: "I had the pleasure of working with Juhi as part of my team, where she led the talent acquisition department with professionalism and insight. Juhi demonstrated a deep understanding of recruitment strategies and candidate engagement, consistently attracting high-quality talent in a competitive market.What stood out most was her ability to quickly grasp the nature of our business and culture, ensuring not only strong technical matches but also cultural alignment. Juhi brought structure, clarity, and energy to our hiring process and collaborated seamlessly with stakeholders across departments.I wouldn’t hesitate to work with Juhi again and can confidently recommend her to any organization looking for a committed talent acquisition Manager.",
+    rating: 5,
+  },
+  {
+    id: 5,
+    name: "Shridhar Iyer",
+    role: "Director of Finance at Unity",
+    // company: "CloudNine Systems",
+    image: "https://i.pravatar.cc/150?img=9",
+    text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
+    rating: 5,
+  },
+  {
+    id: 6,
+    name: "Smitha Dasan",
+    role: "Excellence in Hiring Quality and Exceptional Candidate Experience",
+    company: "NexGen Labs",
+    image: "https://i.pravatar.cc/150?img=12",
+    text: "Juhi is a dedicated, self-motivated and a smart recruiter; totally committed to the work assigned. She is a very methodical and organised recruiter which makes the recruitment so much easy.Juhi has been working for the Shared Services group and had performed really well; understands the talent market and work closely with the stakeholders to hire the top talent.I have relied on her for critical/niche roles and and she has always proved herself with quality results. The hiring focus is on quality and diversity, Juhi is able to plan her work accordingly and drive the results in stipulated time period.Definitely an asset to any organisation she represents and I highly recommend her. I would like to wish Juhi all the best for her future endeavours.",
+    rating: 5,
+  },
+  {
+    id: 7,
+    name: "Juliana Pagliaro",
+    role: "Co-founder & Chief of People",
+    // company: "NextGen Solutions",
+    image: "https://i.pravatar.cc/150?img=15",
+    text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
+    rating: 5,
+  },
+];
 
 export default function Testimonials() {
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
   return (
     <section
-      className="bg-white py-16 md:py-28 border-t border-[#bababa]"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-20"
+      style={{ fontFamily: "Geist, sans-serif" }}
     >
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Section Header */}
-        <div className="mb-20 grid grid-cols-3 gap-4">
-          <div className="col-span-1">
-            <ScrollAnimation variant="fadeUp">
-              <div className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
-                <AiOutlineMessage size={20} className="text-[#605dba]" />
-                Testimonials
-              </div>
-            </ScrollAnimation>
+        <div className="text-center mb-16">
+          <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
+            <AiOutlineMessage size={24} className="text-[#605dba]" />
+            <span>Testimonials</span>
           </div>
-          <div className="col-span-2">
-            <ScrollAnimation variant="fadeUp" delay={0.1}>
-              <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
-                Experiences from Companies and Professionals
-              </h2>
-              <p
-                className="text-[#252E3D] mt-4 md:mt-6 text-base md:text-lg lg:text-xl leading-relaxed"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+
+          <h2
+            className="text-[#252E3D] text-4xl md:text-5xl lg:text-6xl font-medium leading-tight mb-6"
+            style={{ fontFamily: "Palatino Linotype, serif" }}
+          >
+            What our customers love about us
+          </h2>
+
+          {/* Avatar Row */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            {testimonials.map((testimonial, index) => (
+              <button
+                key={testimonial.id}
+                type="button"
+                onClick={() => setActiveTestimonial(index)}
+                aria-pressed={activeTestimonial === index}
+                aria-label={`Show testimonial from ${testimonial.name}`}
+                className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] ${
+                  activeTestimonial === index
+                    ? "w-16 h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
+                    : "w-12 h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300"
+                }`}
               >
-                Hear from hiring teams and professionals who’ve experienced a more
-                thoughtful recruitment process.
-              </p>
-            </ScrollAnimation>
+                <img
+                  src={testimonial.image}
+                  alt={testimonial.name}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Top summary testimonial card */}
-        <ScrollAnimation variant="fadeUp" delay={0.2} className="mb-8">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/home/profile-pic.jpg"
-                  alt="Jenna Li"
-                  width={52}
-                  height={52}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Jenna Li
-                  </p>
-                  <p className="text-sm text-[#252E3D]">
-                    Operations Director, NeoLabs
-                  </p>
-                </div>
-              </div>
+        {/* Main Testimonial Card */}
+        <div className="max-w-4xl mx-auto">
+          <div className="relative bg-white rounded-3xl shadow-xl p-8 md:p-12 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-gray-200">
+            {/* Stars */}
+            <div className="flex justify-center gap-1 mb-6">
+              {[...Array(5)].map((_, i) => (
+                <svg
+                  key={i}
+                  className="w-6 h-6 animate-[pulse_2s_ease-in-out_infinite]"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <radialGradient
+                      id={`starGrad-${i}`}
+                      cx="50%"
+                      cy="75%"
+                      r="75%"
+                    >
+                      <stop offset="0%" stopColor="#5a58ab" />
+                      <stop offset="100%" stopColor="#5d8aba" />
+                    </radialGradient>
+                  </defs>
+                  <path
+                    fill={`url(#starGrad-${i})`}
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                  />
+                </svg>
+              ))}
             </div>
 
-            <p className="mt-6 text-slate-700 text-base md:text-lg leading-relaxed">
-              Juhi brings structure, clarity, and a truly people-first approach
-              to hiring. She quickly understands business needs and culture,
-              consistently delivering high-quality talent even in competitive
-              markets. Her ability to collaborate seamlessly with stakeholders
-              makes her an exceptional recruitment partner.
+            {/* Testimonial Text */}
+            <p className="text-center text-lg md:text-xl text-[#333333] leading-relaxed mb-8 transition-all duration-500">
+              {testimonials[activeTestimonial].text}
             </p>
 
-            <div className="mt-8 grid grid-cols-4 gap-x-8 items-end justify-end pt-8">
-              <div className="flex-1 text-center col-span-3 justify-end">
-                <p
-                  className="text-4xl md:text-5xl font-bold text-slate-900"
-                  style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-                >
-                  x7
-                </p>
-                <p className="mt-2 text-lg text-[#252E3D]">
-                  Faster Time-to-Hire
-                </p>
-              </div>
+            {/* Author Info */}
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#333333] mb-1">
+                {testimonials[activeTestimonial].name}
+              </p>
+              <p className="text-base text-[#737373]">
+                {testimonials[activeTestimonial].role}
+              </p>
+            </div>
 
-              <div className="flex-1 text-center col-span-1 justify-end">
-                <p
-                  className="text-4xl md:text-5xl font-bold text-slate-900"
-                  style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-                >
-                  +50%
-                </p>
-                <p className="mt-2 text-lg text-[#252E3D]">
-                  Stronger Role–Candidate Fit
-                </p>
-              </div>
+            {/* Navigation Dots */}
+            <div className="flex justify-center gap-2 mt-8">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTestimonial(index)}
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    activeTestimonial === index
+                      ? "w-8 bg-[#605dba]"
+                      : "w-2 bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  aria-label={`Go to testimonial ${index + 1}`}
+                />
+              ))}
             </div>
           </div>
-        </ScrollAnimation>
-
-        {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-5 lg:grid-cols-12">
-          {/* PRIMARY CARD */}
-          <ScrollAnimation variant="fadeUp" delay={0.3} className="md:col-span-5 lg:col-span-6">
-            <div className="flex flex-col justify-between rounded-2xl bg-linear-to-br from-[#53509b] to-[#3a6ac3] px-8 py-6 text-white">
-              {/* Quote */}
-              <div>
-                <span className="block text-2xl md:text-4xl font-bold leading-none">“</span>
-
-                <p className="max-w-xl text-lg leading-[1.7] text-white/95">
-                  Juhi is a highly dependable and strategic talent acquisition
-                  professional. She leads end-to-end recruitment with
-                  professionalism, strong stakeholder management, and a deep
-                  understanding of the talent market.
-                </p>
-              </div>
-
-              {/* Author */}
-              <div className="mt-10 flex items-center gap-4">
-                <Image
-                  src="/home/profile-pic.jpg"
-                  alt="Alex Rivera"
-                  width={44}
-                  height={44}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-lg font-semibold">Alex Rivera</p>
-                  <p className="text-md text-white">
-                    Product Manager, ZyloTech
-                  </p>
-                </div>
-              </div>
-
-              {/* Metrics */}
-              <div className="mt-12 grid grid-cols-2 md:grid-cols-5 justify-end items-center gap-8">
-                <div className="col-span-3 text-right">
-                  <p
-                    className="text-4xl font-semibold"
-                    style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-                  >
-                    +70%
-                  </p>
-                  <p className="mt-1 text-sm text-white">
-                    Less Manual Hiring Tasks
-                  </p>
-                </div>
-
-                <div className="col-span-2  text-right">
-                  <p
-                    className="text-4xl font-semibold"
-                    style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-                  >
-                    3.5x
-                  </p>
-                  <p className="mt-1 text-sm text-white">
-                    Hiring Process Efficiency
-                  </p>
-                </div>
-              </div>
-            </div>
-          </ScrollAnimation>
-
-          {/* SECONDARY DARK CARD */}
-          <ScrollAnimation variant="fadeUp" delay={0.4} className="md:col-span-3 lg:col-span-3">
-            <div className="flex h-full flex-col justify-between rounded-2xl bg-[#252E3D] p-6 md:p-8 text-white">
-              <p className="text-lg leading-[1.7] text-white/90">
-                <span className="block text-3xl font-bold leading-none">“</span>
-                A methodical, reliable recruiter who delivers quality talent
-                with speed, clarity, and care.
-              </p>
-
-              <div className="mt-8 flex items-center gap-3">
-                <Image
-                  src="/home/profile-pic.jpg"
-                  alt="Alex Rivera"
-                  width={36}
-                  height={36}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-lg font-semibold">Alex Rivera</p>
-                  <p className="text-sm text-white/70">
-                    Product Manager, ZyloTech
-                  </p>
-                </div>
-              </div>
-            </div>
-          </ScrollAnimation>
-
-          {/* SECONDARY LIGHT CARD */}
-          <ScrollAnimation variant="fadeUp" delay={0.5} className="md:col-span-2 lg:col-span-3">
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
-              <p className="text-lg leading-[1.7] text-slate-700">
-                Working with Juhi has been an excellent experience. She handles
-                urgent and high-pressure hiring with ease
-                <span className="block text-3xl font-bold leading-none text-slate-900">
-                  ”
-                </span>
-              </p>
-
-              <div className="mt-8 flex items-center gap-3">
-                <Image
-                  src="/home/profile-pic.jpg"
-                  alt="Alex Rivera"
-                  width={36}
-                  height={36}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-lg font-semibold text-slate-900">
-                    Alex Rivera
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Product Manager, ZyloTech
-                  </p>
-                </div>
-              </div>
-            </div>
-          </ScrollAnimation>
         </div>
       </div>
     </section>

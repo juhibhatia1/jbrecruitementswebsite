@@ -15,7 +15,7 @@ export default function Home() {
       {/* Content wrapper that scrolls over the fixed hero */}
       <div className="relative z-10 bg-white">
         <HowWeHelpSection />
-        <CoreServices />
+        {/* <CoreServices /> */}
         <HiringJourney />
         <WhyJBSection />
         <Testimonials />

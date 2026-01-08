@@ -104,11 +104,10 @@ export default function HowWeHelpSection() {
               {/* Card Title and Description */}
               <div className="mt-8 md:mt-10">
                 <h3 className="text-gray-900 text-2xl md:text-3xl font-bold mb-3 md:mb-2">
-                  Hiring
+                  Companies
                 </h3>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                  We help businesses find candidates who are not just qualified,
-                  but aligned with their culture, goals, and long-term vision
+                  Build your next great team with us. We help businesses find candidates who aren’t just qualified - but aligned. 
                 </p>
               </div>
             </div>
@@ -121,10 +120,8 @@ export default function HowWeHelpSection() {
             className="hidden lg:flex col-span-1 items-center justify-center px-4 md:px-6"
           >
             <div className="max-w-md text-center">
-              <p className="text-gray-800 text-base md:text-lg lg:text-xl leading-relaxed">
-                Experience how our people-first recruitment approach simplifies
-                hiring for companies and supports professionals through
-                meaningful career moves.
+              <p className="text-[#252E3D] text-base md:text-lg lg:text-2xl leading-relaxed font-medium">
+                We align businesses with the right talent while supporting individuals to grow and succeed. Our structured approach ensures meaningful, long-term career matches.
               </p>
             </div>
           </ScrollAnimation>
@@ -154,11 +151,10 @@ export default function HowWeHelpSection() {
               {/* Card Title and Description */}
               <div>
                 <h3 className="text-gray-900 text-2xl md:text-3xl font-bold mb-3 md:mb-2">
-                  Career Guidance
+                  Job Seekers
                 </h3>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                  Guidance to strengthen profiles, improve visibility, and move
-                  toward meaningful opportunities.
+                  We support individuals throughout their career journey with tools and guidance that help them stand out and succeed.
                 </p>
               </div>
             </div>

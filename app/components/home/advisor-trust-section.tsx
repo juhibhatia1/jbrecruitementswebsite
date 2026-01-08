@@ -60,7 +60,7 @@ export default function AdvisorTrustSection() {
 
             {/* Name + CTA */}
             <div className="mt-8 flex items-center gap-4 text-3xl text-[#c5c5c5]">
-              <span>Senior Recruitment Advisor (Name)</span>
+              <span>Juhi Bhatia</span>
               <button className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm font-medium text-white">
                 Speak
               </button>
