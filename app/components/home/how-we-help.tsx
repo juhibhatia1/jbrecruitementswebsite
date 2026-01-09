@@ -5,13 +5,13 @@ import ResumeScanner from "../ui/resume-scan";
 
 export default function HowWeHelpSection() {
   return (
-    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-20 lg:py-24 px-4 md:px-8 lg:px-12 border-t border-[#bababa]">
+    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 px-6 md:px-8 lg:px-12 border-t border-[#bababa]">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
-            <div className="grid grid-cols-3">
-              <div className="mb-8 md:mb-12 col-span-1 flex items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="mb-6 md:mb-8 col-span-1 flex items-center gap-2">
                 <img
                   src="/home/icons8-ai-48.png"
                   alt="Help Icon"
@@ -25,8 +25,8 @@ export default function HowWeHelpSection() {
                 </p>
               </div>
 
-              <div className="col-span-2">
-                <h2 className="text-[#252e3d] text-2xl md:text-4xl lg:text-5xl xl:text-5xl leading-tight font-semibold">
+              <div className="col-span-1 sm:col-span-2">
+                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
                   Recruitment Support Built for Real People
                 </h2>
               </div>
@@ -107,7 +107,8 @@ export default function HowWeHelpSection() {
                   Companies
                 </h3>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                  Build your next great team with us. We help businesses find candidates who aren’t just qualified - but aligned. 
+                  Build your next great team with us. We help businesses find
+                  candidates who aren’t just qualified - but aligned.
                 </p>
               </div>
             </div>
@@ -121,7 +122,9 @@ export default function HowWeHelpSection() {
           >
             <div className="max-w-md text-center">
               <p className="text-[#252E3D] text-base md:text-lg lg:text-2xl leading-relaxed font-medium">
-                We align businesses with the right talent while supporting individuals to grow and succeed. Our structured approach ensures meaningful, long-term career matches.
+                We align businesses with the right talent while supporting
+                individuals to grow and succeed. Our structured approach ensures
+                meaningful, long-term career matches.
               </p>
             </div>
           </ScrollAnimation>
@@ -137,9 +140,8 @@ export default function HowWeHelpSection() {
               {/* Resume Preview Box */}
               <div className="mb-6 md:mb-8 relative">
                 <div className="">
-                  <ResumeScanner /> 
+                  <ResumeScanner />
                 </div>
-                
 
                 {/* Corner brackets */}
                 <div className="absolute -top-2 -left-2 w-4 h-4 border-l-2 border-t-2 border-gray-300"></div>
@@ -154,7 +156,8 @@ export default function HowWeHelpSection() {
                   Job Seekers
                 </h3>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                  We support individuals throughout their career journey with tools and guidance that help them stand out and succeed.
+                  We support individuals throughout their career journey with
+                  tools and guidance that help them stand out and succeed.
                 </p>
               </div>
             </div>

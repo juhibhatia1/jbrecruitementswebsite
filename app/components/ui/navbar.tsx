@@ -45,41 +45,41 @@ export default function NavigationMenu() {
           isMenuOpen ? "opacity-95" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="h-full flex flex-col justify-between p-8 md:p-12 lg:p-16 lg:px-56 lg:py-30">
+        <div className="h-full flex flex-col justify-between p-6 sm:p-8 md:p-12 lg:p-16 lg:px-32 xl:px-56 lg:py-24 xl:py-30">
           {/* Menu Items */}
-          <div className="flex-1 flex flex-col justify-center space-y-6 md:space-y-8">
+          <div className="flex-1 flex flex-col justify-center space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8">
             <Link
               href="/"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-5xl md:text-6xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               HOME
             </Link>
             <Link
               href="/companies"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               Companies
             </Link>
             <Link
               href="/job-seekers"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               JOB SEEKERS
             </Link>
             <Link
               href="/about-us"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               ABOUT
             </Link>
             <Link
               href="/contact-us"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-5xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
             >
               CONTACT US
             </Link>

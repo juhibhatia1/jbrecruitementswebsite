@@ -4,16 +4,16 @@ import ScrollAnimation from "../ui/scroll-animation";
 
 export default function AboutHero() {
   return (
-    <section className="relative w-full bg-[#FAFAFA] pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden">
+    <section className="relative w-full bg-[#FAFAFA] pt-20 sm:pt-24 pb-12 md:pb-16 overflow-hidden">
       {/* Background Gradient similar to design if needed, or keep clean white/gray */}
-      
-      <div className="mx-auto max-w-7xl px-6 md:px-6">
+
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <ScrollAnimation variant="fadeUp">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left: Title */}
             <div>
               <h1
-                className="text-[#252E3D] text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
+                className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 About Us
@@ -28,8 +28,8 @@ export default function AboutHero() {
               >
                 JB is a recruitment agency dedicated to creating meaningful
                 connections between companies and talented professionals. We
-                believe hiring should feel thoughtful, structured, and positively
-                human - not rushed or transactional.
+                believe hiring should feel thoughtful, structured, and
+                positively human - not rushed or transactional.
               </p>
 
               <blockquote className="relative">

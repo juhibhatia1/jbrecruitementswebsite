@@ -9,9 +9,9 @@ export default function AdvisorTrustSection() {
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
-      <div className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-20">
         {/* Eyebrow */}
-        <div className="mb-6 flex justify-center">
+        <div className="mb-4 md:mb-6 flex justify-center">
           <span className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
             <PiPlugsConnectedBold size={24} />
             Thoughtful
@@ -20,9 +20,9 @@ export default function AdvisorTrustSection() {
 
         {/* Heading */}
         <ScrollAnimation variant="fadeUp">
-          <h2 className="mx-auto text-center text-white text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-semibold leading-tight">
+          <h2 className="mx-auto text-center text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
             Guidance you can trust at every stage of
-            <br />
+            <br className="hidden sm:block" />
             hiring.
           </h2>
         </ScrollAnimation>
@@ -53,13 +53,13 @@ export default function AdvisorTrustSection() {
             delay={0.3}
             className="lg:col-span-7"
           >
-            <h3 className="max-w-xl text-xl md:text-2xl lg:text-4xl font-medium leading-[1.35]">
+            <h3 className="max-w-xl text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium leading-[1.35]">
               Hiring Is About People, Not Just Roles. Get Alignment Right, And
               Everything Else Follows.
             </h3>
 
             {/* Name + CTA */}
-            <div className="mt-8 flex items-center gap-4 text-3xl text-[#c5c5c5]">
+            <div className="mt-6 md:mt-8 flex items-center gap-3 md:gap-4 text-xl sm:text-2xl md:text-3xl text-[#c5c5c5]">
               <span>Juhi Bhatia</span>
               <button className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm font-medium text-white">
                 Speak
@@ -95,7 +95,7 @@ export default function AdvisorTrustSection() {
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
       <div className="pb-16 md:pb-24 lg:pb-16">
-        <div className="mx-auto max-w-7xl px-6 py-12 md:py-16 lg:py-12">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-12">
           <ScrollAnimation
             variant="fadeUp"
             delay={0.4}
@@ -127,12 +127,12 @@ export default function AdvisorTrustSection() {
             <div className="text-center md:border-r md:border-white md:px-8 lg:px-12">
               <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
                 <Image
-                src={"/advisor-trust/favikon-logo.png"}
-                alt="Favikon Logo"
-                width={96}
-                height={96}
-                className="w-full "
-              />
+                  src={"/advisor-trust/favikon-logo.png"}
+                  alt="Favikon Logo"
+                  width={96}
+                  height={96}
+                  className="w-full "
+                />
               </div>
               <h4
                 className="text-lg lg:text-2xl font-semibold"
@@ -150,18 +150,19 @@ export default function AdvisorTrustSection() {
             <div className="text-center md:pl-8 lg:pl-12">
               <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
                 <Image
-                src={"/advisor-trust/favikon-logo.png"}
-                alt="Favikon Logo"
-                width={96}
-                height={96}
-                className="w-full "
-              />
+                  src={"/advisor-trust/favikon-logo.png"}
+                  alt="Favikon Logo"
+                  width={96}
+                  height={96}
+                  className="w-full "
+                />
               </div>
               <div className="mb-3 flex justify-center gap-1 text-white text-xl font-semibold">
                 Global Leadership inContent
               </div>
               <p className="text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
-                Ranked Number 1 worldwide on LinkedIn in the Careers & Office category.
+                Ranked Number 1 worldwide on LinkedIn in the Careers & Office
+                category.
               </p>
             </div>
           </ScrollAnimation>

@@ -74,26 +74,26 @@ export default function Testimonials() {
 
   return (
     <section
-      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-20"
+      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-14">
           <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
             <AiOutlineMessage size={24} className="text-[#605dba]" />
             <span>Testimonials</span>
           </div>
 
           <h2
-            className="text-[#252E3D] text-4xl md:text-5xl lg:text-6xl font-medium leading-tight mb-6"
+            className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6"
             style={{ fontFamily: "Palatino Linotype, serif" }}
           >
             What our customers love about us
           </h2>
 
           {/* Avatar Row */}
-          <div className="flex items-center justify-center gap-4 mb-12">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 overflow-x-auto px-4">
             {testimonials.map((testimonial, index) => (
               <button
                 key={testimonial.id}
@@ -101,10 +101,10 @@ export default function Testimonials() {
                 onClick={() => setActiveTestimonial(index)}
                 aria-pressed={activeTestimonial === index}
                 aria-label={`Show testimonial from ${testimonial.name}`}
-                className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] ${
+                className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] flex-shrink-0 ${
                   activeTestimonial === index
-                    ? "w-16 h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
-                    : "w-12 h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300"
+                    ? "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
+                    : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300"
                 }`}
               >
                 <img

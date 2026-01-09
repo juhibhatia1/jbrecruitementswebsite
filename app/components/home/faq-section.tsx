@@ -108,9 +108,12 @@ export default function FAQsSection() {
   }, []);
 
   return (
-    <section className="bg-white py-16 md:py-28" style={{ fontFamily: "Geist, sans-seriff" }}>
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
+    <section
+      className="bg-white py-12 md:py-16 lg:py-20"
+      style={{ fontFamily: "Geist, sans-seriff" }}
+    >
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+        <div className="grid grid-cols-1 gap-10 md:gap-14 lg:grid-cols-12">
           {/* LEFT (sticky) */}
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
@@ -120,11 +123,14 @@ export default function FAQsSection() {
                   FAQs
                 </div>
 
-                <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
+                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                   Answers to Common Questions
                 </h2>
 
-                <p className="mt-6 text-lg leading-relaxed text-[#293240]" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
+                <p
+                  className="mt-4 md:mt-6 text-base md:text-lg leading-relaxed text-[#293240]"
+                  style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+                >
                   We’ve answered some of the most common questions from hiring
                   teams and professionals to help you understand how we work and
                   what to expect.
@@ -141,7 +147,7 @@ export default function FAQsSection() {
                 >
                   <p className="text-md font-semibold">Need more help?</p>
                   <p className="mt-2 text-sm font-normal">
-                    We’re here to answer <br/> any questions you may have.
+                    We’re here to answer <br /> any questions you may have.
                   </p>
 
                   <div className="mt-12">

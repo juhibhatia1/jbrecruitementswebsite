@@ -12,17 +12,17 @@ export default function CoreServices() {
   const [hoveredLink, setHoveredLink] = React.useState(false);
   const router = useRouter();
   return (
-    <section className="w-full bg-white py-12 md:py-20 border-t border-slate-200" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+    <section className="w-full bg-white py-12 md:py-16 border-t border-slate-200" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         {/* Section Header */}
-        <div className="mb-16 text-center">
+        <div className="mb-10 md:mb-14 text-center">
           <ScrollAnimation variant="fadeUp">
 
-            <h2 className="mx-auto max-w-3xl text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-semibold leading-tight">
+            <h2 className="mx-auto max-w-3xl text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
               Our Core Services
             </h2>
 
-            <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-[#252e3d]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
+            <p className="mx-auto mt-4 md:mt-5 max-w-3xl text-base md:text-lg leading-relaxed text-[#252e3d]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}
               We offer focused recruitment solutions for businesses and practical career support for job seekers — ensuring clarity, alignment, and long-term success on both sides.
             </p>
           </ScrollAnimation>

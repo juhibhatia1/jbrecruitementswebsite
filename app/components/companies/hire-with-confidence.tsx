@@ -6,13 +6,13 @@ import ScrollAnimation from "../ui/scroll-animation";
 
 export default function HireWithConfidence() {
   return (
-    <section className="w-full bg-white py-12 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+    <section className="w-full bg-white py-12 md:py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         {/* Header */}
         <ScrollAnimation variant="fadeUp">
-          <div className="text-center mb-12 md:mb-16">
+          <div className="text-center mb-10 md:mb-14">
             <h1
-              className="text-[#252e3d] text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-tight mb-6"
+              className="text-[#252e3d] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6"
               style={{ fontFamily: "Geist, sans-serif" }}
             >
               Hire with Confidence

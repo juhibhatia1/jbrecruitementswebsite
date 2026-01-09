@@ -60,23 +60,29 @@ export default function HiringJourney() {
   }, []);
 
   return (
-    <section className="bg-white py-12 md:py-20 lg:py-24 border-t border-[#bababa]" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="grid grid-cols-1 gap-12 md:gap-14 lg:gap-16 lg:grid-cols-12">
+    <section
+      className="bg-white py-12 md:py-16 lg:py-20 border-t border-[#bababa]"
+      style={{ fontFamily: "Palatino Linotype, sans-serif" }}
+    >
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+        <div className="grid grid-cols-1 gap-8 md:gap-12 lg:gap-14 lg:grid-cols-12">
           {/* LEFT (Sticky) */}
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
               <ScrollAnimation variant="fadeUp">
-                <div className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium" style={{ fontFamily: 'Geist, sans-seriff' }}>
+                <div
+                  className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium"
+                  style={{ fontFamily: "Geist, sans-seriff" }}
+                >
                   <CiRoute size={24} />
                   Our Process
                 </div>
 
-                <h2 className="text-[#252e3d] text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold leading-tight">
+                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                   The Hiring Journey
                 </h2>
 
-                <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg lg:text-xl leading-relaxed text-[#252e3d]">
+                <p className="mt-4 md:mt-6 max-w-md text-base md:text-lg leading-relaxed text-[#252e3d]">
                   We follow a clear, structured recruitment process designed to
                   create alignment, clarity, and meaningful outcomes for both
                   companies and professionals.
@@ -118,11 +124,14 @@ export default function HiringJourney() {
                         : "translate-y-4 opacity-40"
                     }`}
                   >
-                    <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-slate-900" style={{ fontFamily: 'Geist, sans-seriff' }}>
+                    <h3
+                      className="text-base md:text-lg lg:text-xl font-semibold text-slate-900"
+                      style={{ fontFamily: "Geist, sans-seriff" }}
+                    >
                       {step.title}
                     </h3>
 
-                    <p className="mt-3 md:mt-4 text-sm md:text-base lg:text-2xl leading-relaxed text-[#252e3d]">
+                    <p className="mt-3 md:mt-4 text-sm md:text-base lg:text-lg leading-relaxed text-[#252e3d]">
                       {step.description}
                     </p>
                   </div>

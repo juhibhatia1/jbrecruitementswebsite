@@ -8,8 +8,8 @@ import ScrollAnimation from "../ui/scroll-animation";
 
 export default function RecognizedSection() {
   return (
-    <section className="w-full bg-[#F9F9FB] py-12 md:py-20 lg:py-24 pb-32">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+    <section className="w-full bg-[#F9F9FB] py-12 md:py-16 lg:py-20 pb-20 md:pb-28">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <ScrollAnimation variant="fadeUp">
           <div className="bg-[#18181b] rounded-[40px] p-10 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
             {/* Background Pattern */}
@@ -41,7 +41,7 @@ export default function RecognizedSection() {
 
               {/* Title */}
               <h2
-                className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-tight mb-8 tracking-tight"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight mb-6 md:mb-8 tracking-tight"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Recognized for People-First Recruitment

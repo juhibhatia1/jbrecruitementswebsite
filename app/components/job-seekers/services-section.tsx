@@ -43,13 +43,13 @@ const services = [
 export default function ServicesSection() {
   return (
     <section className="py-12 md:py-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <div className="mb-8 flex items-center gap-4">
           <div className="text-[#605dba]">✨</div>
           <span className="text-sm text-[#605dba]">Our Services</span>
         </div>
 
-        <h2 className="text-center text-3xl md:text-4xl font-semibold text-[#252e3d] mb-8">
+        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d] mb-8">
           How We Can Help
         </h2>
 

@@ -6,8 +6,8 @@ import { PiCubeLight } from "react-icons/pi";
 
 export default function FounderSection() {
   return (
-    <section className="w-full bg-[#FAFAFA] pb-16 md:pb-24">
-      <div className="mx-auto max-w-4xl px-6 md:px-6 text-center">
+    <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
+      <div className="mx-auto max-w-4xl px-6 md:px-8 lg:px-12 text-center">
         <ScrollAnimation variant="fadeUp">
           {/* Label */}
           <div className="inline-flex items-center justify-center gap-2 mb-6">
@@ -22,7 +22,7 @@ export default function FounderSection() {
 
           {/* Title */}
           <h2
-            className="text-[#252E3D] text-3xl md:text-4xl lg:text-5xl font-semibold mb-8 leading-tight"
+            className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-6 md:mb-8 leading-tight"
             style={{ fontFamily: "Geist, sans-serif" }}
           >
             Leadership Grounded in Experience
@@ -33,15 +33,15 @@ export default function FounderSection() {
             className="text-[#252E3D] text-base md:text-lg leading-loose mb-12 text-justify md:text-center"
             style={{ fontFamily: "Palatino Linotype, serif" }}
           >
-            With over 11 years of international recruitment experience across the
-            UK, Europe, the Middle East, and the USA, Juhi Bhatia brings a
+            With over 11 years of international recruitment experience across
+            the UK, Europe, the Middle East, and the USA, Juhi Bhatia brings a
             people-first, globally informed approach to talent acquisition.
             Recognised as one of the Arab Female Leaders, Juhi has led hiring
             across diverse industries and roles, helping organisations build
             aligned teams while guiding professionals toward meaningful career
             growth. Her work is rooted in a simple belief: when hiring is
-            thoughtful and human, outcomes naturally improve — for businesses and
-            for people.
+            thoughtful and human, outcomes naturally improve — for businesses
+            and for people.
           </p>
 
           {/* Profile Card */}

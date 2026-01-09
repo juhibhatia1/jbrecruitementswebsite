@@ -5,8 +5,8 @@ import ScrollAnimation from "../ui/scroll-animation";
 
 export default function MissionVision() {
   return (
-    <section className="w-full bg-[#FAFAFA] pb-16 md:pb-24">
-      <div className="mx-auto max-w-7xl px-6 md:px-6">
+    <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
+      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-stretch">
           {/* Left: Large Image */}
           <ScrollAnimation
@@ -41,8 +41,8 @@ export default function MissionVision() {
               >
                 JB is a recruitment agency dedicated to creating meaningful
                 connections between companies and talented professionals. We
-                believe hiring should feel thoughtful, structured, and positively
-                human - not rushed or transactional.
+                believe hiring should feel thoughtful, structured, and
+                positively human - not rushed or transactional.
               </p>
             </ScrollAnimation>
 

@@ -21,7 +21,7 @@ export default function HeroSection() {
         {/* Content (positioned over the image) */}
         <div className="absolute inset-0 flex flex-col">
           {/* Hero Content */}
-          <div className="flex-1 flex items-center px-6 md:px-12 lg:px-36 py-12 md:py-0 mt-20">
+          <div className="flex-1 flex items-center px-4 sm:px-6 md:px-12 lg:px-36 py-12 md:py-0 mt-16 sm:mt-20">
             <div className="w-full max-w-7xl mx-auto">
               <div className="max-w-2xl lg:max-w-3xl">
                 {/* Main Heading */}
@@ -30,7 +30,7 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-semibold leading-[1.1] mb-6 md:my-8">
+                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8">
                     <div className="">Thoughtful</div>
                     <div className="">Hiring. Real</div>
                     <div className="">Outcomes</div>
@@ -47,7 +47,9 @@ export default function HeroSection() {
                     className="text-[#D6D6D6] text-base md:text-lg 2xl:text-xl leading-relaxed mb-8 md:mb-10 max-w-2xl w-full"
                     style={{ fontFamily: "Geist, sans-serif" }}
                   >
-                    At JB, we help companies hire the right people, fast. Our process is simple, people-first, and built to deliver the talent you need, exactly when you need it.
+                    At JB, we help companies hire the right people, fast. Our
+                    process is simple, people-first, and built to deliver the
+                    talent you need, exactly when you need it.
                   </p>
                 </motion.div>
 
@@ -58,13 +60,17 @@ export default function HeroSection() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <button className="bg-[#3399FE] text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:bg-[#285b8d] transition-all shadow-lg cursor-pointer" 
-                    onClick={() => router.push("/companies")}>
+                    <button
+                      className="bg-[#3399FE] text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:bg-[#285b8d] transition-all shadow-lg cursor-pointer"
+                      onClick={() => router.push("/companies")}
+                    >
                       Build Your Team
                     </button>
 
-                    <button className="bg-transparent border border-white/80 text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:scale-105 transform transition-all backdrop-blur-sm ease-in-out duration-300 cursor-pointer"
-                    onClick={() => router.push("/job-seekers")}>
+                    <button
+                      className="bg-transparent border border-white/80 text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:scale-105 transform transition-all backdrop-blur-sm ease-in-out duration-300 cursor-pointer"
+                      onClick={() => router.push("/job-seekers")}
+                    >
                       Explore Opportunities
                     </button>
                   </div>
