@@ -10,6 +10,10 @@ export default function JobSeekersForm() {
     phone: "",
     description: "",
   });
+  const [resume, setResume] = useState<File | null>(null);
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -20,15 +24,44 @@ export default function JobSeekersForm() {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setResume(event.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!resume) {
+      alert("Please upload a resume.");
+      return;
+    }
+
+    setStatus("loading");
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("email", formData.email);
+    data.append("location", formData.location);
+    data.append("phone", formData.phone);
+    data.append("description", formData.description);
+    data.append("resume", resume);
+
     try {
-      console.log("Submitting job seeker data:", formData);
-      // const response = await axios.post("/api/job-seekers", formData);
-      // console.log("Form submitted successfully:", response.data);
-      alert("Application submitted! (Demo)");
+      await axios.post("/api/job-seekers", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setStatus("success");
+      setFormData({
+        name: "",
+        email: "",
+        location: "",
+        phone: "",
+        description: "",
+      });
+      setResume(null);
     } catch (error) {
       console.error("Error submitting form:", error);
+      setStatus("error");
     }
   };
 
@@ -48,9 +81,11 @@ export default function JobSeekersForm() {
               type="file"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               name="resume"
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx"
             />
-            <div className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 text-[#979797] text-sm">
-              Upload
+            <div className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 text-[#979797] text-sm truncate">
+              {resume ? resume.name : "Upload (PDF, DOC, DOCX)"}
             </div>
           </div>
         </div>
@@ -77,7 +112,7 @@ export default function JobSeekersForm() {
           </label>
           <input
             type="email"
-            placeholder="jane@framer.com"
+            placeholder="jane@gmail.com"
             value={formData.email}
             onChange={handleChange}
             name="email"
@@ -92,13 +127,13 @@ export default function JobSeekersForm() {
           </label>
           <div className="relative">
             <input
-            type="text"
-            placeholder="Location"
-            value={formData.location}
-            onChange={handleChange}
-            name="location"
-            className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
-          />  
+              type="text"
+              placeholder="Location"
+              value={formData.location}
+              onChange={handleChange}
+              name="location"
+              className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
+            />
           </div>
         </div>
 
@@ -109,13 +144,13 @@ export default function JobSeekersForm() {
           </label>
           <div className="relative">
             <input
-            type="text"
-            placeholder="Phone Number"
-            value={formData.phone}
-            onChange={handleChange}
-            name="phone"
-            className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
-          />  
+              type="text"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={handleChange}
+              name="phone"
+              className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
+            />
           </div>
         </div>
 
@@ -137,10 +172,21 @@ export default function JobSeekersForm() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#282828] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer"
+          disabled={status === "loading"}
+          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#282828] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
         >
-          Submit
+          {status === "loading" ? "Submitting..." : "Submit"}
         </button>
+        {status === "success" && (
+          <p className="text-green-600 text-center mt-2">
+            Application submitted successfully!
+          </p>
+        )}
+        {status === "error" && (
+          <p className="text-red-500 text-center mt-2">
+            Failed to submit application. Please try again.
+          </p>
+        )}
       </form>
     </div>
   );

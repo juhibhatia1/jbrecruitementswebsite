@@ -7,7 +7,7 @@ export default function AboutHero() {
     <section className="relative w-full bg-[#FAFAFA] pt-20 sm:pt-24 pb-12 md:pb-16 overflow-hidden">
       {/* Background Gradient similar to design if needed, or keep clean white/gray */}
 
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left: Title */}

@@ -9,7 +9,7 @@ import ScrollAnimation from "../ui/scroll-animation";
 export default function RecognizedSection() {
   return (
     <section className="w-full bg-[#F9F9FB] py-12 md:py-16 lg:py-20 pb-20 md:pb-28">
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
           <div className="bg-[#18181b] rounded-[40px] p-10 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
             {/* Background Pattern */}
@@ -44,7 +44,7 @@ export default function RecognizedSection() {
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight mb-6 md:mb-8 tracking-tight"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
-                Recognized for People-First Recruitment
+                Make Your Next Hire Count
               </h2>
 
               {/* Description */}
@@ -52,14 +52,14 @@ export default function RecognizedSection() {
                 className="text-base md:text-xl lg:text-2xl text-white/80 leading-relaxed mb-12 max-w-3xl mx-auto"
                 style={{ fontFamily: "Palatino Linotype, serif" }}
               >
-                Juhi Bhatia brings 11+ years of global recruitment experience
-                across the UK, Europe, the Middle East, and the USA — building
-                people-first hiring systems that align talent, culture, and
-                long-term growth
+                We believe hiring should be fast, thoughtful, and human-centred.
+                By focusing on quality, transparency, and real candidate
+                potential not just resumes.We help businesses build strong teams
+                and empower job seekers to move forward with confidence.
               </p>
 
               {/* Founder Section */}
-              <div className="flex flex-col items-center gap-4 mb-12">
+              <div className="flex justify-center items-center gap-4 mb-12">
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
                   <Image
                     src="/founder.jpeg"

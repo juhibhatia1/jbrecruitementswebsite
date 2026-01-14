@@ -10,6 +10,9 @@ export default function ContactForm() {
     phone: "",
     message: "",
   });
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -20,12 +23,20 @@ export default function ContactForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setStatus("loading");
     try {
-      console.log("Submitting form data:", formData);
-      const response = await axios.post("/api/contact", formData);
-      console.log("Form submitted successfully:", response.data);
+      await axios.post("/api/contact", formData);
+      setStatus("success");
+      setFormData({
+        name: "",
+        company: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
+      setStatus("error");
     }
   };
 
@@ -67,7 +78,10 @@ export default function ContactForm() {
             </label>
             <input
               type="text"
-              placeholder="Nexilo"
+              placeholder="Google"
+              value={formData.company}
+              onChange={handleChange}
+              name="company"
               className="mt-1 w-full rounded-lg bg-[#f7f7f7] border border-gray-200 px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#605DBA] placeholder-[#979797] text-[#252e3d]"
             />
           </div>
@@ -81,7 +95,7 @@ export default function ContactForm() {
             </label>
             <input
               type="email"
-              placeholder="jane@framer.com"
+              placeholder="jane@gmail.com"
               value={formData.email}
               onChange={handleChange}
               name="email"
@@ -122,10 +136,21 @@ export default function ContactForm() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#252E3D] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer"
+          disabled={status === "loading"}
+          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#252E3D] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
         >
-          Submit
+          {status === "loading" ? "Sending..." : "Submit"}
         </button>
+        {status === "success" && (
+          <p className="text-green-600 text-center mt-2">
+            Message sent successfully!
+          </p>
+        )}
+        {status === "error" && (
+          <p className="text-red-500 text-center mt-2">
+            Failed to send message. Please try again.
+          </p>
+        )}
       </form>
     </div>
   );

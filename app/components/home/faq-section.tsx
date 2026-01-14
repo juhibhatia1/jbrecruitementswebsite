@@ -112,7 +112,7 @@ export default function FAQsSection() {
       className="bg-white py-12 md:py-16 lg:py-20"
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 gap-10 md:gap-14 lg:grid-cols-12">
           {/* LEFT (sticky) */}
           <div className="lg:col-span-5">

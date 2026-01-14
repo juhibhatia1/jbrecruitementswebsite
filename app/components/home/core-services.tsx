@@ -13,7 +13,7 @@ export default function CoreServices() {
   const router = useRouter();
   return (
     <section className="w-full bg-white py-12 md:py-16 border-t border-slate-200" style={{ fontFamily: 'Palatino Linotype, sans-serif' }}>
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-10 md:mb-14 text-center">
           <ScrollAnimation variant="fadeUp">

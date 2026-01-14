@@ -9,7 +9,7 @@ export default function AdvisorTrustSection() {
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16 lg:py-20">
         {/* Eyebrow */}
         <div className="mb-4 md:mb-6 flex justify-center">
           <span className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
@@ -37,7 +37,7 @@ export default function AdvisorTrustSection() {
           >
             <div className="overflow-hidden rounded-3xl">
               <Image
-                src="/advisor-trust/juhi-bhatia.png"
+                src="/home/advisor-trust/juhi-bhatia.png"
                 alt="Senior Recruitment Advisor"
                 width={520}
                 height={640}
@@ -94,75 +94,102 @@ export default function AdvisorTrustSection() {
       </div>
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
-      <div className="pb-16 md:pb-24 lg:pb-16">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-12 md:py-16 lg:py-12">
+      <div className="pb-16 md:pb-24 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
           <ScrollAnimation
             variant="fadeUp"
             delay={0.4}
-            className="grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 md:grid-cols-3"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 lg:gap-6"
           >
             {/* Item 1 */}
-            <div className="text-center md:border-r md:border-white md:pr-8 lg:pr-12">
-              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
+              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src={"/advisor-trust/arab-icons-logo.png"}
+                  src={"/home/advisor-trust/arab-icons.png"}
                   alt="Arab Icons Logo"
-                  width={96}
-                  height={96}
+                  width={120}
+                  height={80}
+                  className="object-contain"
                 />
               </div>
               <h4
-                className="text-base md:text-lg lg:text-2xl font-semibold"
+                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
                 style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
               >
                 Industry Recognition
               </h4>
-              <p className="mt-3 text-sm leading-relaxed text-[#7b7b7b] lg:text-lg">
+              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
                 Featured by The Arab Icons for leadership and impact in global
                 talent acquisition.
               </p>
             </div>
 
             {/* Item 2 */}
-            <div className="text-center md:border-r md:border-white md:px-8 lg:px-12">
-              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
+              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src={"/advisor-trust/favikon-logo.png"}
+                  src="/advisor-trust/favikon-logo.png"
                   alt="Favikon Logo"
-                  width={96}
-                  height={96}
-                  className="w-full "
+                  width={120}
+                  height={80}
+                  className="object-contain w-full"
                 />
               </div>
               <h4
-                className="text-lg lg:text-2xl font-semibold"
+                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
                 style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
               >
                 Ranked #1 Careers & Office creator
               </h4>
-              <p className="mt-3 text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
+              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
                 Recognised by Favikon as the #1 Careers & Office LinkedIn
                 creator in the United Arab Emirates.
               </p>
             </div>
 
             {/* Item 3 */}
-            <div className="text-center md:pl-8 lg:pl-12">
-              <div className="mx-auto mb-6 flex h-16 w-32 items-center justify-center">
+            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
+              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src={"/advisor-trust/favikon-logo.png"}
+                  src="/home/advisor-trust/linkedin-logo.png"
                   alt="Favikon Logo"
-                  width={96}
-                  height={96}
-                  className="w-full "
+                  width={120}
+                  height={80}
+                  className="object-contain w-full"
                 />
               </div>
-              <div className="mb-3 flex justify-center gap-1 text-white text-xl font-semibold">
-                Global Leadership inContent
-              </div>
-              <p className="text-sm lg:text-lg leading-relaxed text-[#7b7b7b]">
+              <h4
+                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
+                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+              >
+                Global Leadership in Content
+              </h4>
+              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
                 Ranked Number 1 worldwide on LinkedIn in the Careers & Office
                 category.
+              </p>
+            </div>
+
+            {/* Item 4 */}
+            <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
+              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
+                <Image
+                  src="/home/advisor-trust/uae-lens.jpg"
+                  alt="UAE Lens Logo"
+                  width={120}
+                  height={80}
+                  className="object-contain w-full"
+                />
+              </div>
+              <h4
+                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
+                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+              >
+                Talent & Career Advocate
+              </h4>
+              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
+                11+ years leading recruitment across US, Europe, Middle East &
+                UK.
               </p>
             </div>
           </ScrollAnimation>

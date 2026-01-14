@@ -6,7 +6,7 @@ export default function Footer() {
       className="relative z-20 bg-white border-t border-[#bababa]"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-8 md:py-10">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
         {/* Top Row */}
         <div className="flex flex-col gap-12 items-center md:flex-row md:items-center md:justify-between">
           {/* Left: Logo + Nav */}

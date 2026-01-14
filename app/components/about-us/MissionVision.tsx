@@ -6,7 +6,7 @@ import ScrollAnimation from "../ui/scroll-animation";
 export default function MissionVision() {
   return (
     <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-stretch">
           {/* Left: Large Image */}
           <ScrollAnimation
@@ -14,10 +14,10 @@ export default function MissionVision() {
             className="relative min-h-[300px] md:min-h-[400px] lg:h-full w-full rounded-3xl overflow-hidden shadow-sm"
           >
             <Image
-              src="/about-us/about-us.jpg" // Note: Need to make sure this image exists or use placeholder
+              src="/about-us/about-us.svg" // Note: Need to make sure this image exists or use placeholder
               alt="Team collaborating in a modern office"
               fill
-              className="object-cover"
+              className="object-contain"
             />
           </ScrollAnimation>
 

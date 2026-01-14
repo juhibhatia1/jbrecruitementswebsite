@@ -5,6 +5,7 @@ import { CiMail } from "react-icons/ci";
 import { MdLocalPhone } from "react-icons/md";
 import { Metadata } from "next";
 import { contactMetadata } from "../lib/metadata";
+import { PiHandsClappingFill } from "react-icons/pi";
 
 export const metadata: Metadata = contactMetadata;
 
@@ -15,7 +16,7 @@ export default function ContactPage() {
       style={{ fontFamily: "Geist, sans-serif" }}
     >
       <main className="flex-grow bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-24 flex items-start md:items-center relative">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 sm:py-16 md:py-24 flex items-start md:items-center relative">
           {/* Subtle circular background blur */}
           <div className="pointer-events-none -z-10 absolute inset-0 flex">
             <div className="absolute left-6 top-6 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-[#eef0ff] via-[#f7f7ff] to-transparent opacity-60 blur-3xl hidden sm:block" />
@@ -62,7 +63,7 @@ export default function ContactPage() {
               {/* Contact Info */}
               <div className="space-y-6">
                 <div className="flex items-center gap-4 group">
-                  <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba]">
+                  <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba] flex-shrink-0 min-w-[48px] min-h-[48px]">
                     <CiMail size={24} className="text-[#605dba]" />
                   </div>
                   <span className="text-[#252e3d] text-lg font-semibold">
@@ -71,8 +72,8 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-center gap-4 group">
-                  <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba]">
-                    <MdLocalPhone size={24} className="text-[#605dba]" />
+                  <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba] flex-shrink-0 min-w-[48px] min-h-[48px]">
+                    <PiHandsClappingFill size={24} className="text-[#605dba]" />
                   </div>
                   <span
                     className="text-[#252e3d] text-lg"

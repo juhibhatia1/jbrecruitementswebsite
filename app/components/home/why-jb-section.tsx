@@ -18,15 +18,15 @@ export default function WhyJBSection() {
 
   return (
     <section className="w-full py-12 md:py-16 lg:py-20 border-t border-slate-200">
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           {/* Left Image */}
           <ScrollAnimation
             variant="scaleUp"
-            className="relative h-[400px] lg:h-[500px] w-full overflow-hidden rounded-[2.5rem] border border-gray-200 shadow-sm"
+            className="relative h-[400px] lg:h-[500px] w-full overflow-hidden"
           >
             <Image
-              src="/home/why-jb.png"
+              src="/logo.png"
               alt="Professional workspace with laptop and office supplies"
               fill
               className="object-cover"

@@ -5,10 +5,10 @@ import "./globals.css";
 import SmoothScroll from "./components/ui/smooth-scroll";
 import StructuredData from "./components/structured-data";
 import GoogleAnalytics from "./components/google-analytics";
-import { Analytics } from "./components/analytics";
 import FloatingNavbar from "./components/floating-navbar";
 import Footer from "./components/footer";
 import { defaultMetadata } from "./lib/metadata";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -43,14 +43,14 @@ h1, h2 {
   position: relative;
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
+  border-radius: 50%;
 }
 
 /* .contact-ring-outer {
   content: "";
   position: absolute;
   inset: -6px;
-  border-radius: 9999px;
+  border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 6px 20px rgba(51, 153, 254, 0.08);
   pointer-events: none;
@@ -67,10 +67,10 @@ h1, h2 {
   display: inline-block;
   width: 6px;
   height: 6px;
-  border-radius: 9999px;
-  background: #d1d5db; /* gray */
+  border-radius: 50%;
+  background: #d1d5da; /* gray */
   transform-origin: center;
-  animation: jb-dot-blink 1.5s infinite ease-in-out;
+  animation: jb-dot-blink 1.75s infinite ease-in-out;
   opacity: 0.85;
 }
 
@@ -86,23 +86,23 @@ h1, h2 {
 
 @keyframes jb-dot-blink {
   0%,
-  20% {
-    transform: scale(1);
+  25% {
+    /* transform: scale(1); */
     background: #d1d5db;
     opacity: 0.6;
   }
-  40% {
-    transform: scale(1.4);
+  50% {
+    /* transform: scale(1); */
     background: #ffffff;
     opacity: 1;
   }
-  60% {
-    transform: scale(1);
+  75% {
+    /* transform: scale(1); */
     background: #d1d5db;
     opacity: 0.6;
   }
   100% {
-    transform: scale(1);
+    /* transform: scale(1); */
     background: #d1d5db;
     opacity: 0.6;
   }

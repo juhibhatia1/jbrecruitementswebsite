@@ -6,36 +6,36 @@ import {
   BsBullseye,
   BsHeartFill,
 } from "react-icons/bs";
-import { FaHandshake } from "react-icons/fa";
 import ScrollAnimation from "../ui/scroll-animation";
+import Image from "next/image";
 
 export default function WhyCompaniesPrefer() {
   const cards = [
     {
-      icon: <FaHandshake size={24} className="text-white" />,
+      iconPath: "/icons/companies/partner.svg",
       text: "You gain a hiring partner, not just a CV provider.",
     },
     {
-      icon: <BsSpeedometer2 size={24} className="text-white" />,
+      iconPath: "/icons/companies/speedometer.svg",
       text: "Our process reduces time-to-hire and increases retention.",
     },
     {
-      icon: <BsChatTextFill size={24} className="text-white" />,
+      iconPath: "/icons/companies/chat-text-fill.svg",
       text: "You receive timely updates and transparent communication.",
     },
     {
-      icon: <BsBullseye size={24} className="text-white" />,
+      iconPath: "/icons/companies/bullseye.svg",
       text: "We present only the most promising profiles, saving you hours of screening.",
     },
     {
-      icon: <BsHeartFill size={24} className="text-white" />,
+      iconPath: "/icons/companies/heart-fill.svg",
       text: "You work with a team that genuinely cares about making great matches.",
     },
   ];
 
   return (
     <section className="w-full bg-[#FAFAFC] py-12 md:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-6 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Header */}
         <ScrollAnimation variant="fadeUp">
           <div className="text-center mb-12 md:mb-16">
@@ -76,9 +76,13 @@ export default function WhyCompaniesPrefer() {
               className="h-full"
             >
               <div className="bg-white rounded-xl p-8 h-full min-h-[220px] flex flex-col items-center justify-center text-center shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-slate-50 hover:shadow-md transition-shadow duration-300">
-                <div className="mb-6 w-14 h-14 bg-gradient-to-br from-[#7c78d6] to-[#605dba] rounded-xl flex items-center justify-center shadow-sm">
-                  {card.icon}
-                </div>
+                <Image
+                  src={card.iconPath}
+                  width={50}
+                  height={50}
+                  alt="icon"
+                  className="mb-4"
+                />
                 <p
                   className="text-[#374151] text-base md:text-lg leading-relaxed font-medium font-serif"
                   style={{ fontFamily: "Palatino Linotype, serif" }}

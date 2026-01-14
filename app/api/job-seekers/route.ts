@@ -1,0 +1,113 @@
+import { NextResponse } from "next/server";
+import ImageKit from "imagekit";
+import nodemailer from "nodemailer";
+
+const imagekit = new ImageKit({
+  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
+  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "",
+});
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const location = formData.get("location") as string;
+    const description = formData.get("description") as string;
+    const file = formData.get("resume") as File;
+
+    if (!name || !email || !file) {
+      return NextResponse.json(
+        { error: "Name, email, and resume are required." },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to buffer for ImageKit
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload to ImageKit
+    const uploadResponse = await imagekit.upload({
+      file: buffer,
+      fileName: file.name,
+      folder: "/job-seekers-resumes",
+    });
+
+    const fileUrl = uploadResponse.url;
+
+    // Configure Nodemailer
+    const user = process.env.NEXT_NODEMAILER_USER;
+    const pass = process.env.NEXT_NODEMAILER_PASS;
+
+    if (!user || !pass) {
+      console.error("Missing Nodemailer credentials");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user,
+        pass,
+      },
+    });
+
+    const mailOptions = {
+      from: user,
+      to: user, // Send to admin
+      replyTo: email,
+      subject: `New Job Application from ${name}`,
+      text: `
+        Name: ${name}
+        Email: ${email}
+        Phone: ${phone || "Not provided"}
+        Location: ${location || "Not provided"}
+        
+        Description:
+        ${description || "No description provided"}
+
+        Resume: ${fileUrl}
+      `,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #3b82f6;">New Job Application</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+          <p><strong>Location:</strong> ${location || "Not provided"}</p>
+          
+          <div style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 5px;">
+            <p><strong>Description:</strong></p>
+            <p style="white-space: pre-wrap;">${(
+              description || "No description provided"
+            ).replace(/\n/g, "<br>")}</p>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <a href="${fileUrl}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View Resume</a>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">Or copy link: ${fileUrl}</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return NextResponse.json({
+      success: true,
+      message: "Application submitted successfully!",
+    });
+  } catch (error) {
+    console.error("Error processing job application:", error);
+    return NextResponse.json(
+      { error: "Failed to process application." },
+      { status: 500 }
+    );
+  }
+}
