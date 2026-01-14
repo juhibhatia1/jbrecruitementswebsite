@@ -5,7 +5,6 @@ import HiringJourney from "./components/home/hiring-journey";
 import Testimonials from "./components/home/testimonials";
 import AdvisorTrustSection from "./components/home/advisor-trust-section";
 import FAQsSection from "./components/home/faq-section";
-import CoreServices from "./components/home/core-services";
 
 export default function Home() {
   return (
@@ -15,7 +14,6 @@ export default function Home() {
       {/* Content wrapper that scrolls over the fixed hero */}
       <div className="relative z-10 bg-white">
         <HowWeHelpSection />
-        {/* <CoreServices /> */}
         <HiringJourney />
         <WhyJBSection />
         <Testimonials />
