@@ -13,7 +13,7 @@ export default function Footer() {
           <div className="flex flex-col items-center md:items-start w-full md:w-auto">
             {/* Logo */}
             <div
-              className="mb-8 text-4xl md:text-5xl font-bold tracking-tight text-black"
+              className="mb-8 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-black"
               style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
             >
               JB
@@ -107,7 +107,7 @@ export default function Footer() {
         <div className="my-3 lg:my-4 h-px w-full bg-[#C4C4C4]" />
 
         {/* Bottom */}
-        <div className="text-sm lg:text-lg text-[#252E3D] text-center md:text-left">
+        <div className="text-xs sm:text-sm md:text-base lg:text-lg text-[#252E3D] text-center md:text-left">
           © Copyright 2025
         </div>
       </div>

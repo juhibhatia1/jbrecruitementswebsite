@@ -33,6 +33,9 @@ export default function ServiceCard({
         setIsFlipped(false);
       }, 5000); // Show back for 5 seconds
       return () => clearTimeout(timer);
+    } else if (!isHovered && !shouldFlip) {
+      // If parent tells us to stop flipping (shouldFlip -> false), close immediately
+      setIsFlipped(false);
     }
   }, [shouldFlip, isHovered]);
 

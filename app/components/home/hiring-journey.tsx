@@ -93,8 +93,8 @@ export default function HiringJourney() {
 
           {/* RIGHT (Scrollable Timeline) */}
           <div ref={containerRef} className="relative lg:col-span-7">
-            {/* Vertical line */}
-            <div className="absolute left-[20px] md:left-[28px] top-0 h-full w-px bg-black" />
+            {/* Vertical line - stops at last item */}
+            <div className="absolute left-[20px] md:left-[28px] top-0 bottom-0 w-px bg-gray-300" />
 
             <div className="space-y-16 md:space-y-20 lg:space-y-24">
               {steps.map((step, index) => (
@@ -103,6 +103,9 @@ export default function HiringJourney() {
                   data-step={index}
                   className="relative flex gap-6 md:gap-8 lg:gap-10"
                 >
+                  {index === steps.length - 1 && (
+                    <div className="absolute left-[20px] md:left-[28px] top-6 bottom-0 w-px bg-white" />
+                  )}
                   {/* Number */}
                   <div className="w-10 md:w-14 shrink-0 text-right">
                     <span
@@ -138,9 +141,6 @@ export default function HiringJourney() {
                 </div>
               ))}
             </div>
-
-            {/* Timeline end dot */}
-            <div className="absolute bottom-0 left-[18px] md:left-[26px] h-2 w-2 rounded-full bg-slate-400" />
           </div>
         </div>
       </div>

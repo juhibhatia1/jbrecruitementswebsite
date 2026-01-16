@@ -11,32 +11,67 @@ const services = [
   {
     id: 1,
     title: "Resume Review & Rewriting",
-    description: "Detailed review and rewording to make your resume stand out.",
+    description:
+      "ATS-optimized resumes aligned with your target roles and recruiter search systems.",
     iconPath: "/icons/job-seekers/resume-review.svg",
+    features: [
+      "ATS-friendly, role-aligned structure",
+      "Keyword-rich, Boolean-ready skills",
+      "Clear value-driven positioning",
+      "USD 80 | 5 days",
+    ],
   },
   {
     id: 2,
     title: "Cover Letter Writing",
-    description: "Custom cover letters tailored to your target roles.",
+    description:
+      "A master cover letter that communicates impact, motivation, and adaptability.",
     iconPath: "/icons/job-seekers/cover-letter.svg",
+    features: [
+      "Strengths and achievements highlighted",
+      "Motivation clearly articulated",
+      "Easily customizable for roles",
+      "USD 80 | 5 days",
+    ],
   },
   {
     id: 3,
     title: "LinkedIn Optimization",
-    description: "Profile tweaks to improve visibility and recruiter interest.",
+    description:
+      "Strategic LinkedIn profiles designed to improve recruiter discovery and ranking.",
     iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
+    features: [
+      "ATS-style keyword optimization",
+      "Skills-based profile structuring",
+      "Recruiter and Boolean visibility",
+      "USD 80 | 5 days",
+    ],
   },
   {
     id: 4,
     title: "Superstar Shout-Out",
-    description: "Highlighting top candidates to our hiring partners.",
+    description:
+      "A targeted LinkedIn announcement amplifying your availability to decision-makers.",
     iconPath: "/icons/job-seekers/superstar.svg",
+    features: [
+      "Tailored recruiter-focused LinkedIn post",
+      "Skills and availability highlighted",
+      "Expanded employer visibility",
+      "USD 180 | 5 days",
+    ],
   },
   {
     id: 5,
     title: "Ask Me Anything",
-    description: "Quick consults to answer career questions and strategies.",
+    description:
+      "Direct, practical guidance for real-world career challenges and decisions.",
     iconPath: "/icons/job-seekers/ask-me-anything.svg",
+    features: [
+      "Career changes and transitions",
+      "Remote jobs and interviews",
+      "Burnout, layoffs, clarity",
+      "USD 30 | 48 hours",
+    ],
   },
 ];
 
@@ -64,6 +99,7 @@ export default function ServicesSection() {
 
   const handleManualFlip = () => {
     setIsPaused(true);
+    setCurrentFlipIndex(-1); // Reset auto-flip index to close any open cards immediately
     // Resume after 5 seconds
     setTimeout(() => {
       setIsPaused(false);
@@ -79,7 +115,7 @@ export default function ServicesSection() {
             alt="Help Icon"
             className="w-6 h-6 md:w-7 md:h-7"
           />
-          <span className="text-sm font-semibold text-[#605dba]">
+          <span className="text-sm sm:text-base font-semibold text-[#605dba]">
             Our Services
           </span>
         </div>
@@ -94,7 +130,7 @@ export default function ServicesSection() {
           <div className="h-full flex items-center">
             <div className="pr-4 lg:pr-8">
               <p
-                className="text-[#374151] text-lg md:text-[19px] leading-relaxed font-medium"
+                className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium"
                 style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 Beyond core recruitment, we support your hiring process with
@@ -111,6 +147,7 @@ export default function ServicesSection() {
               title={s.title}
               description={s.description}
               iconPath={s.iconPath}
+              features={s.features}
               shouldFlip={started && currentFlipIndex === index}
               onManualFlip={handleManualFlip}
             />

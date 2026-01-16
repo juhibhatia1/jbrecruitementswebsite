@@ -11,7 +11,7 @@ export default function RecognizedSection() {
     <section className="w-full bg-[#F9F9FB] py-12 md:py-16 lg:py-20 pb-20 md:pb-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
-          <div className="bg-[#18181b] rounded-[40px] p-10 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
+          <div className="bg-[#18181b] rounded-[40px] p-6 sm:p-10 md:p-16 lg:p-20 text-center text-white relative overflow-hidden shadow-2xl">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-[0.03]">
               <div
@@ -49,7 +49,7 @@ export default function RecognizedSection() {
 
               {/* Description */}
               <p
-                className="text-base md:text-xl lg:text-2xl text-white/80 leading-relaxed mb-12 max-w-3xl mx-auto"
+                className="text-sm sm:text-base md:text-lg lg:text-xl text-white/80 leading-relaxed mb-12 max-w-3xl mx-auto"
                 style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 We believe hiring should be fast, thoughtful, and human-centred.
@@ -70,13 +70,13 @@ export default function RecognizedSection() {
                 </div>
                 <div className="text-center">
                   <p
-                    className="font-semibold text-lg text-white"
+                    className="font-semibold text-base sm:text-lg text-white"
                     style={{ fontFamily: "Geist, sans-serif" }}
                   >
                     Juhi Bhatia
                   </p>
                   <p
-                    className="text-white/60 text-sm font-medium tracking-wide"
+                    className="text-white/60 text-xs sm:text-sm font-medium tracking-wide"
                     style={{ fontFamily: "Geist, sans-serif" }}
                   >
                     Founder of JB

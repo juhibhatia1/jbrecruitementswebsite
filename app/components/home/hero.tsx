@@ -8,12 +8,12 @@ export default function HeroSection() {
   return (
     <>
       {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile */}
-      <div className="relative md:fixed top-0 left-0 w-full min-h-screen md:h-screen z-0">
+      <div className="relative md:fixed top-0 left-0 w-full h-screen z-0">
         {/* Background Image */}
         <img
           src="/home/hero-background.jpg"
           alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
-          className="w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full object-fill"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
@@ -21,7 +21,7 @@ export default function HeroSection() {
         {/* Content (positioned over the image) */}
         <div className="absolute inset-0 flex flex-col">
           {/* Hero Content */}
-          <div className="flex-1 flex items-center px-4 sm:px-6 md:px-12 lg:px-36 py-12 md:py-0 mt-16 sm:mt-20">
+          <div className="flex-1 flex items-center px-4 sm:px-6 md:px-12 lg:px-36 py-8 md:py-0 mt-16 sm:mt-20">
             <div className="w-full max-w-7xl mx-auto">
               <div className="max-w-2xl lg:max-w-3xl">
                 {/* Main Heading */}

@@ -13,7 +13,7 @@ export default function FounderSection() {
           <div className="inline-flex items-center justify-center gap-2 mb-6">
             <PiCubeLight className="text-[#605dba] text-xl" />
             <span
-              className="text-[#605dba] font-medium text-base"
+              className="text-[#605dba] font-medium text-sm sm:text-base"
               style={{ fontFamily: "Geist, sans-serif" }}
             >
               Meet the Founder
@@ -55,12 +55,12 @@ export default function FounderSection() {
               />
             </div>
             <h3
-              className="text-[#252E3D] text-lg font-semibold mb-0.5"
+              className="text-[#252E3D] text-base sm:text-lg font-semibold mb-0.5"
               style={{ fontFamily: "Geist, sans-serif" }}
             >
               Juhi Bhatia
             </h3>
-            <p className="text-gray-500 text-sm">Founder of JB</p>
+            <p className="text-gray-500 text-xs sm:text-sm">Founder of JB</p>
           </div>
         </ScrollAnimation>
       </div>

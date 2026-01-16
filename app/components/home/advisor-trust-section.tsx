@@ -75,7 +75,7 @@ export default function AdvisorTrustSection() {
                 <span className="text-2xl md:text-3xl font-semibold text-white">
                   84%
                 </span>
-                <span className="text-md text-[#c5c5c5]">
+                <span className="text-sm sm:text-base text-[#c5c5c5]">
                   Better role alignment
                 </span>
               </div>
@@ -84,7 +84,7 @@ export default function AdvisorTrustSection() {
                 <span className="text-2xl md:text-3xl font-semibold text-white">
                   5X
                 </span>
-                <span className="text-md text-[#c5c5c5]">
+                <span className="text-sm sm:text-base text-[#c5c5c5]">
                   Honest communication
                 </span>
               </div>
@@ -103,13 +103,14 @@ export default function AdvisorTrustSection() {
           >
             {/* Item 1 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
+              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
                   src={"/home/advisor-trust/arab-icons.png"}
                   alt="Arab Icons Logo"
-                  width={120}
-                  height={80}
-                  className="object-contain"
+                  width={100}
+                  height={100}
+                  className="h-full w-auto object-contain"
+                  unoptimized
                 />
               </div>
               <h4
@@ -126,13 +127,14 @@ export default function AdvisorTrustSection() {
 
             {/* Item 2 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
+              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src="/advisor-trust/favikon-logo.png"
+                  src="/home/advisor-trust/favikon-logo.png"
                   alt="Favikon Logo"
-                  width={120}
-                  height={80}
-                  className="object-contain w-full"
+                  width={100}
+                  height={100}
+                  className="h-full w-auto object-contain"
+                  unoptimized
                 />
               </div>
               <h4
@@ -149,13 +151,14 @@ export default function AdvisorTrustSection() {
 
             {/* Item 3 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
+              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
                   src="/home/advisor-trust/linkedin-logo.png"
                   alt="Favikon Logo"
-                  width={120}
-                  height={80}
-                  className="object-contain w-full"
+                  width={100}
+                  height={100}
+                  className="h-full w-auto object-contain"
+                  unoptimized
                 />
               </div>
               <h4
@@ -172,13 +175,14 @@ export default function AdvisorTrustSection() {
 
             {/* Item 4 */}
             <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
-              <div className="mb-6 flex h-20 w-full max-w-[120px] items-center justify-center">
+              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
                   src="/home/advisor-trust/uae-lens.jpg"
                   alt="UAE Lens Logo"
-                  width={120}
-                  height={80}
-                  className="object-contain w-full"
+                  width={100}
+                  height={100}
+                  className="h-full w-auto object-contain"
+                  unoptimized
                 />
               </div>
               <h4

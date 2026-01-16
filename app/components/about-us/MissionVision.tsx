@@ -30,7 +30,7 @@ export default function MissionVision() {
               className="flex-1 bg-gradient-to-br from-white to-[#E6E6FA] p-6 md:p-10 rounded-3xl shadow-sm border border-white/50"
             >
               <h2
-                className="text-[#252E3D] text-2xl md:text-3xl font-bold mb-4"
+                className="text-[#252E3D] text-xl sm:text-2xl md:text-3xl font-bold mb-4"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Our Mission
@@ -64,7 +64,7 @@ export default function MissionVision() {
               />
 
               <h2
-                className="text-white text-2xl md:text-3xl font-bold mb-4 relative z-10"
+                className="text-white text-xl sm:text-2xl md:text-3xl font-bold mb-4 relative z-10"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Our Vision

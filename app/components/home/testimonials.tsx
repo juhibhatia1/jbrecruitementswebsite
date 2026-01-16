@@ -211,16 +211,16 @@ export default function Testimonials() {
             </div>
 
             {/* Testimonial Text */}
-            <p className="text-center text-lg md:text-xl text-[#333333] leading-relaxed mb-8 transition-all duration-500">
+            <p className="text-center text-base sm:text-lg md:text-xl text-[#333333] leading-relaxed mb-8 transition-all duration-500">
               {testimonials[activeTestimonial].text}
             </p>
 
             {/* Author Info */}
             <div className="text-center">
-              <p className="text-xl font-bold text-[#333333] mb-1">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-[#333333] mb-1">
                 {testimonials[activeTestimonial].name}
               </p>
-              <p className="text-base text-[#737373]">
+              <p className="text-sm sm:text-base md:text-lg text-[#737373]">
                 {testimonials[activeTestimonial].role}
               </p>
             </div>

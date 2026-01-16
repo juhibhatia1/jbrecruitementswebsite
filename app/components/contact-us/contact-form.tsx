@@ -45,7 +45,7 @@ export default function ContactForm() {
       className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full mx-auto border border-[#bababa]"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-      <h2 className="text-2xl lg:text-5xl font-semibold text-[#252E3D]">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-[#252E3D]">
         Get in Touch with Us
       </h2>
 

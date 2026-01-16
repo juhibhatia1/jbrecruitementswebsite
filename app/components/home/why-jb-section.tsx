@@ -23,13 +23,13 @@ export default function WhyJBSection() {
           {/* Left Image */}
           <ScrollAnimation
             variant="scaleUp"
-            className="relative h-[400px] lg:h-[500px] w-full overflow-hidden"
+            className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full overflow-hidden rounded-lg"
           >
             <Image
               src="/logo.png"
               alt="Professional workspace with laptop and office supplies"
               fill
-              className="object-cover"
+              className="object-contain"
               priority
             />
           </ScrollAnimation>
@@ -42,7 +42,7 @@ export default function WhyJBSection() {
                 <div className="flex items-center gap-2">
                   <PiBrainLight size={24} className="text-[#605dba]" />
                   <span
-                    className="text-[#605dba] text-lg font-semibold tracking-wide"
+                    className="text-[#605dba] text-base md:text-lg font-semibold tracking-wide"
                     style={{ fontFamily: "Geist, sans-serif" }}
                   >
                     Why JB
@@ -57,7 +57,7 @@ export default function WhyJBSection() {
                 </h2>
 
                 <p
-                  className="text-[#252E3D] text-lg md:text-xl leading-relaxed max-w-lg"
+                  className="text-[#252E3D] text-base md:text-lg lg:text-xl leading-relaxed max-w-lg"
                   style={{ fontFamily: "Palatino Linotype, serif" }}
                 >
                   Insight-driven recommendations that match role, culture &
@@ -74,7 +74,7 @@ export default function WhyJBSection() {
                   >
                     <BsCheckCircleFill className="text-[#4CD964] text-xl flex-shrink-0" />
                     <span
-                      className="text-[#3c4656] text-base font-medium"
+                      className="text-[#3c4656] text-sm sm:text-base font-medium"
                       style={{ fontFamily: "Geist, sans-serif" }}
                     >
                       {feature}

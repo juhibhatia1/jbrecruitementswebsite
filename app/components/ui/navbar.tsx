@@ -11,11 +11,11 @@ export default function NavigationMenu() {
       {/* Hamburger/Close menu button */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="relative bg-white p-2.5 md:p-4 rounded-full hover:bg-gray-100 transition-all z-50 cursor-pointer border border-[#bababa]"
+        className="relative bg-white px-2 py-1 md:py-1.5 lg:py-2.5 md:px-3 lg:px-3 rounded-full hover:bg-gray-100 transition-all z-50 cursor-pointer border border-[#bababa]"
       >
         {isMenuOpen ? (
           // X icon
-          <div className="w-5 h-5 flex items-center justify-center">
+          <div className="w-7 h-7 lg:w-8 flex items-center justify-center">
             <svg
               className="w-5 h-5 text-gray-900"
               fill="none"
@@ -32,9 +32,9 @@ export default function NavigationMenu() {
           </div>
         ) : (
           // Hamburger icon
-          <div className="flex flex-col gap-1.5 w-5 h-5 justify-center mr-1.5">
-            <div className="w-7 h-0.75 bg-gray-900 rounded"></div>
-            <div className="w-full h-0.5 bg-gray-900 rounded"></div>
+          <div className="flex flex-col gap-1 md:gap-1.5 w-7 h-7 lg:w-8 justify-center">
+            <div className="w-7 h-0.5 md:w-7 md:h-0.75 lg:w-full bg-gray-900 rounded py-[1.2px]"></div>
+            <div className="w-5 h-0.5 md:h-0.75 bg-gray-900 rounded py-[1.2px]"></div>
           </div>
         )}
       </button>
@@ -51,35 +51,35 @@ export default function NavigationMenu() {
             <Link
               href="/"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
               HOME
             </Link>
             <Link
               href="/companies"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
-              Companies
+              COMPANIES
             </Link>
             <Link
               href="/job-seekers"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
               JOB SEEKERS
             </Link>
             <Link
               href="/about-us"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
               ABOUT
             </Link>
             <Link
               href="/contact-us"
               onClick={() => setIsMenuOpen(false)}
-              className="text-white text-3xl sm:text-4xl md:text-3xl lg:text-4xl font-bold hover:text-gray-300 transition-colors"
+              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
               CONTACT US
             </Link>

@@ -15,7 +15,7 @@ export default function FloatingNavbar() {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo (left) */}
             <button
-              className="bg-white rounded-full px-4 py-1 md:px-5 border border-[#bababa] cursor-pointer"
+              className="bg-white rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 border border-[#bababa] cursor-pointer"
               onClick={() => router.push("/")}
             >
               <Image
@@ -23,7 +23,7 @@ export default function FloatingNavbar() {
                 height={80}
                 src="/logo.png"
                 alt="JB Recruitment Solutions - HR Consulting & Talent Acquisition"
-                className="h-12 md:h-12 w-12"
+                className="w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12"
                 priority
               />
             </button>
@@ -31,15 +31,15 @@ export default function FloatingNavbar() {
             {/* Right side navigation (actions) */}
             <div className="flex items-center gap-3 md:gap-4">
               <button
-                className="contact-ring relative bg-white rounded-full p-1 text-xs md:text-base font-semibold hover:bg-gray-100 transition-all cursor-pointer"
+                className="contact-ring relative bg-transparent rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 text-xs sm:text-sm md:text-base font-semibold cursor-pointer"
                 onClick={() => router.push("/contact-us")}
               >
                 <span aria-hidden className="contact-ring-outer" />
 
-                <div className="relative z-10 bg-[#252e3d] px-4 py-2 md:px-4 md:py-2 rounded-full flex items-center gap-2">
+                <div className="relative z-10 bg-[#252e3d] border-4 border-white px-3 py-1.5 sm:px-3.5 sm:py-2 md:px-4 md:py-2 lg:px-5 lg:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
                   <span className="text-white">Contact</span>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-1.5">
                     <span className="dot dot-1" />
                     <span className="dot dot-2" />
                     <span className="dot dot-3" />

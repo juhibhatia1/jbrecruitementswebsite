@@ -57,7 +57,7 @@ export default function WhyCompaniesPrefer() {
           >
             <div className="pr-4 lg:pr-8">
               <p
-                className="text-[#374151] text-lg md:text-[19px] leading-relaxed font-medium"
+                className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium"
                 style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 You get candidates who fit the role, fit the team, and move your
@@ -84,7 +84,7 @@ export default function WhyCompaniesPrefer() {
                   className="mb-4"
                 />
                 <p
-                  className="text-[#374151] text-base md:text-lg leading-relaxed font-medium font-serif"
+                  className="text-[#374151] text-sm sm:text-base md:text-lg leading-relaxed font-medium font-serif"
                   style={{ fontFamily: "Palatino Linotype, serif" }}
                 >
                   {card.text}

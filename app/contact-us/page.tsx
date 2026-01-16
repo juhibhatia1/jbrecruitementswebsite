@@ -66,7 +66,7 @@ export default function ContactPage() {
                   <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba] flex-shrink-0 min-w-[48px] min-h-[48px]">
                     <CiMail size={24} className="text-[#605dba]" />
                   </div>
-                  <span className="text-[#252e3d] text-lg font-semibold">
+                  <span className="text-[#252e3d] text-base sm:text-lg font-semibold">
                     juhi.bhatia1@gmail.com
                   </span>
                 </div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
                     <PiHandsClappingFill size={24} className="text-[#605dba]" />
                   </div>
                   <span
-                    className="text-[#252e3d] text-lg"
+                    className="text-[#252e3d] text-base sm:text-lg"
                     style={{ fontFamily: "Palatino Linotype, sans-serif" }}
                   >
                     We assist Employers and Candidates across regions and
@@ -89,20 +89,20 @@ export default function ContactPage() {
               {/* Small Cards: Companies / Job Seekers */}
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-white/80 backdrop-blur-sm rounded-xl border p-4 xl:p-6 shadow-sm">
-                  <h4 className="font-semibold text-2xl xl:text-3xl text-[#252E3D] mb-2 xl:mb-3">
+                  <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Companies
                   </h4>
-                  <p className="text-md text-gray-600">
+                  <p className="text-sm sm:text-base text-gray-600">
                     We help businesses hire candidates who are not just
                     qualified, but truly aligned with their culture and goals.
                   </p>
                 </div>
 
                 <div className="bg-white/80 backdrop-blur-sm rounded-xl border p-4 xl:p-6 shadow-sm">
-                  <h4 className="font-semibold text-2xl xl:text-3xl text-[#252E3D] mb-2 xl:mb-3">
+                  <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Job Seekers
                   </h4>
-                  <p className="text-md text-gray-600">
+                  <p className="text-sm sm:text-base text-gray-600">
                     We support individuals throughout their career journey with
                     tools and guidance that help them stand out and succeed.
                   </p>

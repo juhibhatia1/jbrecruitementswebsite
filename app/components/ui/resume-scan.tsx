@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function ResumeScanner() {
   return (
-    <div className="relative w-[220px] h-[270px] mx-auto overflow-hidden bg-white shadow-lg z-10">
+    <div className="relative w-[180px] h-[220px] sm:w-[200px] sm:h-[250px] md:w-[220px] md:h-[270px] mx-auto overflow-hidden bg-white shadow-lg z-10">
       {/* Resume Image Container */}
       {/* Static Resume Image (fixed at initial position) */}
       <div className="w-full will-change-transform">

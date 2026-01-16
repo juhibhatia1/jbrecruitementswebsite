@@ -40,10 +40,10 @@ export default function JobSeekersPage() {
                 style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
               >
                 <div>
-                  <h3 className="text-xl font-semibold text-[#252e3d] mb-3">
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3">
                     Your Career Support Starts Here
                   </h3>
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                     JB is dedicated to helping individuals present their best
                     selves and unlock meaningful career opportunities. Whether
                     you're actively job hunting or exploring new possibilities,
@@ -52,10 +52,10 @@ export default function JobSeekersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold text-[#252e3d] mb-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2">
                     Stay Updated With Latest Roles
                   </h4>
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                     We regularly share job opportunities across industries.
                     Submit your resume once and receive curated opportunities
                     that fit your experience, skills, and goals.
@@ -66,7 +66,7 @@ export default function JobSeekersPage() {
                   <h4 className="text-lg font-semibold text-[#252e3d] mb-3">
                     Simple Process for Candidates
                   </h4>
-                  <ol className="list-inside list-decimal text-gray-700 space-y-1">
+                  <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-1">
                     <li>Fill out the short form</li>
                     <li>Upload your resume</li>
                     <li>Get notified about suitable openings</li>

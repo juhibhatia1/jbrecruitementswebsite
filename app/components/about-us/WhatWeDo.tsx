@@ -38,7 +38,7 @@ export default function WhatWeDo() {
                 What we do
               </h2>
               <p
-                className="text-[#252E3D] text-base leading-relaxed max-w-md mb-6"
+                className="text-[#252E3D] text-sm sm:text-base leading-relaxed max-w-md mb-6"
                 style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 We proudly support{" "}

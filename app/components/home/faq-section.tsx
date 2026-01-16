@@ -153,7 +153,7 @@ export default function FAQsSection() {
                   <div className="mt-12">
                     <a
                       href="#"
-                      className="inline-flex items-center gap-1 text-lg font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
+                      className="inline-flex items-center gap-1 text-base md:text-lg font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
                       onMouseEnter={() => setHoveredLink(true)}
                       onMouseLeave={() => setHoveredLink(false)}
                     >
@@ -195,7 +195,7 @@ export default function FAQsSection() {
                       onClick={toggleOpen}
                       className="flex w-full items-center justify-between px-6 py-5 text-left cursor-pointer"
                     >
-                      <span className="text-base font-semibold text-[#293240]">
+                      <span className="text-sm sm:text-base md:text-lg font-semibold text-[#293240]">
                         {faq.question}
                       </span>
 
@@ -209,7 +209,7 @@ export default function FAQsSection() {
                     </button>
 
                     <div
-                      className="px-6 text-sm leading-relaxed text-[#7b7b7b] overflow-hidden transition-all duration-300"
+                      className="px-6 text-sm md:text-base leading-relaxed text-[#7b7b7b] overflow-hidden transition-all duration-300"
                       style={{
                         maxHeight: isOpen ? "480px" : "0px",
                         opacity: isOpen ? 1 : 0,

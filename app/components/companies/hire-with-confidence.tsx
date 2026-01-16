@@ -44,7 +44,7 @@ export default function HireWithConfidence() {
             {/* Content */}
             <div className="flex-1">
               <h2
-                className="text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Complete Recruitment Support
@@ -56,38 +56,38 @@ export default function HireWithConfidence() {
               </p>
               <ul className="space-y-4 text-base text-[#252e3d]">
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Complete Talent Acquisition
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Complete Talent Acquisition
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Global & Leadership Hiring
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Data-Driven Candidate Shortlisting
                   </span>
                 </li>
@@ -146,12 +146,12 @@ export default function HireWithConfidence() {
 
             <div>
               <h3
-                className="text-3xl md:text-4xl font-bold mb-2 leading-tight text-[#252e3d]"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight text-[#252e3d]"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Tailored Role-Based Search
               </h3>
-              <p className="text-[#4b5563] leading-relaxed text-base">
+              <p className="text-[#4b5563] leading-relaxed text-sm sm:text-base">
                 We help businesses find candidates who aren't just qualified -
                 but aligned. Our hiring process is structured, efficient, and
                 tailored to each organisation's culture and goals.
@@ -164,7 +164,7 @@ export default function HireWithConfidence() {
             {/* Content */}
             <div className="flex-1">
               <h2
-                className="text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Industry-aware Screening
@@ -177,29 +177,29 @@ export default function HireWithConfidence() {
               </p>
               <ul className="space-y-4 text-base text-[#252e3d]">
                 <li className="flex items-center gap-2">
-                  <FaCheck 
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Role-Specific Evaluation
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Context-Driven Shortlisting
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaCheck
-                    className="text-black flex-shrink-0"
-                    size={15}
-                  />
-                  <span style={{ fontFamily: "Geist, sans-serif" }} className="text-black font-medium">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
                     Better Hiring Decisions
                   </span>
                 </li>
@@ -280,12 +280,12 @@ export default function HireWithConfidence() {
 
             <div className="mt-auto">
               <h3
-                className="text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Quality-Driven Selection
               </h3>
-              <p className="text-[#4b5563] leading-relaxed text-base">
+              <p className="text-[#4b5563] leading-relaxed text-sm sm:text-base">
                 Gain clear visibility into candidate fit, hiring progress, and
                 next steps — so decisions feel confident, not rushed.
               </p>

@@ -46,23 +46,6 @@ h1, h2 {
   border-radius: 50%;
 }
 
-/* .contact-ring-outer {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 6px 20px rgba(51, 153, 254, 0.08);
-  pointer-events: none;
-  transition: box-shadow 180ms ease, transform 180ms ease;
-  z-index: 0;
-} */
-
-/* .contact-ring:hover .contact-ring-outer {
-  box-shadow: 0 10px 30px rgba(51, 153, 254, 0.16);
-  transform: scale(1.02);
-} */
-
 .contact-ring .dot {
   display: inline-block;
   width: 6px;
