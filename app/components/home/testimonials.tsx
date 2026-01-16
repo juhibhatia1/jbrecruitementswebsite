@@ -111,10 +111,10 @@ export default function Testimonials() {
 
   return (
     <section
-      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16"
+      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16 overflow-x-hidden"
       style={{ fontFamily: "Geist, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 overflow-hidden">
         {/* Section Header */}
         <div className="text-center mb-10 md:mb-14">
           <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
@@ -130,7 +130,7 @@ export default function Testimonials() {
           </h2>
 
           {/* Avatar Row */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 overflow-x-auto px-4 py-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 overflow-x-auto scrollbar-hide px-4 py-2">
             {testimonials.map((testimonial, index) => (
               <button
                 key={testimonial.id}
@@ -140,7 +140,7 @@ export default function Testimonials() {
                 aria-label={`Show testimonial from ${testimonial.name}`}
                 className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] flex-shrink-0 ${
                   activeTestimonial === index
-                    ? "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
+                    ? "w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
                     : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300"
                 }`}
               >
@@ -155,7 +155,7 @@ export default function Testimonials() {
         </div>
 
         {/* Main Testimonial Card */}
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative w-full md:max-w-4xl mx-auto">
           {/* Desktop Navigation Arrows */}
           <button
             onClick={handlePrevious}
@@ -179,7 +179,7 @@ export default function Testimonials() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="relative bg-white rounded-3xl shadow-xl p-8 md:p-12 transition-all duration-500 border border-gray-200"
+            className="relative bg-white rounded-3xl shadow-xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200"
           >
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">

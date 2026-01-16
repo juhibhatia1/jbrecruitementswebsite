@@ -27,6 +27,22 @@
   }
 }
 
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -34,7 +50,8 @@ body {
 }
 
 /* Heading styles - Geist font */
-h1, h2 {
+h1,
+h2 {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
