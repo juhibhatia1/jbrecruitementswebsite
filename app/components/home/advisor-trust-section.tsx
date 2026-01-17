@@ -5,7 +5,7 @@ import ScrollAnimation from "../ui/scroll-animation";
 export default function AdvisorTrustSection() {
   return (
     <section
-      className="bg-[#1b1b1b] text-white"
+      className="bg-[#1b1b1b] text-white relative z-10"
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}

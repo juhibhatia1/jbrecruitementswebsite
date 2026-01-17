@@ -110,7 +110,7 @@ export default function HiringJourney() {
 
             {/* Progress Line */}
             <motion.div
-              className="absolute left-[20px] md:left-[28px] top-0 w-px bg-black origin-top"
+              className="absolute left-[20px] md:left-[28px] top-0 w-px bg-black origin-top p-[0.75px]"
               style={{ scaleY, height: "100%" }}
             />
 

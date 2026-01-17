@@ -8,12 +8,13 @@ export default function HeroSection() {
   return (
     <>
       {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile */}
-      <div className="relative md:fixed top-0 left-0 w-full h-screen z-0">
+      {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile -> Now FIXED always */}
+      <div className="fixed top-0 left-0 w-screen h-[100dvh] z-0 overflow-hidden">
         {/* Background Image */}
         <img
           src="/home/hero-background.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
-          className="absolute inset-0 w-full h-full object-cover object-right md:object-fill"
+          className="absolute inset-0 w-full h-full object-cover object-[82%_50%] sm:object-[85%_50%] md:object-[80%_50%] lg:object-[80%_0%] xl:object-[90%_12%]"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
@@ -23,6 +24,7 @@ export default function HeroSection() {
           {/* Hero Content */}
           <div className="flex-1 flex items-center px-4 sm:px-6 md:px-12 lg:px-36 py-8 md:py-0 mt-16 sm:mt-20">
             <div className="w-full max-w-7xl mx-auto">
+              {/* ... content remains ... */}
               <div className="max-w-2xl lg:max-w-3xl">
                 {/* Main Heading */}
                 <motion.div
@@ -81,8 +83,8 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Spacer to push content below the fixed hero (only needed on desktop) */}
-      <div className="hidden md:block h-screen" aria-hidden />
+      {/* Spacer to push content below the fixed hero (always needed now that hero is fixed) */}
+      <div className="block h-[100dvh]" aria-hidden />
     </>
   );
 }

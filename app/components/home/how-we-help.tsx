@@ -5,7 +5,7 @@ import ResumeScanner from "../ui/resume-scan";
 
 export default function HowWeHelpSection() {
   return (
-    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 px-6 md:px-8 lg:px-12 border-t border-[#bababa]">
+    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 px-6 md:px-8 lg:px-12 border-t border-[#bababa] overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
