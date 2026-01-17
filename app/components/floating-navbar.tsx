@@ -36,7 +36,7 @@ export default function FloatingNavbar() {
               >
                 <span aria-hidden className="contact-ring-outer" />
 
-                <div className="relative z-10 bg-[#252e3d] border-4 border-white px-3 py-1.5 sm:px-3.5 sm:py-2 md:px-4 md:py-2 lg:px-5 lg:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
+                <div className="relative z-10 bg-[#252e3d] hover:bg-[#3399FE] border-4 border-white px-3 py-1.5 sm:px-3.5 sm:py-2 md:px-4 md:py-2 lg:px-5 lg:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
                   <span className="text-white">Contact</span>
 
                   <div className="flex items-center gap-1 sm:gap-1.5">

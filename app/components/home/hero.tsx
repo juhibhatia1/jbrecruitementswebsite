@@ -13,7 +13,7 @@ export default function HeroSection() {
         <img
           src="/home/hero-background.jpg"
           alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
-          className="absolute inset-0 w-full h-full object-fill"
+          className="absolute inset-0 w-full h-full object-cover object-right md:object-fill"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />

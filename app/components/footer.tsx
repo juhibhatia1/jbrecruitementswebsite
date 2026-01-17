@@ -34,8 +34,8 @@ export default function Footer() {
               {/* Force line break on mobile only */}
               <div className="w-full md:hidden"></div>
 
-              <Link href="/about" className="hover:underline">
-                About
+              <Link href="/about-us" className="hover:underline">
+                About Us
               </Link>
               <Link href="/contact-us" className="hover:underline">
                 Contact Us

@@ -74,7 +74,7 @@ export default function NavigationMenu() {
               onClick={() => setIsMenuOpen(false)}
               className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors"
             >
-              ABOUT
+              ABOUT US
             </Link>
             <Link
               href="/contact-us"

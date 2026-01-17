@@ -9,9 +9,9 @@ export default function AboutHero() {
 
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
             {/* Left: Title */}
-            <div>
+            <div className="col-span-1">
               <h1
                 className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
                 style={{ fontFamily: "Geist, sans-serif" }}
@@ -21,7 +21,7 @@ export default function AboutHero() {
             </div>
 
             {/* Right: Text Content */}
-            <div className="space-y-6 pt-2">
+            <div className="space-y-6 col-span-2">
               <p
                 className="text-[#252E3D] text-base md:text-lg leading-loose"
                 style={{ fontFamily: "Palatino Linotype, serif" }}

@@ -11,7 +11,7 @@ export default function MissionVision() {
           {/* Left: Large Image */}
           <ScrollAnimation
             variant="scaleUp"
-            className="relative min-h-[300px] md:min-h-[400px] lg:h-full w-full rounded-3xl overflow-hidden shadow-sm"
+            className="relative min-h-[300px] md:min-h-[400px] lg:h-full w-full rounded-3xl overflow-hidden"
           >
             <Image
               src="/about-us/about-us.svg" // Note: Need to make sure this image exists or use placeholder
@@ -27,7 +27,7 @@ export default function MissionVision() {
             <ScrollAnimation
               variant="fadeUp"
               delay={0.2}
-              className="flex-1 bg-gradient-to-br from-white to-[#E6E6FA] p-6 md:p-10 rounded-3xl shadow-sm border border-white/50"
+              className="flex-1 bg-gradient-to-br from-white to-[#E6E6FA] p-6 md:p-10 rounded-3xl border border-[#E6E6FA]"
             >
               <h2
                 className="text-[#252E3D] text-xl sm:text-2xl md:text-3xl font-bold mb-4"
@@ -50,16 +50,19 @@ export default function MissionVision() {
             <ScrollAnimation
               variant="fadeUp"
               delay={0.3}
-              className="flex-1 bg-[#252E3D] relative overflow-hidden p-6 md:p-10 rounded-3xl shadow-lg"
+              className="flex-1 bg-[#252E3D] relative overflow-hidden p-6 md:p-10 rounded-3xl"
             >
-              {/* Abstract checkerboard pattern overlay (CSS/SVG) */}
+              {/* Grid of squares pattern overlay with gradient fade */}
               <div
-                className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none"
+                className="absolute top-0 right-0 w-2/3 h-full pointer-events-none"
                 style={{
                   backgroundImage:
-                    "linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)",
-                  backgroundSize: "40px 40px",
-                  backgroundPosition: "0 0, 20px 20px",
+                    "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                  backgroundSize: "20px 20px",
+                  maskImage:
+                    "linear-gradient(to left, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)",
+                  WebkitMaskImage:
+                    "linear-gradient(to left, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)",
                 }}
               />
 
