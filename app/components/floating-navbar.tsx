@@ -21,7 +21,7 @@ export default function FloatingNavbar() {
               <Image
                 width={80}
                 height={80}
-                src="/logo.png"
+                src="/logo.avif"
                 alt="JB Recruitment Solutions - HR Consulting & Talent Acquisition"
                 className="w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12"
                 priority

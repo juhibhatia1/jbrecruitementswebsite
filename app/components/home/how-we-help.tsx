@@ -13,7 +13,7 @@ export default function HowWeHelpSection() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="mb-6 md:mb-8 col-span-1 flex items-center gap-2">
                 <img
-                  src="/home/icons8-ai-48.png"
+                  src="/home/icons8-ai-48.avif"
                   alt="Help Icon"
                   className="w-6 h-6 md:w-7 md:h-7"
                 />

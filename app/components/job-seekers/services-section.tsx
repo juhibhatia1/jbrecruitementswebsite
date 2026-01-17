@@ -111,7 +111,7 @@ export default function ServicesSection() {
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="mb-8 flex items-center gap-2">
           <img
-            src="/home/icons8-ai-48.png"
+            src="/home/icons8-ai-48.avif"
             alt="Help Icon"
             className="w-6 h-6 md:w-7 md:h-7"
           />

@@ -26,7 +26,7 @@ export default function WhyJBSection() {
             className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full overflow-hidden rounded-lg"
           >
             <Image
-              src="/logo.png"
+              src="/logo.avif"
               alt="Professional workspace with laptop and office supplies"
               fill
               className="object-contain"

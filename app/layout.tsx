@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SmoothScroll from "./components/ui/smooth-scroll";
+// import SmoothScroll from "./components/ui/smooth-scroll";
 import StructuredData from "./components/structured-data";
 import GoogleAnalytics from "./components/google-analytics";
 import FloatingNavbar from "./components/floating-navbar";
 import Footer from "./components/footer";
 import { defaultMetadata } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
+import LenisProvider from "./providers/lenis-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,10 +47,12 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>
-        <SmoothScroll />
-        <FloatingNavbar />
-        {children}
-        <Footer />
+        {/* <SmoothScroll /> */}
+        <LenisProvider>
+          <FloatingNavbar />
+          {children}
+          <Footer />
+        </LenisProvider>
       </body>
     </html>
   );

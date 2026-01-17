@@ -54,7 +54,7 @@ export default function Footer() {
               rel="noopener noreferrer"
             >
               <img
-                src="/footer/linkedin-logo.png"
+                src="/footer/linkedin-logo.avif"
                 alt="LinkedIn"
                 className="h-5 w-5"
               />
@@ -69,7 +69,7 @@ export default function Footer() {
               rel="noopener noreferrer"
             >
               <img
-                src="/footer/facebook-logo.png"
+                src="/footer/facebook-logo.avif"
                 alt="Facebook"
                 className="h-5 w-5"
               />
@@ -83,7 +83,11 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/footer/twitter-logo.png" alt="X" className="h-5 w-5" />
+              <img
+                src="/footer/twitter-logo.avif"
+                alt="X"
+                className="h-5 w-5"
+              />
             </Link>
 
             {/* Instagram */}
@@ -95,7 +99,7 @@ export default function Footer() {
               rel="noopener noreferrer"
             >
               <img
-                src="/footer/instagram-logo.png"
+                src="/footer/instagram-logo.avif"
                 alt="Instagram"
                 className="h-5 w-5"
               />
@@ -105,11 +109,6 @@ export default function Footer() {
 
         {/* Divider */}
         <div className="my-3 lg:my-4 h-px w-full bg-[#C4C4C4]" />
-
-        {/* Bottom */}
-        <div className="text-xs sm:text-sm md:text-base lg:text-lg text-[#252E3D] text-center md:text-left">
-          © Copyright 2025
-        </div>
       </div>
     </footer>
   );

@@ -48,7 +48,7 @@ export default function FounderSection() {
           <div className="flex flex-col items-center">
             <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mb-3">
               <Image
-                src="/founder.jpeg"
+                src="/founder.avif"
                 alt="Juhi Bhatia"
                 fill
                 className="object-cover"

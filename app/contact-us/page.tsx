@@ -43,7 +43,7 @@ export default function ContactPage() {
               {/* Founder */}
               {/* <div className="flex items-center gap-4 pt-4">
                 <Image
-                  src="/founder.jpeg"
+                  src="/founder.avif"
                   alt="Founder"
                   width={56}
                   height={56}

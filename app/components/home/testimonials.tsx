@@ -10,7 +10,7 @@ const testimonials = [
     name: "Delicia Pillay",
     role: "Head of Resourcing Sub-Saharan Africa",
     // company: "TechFlow Inc",
-    image: "/home/testimonials/delicia-pillay.jpg",
+    image: "/home/testimonials/delicia-pillay.avif",
     text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
     rating: 5,
   },
@@ -19,7 +19,7 @@ const testimonials = [
     name: "Mohammed Barakat",
     role: "Human Resources Director Assoc",
     // company: "StartupHub",
-    image: "/home/testimonials/mohammed-barakat.jpg",
+    image: "/home/testimonials/mohammed-barakat.avif",
     text: "I had the pleasure of working with Juhi as part of my team, where she led the talent acquisition department with professionalism and insight. Juhi demonstrated a deep understanding of recruitment strategies and candidate engagement, consistently attracting high-quality talent in a competitive market.What stood out most was her ability to quickly grasp the nature of our business and culture, ensuring not only strong technical matches but also cultural alignment. Juhi brought structure, clarity, and energy to our hiring process and collaborated seamlessly with stakeholders across departments.I wouldn’t hesitate to work with Juhi again and can confidently recommend her to any organization looking for a committed talent acquisition Manager.",
     rating: 5,
   },
@@ -28,7 +28,7 @@ const testimonials = [
     name: "Shridhar Iyer",
     role: "Director of Finance at Unity",
     // company: "CloudNine Systems",
-    image: "/home/testimonials/shridhar-iyer.jpg",
+    image: "/home/testimonials/shridhar-iyer.avif",
     text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
     rating: 5,
   },
@@ -37,7 +37,7 @@ const testimonials = [
     name: "Smitha Dasan",
     role: "Excellence in Hiring Quality and Exceptional Candidate Experience",
     company: "NexGen Labs",
-    image: "/home/testimonials/smitha-dasan.jpg",
+    image: "/home/testimonials/smitha-dasan.avif",
     text: "Juhi is a dedicated, self-motivated and a smart recruiter; totally committed to the work assigned. She is a very methodical and organised recruiter which makes the recruitment so much easy.Juhi has been working for the Shared Services group and had performed really well; understands the talent market and work closely with the stakeholders to hire the top talent.I have relied on her for critical/niche roles and and she has always proved herself with quality results. The hiring focus is on quality and diversity, Juhi is able to plan her work accordingly and drive the results in stipulated time period.Definitely an asset to any organisation she represents and I highly recommend her. I would like to wish Juhi all the best for her future endeavours.",
     rating: 5,
   },
@@ -46,7 +46,7 @@ const testimonials = [
     name: "Nick Macleay",
     role: "Omnia Solutions Ltd",
     // company: "InnovateCo",
-    image: "/home/testimonials/omnia.webp",
+    image: "/home/testimonials/omnia.avif",
     text: "Juhi, has helped me on a couple of recruitment assignments, they were not easy sourcing positions, and roles that she has not worked on before. Juhi was very quick, she listens to what we needed and delivered me a short list within 48 hrs and the 2 of the candidates that she short listed made 2nd and final stage interviews. I will definitely use Juhi again for my sourcing projects.",
     rating: 5,
   },
@@ -55,7 +55,7 @@ const testimonials = [
     name: "Envision People",
     role: "Recruitment Director",
     // company: "DataSphere",
-    image: "/home/testimonials/envision-people.jpg",
+    image: "/home/testimonials/envision-people.webp",
     text: "Juhi has been supporting my recruitment drives for the last 6 months. She has worked on sourcing and first level screening of candidates. I have found Juhi to be highly proactive and has a great level of understanding the roles with basic information. I would highly recommend Juhi as a recruiter or resourcer for any roles in the UK or Europe regions.",
     rating: 5,
   },
@@ -64,7 +64,7 @@ const testimonials = [
     name: "Juliana Pagliaro",
     role: "Co-founder & Chief of People",
     // company: "NextGen Solutions",
-    image: "/home/testimonials/juliana-pagliaro.png",
+    image: "/home/testimonials/juliana-pagliaro.avif",
     text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
     rating: 5,
   },
@@ -78,13 +78,13 @@ export default function Testimonials() {
 
   const handlePrevious = () => {
     setActiveTestimonial((prev) =>
-      prev === 0 ? testimonials.length - 1 : prev - 1
+      prev === 0 ? testimonials.length - 1 : prev - 1,
     );
   };
 
   const handleNext = () => {
     setActiveTestimonial((prev) =>
-      prev === testimonials.length - 1 ? 0 : prev + 1
+      prev === testimonials.length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -140,8 +140,8 @@ export default function Testimonials() {
                 aria-label={`Show testimonial from ${testimonial.name}`}
                 className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] flex-shrink-0 ${
                   activeTestimonial === index
-                    ? "w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10"
-                    : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300"
+                    ? "w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10 opacity-100"
+                    : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300 opacity-80 hover:opacity-100"
                 }`}
               >
                 <img

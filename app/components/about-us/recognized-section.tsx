@@ -17,7 +17,7 @@ export default function RecognizedSection() {
         playsInline
         className="absolute top-0 left-0 w-full h-full object-cover scale-110 pointer-events-none z-0"
       >
-        <source src="/Video_Loop_Effect_and_Edits.mp4" type="video/mp4" />
+        <source src="/bg-video.mp4" type="video/mp4" />
       </video>
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6">
@@ -84,7 +84,7 @@ export default function RecognizedSection() {
               <div className="flex justify-center items-center gap-4 mb-12">
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
                   <Image
-                    src="/founder.jpeg"
+                    src="/founder.avif"
                     alt="Juhi Bhatia - Founder of JB"
                     fill
                     className="object-cover"

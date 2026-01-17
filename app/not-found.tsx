@@ -18,8 +18,8 @@ export default function NotFound() {
         {/* 404 */}
         <ScrollAnimation variant="scaleUp" delay={0.1}>
           <Image
-            src={"/not-found/404.png"}
-            alt="404.png"
+            src={"/not-found/404.avif"}
+            alt="404.avif"
             className="w-full h-full"
             width={300}
             height={400}

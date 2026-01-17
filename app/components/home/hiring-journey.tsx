@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CiRoute } from "react-icons/ci";
+import { motion, useScroll, useSpring } from "framer-motion";
 import ScrollAnimation from "../ui/scroll-animation";
 
 const steps = [
@@ -35,6 +36,17 @@ export default function HiringJourney() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 70%", "end 50%"],
+  });
+
+  const scaleY = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
   useEffect(() => {
     const items = containerRef.current?.querySelectorAll("[data-step]");
     if (!items) return;
@@ -51,7 +63,7 @@ export default function HiringJourney() {
       {
         rootMargin: "-40% 0px -40% 0px",
         threshold: 0,
-      }
+      },
     );
 
     items.forEach((el) => observer.observe(el));
@@ -93,8 +105,14 @@ export default function HiringJourney() {
 
           {/* RIGHT (Scrollable Timeline) */}
           <div ref={containerRef} className="relative lg:col-span-7">
-            {/* Vertical line - stops at last item */}
-            <div className="absolute left-[20px] md:left-[28px] top-0 bottom-0 w-px bg-gray-300" />
+            {/* Background Line */}
+            <div className="absolute left-[20px] md:left-[28px] top-0 bottom-0 w-px bg-gray-200" />
+
+            {/* Progress Line */}
+            <motion.div
+              className="absolute left-[20px] md:left-[28px] top-0 w-px bg-black origin-top"
+              style={{ scaleY, height: "100%" }}
+            />
 
             <div className="space-y-16 md:space-y-20 lg:space-y-24">
               {steps.map((step, index) => (
@@ -103,13 +121,15 @@ export default function HiringJourney() {
                   data-step={index}
                   className="relative flex gap-6 md:gap-8 lg:gap-10"
                 >
+                  {/* Mask the line for the last item */}
                   {index === steps.length - 1 && (
-                    <div className="absolute left-[20px] md:left-[28px] top-6 bottom-0 w-px bg-white" />
+                    <div className="absolute left-[20px] md:left-[28px] top-10 bottom-0 w-1 bg-white z-20" />
                   )}
+
                   {/* Number */}
-                  <div className="w-10 md:w-14 shrink-0 text-right">
+                  <div className="w-10 md:w-14 shrink-0 text-right z-10">
                     <span
-                      className={`text-3xl md:text-4xl font-semibold bg-white py-1 px-2 transition-colors duration-300 ${
+                      className={`relative inline-block text-3xl md:text-4xl font-semibold bg-white py-1 px-2 transition-colors duration-300 ${
                         activeIndex === index
                           ? "text-[#4e6bcd]"
                           : "text-indigo-300"
@@ -141,6 +161,11 @@ export default function HiringJourney() {
                 </div>
               ))}
             </div>
+            {/* White overlay for the bottom part of the last item to stop the line cleanly if desired, 
+                but with progress line it might look better continuous. 
+                I removed the separate white cutout div to rely on z-index or just letting it flow. 
+                The user asked for "darkened as we go down", which implies filling up.
+            */}
           </div>
         </div>
       </div>

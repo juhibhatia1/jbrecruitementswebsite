@@ -68,8 +68,8 @@ export default function FAQsSection() {
     const computeActive = () => {
       const items = Array.from(
         (containerRef.current ?? document).querySelectorAll<HTMLElement>(
-          "[data-faq]"
-        )
+          "[data-faq]",
+        ),
       );
       if (!items.length) return;
 
@@ -140,7 +140,7 @@ export default function FAQsSection() {
                 <div
                   className="mt-10 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 p-6 text-white text-right"
                   style={{
-                    backgroundImage: "url('/home/faq-background.png')",
+                    backgroundImage: "url('/home/faq-background.avif')",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}

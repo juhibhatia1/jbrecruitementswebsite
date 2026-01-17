@@ -28,7 +28,7 @@ export default function AdvisorTrustSection() {
         </ScrollAnimation>
 
         {/* Content */}
-        <div className="mt-12 md:mt-20 lg:mt-24 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center">
+        <div className="mt-12 md:mt-20 lg:mt-24 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center md:p-4">
           {/* Image */}
           <ScrollAnimation
             variant="scaleUp"
@@ -37,7 +37,7 @@ export default function AdvisorTrustSection() {
           >
             <div className="overflow-hidden rounded-3xl">
               <Image
-                src="/home/advisor-trust/juhi-bhatia.png"
+                src="/home/advisor-trust/juhi-bhatia.avif"
                 alt="Senior Recruitment Advisor"
                 width={520}
                 height={640}
@@ -53,7 +53,7 @@ export default function AdvisorTrustSection() {
             delay={0.3}
             className="lg:col-span-7"
           >
-            <h3 className="max-w-xl text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium leading-[1.35]">
+            <h3 className="max-w-2xl text-lg sm:text-xl md:text-2xl lg:text-4xl font-medium leading-[1.35]">
               Hiring Is About People, Not Just Roles. Get Alignment Right, And
               Everything Else Follows.
             </h3>
@@ -70,21 +70,21 @@ export default function AdvisorTrustSection() {
             <div className="mt-8 h-px w-full bg-white" />
 
             {/* Metrics */}
-            <div className="mt-6 flex flex-wrap gap-8 md:gap-12 lg:gap-16 text-[#7b7b7b]">
+            <div className="mt-6 flex flex-wrap justify-between gap-8 md:gap-12 lg:gap-16 text-[#7b7b7b]">
               <div className="flex items-baseline gap-2 md:gap-3">
-                <span className="text-2xl md:text-3xl font-semibold text-white">
+                <span className="text-3xl md:text-4xl font-semibold text-white">
                   84%
                 </span>
-                <span className="text-sm sm:text-base text-[#c5c5c5]">
+                <span className="text-md sm:text-lg text-[#c5c5c5]">
                   Better role alignment
                 </span>
               </div>
 
               <div className="flex items-baseline gap-2 md:gap-3 text-[#7b7b7b]">
-                <span className="text-2xl md:text-3xl font-semibold text-white">
+                <span className="text-3xl md:text-4xl font-semibold text-white">
                   5X
                 </span>
-                <span className="text-sm sm:text-base text-[#c5c5c5]">
+                <span className="text-md sm:text-lg text-[#c5c5c5]">
                   Honest communication
                 </span>
               </div>
@@ -105,7 +105,7 @@ export default function AdvisorTrustSection() {
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src={"/home/advisor-trust/arab-icons.png"}
+                  src={"/home/advisor-trust/arab-icons.avif"}
                   alt="Arab Icons Logo"
                   width={100}
                   height={100}
@@ -129,7 +129,7 @@ export default function AdvisorTrustSection() {
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src="/home/advisor-trust/favikon-logo.png"
+                  src="/home/advisor-trust/favikon-logo.avif"
                   alt="Favikon Logo"
                   width={100}
                   height={100}
@@ -153,7 +153,7 @@ export default function AdvisorTrustSection() {
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src="/home/advisor-trust/linkedin-logo.png"
+                  src="/home/advisor-trust/linkedin-logo.avif"
                   alt="Favikon Logo"
                   width={100}
                   height={100}
@@ -177,7 +177,7 @@ export default function AdvisorTrustSection() {
             <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
-                  src="/home/advisor-trust/uae-lens.jpg"
+                  src="/home/advisor-trust/uae-lens.avif"
                   alt="UAE Lens Logo"
                   width={100}
                   height={100}

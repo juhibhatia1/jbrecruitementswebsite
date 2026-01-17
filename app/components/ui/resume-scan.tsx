@@ -11,7 +11,7 @@ export default function ResumeScanner() {
       <div className="w-full will-change-transform">
         {/* Replace src with your actual resume image path */}
         <Image
-          src="/home/resume.jpg"
+          src="/home/resume.avif"
           alt="Resume"
           width={600}
           height={1000}

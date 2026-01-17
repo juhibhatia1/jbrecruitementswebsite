@@ -11,7 +11,7 @@ export default function HeroSection() {
       <div className="relative md:fixed top-0 left-0 w-full h-screen z-0">
         {/* Background Image */}
         <img
-          src="/home/hero-background.jpg"
+          src="/home/hero-background.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
           className="absolute inset-0 w-full h-full object-cover object-right md:object-fill"
         />
