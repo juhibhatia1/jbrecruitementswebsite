@@ -11,7 +11,7 @@ const testimonials = [
     role: "Head of Resourcing Sub-Saharan Africa",
     // company: "TechFlow Inc",
     image: "/home/testimonials/delicia-pillay.avif",
-    text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
+    text: "I wholeheartedly recommend Juhi Bhatia, who worked with us as a freelance talent mapper. She is reliable, assertive, and consistently delivers high-quality work on time with great attention to detail. Juhi communicates effectively, addresses challenges proactively, and contributes innovative solutions. Her warm, professional demeanor fosters strong relationships and a collaborative environment. She would be a valuable asset to any organization.",
     rating: 5,
   },
   {
@@ -130,7 +130,7 @@ export default function Testimonials() {
           </h2>
 
           {/* Avatar Row */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 overflow-x-auto scrollbar-hide px-4 py-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 px-4 py-4 mx-auto scrollbar-hide">
             {testimonials.map((testimonial, index) => (
               <button
                 key={testimonial.id}
@@ -179,7 +179,7 @@ export default function Testimonials() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="relative bg-white rounded-3xl shadow-xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200"
+            className="relative bg-white rounded-3xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200"
           >
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">
