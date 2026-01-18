@@ -62,47 +62,50 @@ export default function Footer() {
 
             {/* Facebook */}
             <Link
-              href="https://www.facebook.com"
+              href="#"
               aria-label="Facebook"
-              className="hover:text-slate-900"
-              target="_blank"
-              rel="noopener noreferrer"
+              className="hover:text-slate-900 relative group"
             >
               <img
                 src="/footer/facebook-logo.avif"
                 alt="Facebook"
                 className="h-5 w-5"
               />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                Coming Soon
+              </span>
             </Link>
 
             {/* X (Twitter) */}
             <Link
-              href="https://twitter.com"
+              href="#"
               aria-label="X"
-              className="hover:text-slate-900"
-              target="_blank"
-              rel="noopener noreferrer"
+              className="hover:text-slate-900 relative group"
             >
               <img
                 src="/footer/twitter-logo.avif"
                 alt="X"
                 className="h-5 w-5"
               />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                Coming Soon
+              </span>
             </Link>
 
             {/* Instagram */}
             <Link
-              href="https://www.instagram.com"
+              href="#"
               aria-label="Instagram"
-              className="hover:text-slate-900"
-              target="_blank"
-              rel="noopener noreferrer"
+              className="hover:text-slate-900 relative group"
             >
               <img
                 src="/footer/instagram-logo.avif"
                 alt="Instagram"
                 className="h-5 w-5"
               />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                Coming Soon
+              </span>
             </Link>
           </div>
         </div>

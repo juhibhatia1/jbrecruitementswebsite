@@ -23,7 +23,7 @@ export default function WhyJBSection() {
           {/* Left Image */}
           <ScrollAnimation
             variant="scaleUp"
-            className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full overflow-hidden rounded-lg"
+            className="relative h-[200px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full overflow-hidden rounded-lg"
           >
             <Image
               src="/logo.avif"

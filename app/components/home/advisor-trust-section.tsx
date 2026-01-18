@@ -175,7 +175,7 @@ export default function AdvisorTrustSection() {
 
             {/* Item 4 */}
             <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
-              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
+              <div className="mb-14 flex h-[64px] w-full max-w-[120px] items-center justify-center">
                 <Image
                   src="/home/advisor-trust/uae-lens.avif"
                   alt="UAE Lens Logo"

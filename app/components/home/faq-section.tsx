@@ -5,6 +5,7 @@ import { PiHeadsetBold } from "react-icons/pi";
 import { RxArrowTopRight } from "react-icons/rx";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import ScrollAnimation from "../ui/scroll-animation";
+import Link from "next/link";
 
 type FAQ = {
   question: string;
@@ -151,8 +152,8 @@ export default function FAQsSection() {
                   </p>
 
                   <div className="mt-12">
-                    <a
-                      href="#"
+                    <Link
+                      href="/contact-us"
                       className="inline-flex items-center gap-1 text-base md:text-lg font-medium text-white hover:text-white/90 border-b border-white transition duration-300 ease-in-out"
                       onMouseEnter={() => setHoveredLink(true)}
                       onMouseLeave={() => setHoveredLink(false)}
@@ -164,7 +165,7 @@ export default function FAQsSection() {
                           hoveredLink ? "rotate-45 translate-x-1" : "rotate-0"
                         }`}
                       />
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </ScrollAnimation>
