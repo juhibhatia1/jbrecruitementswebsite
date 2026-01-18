@@ -145,9 +145,9 @@ export default function FAQsSection() {
                     backgroundPosition: "center",
                   }}
                 >
-                  <p className="text-md font-semibold">Need more help?</p>
+                  {/* <p className="text-md font-semibold">Need more help?</p> */}
                   <p className="mt-2 text-sm font-normal">
-                    We’re here to answer <br /> any questions you may have.
+                    Can't find the answer you're<br /> looking for?
                   </p>
 
                   <div className="mt-12">
@@ -157,7 +157,7 @@ export default function FAQsSection() {
                       onMouseEnter={() => setHoveredLink(true)}
                       onMouseLeave={() => setHoveredLink(false)}
                     >
-                      Ask a Question
+                      Contact Us
                       <RxArrowTopRight
                         size={16}
                         className={`transform transition-transform duration-300 ${

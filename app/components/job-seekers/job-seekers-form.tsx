@@ -18,7 +18,7 @@ export default function JobSeekersForm() {
   const handleChange = (
     event: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = event.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -67,7 +67,7 @@ export default function JobSeekersForm() {
 
   return (
     <div
-      className="w-full mx-auto"
+      className="w-full mx-auto pt-0 lg:pt-10"
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
       <form className="space-y-6" onSubmit={handleSubmit}>

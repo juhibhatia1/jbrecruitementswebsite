@@ -24,10 +24,11 @@ export default function ServiceCard({
 }: ServiceCardProps) {
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isManualFlip, setIsManualFlip] = useState<boolean>(false);
 
   // Auto-flip based on parent control
   useEffect(() => {
-    if (!isHovered && shouldFlip) {
+    if (!isHovered && shouldFlip && !isManualFlip) {
       setIsFlipped(true);
       const timer = setTimeout(() => {
         setIsFlipped(false);
@@ -37,7 +38,7 @@ export default function ServiceCard({
       // If parent tells us to stop flipping (shouldFlip -> false), close immediately
       setIsFlipped(false);
     }
-  }, [shouldFlip, isHovered]);
+  }, [shouldFlip, isHovered, isManualFlip]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -48,6 +49,15 @@ export default function ServiceCard({
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsFlipped(false);
+  };
+
+  const handleClick = () => {
+    // Manual toggle on tap/click — tapping again closes
+    setIsFlipped((prev) => !prev);
+    setIsManualFlip(true);
+    if (onManualFlip) onManualFlip();
+    // Clear manual flag after a short duration so auto-flip can resume
+    setTimeout(() => setIsManualFlip(false), 6000);
   };
 
   // Default features if not provided
@@ -63,10 +73,11 @@ export default function ServiceCard({
 
   return (
     <div
-      className="relative w-full h-44 sm:h-64 md:h-60 lg:h-56 group"
+      className="relative w-full h-52 sm:h-64 md:h-60 lg:h-56 group"
       style={{ perspective: "1200px" }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       <div
         className="relative w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
@@ -103,14 +114,19 @@ export default function ServiceCard({
             </p>
           )}
 
-          <div className="mt-2 text-xs text-gray-400 transition-opacity duration-300 group-hover:text-[#5a58ab]">
-            Hover to see more
+          <div className="mt-2 transition-opacity duration-300">
+            <span className="text-xs text-gray-400 sm:hidden">
+              Tap to see more
+            </span>
+            <span className="hidden sm:inline-block text-xs text-gray-400 group-hover:text-[#5a58ab]">
+              Hover to see more
+            </span>
           </div>
         </div>
 
         {/* Back Side */}
         <div
-          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-center p-4 sm:p-5 md:p-6 border border-gray-100"
+          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-center p-5 sm:p-6 md:p-7 border border-gray-100"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
@@ -124,7 +140,7 @@ export default function ServiceCard({
           </div>
 
           {/* Feature List */}
-          <div className="space-y-2">
+          <div className="space-y-2 px-2 md:px-0">
             {displayFeatures.map((feature, index) => (
               <div key={index} className="flex items-center text-gray-700 py-1">
                 <div className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full mr-2.5 flex-shrink-0"></div>

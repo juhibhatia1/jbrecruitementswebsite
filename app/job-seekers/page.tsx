@@ -11,7 +11,7 @@ export default function JobSeekersPage() {
       style={{ fontFamily: "Geist, sans-seriff" }}
     >
       <main className="flex-grow">
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6 py-12 sm:py-16 md:py-24 flex items-center">
+        <div className="relative mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-center">
           {/* Sun Rays Background Effect */}
           <div
             className="absolute top-0 left-0 w-full h-[600px] pointer-events-none overflow-hidden -z-10"
@@ -30,9 +30,7 @@ export default function JobSeekersPage() {
             {/* Left Content */}
             <div className="pt-0 lg:pt-10">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-[#252e3d]">
-                Career <br />
-                Insights & <br />
-                Guidance
+                Career Insights & Guidance
               </h1>
 
               <div

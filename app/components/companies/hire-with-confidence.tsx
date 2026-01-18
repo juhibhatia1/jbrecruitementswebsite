@@ -5,7 +5,7 @@ import { FaCheck } from "react-icons/fa";
 
 export default function HireWithConfidence() {
   return (
-    <section className="w-full bg-gradient-to-b from-slate-50 to-white py-12 md:py-16 lg:py-20">
+    <section className="w-full bg-gradient-to-b from-slate-50 to-white md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
@@ -32,7 +32,7 @@ export default function HireWithConfidence() {
           {/* TOP LEFT - Complete Recruitment Support */}
           <div className="bg-white rounded-xl p-8 md:p-6 shadow-lg border border-slate-200 flex flex-col md:flex-row gap-8 items-center lg:col-span-8">
             {/* Background Image */}
-            <div className="flex-shrink-0 rounded-xl w-100 h-100 relative bg-slate-100">
+            <div className="flex-shrink-0 rounded-xl w-72 h-60 sm:w-84 sm:h-68 md:w-100 md:h-100 relative bg-slate-100">
               <Image
                 src="/companies/card-1.svg"
                 alt="Complete Recruitment Support"
@@ -205,7 +205,7 @@ export default function HireWithConfidence() {
                 </li>
               </ul>
             </div>
-            <div className="flex-shrink-0 w-100 h-100 rounded-xl relative bg-slate-100">
+            <div className="flex-shrink-0 w-72 h-60 sm:w-84 sm:h-68 md:w-100 md:h-100 rounded-xl relative bg-slate-100">
               <Image
                 src="/companies/card-2.svg"
                 alt="Complete Recruitment Support"
