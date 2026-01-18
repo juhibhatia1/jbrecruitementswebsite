@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLenis } from "../../providers/lenis-provider";
+import { useRouter } from "next/navigation";
 
 export default function NavigationMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { lenis } = useLenis();
+  const router = useRouter();
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -64,41 +66,61 @@ export default function NavigationMenu() {
         <div className="h-full flex flex-col justify-between p-6 sm:p-8 md:p-12 lg:p-16 lg:px-32 xl:px-56 lg:py-24 xl:py-30">
           {/* Menu Items */}
           <div className="flex-1 flex flex-col justify-center space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8">
-            <Link
-              href="/"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors cursor-default"
-            >
-              <span className="hover:text-gray-300 cursor-pointer">HOME</span>
-            </Link>
-            <Link
-              href="/companies"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold hover:text-gray-300 transition-colors cursor-default"
-            >
-              <span className="hover:text-gray-300 cursor-pointer">COMPANIES</span>
-            </Link>
-            <Link
-              href="/job-seekers"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors cursor-default"
-            >
-              <span className="hover:text-gray-300 cursor-pointer">JOB SEEKERS</span>
-            </Link>
-            <Link
-              href="/about-us"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors cursor-default"
-            >
-              <span className="hover:text-gray-300 cursor-pointer">ABOUT US</span>
-            </Link>
-            <Link
-              href="/contact-us"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors cursor-default"
-            >
-              <span className="hover:text-gray-300 cursor-pointer">CONTACT US</span>
-            </Link>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <span
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  router.push("/");
+                }}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                HOME
+              </span>
+            </div>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <span
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  router.push("/companies");
+                }}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                COMPANIES
+              </span>
+            </div>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <span
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  router.push("/job-seekers");
+                }}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                JOB SEEKERS
+              </span>
+            </div>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <span
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  router.push("/about-us");
+                }}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                ABOUT US
+              </span>
+            </div>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <span
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  router.push("/contact-us");
+                }}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                CONTACT US
+              </span>
+            </div>
 
             {/* Underline */}
             <div className="w-full max-w-sm h-px bg-white md:mb-8"></div>
@@ -106,19 +128,21 @@ export default function NavigationMenu() {
             <div className="flex items-center gap-6 md:gap-8">
               <Link
                 href="https://www.linkedin.com/in/juhiibhatia/"
-                className="text-white hover:text-gray-300 transition-colors"
+                className="text-white hover:text-[#605DBA] transition-colors"
               >
-                <svg
-                  className="w-7 h-7 md:w-8 md:h-8"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                </svg>
+                <span className="">
+                  <svg
+                    className="w-7 h-7 md:w-8 md:h-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                  </svg>
+                </span>
               </Link>
               <Link
                 href="#"
-                className="text-white hover:text-gray-300 transition-colors"
+                className="text-white hover:text-[#605DBA] transition-colors"
               >
                 <svg
                   className="w-7 h-7 md:w-8 md:h-8"
@@ -130,7 +154,7 @@ export default function NavigationMenu() {
               </Link>
               <Link
                 href="#"
-                className="text-white hover:text-gray-300 transition-colors"
+                className="text-white hover:text-[#605DBA] transition-colors"
               >
                 <svg
                   className="w-7 h-7 md:w-8 md:h-8"
@@ -142,7 +166,7 @@ export default function NavigationMenu() {
               </Link>
               <Link
                 href="#"
-                className="text-white hover:text-gray-300 transition-colors"
+                className="text-white hover:text-[#605DBA] transition-colors"
               >
                 <svg
                   className="w-7 h-7 md:w-8 md:h-8"

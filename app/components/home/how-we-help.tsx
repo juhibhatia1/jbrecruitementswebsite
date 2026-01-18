@@ -1,9 +1,13 @@
+"use client";
+
 import React from "react";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
 import ResumeScanner from "../ui/resume-scan";
+import { useRouter } from "next/navigation";
 
 export default function HowWeHelpSection() {
+  const router = useRouter();
   return (
     <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 px-6 md:px-8 lg:px-12 border-t border-[#bababa] overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -46,7 +50,7 @@ export default function HowWeHelpSection() {
             className="space-y-8 lg:space-y-10 col-span-1"
           >
             {/* Chat Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg cursor-pointer" onClick={() => router.push('/companies')}>
               {/* Chat Messages */}
               <div className="space-y-3 md:space-y-4 mb-8 md:mb-0">
                 {/* User message */}
@@ -136,7 +140,7 @@ export default function HowWeHelpSection() {
             className="space-y-6 md:space-y-8 col-span-1 flex flex-col items-end"
           >
             {/* Career Guidance Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full cursor-pointer" onClick={() => router.push('/job-seekers')}>
               {/* Resume Preview Box */}
               <div className="mb-6 md:mb-8 relative">
                 <div className="">

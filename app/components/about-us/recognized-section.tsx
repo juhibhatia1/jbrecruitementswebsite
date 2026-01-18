@@ -22,9 +22,14 @@ export default function RecognizedSection() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
-          <div className="bg-[#414956] rounded-[40px] p-6 sm:p-10 md:p-16 lg:p-20 text-center text-white relative overflow-hidden shadow-2xl">
+          <div
+            className="rounded-[40px] p-6 sm:p-10 md:p-12 2xl:p-16 text-center text-white relative overflow-hidden shadow-2xl bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/about-us/card-bg-image.jpeg')" }}
+          >
+            {/* Overlay for better text readability */}
+            <div className="absolute inset-0 bg-[#414956]/60 rounded-[40px]"></div>
             {/* Dark square tiles pattern - top left corner */}
-            <div
+            {/* <div
               className="absolute top-0 left-0 w-full h-full pointer-events-none"
               style={{
                 background:
@@ -34,9 +39,9 @@ export default function RecognizedSection() {
                 WebkitMaskImage:
                   "radial-gradient(ellipse 80% 80% at 0% 0%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)",
               }}
-            ></div>
+            ></div> */}
             {/* Dark square tiles pattern - bottom right corner */}
-            <div
+            {/* <div
               className="absolute top-0 left-0 w-full h-full pointer-events-none"
               style={{
                 background:
@@ -46,7 +51,7 @@ export default function RecognizedSection() {
                 WebkitMaskImage:
                   "radial-gradient(ellipse 80% 80% at 100% 100%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)",
               }}
-            ></div>
+            ></div> */}
 
             {/* Content */}
             <div className="relative z-10 max-w-4xl mx-auto">
@@ -108,11 +113,11 @@ export default function RecognizedSection() {
 
               {/* CTA Button */}
               <Link
-                href="/about-us"
+                href="/contact-us"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-[#605dba] hover:bg-[#534eb8] text-white font-medium rounded-full transition-all duration-300 text-lg shadow-[0_10px_20px_rgba(96,93,186,0.3)] hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] hover:-translate-y-1 group"
                 style={{ fontFamily: "Geist, sans-serif" }}
               >
-                Explore the Journey
+                Contact
                 <RxArrowTopRight
                   size={20}
                   className="transform group-hover:rotate-45 group-hover:translate-x-1 transition-transform duration-300"
