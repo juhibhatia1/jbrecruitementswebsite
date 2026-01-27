@@ -61,7 +61,7 @@ export default function HireWithConfidence() {
                     style={{ fontFamily: "Geist, sans-serif" }}
                     className="text-black font-medium"
                   >
-                    Complete Talent Acquisition
+                    Data-driven approach
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export default function HireWithConfidence() {
                     style={{ fontFamily: "Geist, sans-serif" }}
                     className="text-black font-medium"
                   >
-                    Complete Talent Acquisition
+                    300,000+ global talent network
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export default function HireWithConfidence() {
                     style={{ fontFamily: "Geist, sans-serif" }}
                     className="text-black font-medium"
                   >
-                    Global & Leadership Hiring
+                    48-hour shortlist turnaround
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -88,7 +88,16 @@ export default function HireWithConfidence() {
                     style={{ fontFamily: "Geist, sans-serif" }}
                     className="text-black font-medium"
                   >
-                    Data-Driven Candidate Shortlisting
+                    Flexible payment options
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <FaCheck className="text-black flex-shrink-0" size={15} />
+                  <span
+                    style={{ fontFamily: "Geist, sans-serif" }}
+                    className="text-black font-medium"
+                  >
+                    JB works as an extension of your brand
                   </span>
                 </li>
               </ul>
@@ -287,7 +296,7 @@ export default function HireWithConfidence() {
               </h3>
               <p className="text-[#4b5563] leading-relaxed text-sm sm:text-base">
                 Gain clear visibility into candidate fit, hiring progress, and
-                next steps — so decisions feel confident, not rushed.
+                next steps - so decisions feel confident, not rushed.
               </p>
             </div>
           </div>

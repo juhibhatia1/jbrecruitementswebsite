@@ -40,7 +40,7 @@ export default function FounderSection() {
             across diverse industries and roles, helping organisations build
             aligned teams while guiding professionals toward meaningful career
             growth. Her work is rooted in a simple belief: when hiring is
-            thoughtful and human, outcomes naturally improve — for businesses
+            thoughtful and human, outcomes naturally improve - for businesses
             and for people.
           </p>
 

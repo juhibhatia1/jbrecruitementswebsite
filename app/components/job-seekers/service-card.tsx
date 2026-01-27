@@ -11,6 +11,8 @@ type ServiceCardProps = {
   backDescription?: string;
   shouldFlip?: boolean;
   onManualFlip?: () => void;
+  onHoverStart?: () => void;
+  onHoverEnd?: () => void;
 };
 
 export default function ServiceCard({
@@ -21,6 +23,8 @@ export default function ServiceCard({
   backDescription,
   shouldFlip = false,
   onManualFlip,
+  onHoverStart,
+  onHoverEnd,
 }: ServiceCardProps) {
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -43,16 +47,17 @@ export default function ServiceCard({
   const handleMouseEnter = () => {
     setIsHovered(true);
     setIsFlipped(true);
-    if (onManualFlip) onManualFlip();
+    if (onHoverStart) onHoverStart();
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
     setIsFlipped(false);
+    if (onHoverEnd) onHoverEnd();
   };
 
   const handleClick = () => {
-    // Manual toggle on tap/click — tapping again closes
+    // Manual toggle on tap/click - tapping again closes
     setIsFlipped((prev) => !prev);
     setIsManualFlip(true);
     if (onManualFlip) onManualFlip();
@@ -73,7 +78,7 @@ export default function ServiceCard({
 
   return (
     <div
-      className="relative w-full h-52 sm:h-64 md:h-60 lg:h-56 group"
+      className="relative w-full h-68 sm:h-64 md:h-72 lg:h-64 group"
       style={{ perspective: "1200px" }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

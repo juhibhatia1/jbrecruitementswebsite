@@ -1,9 +1,7 @@
 import { MetadataRoute } from "next";
+import { siteUrl } from "./lib/metadata";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
-
   return {
     rules: [
       {
@@ -22,6 +20,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin/"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

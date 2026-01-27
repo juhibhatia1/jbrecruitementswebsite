@@ -10,13 +10,13 @@ const steps = [
     id: "01",
     title: "Discover & Understand",
     description:
-      "We begin by understanding role needs, team culture, and goals — along with a candidate’s experience, strengths, and career direction — to create clarity before moving forward.",
+      "We begin by understanding role needs, team culture, and goals - along with a candidate’s experience, strengths, and career direction - to create clarity before moving forward.",
   },
   {
     id: "02",
     title: "Source & Evaluate",
     description:
-      "We source talent thoughtfully, evaluating skills, mindset, cultural fit, and growth potential — going beyond resumes to identify candidates who align with both role and organisation.",
+      "We source talent thoughtfully, evaluating skills, mindset, cultural fit, and growth potential - going beyond resumes to identify candidates who align with both role and organisation.",
   },
   {
     id: "03",
@@ -28,7 +28,7 @@ const steps = [
     id: "04",
     title: "Connect & Support",
     description:
-      "We coordinate interviews, communication, and next steps while staying involved through decisions and onboarding — ensuring a smooth, transparent, and supportive hiring experience.",
+      "We coordinate interviews, communication, and next steps while staying involved through decisions and onboarding - ensuring a smooth, transparent, and supportive hiring experience.",
   },
 ];
 

@@ -1,12 +1,125 @@
+"use client";
+
 import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
 import ScrollAnimation from "../ui/scroll-animation";
+import { useState } from "react";
+
+interface Items {
+  id: number;
+  title: string;
+  description: string;
+  imageSrc: string;
+  imageAlt: string;
+  sizeWidth: number;
+  sizeHeight: number;
+}
+
+function MarqueeItems() {
+  const items: Items[] = [
+    {
+      id: 1,
+      title: "Favikon - Brand Recognition",
+      description:
+        "Ranked #1 Careers & Office LinkedIn Creator worldwide and #2 among the Top 10 Thought Leaders in the UAE (2025).",
+      imageSrc: "/home/advisor-trust/favikon-logo.avif",
+      imageAlt: "Favikon Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 2,
+      title: "The Arab Icons - Industry Recognition",
+      description:
+        "Featured for leadership and global impact in talent acquisition and recruitment.",
+      imageSrc: "/home/advisor-trust/arab-icons.avif",
+      imageAlt: "Arab Icons Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 3,
+      title: "The UAE Lens - Talent & Career Advocate",
+      description:
+        "Recognised for 11+ years of recruitment leadership across the US, Europe, Middle East, and UK.",
+      imageSrc: "/home/advisor-trust/uae-lens.avif",
+      imageAlt: "UAE Lens Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 4,
+      title: "The World Star - Professional Leadership Spotlight",
+      description:
+        "Recognised for human-first recruitment leadership, mental health advocacy, and building scalable global hiring systems.",
+      imageSrc: "/home/advisor-trust/1767120368951.jpg",
+      imageAlt: "LinkedIn Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 5,
+      title: "Dubai Global Leaders - Talent & Business Leadership",
+      description:
+        "Honoured as a Dubai-based talent leader and entrepreneur driving modern, people-first recruitment at scale.",
+      imageSrc: "/home/advisor-trust/dubaigloballeaders_logo.jpg",
+      imageAlt: "Dubai Global Leaders Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 6,
+      title: "Link Hub - Global Creator Ranking",
+      description:
+        "Ranked #13 among the world’s Top 100 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
+      imageSrc: "/home/advisor-trust/image.png",
+      imageAlt: "Link Hub Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+  ];
+
+  return (
+    <div className="flex gap-16 pr-16">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="flex w-[300px] flex-col items-center text-center"
+        >
+          {/* LOGO ZONE */}
+          <div className="flex h-[96px] items-center justify-center mb-6">
+            <Image
+              src={item.imageSrc}
+              alt={item.imageAlt}
+              width={item.sizeWidth}
+              height={item.sizeHeight}
+              className="max-h-[80px] w-auto object-contain"
+              unoptimized
+            />
+          </div>
+
+          {/* TITLE ZONE */}
+          <h4 className="min-h-[56px] text-lg font-semibold leading-snug mb-3">
+            {item.title}
+          </h4>
+
+          {/* DESCRIPTION ZONE */}
+          <p className="min-h-[72px] text-sm leading-relaxed text-[#c5c5c5]">
+            {item.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 export default function AdvisorTrustSection() {
+  const [paused, setPaused] = useState(false);
   return (
     <section
       className="bg-[#1b1b1b] text-white relative z-10"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      style={{ fontFamily: "Geist, sans-serif" }}
     >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16 lg:py-20">
@@ -94,14 +207,13 @@ export default function AdvisorTrustSection() {
       </div>
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
-      <div className="pb-16 md:pb-24 lg:pb-20">
+      {/* <div className="pb-16 md:pb-24 lg:pb-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
           <ScrollAnimation
             variant="fadeUp"
             delay={0.4}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 lg:gap-6"
           >
-            {/* Item 1 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
@@ -125,7 +237,6 @@ export default function AdvisorTrustSection() {
               </p>
             </div>
 
-            {/* Item 2 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
@@ -149,7 +260,6 @@ export default function AdvisorTrustSection() {
               </p>
             </div>
 
-            {/* Item 3 */}
             <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
               <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
                 <Image
@@ -173,7 +283,6 @@ export default function AdvisorTrustSection() {
               </p>
             </div>
 
-            {/* Item 4 */}
             <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
               <div className="mb-14 flex h-[64px] w-full max-w-[120px] items-center justify-center">
                 <Image
@@ -195,6 +304,25 @@ export default function AdvisorTrustSection() {
                 11+ years leading recruitment across US, Europe, Middle East &
                 UK.
               </p>
+            </div>
+          </ScrollAnimation>
+        </div>
+      </div> */}
+
+      {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
+      <div className="pb-16 md:pb-24 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
+          <ScrollAnimation variant="fadeUp" delay={0.4}>
+            <div className="marquee">
+              <div
+                className={`marquee-track ${paused ? "paused" : ""}`}
+                onClick={() => setPaused((prev) => !prev)}
+              >
+                {/* ===== FIRST SET ===== */}
+                <MarqueeItems />
+                {/* ===== DUPLICATE SET (for seamless loop) ===== */}
+                <MarqueeItems />
+              </div>
             </div>
           </ScrollAnimation>
         </div>

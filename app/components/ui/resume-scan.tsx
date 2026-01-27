@@ -11,7 +11,7 @@ export default function ResumeScanner() {
       <div className="w-full will-change-transform">
         {/* Replace src with your actual resume image path */}
         <Image
-          src="/home/resume.avif"
+          src="/home/Gemini_Generated_Image_oann8boann8boann.png"
           alt="Resume"
           width={600}
           height={1000}
@@ -23,8 +23,8 @@ export default function ResumeScanner() {
       {/* The Scanning Beam & Gradient Overlay */}
       <motion.div
         className="absolute left-0 w-full h-[150px] pointer-events-none z-10"
-        initial={{ top: "100%" }}
-        animate={{ top: "0%" }}
+        initial={{ top: "0%" }}
+        animate={{ top: "100%" }}
         transition={scanTransition}
       >
         <div className="absolute top-0 left-0 w-full h-[2px] bg-indigo-500 shadow-[0_0_10px_5px_rgba(99,102,241,0.8)] z-20" />

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
+export const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
+const ogImage = "/opengraph-image";
 
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -67,7 +69,7 @@ export const defaultMetadata: Metadata = {
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Transform your hiring process with expert recruitment services.",
     images: [
       {
-        url: "/og-image.png",
+        url: ogImage,
         width: 1200,
         height: 630,
         alt: "JB Recruitment Solutions - HR Consulting & Talent Acquisition",
@@ -80,7 +82,7 @@ export const defaultMetadata: Metadata = {
       "JB Recruitment Solutions - Premier HR Consulting & Talent Acquisition Firm",
     description:
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions.",
-    images: ["/og-image.png"],
+    images: [ogImage],
     creator: "@JBRecruitment",
   },
   robots: {
@@ -110,6 +112,13 @@ export const contactMetadata: Metadata = {
   title: "Contact Us - JB Recruitment Solutions",
   description:
     "Get in touch with JB Recruitment Solutions. Whether you're looking to hire top talent or explore career opportunities, our HR consulting experts are here to help.",
+  keywords: [
+    "contact JB Recruitment",
+    "hire recruiters",
+    "talk to HR consultants",
+    "recruitment services contact",
+    "talent acquisition help",
+  ],
   openGraph: {
     title: "Contact Us - JB Recruitment Solutions",
     description:
@@ -117,7 +126,7 @@ export const contactMetadata: Metadata = {
     url: `${siteUrl}/contact-us`,
     images: [
       {
-        url: "/og-image.png",
+        url: ogImage,
         width: 1200,
         height: 630,
         alt: "Contact JB Recruitment Solutions",
@@ -129,12 +138,17 @@ export const contactMetadata: Metadata = {
   },
 };
 
-
-
 export const aboutMetadata: Metadata = {
   title: "About Us - JB Recruitment Solutions",
   description:
     "Learn about JB Recruitment Solutions, our mission, vision, and the team dedicated to transforming your hiring process. We are committed to connecting businesses with exceptional talent.",
+  keywords: [
+    "about JB Recruitment",
+    "recruitment firm story",
+    "talent acquisition team",
+    "HR consulting mission",
+    "Juhi Bhatia recruiter",
+  ],
   openGraph: {
     title: "About Us - JB Recruitment Solutions",
     description:
@@ -142,7 +156,7 @@ export const aboutMetadata: Metadata = {
     url: `${siteUrl}/about-us`,
     images: [
       {
-        url: "/og-image.png",
+        url: ogImage,
         width: 1200,
         height: 630,
         alt: "About JB Recruitment Solutions",
@@ -158,6 +172,13 @@ export const companiesMetadata: Metadata = {
   title: "For Companies - Hire with Confidence | JB Recruitment Solutions",
   description:
     "Complete recruitment support for businesses. From requirement-led hiring to quality-driven selection, we help you find candidates who fit your role, team, and culture.",
+  keywords: [
+    "recruitment for companies",
+    "hire with confidence",
+    "enterprise hiring partner",
+    "outsourced recruiting",
+    "executive search partner",
+  ],
   openGraph: {
     title: "For Companies - Hire with Confidence | JB Recruitment Solutions",
     description:
@@ -165,7 +186,7 @@ export const companiesMetadata: Metadata = {
     url: `${siteUrl}/companies`,
     images: [
       {
-        url: "/og-image.png",
+        url: ogImage,
         width: 1200,
         height: 630,
         alt: "JB Recruitment Solutions for Companies",
@@ -181,6 +202,13 @@ export const jobSeekersMetadata: Metadata = {
   title: "Career Insights & Job Opportunities - JB Recruitment Solutions",
   description:
     "Explore career advice, industry insights, and job opportunities with JB Recruitment Solutions. Connect with top employers and advance your career with expert guidance.",
+  keywords: [
+    "job seekers JB Recruitment",
+    "career guidance",
+    "resume support",
+    "find jobs UAE",
+    "international career opportunities",
+  ],
   openGraph: {
     title: "Career Insights & Job Opportunities - JB Recruitment Solutions",
     description:
@@ -188,7 +216,7 @@ export const jobSeekersMetadata: Metadata = {
     url: `${siteUrl}/job-seekers`,
     images: [
       {
-        url: "/og-image.png",
+        url: ogImage,
         width: 1200,
         height: 630,
         alt: "Career Opportunities - JB Recruitment Solutions",

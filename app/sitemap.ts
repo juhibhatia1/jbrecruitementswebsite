@@ -1,36 +1,34 @@
 import { MetadataRoute } from "next";
+import { siteUrl } from "./lib/metadata";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://jbsolutions.dev-aashish.tech";
-
   return [
     {
-      url: baseUrl,
+      url: siteUrl,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/companies`,
+      url: `${siteUrl}/companies`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/job-seekers`,
+      url: `${siteUrl}/job-seekers`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/about-us`,
+      url: `${siteUrl}/about-us`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/contact-us`,
+      url: `${siteUrl}/contact-us`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,

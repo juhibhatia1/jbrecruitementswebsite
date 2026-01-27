@@ -155,7 +155,7 @@ export default function Testimonials() {
         </div>
 
         {/* Main Testimonial Card */}
-        <div className="relative w-full md:max-w-4xl mx-auto">
+        <div className="relative w-full md:max-w-4xl mx-auto md:min-h-[520px]">
           {/* Desktop Navigation Arrows */}
           <button
             onClick={handlePrevious}
@@ -179,7 +179,7 @@ export default function Testimonials() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="relative bg-white rounded-3xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200"
+            className="relative bg-white rounded-3xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200 h-full flex flex-col justify-between"
           >
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">

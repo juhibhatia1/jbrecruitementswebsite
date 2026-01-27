@@ -114,3 +114,34 @@ h2 {
 .contact-ring .z-10 {
   z-index: 10;
 }
+
+
+/*Advisor Trust Section Marquee Animation*/
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+/* hover pause */
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+
+.marquee-track.paused {
+  animation-play-state: paused;
+}

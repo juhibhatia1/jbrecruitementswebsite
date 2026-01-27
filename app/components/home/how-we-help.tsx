@@ -14,7 +14,7 @@ export default function HowWeHelpSection() {
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="mb-6 md:mb-8 col-span-1 flex items-center gap-2">
                 <img
                   src="/home/icons8-ai-48.avif"
@@ -29,9 +29,9 @@ export default function HowWeHelpSection() {
                 </p>
               </div>
 
-              <div className="col-span-1 sm:col-span-2">
+              <div className="col-span-1 sm:col-span-3">
                 <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
-                  Recruitment Support Built for Real People
+                  We support hiring across the UK, Europe, the Middle East, and the USA
                 </h2>
               </div>
             </div>

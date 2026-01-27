@@ -1,23 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ServiceCard from "./service-card";
-import { AiOutlineFileText, AiOutlineMail } from "react-icons/ai";
-import { FaLinkedin } from "react-icons/fa";
-import { HiSparkles } from "react-icons/hi";
-import { IoMdHome } from "react-icons/io";
 
 const services = [
   {
     id: 1,
     title: "Resume Review & Rewriting",
     description:
-      "ATS-optimized resumes aligned with your target roles and recruiter search systems.",
+      "ATS-optimised resumes aligned with your target roles and recruiter search systems.",
     iconPath: "/icons/job-seekers/resume-review.svg",
     features: [
-      "ATS-friendly, role-aligned structure",
-      "Keyword-rich, Boolean-ready skills",
-      "Clear value-driven positioning",
+      "ATS-compliant, keyword-optimized resumes",
+      "Strategic skills keywords for Boolean search visibility",
+      "Strong achievement-focused bullet points",
+      "Clear professional positioning and value proposition",
       "USD 80 | 5 days",
     ],
   },
@@ -29,8 +26,9 @@ const services = [
     iconPath: "/icons/job-seekers/cover-letter.svg",
     features: [
       "Strengths and achievements highlighted",
-      "Motivation clearly articulated",
-      "Easily customizable for roles",
+      "Motivation and role-fit are articulated strategically",
+      "Easily customizable version for multiple applications",
+      "Professional and persuasive",
       "USD 80 | 5 days",
     ],
   },
@@ -38,12 +36,12 @@ const services = [
     id: 3,
     title: "LinkedIn Optimization",
     description:
-      "Strategic LinkedIn profiles designed to improve recruiter discovery and ranking.",
+      "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
     iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
     features: [
-      "ATS-style keyword optimization",
+      "Keywords optimized content",
       "Skills-based profile structuring",
-      "Recruiter and Boolean visibility",
+      "LinkedIn banner optimisation for stronger personal branding",
       "USD 80 | 5 days",
     ],
   },
@@ -51,12 +49,13 @@ const services = [
     id: 4,
     title: "Superstar Shout-Out",
     description:
-      "A targeted LinkedIn announcement amplifying your availability to decision-makers.",
+      "A targeted LinkedIn announcement amplifying your availability to decision-makers. Posted from Juhi Bhatia's personal LinkedIn.",
     iconPath: "/icons/job-seekers/superstar.svg",
     features: [
-      "Tailored recruiter-focused LinkedIn post",
-      "Skills and availability highlighted",
-      "Expanded employer visibility",
+      "Tailored LinkedIn post highlighting your profile, key skills, and availability",
+      "Strategic positioning designed to attract hiring managers and recruiters",
+      "Enhanced visibility among employers and decision-makers",
+      "Published via Juhi Bhatia’s personal LinkedIn to maximize reach and credibility",
       "USD 180 | 5 days",
     ],
   },
@@ -69,7 +68,8 @@ const services = [
     features: [
       "Career changes and transitions",
       "Remote jobs and interviews",
-      "Burnout, layoffs, clarity",
+      "Burnout, layoffs, and clarity",
+      "Resume or LinkedIn direction",
       "USD 30 | 48 hours",
     ],
   },
@@ -79,6 +79,7 @@ export default function ServicesSection() {
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // start auto-flip sequence after initial 3s delay
   useEffect(() => {
@@ -97,14 +98,34 @@ export default function ServicesSection() {
     return () => clearInterval(interval);
   }, [isPaused, started]);
 
-  const handleManualFlip = () => {
+  const clearResumeTimeout = useCallback(() => {
+    if (resumeTimeoutRef.current) {
+      clearTimeout(resumeTimeoutRef.current);
+      resumeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const pauseAutoFlip = useCallback(() => {
+    clearResumeTimeout();
     setIsPaused(true);
-    setCurrentFlipIndex(-1); // Reset auto-flip index to close any open cards immediately
-    // Resume after 5 seconds
-    setTimeout(() => {
+  }, [clearResumeTimeout]);
+
+  const resumeAutoFlip = useCallback(() => {
+    clearResumeTimeout();
+    setIsPaused(false);
+  }, [clearResumeTimeout]);
+
+  const pauseTemporarily = useCallback(() => {
+    pauseAutoFlip();
+    setCurrentFlipIndex(-1); // Close any open cards immediately
+    resumeTimeoutRef.current = setTimeout(() => {
       setIsPaused(false);
     }, 5000);
-  };
+  }, [pauseAutoFlip]);
+
+  useEffect(() => {
+    return () => clearResumeTimeout();
+  }, [clearResumeTimeout]);
 
   return (
     <section className="py-12 md:py-16">
@@ -125,7 +146,7 @@ export default function ServicesSection() {
         </h2>
 
         {/* Grid Layout matching why-companies-prefer */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* 1. Text Block (Top-Left) */}
           <div className="h-full flex items-center">
             <div className="pr-4 lg:pr-8">
@@ -149,9 +170,30 @@ export default function ServicesSection() {
               iconPath={s.iconPath}
               features={s.features}
               shouldFlip={started && currentFlipIndex === index}
-              onManualFlip={handleManualFlip}
+              onManualFlip={pauseTemporarily}
+              onHoverStart={pauseAutoFlip}
+              onHoverEnd={resumeAutoFlip}
             />
           ))}
+        </div>
+
+        {/* Bundle Offer Below Cards */}
+        <div className="mt-12 flex justify-center">
+          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] shadow-lg px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center">
+            <div
+              className="absolute inset-0 -z-10 blur-2xl bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
+              aria-hidden="true"
+            ></div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm border border-[#e8e3ff]">
+              Limited Bundle
+            </span>
+            <p className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
+              All services bundled together at a special price of USD 400.
+            </p>
+            <span className="text-md text-[#4b5563]">
+              Highlighting every upgrade in one move.
+            </span>
+          </div>
         </div>
       </div>
     </section>

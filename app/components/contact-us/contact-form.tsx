@@ -53,7 +53,7 @@ export default function ContactForm() {
         className="text-[#252e3d] text-sm sm:text-base lg:text-lg mt-2"
         style={{ fontFamily: "Palatino Linotype, sans-serif" }}
       >
-        Share your questions, thoughts, or ideas—we're here to help and ready to
+        Share your questions, thoughts, or ideas - we're here to help and ready to
         listen.
       </p>
 

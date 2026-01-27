@@ -7,7 +7,7 @@ import StructuredData from "./components/structured-data";
 import GoogleAnalytics from "./components/google-analytics";
 import FloatingNavbar from "./components/floating-navbar";
 import Footer from "./components/footer";
-import { defaultMetadata } from "./lib/metadata";
+import { defaultMetadata, siteUrl } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
 import LenisProvider from "./providers/lenis-provider";
 
@@ -45,7 +45,7 @@ export default function RootLayout({
           name="google-site-verification"
           content="YOUR_VERIFICATION_CODE"
         />
-        <link rel="canonical" href="https://jbrecruitment.com" />
+        <link rel="canonical" href={siteUrl} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
