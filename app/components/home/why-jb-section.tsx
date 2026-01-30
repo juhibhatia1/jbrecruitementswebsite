@@ -18,7 +18,7 @@ export default function WhyJBSection() {
 
   return (
     <section className="w-full py-12 md:py-16 lg:py-20 border-t border-slate-200">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           {/* Left Image */}
           <ScrollAnimation
@@ -43,7 +43,7 @@ export default function WhyJBSection() {
                   <PiBrainLight size={24} className="text-[#605dba]" />
                   <span
                     className="text-[#605dba] text-base md:text-lg font-semibold tracking-wide"
-                    style={{ fontFamily: "Geist, sans-serif" }}
+                    style={{ fontFamily: "Raleway, sans-serif" }}
                   >
                     Why JB
                   </span>
@@ -51,14 +51,13 @@ export default function WhyJBSection() {
 
                 <h2
                   className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-semibold leading-[1.1]"
-                  style={{ fontFamily: "Geist, sans-serif" }}
                 >
                   Why Choose Us
                 </h2>
 
                 <p
                   className="text-[#252E3D] text-base md:text-lg lg:text-xl leading-relaxed max-w-lg"
-                  style={{ fontFamily: "Palatino Linotype, serif" }}
+                  style={{ fontFamily: "Crimson Text, serif" }}
                 >
                   Insight-driven recommendations that match role, culture &
                   long-term fit.
@@ -75,7 +74,7 @@ export default function WhyJBSection() {
                     <BsCheckCircleFill className="text-[#4CD964] text-xl flex-shrink-0" />
                     <span
                       className="text-[#3c4656] text-sm sm:text-base font-medium"
-                      style={{ fontFamily: "Geist, sans-serif" }}
+                      style={{ fontFamily: "Raleway, sans-serif" }}
                     >
                       {feature}
                     </span>
@@ -88,7 +87,7 @@ export default function WhyJBSection() {
                 <Link
                   href="/contact-us"
                   className="inline-flex items-center justify-center px-8 py-3.5 bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] text-white font-semibold rounded-full transition-all duration-300 text-lg hover:shadow-[0_6px_20px_rgba(74,144,226,0.23)] hover:scale-105 ease-in-out"
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   Get Started
                 </Link>

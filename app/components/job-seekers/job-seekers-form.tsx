@@ -68,7 +68,7 @@ export default function JobSeekersForm() {
   return (
     <div
       className="w-full mx-auto pt-0 lg:pt-10"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Upload Resume */}

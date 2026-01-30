@@ -26,26 +26,24 @@ export default function WhatWeDo() {
 
   return (
     <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-14 items-start">
           {/* Left: Headers & Toggles */}
           <div className="lg:col-span-5 space-y-6">
             <ScrollAnimation variant="fadeUp">
               <h2
                 className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-3"
-                style={{ fontFamily: "Geist, sans-serif" }}
               >
                 What we do
               </h2>
               <p
                 className="text-[#252E3D] text-sm sm:text-base leading-relaxed max-w-md mb-6"
-                style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 We proudly support{" "}
                 <span className="font-semibold">
                   both companies and job seekers
                 </span>{" "}
-                - creating a balanced ecosystem where every match is purposeful.
+                creating a balanced ecosystem where every match is purposeful.
               </p>
 
               {/* Toggles */}
@@ -59,7 +57,7 @@ export default function WhatWeDo() {
                       ? "bg-[#252E3D] border-[#252E3D] text-white shadow-lg scale-[1.02]"
                       : "bg-white border-gray-200 text-gray-400 hover:border-[#252E3D] hover:text-[#252E3D] hover:bg-gray-50"
                   }`}
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   <span>Company</span>
                   <FaBriefcase
@@ -79,7 +77,7 @@ export default function WhatWeDo() {
                       ? "bg-[#252E3D] border-[#252E3D] text-white shadow-lg scale-[1.02]"
                       : "bg-white border-gray-200 text-gray-400 hover:border-[#252E3D] hover:text-[#252E3D] hover:bg-gray-50"
                   }`}
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   <span>Job seekers</span>
                   <FaUserFriends
@@ -114,7 +112,7 @@ export default function WhatWeDo() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                         className="group w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(96,93,186,0.12)] hover:border-[#605dba]/20 hover:-translate-y-0.5 transition-all duration-300"
-                        style={{ fontFamily: "Geist, sans-serif" }}
+                        style={{ fontFamily: "Raleway, sans-serif" }}
                       >
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FAFAFA] group-hover:bg-[#605dba]/10 flex items-center justify-center transition-colors duration-300">
                           <IoCheckmarkCircle className="text-gray-300 group-hover:text-[#605dba] text-xl transition-colors duration-300" />
@@ -123,7 +121,7 @@ export default function WhatWeDo() {
                           {item}
                         </span>
                       </motion.div>
-                    )
+                    ),
                   )}
                 </motion.div>
               </AnimatePresence>

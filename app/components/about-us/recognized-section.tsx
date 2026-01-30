@@ -20,7 +20,7 @@ export default function RecognizedSection() {
         <source src="/bg-video.mp4" type="video/mp4" />
       </video>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-0">
         <ScrollAnimation variant="fadeUp">
           <div
             className="rounded-[40px] p-6 sm:p-10 md:p-12 2xl:p-16 text-center text-white relative overflow-hidden shadow-2xl bg-cover bg-center bg-no-repeat"
@@ -60,25 +60,19 @@ export default function RecognizedSection() {
                 <BiWorld size={18} className="text-white/80" />
                 <span
                   className="text-sm font-medium tracking-wide text-white/90"
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   Global Recognition
                 </span>
               </div>
 
               {/* Title */}
-              <h2
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight mb-6 md:mb-8 tracking-tight"
-                style={{ fontFamily: "Geist, sans-serif" }}
-              >
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight mb-6 md:mb-8 tracking-tight">
                 Make Your Next Hire Count
               </h2>
 
               {/* Description */}
-              <p
-                className="text-sm sm:text-base md:text-lg lg:text-xl text-white/80 leading-relaxed mb-12 max-w-4xl mx-auto"
-                style={{ fontFamily: "Palatino Linotype, serif" }}
-              >
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/80 leading-relaxed mb-12 max-w-4xl mx-auto">
                 We believe hiring should be fast, thoughtful, and human-centred.
                 By focusing on quality, transparency, and real candidate
                 potential not just resumes.We help businesses build strong teams
@@ -96,16 +90,10 @@ export default function RecognizedSection() {
                   />
                 </div>
                 <div className="text-center">
-                  <p
-                    className="font-semibold text-base sm:text-lg text-white"
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                  >
+                  <p className="font-semibold text-base sm:text-lg text-white">
                     Juhi Bhatia
                   </p>
-                  <p
-                    className="text-white/60 text-xs sm:text-sm font-medium tracking-wide"
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                  >
+                  <p className="text-white/60 text-xs sm:text-sm font-medium tracking-wide">
                     Founder of JB
                   </p>
                 </div>
@@ -115,7 +103,7 @@ export default function RecognizedSection() {
               <Link
                 href="/contact-us"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-[#605dba] hover:bg-[#534eb8] text-white font-medium rounded-full transition-all duration-300 text-lg shadow-[0_10px_20px_rgba(96,93,186,0.3)] hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] hover:-translate-y-1 group"
-                style={{ fontFamily: "Geist, sans-serif" }}
+                style={{ fontFamily: "Raleway, sans-serif" }}
               >
                 Contact
                 <RxArrowTopRight

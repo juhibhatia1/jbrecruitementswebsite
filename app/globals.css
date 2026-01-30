@@ -1,17 +1,87 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+/* Fonts are loaded via next/font in `app/layout.tsx` (Raleway + Crimson Text). */
 @import "tailwindcss";
+
+/* 
+  FONT SETUP:
+  - Crimson Text: Used for all headings (h1-h6) - serif font for elegant typography
+  - Raleway: Used for body text (p, span, div, etc.) - modern sans-serif for readability
+  - Both fonts are imported from Google Fonts with proper preconnect links in layout.tsx
+*/
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
   --font-palatino: "Palatino Linotype", "Palatino", "Book Antiqua", serif;
   --font-geist-sans: "Geist", sans-serif;
+  --font-raleway: "Raleway", sans-serif;
+  --font-crimson: "Crimson Text", serif;
+}
+
+/* Geist font utilities */
+.geist {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.geist-400 {
+  font-weight: 400;
+}
+.geist-600 {
+  font-weight: 600;
+}
+.geist-700 {
+  font-weight: 700;
+}
+
+/* Example usage:
+   <p class="geist geist-600">Text using Geist at weight 600</p>
+   Add <link rel="preconnect" href="https://fonts.googleapis.com"> and
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   in `app/layout.tsx` head for best performance.
+*/
+
+/* Raleway font utilities */
+.raleway {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.raleway-400 {
+  font-weight: 400;
+}
+.raleway-600 {
+  font-weight: 600;
+}
+.raleway-700 {
+  font-weight: 700;
+}
+.raleway-900 {
+  font-weight: 900;
+}
+
+/* Crimson Text font utilities */
+.crimson {
+  font-family: "Crimson Text", serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.crimson-400 {
+  font-weight: 400;
+}
+.crimson-600 {
+  font-weight: 600;
+}
+.crimson-700 {
+  font-weight: 700;
+}
+.crimson-italic {
+  font-style: italic;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-raleway);
   --font-mono: var(--font-geist-mono);
   --font-palatino: var(--font-palatino);
 
@@ -19,6 +89,8 @@
   --font-family-geist: var(--font-geist-sans), sans-serif;
   --font-family-palatino:
     "Palatino Linotype", "Palatino", "Book Antiqua", serif;
+  --font-family-raleway: var(--font-raleway);
+  --font-family-crimson: var(--font-crimson);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,13 +121,29 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-raleway);
 }
 
-/* Heading styles - Geist font */
+/* Heading styles - Crimson Text */
 h1,
-h2 {
-  font-family: var(--font-geist-sans), sans-serif;
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-crimson);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Body text - Raleway */
+p,
+span,
+div,
+li,
+td,
+th {
+  font-family: var(--font-raleway);
 }
 
 /* Contact button ring and blinking dots */
@@ -115,7 +203,6 @@ h2 {
   z-index: 10;
 }
 
-
 /*Advisor Trust Section Marquee Animation*/
 @keyframes marquee {
   from {
@@ -140,7 +227,6 @@ h2 {
 .marquee:hover .marquee-track {
   animation-play-state: paused;
 }
-
 
 .marquee-track.paused {
   animation-play-state: paused;

@@ -108,7 +108,7 @@ export default function ServiceCard({
 
           <h3
             className="text-base sm:text-lg md:text-xl font-semibold text-[#252e3d] mb-1.5 text-center transition-all duration-300 group-hover:text-[#5a58ab] leading-snug"
-            style={{ fontFamily: "Palatino Linotype, serif" }}
+            style={{ fontFamily: "Crimson Text, serif" }}
           >
             {title}
           </h3>

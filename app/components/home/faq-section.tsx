@@ -111,9 +111,9 @@ export default function FAQsSection() {
   return (
     <section
       className="bg-white py-12 md:py-16 lg:py-20"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         <div className="grid grid-cols-1 gap-10 md:gap-14 lg:grid-cols-12">
           {/* LEFT (sticky) */}
           <div className="lg:col-span-5">
@@ -148,7 +148,8 @@ export default function FAQsSection() {
                 >
                   {/* <p className="text-md font-semibold">Need more help?</p> */}
                   <p className="mt-2 text-sm font-normal">
-                    Can't find the answer you're<br /> looking for?
+                    Can't find the answer you're
+                    <br /> looking for?
                   </p>
 
                   <div className="mt-12">

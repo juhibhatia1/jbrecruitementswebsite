@@ -4,9 +4,9 @@ export default function Footer() {
   return (
     <footer
       className="relative z-20 bg-white border-t border-[#bababa]"
-      style={{ fontFamily: "Geist, sans-serif" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
+      <div className="mx-auto max-w-7xl px-4 md:px-0 py-8 md:py-10">
         {/* Top Row */}
         <div className="flex flex-col gap-12 items-center md:flex-row md:items-center md:justify-between">
           {/* Left: Logo + Nav */}
@@ -60,6 +60,21 @@ export default function Footer() {
               />
             </Link>
 
+            {/* Instagram */}
+            <Link
+              href="https://www.instagram.com/juhibhatia_globalrecruiter/"
+              aria-label="Instagram"
+              className="hover:text-slate-900 relative group"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="/footer/instagram-logo.avif"
+                alt="Instagram"
+                className="h-5 w-5"
+              />
+            </Link>
+
             {/* Facebook */}
             <Link
               href="#"
@@ -85,22 +100,6 @@ export default function Footer() {
               <img
                 src="/footer/twitter-logo.avif"
                 alt="X"
-                className="h-5 w-5"
-              />
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                Coming Soon
-              </span>
-            </Link>
-
-            {/* Instagram */}
-            <Link
-              href="#"
-              aria-label="Instagram"
-              className="hover:text-slate-900 relative group"
-            >
-              <img
-                src="/footer/instagram-logo.avif"
-                alt="Instagram"
                 className="h-5 w-5"
               />
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">

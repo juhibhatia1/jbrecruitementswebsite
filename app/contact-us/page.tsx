@@ -13,10 +13,10 @@ export default function ContactPage() {
   return (
     <div
       className="min-h-screen flex flex-col bg-white"
-      style={{ fontFamily: "Geist, sans-serif" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="flex-grow bg-white">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-start md:items-center relative">
+        <div className="mx-auto max-w-7xl px-4 md:px-0 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-start md:items-center relative">
           {/* Subtle circular background blur */}
           <div className="pointer-events-none -z-10 absolute inset-0 flex">
             <div className="absolute left-6 top-6 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-[#eef0ff] via-[#f7f7ff] to-transparent opacity-60 blur-3xl hidden sm:block" />
@@ -26,14 +26,12 @@ export default function ContactPage() {
             <ScrollAnimation variant="fadeUp" className="space-y-8">
               <h1
                 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#252e3d] leading-tight"
-                style={{ fontFamily: "Geist, sans-serif" }}
               >
                 Let’s Connect
               </h1>
 
               <p
                 className="text-[#252e3d] leading-relaxed text-base sm:text-lg"
-                style={{ fontFamily: "Palatino Linotype, sans-serif" }}
               >
                 Whether you're an organisation looking to hire or a professional
                 exploring your next opportunity, we’re here to support you with
@@ -79,8 +77,7 @@ export default function ContactPage() {
                     <PiHandsClappingFill size={24} className="text-[#605dba]" />
                   </div>
                   <span
-                    className="text-[#252e3d] text-base sm:text-lg"
-                    style={{ fontFamily: "Palatino Linotype, sans-serif" }}
+                    className="text-[#252e3d] text-xs sm:text-base"
                   >
                     We assist Employers and Candidates across regions and
                     industries, offering flexible recruitment support and
@@ -97,7 +94,6 @@ export default function ContactPage() {
                   </h4>
                   <p
                     className="text-sm sm:text-base text-gray-600"
-                    style={{ fontFamily: "Palatino Linotype, sans-serif" }}
                   >
                     We help businesses hire candidates who are not just
                     qualified, but truly aligned with their culture and goals.
@@ -110,7 +106,6 @@ export default function ContactPage() {
                   </h4>
                   <p
                     className="text-sm sm:text-base text-gray-600"
-                    style={{ fontFamily: "Palatino Linotype, sans-serif" }}
                   >
                     We support individuals throughout their career journey with
                     tools and guidance that help them stand out and succeed.

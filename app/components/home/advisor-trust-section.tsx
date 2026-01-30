@@ -113,16 +113,15 @@ function MarqueeItems() {
   );
 }
 
-
 export default function AdvisorTrustSection() {
   const [paused, setPaused] = useState(false);
   return (
     <section
       className="bg-[#1b1b1b] text-white relative z-10"
-      style={{ fontFamily: "Geist, sans-serif" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
-      <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl px-4 md:px-0 py-12 md:py-16 lg:py-20">
         {/* Eyebrow */}
         <div className="mb-4 md:mb-6 flex justify-center">
           <span className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">

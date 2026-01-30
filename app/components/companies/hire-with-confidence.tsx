@@ -1,24 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { FaCheck } from "react-icons/fa";
 
 export default function HireWithConfidence() {
   return (
     <section className="w-full bg-gradient-to-b from-slate-50 to-white md:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
-          <h1
-            className="text-[#252e3d] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6"
-            style={{ fontFamily: "Geist, sans-serif" }}
-          >
+          <h1 className="text-[#26262A] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6 crimson">
             Hire with Confidence
           </h1>
-          <p
-            className="mx-auto max-w-3xl text-[#252e3d] text-base md:text-lg lg:text-xl leading-relaxed text-left"
-            style={{ fontFamily: "Palatino Linotype, sans-serif" }}
-          >
+          <p className="mx-auto max-w-3xl text-[#252e3d] text-base md:text-lg lg:text-xl leading-relaxed text-left raleway">
             Hiring is one of the most crucial decisions a business makes. At JB
             Solutions, we treat it with the importance it deserves. Our
             recruitment approach goes beyond matching skills - we look at
@@ -30,75 +23,52 @@ export default function HireWithConfidence() {
         {/* Cards Grid - 2x2 Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* TOP LEFT - Complete Recruitment Support */}
-          <div className="bg-white rounded-xl p-8 md:p-6 shadow-lg border border-slate-200 flex flex-col md:flex-row gap-8 items-center lg:col-span-8">
-            {/* Background Image */}
-            <div className="flex-shrink-0 rounded-xl w-72 h-60 sm:w-84 sm:h-68 md:w-100 md:h-100 relative bg-slate-100">
-              <Image
-                src="/companies/card-1.svg"
-                alt="Complete Recruitment Support"
-                fill
-                className="object-contain"
-              />
+          <div className="bg-white rounded-xl p-8 md:p-6 shadow-lg border border-slate-200 lg:col-span-8">
+            {/* Top Section: Image + Content side by side */}
+            <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-6 items-center justify-center">
+              {/* Image */}
+              <div className="flex-shrink-0 rounded-xl w-full md:w-64 h-48 md:h-56 relative">
+                <Image
+                  src="/companies/card-1.png"
+                  alt="Complete Recruitment Support"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 items-center justify-center">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 leading-tight text-[#252e3d] crimson">
+                  Complete Recruitment Support
+                </h2>
+                <p className="text-[#4b5563] text-base leading-relaxed raleway">
+                  Simplify your entire hiring journey. From sourcing to
+                  selection, we deliver structured, human-first recruitment
+                  support. So the right hire is always within reach.
+                </p>
+              </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1">
-              <h2
-                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
-                style={{ fontFamily: "Geist, sans-serif" }}
-              >
-                Complete Recruitment Support
-              </h2>
-              <p className="text-[#4b5563] text-base mb-4 leading-relaxed">
-                Simplify your entire hiring journey. From sourcing to selection,
-                we deliver structured, human-first recruitment support. So the
-                right hire is always within reach.
-              </p>
-              <ul className="space-y-4 text-base text-[#252e3d]">
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    Data-driven approach
-                  </span>
+            {/* Bottom Section: Tagline + Features */}
+            <div className="">
+              {/* Centered tagline */}
+              <div className="text-center mb-4">
+                <p className="text-[#252E3D] font-semibold text-lg md:text-2xl crimson">
+                  JB works as an extension of your brand
+                </p>
+              </div>
+
+              {/* Two-column feature list */}
+              <ul className="grid grid-cols-1 sm:grid-cols-2 justify-center items-center gap-3 text-base text-[#737373]">
+                <li className="font-medium raleway">
+                  ● 300,000+ global talent network
                 </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    300,000+ global talent network
-                  </span>
+                <li className="font-medium raleway">● Data-driven approach</li>
+                <li className="font-medium raleway">
+                  ● 48-hour shortlist turnaround
                 </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    48-hour shortlist turnaround
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    Flexible payment options
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    JB works as an extension of your brand
-                  </span>
+                <li className="font-medium raleway">
+                  ● Flexible payment options
                 </li>
               </ul>
             </div>
@@ -112,7 +82,7 @@ export default function HireWithConfidence() {
               <div className="bg-slate-100 px-3 py-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 inline-block max-w-[85%]">
                 <p
                   className="text-[#1f2937] text-sm"
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   Can I share my requirements with you?
                 </p>
@@ -123,7 +93,7 @@ export default function HireWithConfidence() {
                 <div className="bg-[#605dba] text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-md inline-block">
                   <p
                     className="text-sm font-medium"
-                    style={{ fontFamily: "Geist, sans-serif" }}
+                    style={{ fontFamily: "Raleway, sans-serif" }}
                   >
                     Yes, please.
                   </p>
@@ -135,7 +105,7 @@ export default function HireWithConfidence() {
                 <div className="bg-slate-100 px-4 py-2 rounded-xl rounded-tl-none border border-slate-100 shadow-sm flex items-center">
                   <span
                     className="text-sm font-medium text-[#1f2937]"
-                    style={{ fontFamily: "Geist, sans-serif" }}
+                    style={{ fontFamily: "Raleway, sans-serif" }}
                   >
                     Done ✅
                   </span>
@@ -143,21 +113,20 @@ export default function HireWithConfidence() {
               </div>
 
               {/* Chat 4 (Follow up) */}
-              <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm inline-block max-w-[85%]">
-                <p
-                  className="text-[#1f2937] text-sm"
-                  style={{ fontFamily: "Geist, sans-serif" }}
-                >
-                  We'll follow up shortly.
-                </p>
+              <div className="flex justify-end">
+                <div className="bg-[#605dba] text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-md inline-block">
+                  <p
+                    className="text-sm font-medium"
+                    style={{ fontFamily: "Raleway, sans-serif" }}
+                  >
+                    We'll follow up shortly.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div>
-              <h3
-                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight text-[#252e3d]"
-                style={{ fontFamily: "Geist, sans-serif" }}
-              >
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight text-[#26262A]">
                 Tailored Role-Based Search
               </h3>
               <p className="text-[#4b5563] leading-relaxed text-sm sm:text-base">
@@ -169,68 +138,45 @@ export default function HireWithConfidence() {
           </div>
 
           {/* BOTTOM LEFT - Industry-Aware Screening */}
-          <div className="bg-white rounded-xl p-8 md:p-6 shadow-lg border border-slate-200 flex flex-col md:flex-row gap-8 items-center min-h-[400px] lg:col-span-8">
+          <div className="bg-white rounded-xl p-8 md:p-6 shadow-lg border border-slate-200 lg:col-span-8">
             {/* Content */}
-            <div className="flex-1">
-              <h2
-                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
-                style={{ fontFamily: "Geist, sans-serif" }}
-              >
+            <div className="">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#26262A]">
                 Industry-aware Screening
               </h2>
-              <p className="text-[#4b5563] text-base mb-4 leading-relaxed">
+              <p className="text-[#4b5563] text-base mb-6 leading-relaxed">
                 It ensures candidates are evaluated with a deep understanding of
                 the role, domain, and business context. Instead of relying on
                 keywords alone, we assess real-world experience, problem solving
                 ability, and team alignment.
               </p>
-              <ul className="space-y-4 text-base text-[#252e3d]">
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    Role-Specific Evaluation
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    Context-Driven Shortlisting
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaCheck className="text-black flex-shrink-0" size={15} />
-                  <span
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                    className="text-black font-medium"
-                  >
-                    Better Hiring Decisions
-                  </span>
-                </li>
-              </ul>
             </div>
-            <div className="flex-shrink-0 w-72 h-60 sm:w-84 sm:h-68 md:w-100 md:h-100 rounded-xl relative bg-slate-100">
-              <Image
-                src="/companies/card-2.svg"
-                alt="Complete Recruitment Support"
-                fill
-                className="object-contain"
-              />
+
+            <div className="flex items-center gap-6 md:gap-8">
+              {/* Image */}
+              <div className="flex-shrink-0 w-full md:w-100 h-48 md:h-56 rounded-xl relative">
+                <Image
+                  src="/companies/card-2.png"
+                  alt="Industry-aware Screening"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <ul className="space-y-3 text-[#737373]">
+                <li className="font-medium">● Role-Specific Evaluation</li>
+                <li className="font-medium">● Context-Driven Shortlisting</li>
+                <li className="font-medium">● Better Hiring Decisions</li>
+              </ul>
             </div>
           </div>
 
           {/* BOTTOM RIGHT - Quality-Driven Selection */}
           <div className="bg-white rounded-xl p-5 md:p-6 shadow-lg border border-slate-200 min-h-[400px] flex flex-col justify-between lg:col-span-4">
-            <div className="mb-6 w-full max-w-sm mx-autorounded-xl p-3">
+            <div className="w-full max-w-sm mx-auto rounded-xl p-3">
               <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <p
                   className="text-sm text-[#1f2937] font-semibold tracking-wide"
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   Comparison
                 </p>
@@ -288,10 +234,7 @@ export default function HireWithConfidence() {
             </div>
 
             <div className="mt-auto">
-              <h3
-                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight text-[#252e3d]"
-                style={{ fontFamily: "Geist, sans-serif" }}
-              >
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight text-[#26262A]">
                 Quality-Driven Selection
               </h3>
               <p className="text-[#4b5563] leading-relaxed text-sm sm:text-base">

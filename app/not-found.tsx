@@ -10,7 +10,7 @@ export default function NotFound() {
   return (
     <div
       className="relative bg-white overflow-hidden"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <FloatingNavbar />
       {/* Subtle diagonal background */}
@@ -37,7 +37,7 @@ export default function NotFound() {
         <ScrollAnimation variant="fadeUp" delay={0.3}>
           <p
             className="mt-2 max-w-md text-sm text-[#252E3D] md:text-base lg:text-xl"
-            style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+            style={{ fontFamily: "Crimson Text, serif" }}
           >
             The page you were looking for can't be found.
           </p>

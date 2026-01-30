@@ -6,7 +6,7 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 
 interface testimonials {
   id: number;
-  name: string; 
+  name: string;
   role?: string;
   company: string;
   image: string;
@@ -122,9 +122,9 @@ export default function Testimonials() {
   return (
     <section
       className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16 overflow-x-hidden"
-      style={{ fontFamily: "Geist, sans-serif" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-6 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 md:px-0 overflow-hidden">
         {/* Section Header */}
         <div className="text-center mb-10 md:mb-14">
           <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
@@ -134,7 +134,6 @@ export default function Testimonials() {
 
           <h2
             className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6"
-            style={{ fontFamily: "Palatino Linotype, serif" }}
           >
             What our customers love about us
           </h2>
@@ -193,9 +192,9 @@ export default function Testimonials() {
           >
             {/* Author Info */}
             <div className="text-center mb-3">
-              <p className="text-lg sm:text-xl md:text-3xl font-bold text-black">
+              <h3 className="text-lg sm:text-xl md:text-3xl font-bold text-black">
                 {testimonials[activeTestimonial].company}
-              </p>
+              </h3>
               <p className="text-sm sm:text-base md:text-lg text-[#05070F] my-1">
                 {testimonials[activeTestimonial].name}
               </p>

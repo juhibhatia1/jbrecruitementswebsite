@@ -14,7 +14,7 @@ export default function FounderSection() {
             <PiCubeLight className="text-[#605dba] text-xl" />
             <span
               className="text-[#605dba] font-medium text-sm sm:text-base"
-              style={{ fontFamily: "Geist, sans-serif" }}
+              style={{ fontFamily: "Raleway, sans-serif" }}
             >
               Meet the Founder
             </span>
@@ -23,7 +23,6 @@ export default function FounderSection() {
           {/* Title */}
           <h2
             className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-6 md:mb-8 leading-tight"
-            style={{ fontFamily: "Geist, sans-serif" }}
           >
             Leadership Grounded in Experience
           </h2>
@@ -31,7 +30,6 @@ export default function FounderSection() {
           {/* Bio Text */}
           <p
             className="text-[#252E3D] text-base md:text-lg leading-loose mb-12 text-justify md:text-center"
-            style={{ fontFamily: "Palatino Linotype, serif" }}
           >
             With over 11 years of international recruitment experience across
             the UK, Europe, the Middle East, and the USA, Juhi Bhatia brings a
@@ -56,7 +54,6 @@ export default function FounderSection() {
             </div>
             <h3
               className="text-[#252E3D] text-base sm:text-lg font-semibold mb-0.5"
-              style={{ fontFamily: "Geist, sans-serif" }}
             >
               Juhi Bhatia
             </h3>

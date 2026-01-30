@@ -13,7 +13,7 @@ export default function HeroSection() {
         {/* Background Image */}
         <img
           src="/home/hero-background.avif"
-          alt="Professional recruitment and HR consulting services - JB Recruitment Solutions team"
+          alt="Professional recruitment and HR consulting services - JB Recruitments"
           className="absolute inset-0 w-full h-full object-cover object-[82%_50%] sm:object-[85%_50%] md:object-[80%_50%] lg:object-[80%_0%] xl:object-[90%_12%]"
         />
         {/* Dark overlay */}
@@ -32,7 +32,7 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8">
+                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8 crimson">
                     <div className="">Thoughtful</div>
                     <div className="">Hiring. Real</div>
                     <div className="">Outcomes</div>
@@ -45,10 +45,7 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <p
-                    className="text-[#D6D6D6] text-base md:text-lg 2xl:text-xl leading-relaxed mb-4 md:mb-10 max-w-xl md:max-w-3xl w-full"
-                    style={{ fontFamily: "Geist, sans-serif" }}
-                  >
+                  <p className="text-[#D6D6D6] text-base md:text-lg 2xl:text-xl leading-relaxed mb-4 md:mb-10 max-w-xl md:max-w-3xl w-full raleway">
                     JB is more than a recruitment agency - we’re a brand
                     defining trust, visibility & lasting impact. At JB, we help
                     companies hire the right people, fast. Our process is

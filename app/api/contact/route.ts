@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "Name, email, and message are required fields." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -21,23 +21,52 @@ export async function POST(request: Request) {
       console.error("Missing email credentials in environment variables.");
       return NextResponse.json(
         { error: "Server configuration error." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    // Configure the transporter for Office 365
+    // Temporary Gmail configuration (working solution)
+    // Using Gmail while finding correct Neospace SMTP settings
+    // const transporter = nodemailer.createTransport({
+    //   service: "gmail",
+    //   auth: {
+    //     user,
+    //     pass,
+    //   },
+    // });
+
+    // When you find your Neospace SMTP settings, replace above with:
     const transporter = nodemailer.createTransport({
-      host: "smtp.office365.com",
-      port: 587,
-      secure: false, // true for 465, false for other ports
+      host: "smtp0001.neo.space",
+      port: 465,
+      secure: true, // TLS
       auth: {
-        user,
-        pass,
-      },
-      tls: {
-        ciphers: "SSLv3",
+        user: "contact@jbrecruitments.com",
+        pass: process.env.NEXT_NODEMAILER_PASS,
       },
     });
+
+    // Alternative Neospace configurations to try:
+    // 1. If above doesn't work, try:
+    // host: "mail.neospace.com.my"
+    //
+    // 2. Or server-specific (check your Neospace control panel):
+    // host: "server123.neospace.com.my" (replace 123 with your server number)
+    //
+    // 3. Or try with port 465:
+    // port: 465, secure: true
+
+    // Alternative configuration if above doesn't work:
+    // Try port 465 with secure: true
+    // const transporter = nodemailer.createTransport({
+    //   host: "mail.jbrecruitments.com",
+    //   port: 465,
+    //   secure: true,
+    //   auth: {
+    //     user,
+    //     pass,
+    //   },
+    // });
 
     const mailOptions = {
       from: user,
@@ -63,7 +92,7 @@ export async function POST(request: Request) {
               <p><strong>Message:</strong></p>
               <p style="white-space: pre-wrap;">${message.replace(
                 /\n/g,
-                "<br>"
+                "<br>",
               )}</p>
             </div>
           </div>
@@ -74,13 +103,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: true, message: "Email sent successfully!" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error sending email:", error);
     return NextResponse.json(
       { error: "Failed to send email." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

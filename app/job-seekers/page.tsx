@@ -8,10 +8,10 @@ export default function JobSeekersPage() {
   return (
     <div
       className="min-h-screen bg-[#F9F9FB] text-[#252E3D]"
-      style={{ fontFamily: "Geist, sans-seriff" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="flex-grow">
-        <div className="relative mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-center">
+        <div className="relative mx-auto max-w-7xl px-4 md:px-0 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-center">
           {/* Sun Rays Background Effect */}
           <div
             className="absolute top-0 left-0 w-full h-[600px] pointer-events-none overflow-hidden -z-10"
@@ -33,11 +33,12 @@ export default function JobSeekersPage() {
                 Career Insights & Guidance
               </h1>
 
-              <div
-                className="mt-8 space-y-8"
-              >
+              <div className="mt-8 space-y-8">
                 <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
+                  <h3
+                    className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3"
+                    style={{ fontFamily: "Crimson Text, serif" }}
+                  >
                     Your Career Support Starts Here
                   </h3>
                   <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -49,7 +50,10 @@ export default function JobSeekersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
+                  <h4
+                    className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2"
+                    style={{ fontFamily: "Crimson Text, serif" }}
+                  >
                     Stay Updated With Latest Roles
                   </h4>
                   <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -60,7 +64,10 @@ export default function JobSeekersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
+                  <h4
+                    className="text-lg font-semibold text-[#252e3d] mb-3"
+                    style={{ fontFamily: "Crimson Text, serif" }}
+                  >
                     Simple Process for Candidates
                   </h4>
                   <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-1">

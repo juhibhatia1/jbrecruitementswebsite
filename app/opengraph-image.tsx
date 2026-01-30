@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt =
-  "JB Recruitment Solutions - HR Consulting & Talent Acquisition";
+export const alt = "JB Recruitments - HR Consulting & Talent Acquisition";
 export const size = {
   width: 1200,
   height: 630,
@@ -31,7 +30,7 @@ export default async function Image() {
     >
       <img
         src={`${baseUrl}/logo.avif`}
-        alt="JB Recruitment Solutions logo"
+        alt="JB Recruitments logo"
         style={{
           width: 180,
           height: 180,
@@ -52,7 +51,7 @@ export default async function Image() {
           letterSpacing: "-0.5px",
         }}
       >
-        JB Recruitment Solutions
+        JB Recruitments
       </div>
       <div
         style={{

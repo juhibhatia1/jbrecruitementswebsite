@@ -7,14 +7,13 @@ export default function AboutHero() {
     <section className="relative w-full bg-[#FAFAFA] pt-20 sm:pt-24 pb-12 md:pb-16 overflow-hidden">
       {/* Background Gradient similar to design if needed, or keep clean white/gray */}
 
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         <ScrollAnimation variant="fadeUp">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
             {/* Left: Title */}
             <div className="col-span-1">
               <h1
                 className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
-                style={{ fontFamily: "Geist, sans-serif" }}
               >
                 About Us
               </h1>
@@ -24,7 +23,6 @@ export default function AboutHero() {
             <div className="space-y-6 col-span-2">
               <p
                 className="text-[#252E3D] text-base md:text-lg leading-loose"
-                style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 JB is a recruitment agency dedicated to creating meaningful
                 connections between companies and talented professionals. We
@@ -35,7 +33,6 @@ export default function AboutHero() {
               <blockquote className="relative">
                 <p
                   className="text-[#252E3D] text-lg md:text-xl font-bold leading-tight"
-                  style={{ fontFamily: "Geist, sans-serif" }}
                 >
                   "Hiring can be efficient and humane at the same time."
                 </p>

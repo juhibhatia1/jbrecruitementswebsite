@@ -15,7 +15,7 @@ export default function ContactForm() {
   >("idle");
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -43,7 +43,7 @@ export default function ContactForm() {
   return (
     <div
       className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full mx-auto border border-[#bababa]"
-      style={{ fontFamily: "Geist, sans-serif" }}
+      style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-[#252E3D]">
         Get in Touch with Us
@@ -51,10 +51,9 @@ export default function ContactForm() {
 
       <p
         className="text-[#252e3d] text-sm sm:text-base lg:text-lg mt-2"
-        style={{ fontFamily: "Palatino Linotype, sans-serif" }}
       >
-        Share your questions, thoughts, or ideas - we're here to help and ready to
-        listen.
+        Share your questions, thoughts, or ideas - we're here to help and ready
+        to listen.
       </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

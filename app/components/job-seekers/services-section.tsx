@@ -127,7 +127,7 @@ export default function ServicesSection() {
 
   return (
     <section className="py-12 md:py-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-0">
         <div className="relative flex items-center justify-center mb-12 md:mb-16">
           <div className="absolute left-0 flex items-center gap-2">
             <img
@@ -152,7 +152,6 @@ export default function ServicesSection() {
             <div className="pr-4 lg:pr-8">
               <p
                 className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium"
-                style={{ fontFamily: "Palatino Linotype, serif" }}
               >
                 Beyond core recruitment, we support your hiring process with
                 thoughtful coordination, clear communication, and end-to-end
@@ -187,9 +186,9 @@ export default function ServicesSection() {
             <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm border border-[#e8e3ff]">
               Limited Bundle
             </span>
-            <p className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
+            <h2 className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
               All services bundled together at a special price of USD 400.
-            </p>
+            </h2>
             <span className="text-md text-[#4b5563]">
               Highlighting every upgrade in one move.
             </span>

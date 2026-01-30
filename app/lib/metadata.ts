@@ -8,14 +8,15 @@ export const defaultMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default:
-      "JB Recruitment Solutions - Premier HR Consulting & Talent Acquisition Firm",
-    template: "%s | JB Recruitment Solutions",
+      "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
+    template: "%s | JB Recruitments",
   },
   description:
-    "JB Recruitment Solutions is a leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Connect with top talent and transform your hiring process with our expert recruitment services.",
+    "JB Recruitments is a leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Connect with top talent and transform your hiring process with our expert recruitment services.",
   keywords: [
+    "JB Recruitments",
+    "JB Recruitment",
     "JB Solutions",
-    "JB Recruitment Solutions",
     "HR firms",
     "HR consulting",
     "recruitment agency",
@@ -50,9 +51,9 @@ export const defaultMetadata: Metadata = {
     "top recruitment agencies",
     "best HR consultancy",
   ],
-  authors: [{ name: "JB Recruitment Solutions" }],
-  creator: "JB Recruitment Solutions",
-  publisher: "JB Recruitment Solutions",
+  authors: [{ name: "JB Recruitments" }],
+  creator: "JB Recruitments",
+  publisher: "JB Recruitments",
   formatDetection: {
     email: false,
     address: false,
@@ -62,9 +63,8 @@ export const defaultMetadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "JB Recruitment Solutions",
-    title:
-      "JB Recruitment Solutions - Premier HR Consulting & Talent Acquisition Firm",
+    siteName: "JB Recruitments",
+    title: "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
     description:
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Transform your hiring process with expert recruitment services.",
     images: [
@@ -72,14 +72,13 @@ export const defaultMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "JB Recruitment Solutions - HR Consulting & Talent Acquisition",
+        alt: "JB Recruitments - HR Consulting & Talent Acquisition",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "JB Recruitment Solutions - Premier HR Consulting & Talent Acquisition Firm",
+    title: "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
     description:
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions.",
     images: [ogImage],
@@ -102,25 +101,24 @@ export const defaultMetadata: Metadata = {
     // Uncomment after saving logo.png to public folder:
     // apple: '/logo.png',
   },
-  manifest: "/manifest.json",
   alternates: {
     canonical: siteUrl,
   },
 };
 
 export const contactMetadata: Metadata = {
-  title: "Contact Us - JB Recruitment Solutions",
+  title: "Contact Us - JB Recruitments",
   description:
-    "Get in touch with JB Recruitment Solutions. Whether you're looking to hire top talent or explore career opportunities, our HR consulting experts are here to help.",
+    "Get in touch with JB Recruitments. Whether you're looking to hire top talent or explore career opportunities, our HR consulting experts are here to help.",
   keywords: [
-    "contact JB Recruitment",
+    "contact JB Recruitments",
     "hire recruiters",
     "talk to HR consultants",
     "recruitment services contact",
     "talent acquisition help",
   ],
   openGraph: {
-    title: "Contact Us - JB Recruitment Solutions",
+    title: "Contact Us - JB Recruitments",
     description:
       "Get in touch with our HR consulting experts for talent acquisition and recruitment solutions.",
     url: `${siteUrl}/contact-us`,
@@ -129,7 +127,7 @@ export const contactMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "Contact JB Recruitment Solutions",
+        alt: "Contact JB Recruitments",
       },
     ],
   },
@@ -139,27 +137,27 @@ export const contactMetadata: Metadata = {
 };
 
 export const aboutMetadata: Metadata = {
-  title: "About Us - JB Recruitment Solutions",
+  title: "About Us - JB Recruitments",
   description:
-    "Learn about JB Recruitment Solutions, our mission, vision, and the team dedicated to transforming your hiring process. We are committed to connecting businesses with exceptional talent.",
+    "Learn about JB Recruitments, our mission, vision, and the team dedicated to transforming your hiring process. We are committed to connecting businesses with exceptional talent.",
   keywords: [
-    "about JB Recruitment",
+    "about JB Recruitments",
     "recruitment firm story",
     "talent acquisition team",
     "HR consulting mission",
     "Juhi Bhatia recruiter",
   ],
   openGraph: {
-    title: "About Us - JB Recruitment Solutions",
+    title: "About Us - JB Recruitments",
     description:
-      "Discover our story, mission, and commitment to people-first recruitment. Meet the team behind JB Recruitment Solutions.",
+      "Discover our story, mission, and commitment to people-first recruitment. Meet the team behind JB Recruitments.",
     url: `${siteUrl}/about-us`,
     images: [
       {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "About JB Recruitment Solutions",
+        alt: "About JB Recruitments",
       },
     ],
   },
@@ -169,7 +167,7 @@ export const aboutMetadata: Metadata = {
 };
 
 export const companiesMetadata: Metadata = {
-  title: "For Companies - Hire with Confidence | JB Recruitment Solutions",
+  title: "For Companies - Hire with Confidence | JB Recruitments",
   description:
     "Complete recruitment support for businesses. From requirement-led hiring to quality-driven selection, we help you find candidates who fit your role, team, and culture.",
   keywords: [
@@ -180,7 +178,7 @@ export const companiesMetadata: Metadata = {
     "executive search partner",
   ],
   openGraph: {
-    title: "For Companies - Hire with Confidence | JB Recruitment Solutions",
+    title: "For Companies - Hire with Confidence | JB Recruitments",
     description:
       "Transform your hiring with our comprehensive recruitment solutions. We find candidates aligned with your goals and culture.",
     url: `${siteUrl}/companies`,
@@ -189,7 +187,7 @@ export const companiesMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "JB Recruitment Solutions for Companies",
+        alt: "JB Recruitments for Companies",
       },
     ],
   },
@@ -199,18 +197,18 @@ export const companiesMetadata: Metadata = {
 };
 
 export const jobSeekersMetadata: Metadata = {
-  title: "Career Insights & Job Opportunities - JB Recruitment Solutions",
+  title: "Career Insights & Job Opportunities - JB Recruitments",
   description:
-    "Explore career advice, industry insights, and job opportunities with JB Recruitment Solutions. Connect with top employers and advance your career with expert guidance.",
+    "Explore career advice, industry insights, and job opportunities with JB Recruitments. Connect with top employers and advance your career with expert guidance.",
   keywords: [
-    "job seekers JB Recruitment",
+    "job seekers JB Recruitments",
     "career guidance",
     "resume support",
     "find jobs UAE",
     "international career opportunities",
   ],
   openGraph: {
-    title: "Career Insights & Job Opportunities - JB Recruitment Solutions",
+    title: "Career Insights & Job Opportunities - JB Recruitments",
     description:
       "Explore career advice and connect with top employers through our recruitment experts.",
     url: `${siteUrl}/job-seekers`,
@@ -219,7 +217,7 @@ export const jobSeekersMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "Career Opportunities - JB Recruitment Solutions",
+        alt: "Career Opportunities - JB Recruitments",
       },
     ],
   },

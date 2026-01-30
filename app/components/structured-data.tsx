@@ -3,7 +3,7 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "RecruitmentAgency",
     "@id": "https://jbrecruitment.com/#organization",
-    name: "JB Recruitment Solutions",
+    name: "JB Recruitments",
     alternateName: "JB Solutions",
     url: "https://jbrecruitment.com",
     // Uncomment after saving logo.png to public folder:
@@ -48,7 +48,7 @@ export default function StructuredData() {
       "https://www.linkedin.com/in/juhiibhatia/",
       "https://www.facebook.com",
       "https://twitter.com",
-      "https://www.instagram.com",
+      "https://www.instagram.com/juhibhatia_globalrecruiter/",
     ],
   };
 
@@ -57,7 +57,7 @@ export default function StructuredData() {
     "@type": "WebSite",
     "@id": "https://jbrecruitment.com/#website",
     url: "https://jbrecruitment.com",
-    name: "JB Recruitment Solutions",
+    name: "JB Recruitments",
     publisher: {
       "@id": "https://jbrecruitment.com/#organization",
     },

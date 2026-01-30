@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     if (!name || !email || !file) {
       return NextResponse.json(
         { error: "Name, email, and resume are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,15 +46,17 @@ export async function POST(request: Request) {
       console.error("Missing Nodemailer credentials");
       return NextResponse.json(
         { error: "Server configuration error" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp0001.neo.space",
+      port: 465,
+      secure: true, // TLS
       auth: {
-        user,
-        pass,
+        user: "contact@jbrecruitments.com",
+        pass: process.env.NEXT_NODEMAILER_PASS,
       },
     });
 
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
     console.error("Error processing job application:", error);
     return NextResponse.json(
       { error: "Failed to process application." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

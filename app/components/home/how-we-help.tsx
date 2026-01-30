@@ -10,7 +10,7 @@ export default function HowWeHelpSection() {
   const router = useRouter();
   return (
     <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-0">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
@@ -23,7 +23,7 @@ export default function HowWeHelpSection() {
                 />
                 <p
                   className="text-[#605dba] text-base md:text-lg font-medium"
-                  style={{ fontFamily: "Geist, sans-serif" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   How We Help
                 </p>
@@ -42,7 +42,7 @@ export default function HowWeHelpSection() {
         {/* Main Content Grid: left card, centered description, right card */}
         <div
           className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 xl:gap-16"
-          style={{ fontFamily: "Geist, sans-serif" }}
+          style={{ fontFamily: "Raleway, sans-serif" }}
         >
           {/* Left Column */}
           <ScrollAnimation
