@@ -41,7 +41,7 @@ export default function StructuredData() {
       "@type": "ContactPoint",
       telephone: "+1-555-123-4567",
       contactType: "customer service",
-      email: "juhi@jbrecruitments.com",
+      email: "contact@jbrecruitments.com",
       availableLanguage: "English",
     },
     sameAs: [

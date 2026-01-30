@@ -32,24 +32,10 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <div className="hidden sm:block">
-                    <motion.span
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: [8, 0, 8] }}
-                      transition={{ duration: 3.2, ease: "easeInOut" }}
-                      whileHover={{ scale: 1.06 }}
-                      className="inline-flex items-center gap-3 bg-white/2 border border-[#caa42b] text-[#e1b223] px-6 py-3 rounded-full text-sm sm:text-base font-semibold tracking-wider shadow-[0_0px_60px_rgba(202,164,43,0.14)] transform transition-all duration-300 ring-1 ring-[#caa42b]/25 backdrop-blur-md"
-                      aria-label="JB - A brand by Juhi Bhatia"
-                    >
-                      <span className="leading-tight drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]">
-                        JB - A brand by Juhi Bhatia
-                      </span>
-                    </motion.span>
-                  </div>
-
-                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] my-6 md:my-8">
-                    <div className="">Thoughtful Hiring.</div>
-                    <div className="">Real Outcomes</div>
+                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8">
+                    <div className="">Thoughtful</div>
+                    <div className="">Hiring. Real</div>
+                    <div className="">Outcomes</div>
                   </h1>
                 </motion.div>
 

@@ -9,8 +9,8 @@ import { useRouter } from "next/navigation";
 export default function HowWeHelpSection() {
   const router = useRouter();
   return (
-    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 px-6 md:px-8 lg:px-12 border-t border-[#bababa] overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
@@ -31,7 +31,8 @@ export default function HowWeHelpSection() {
 
               <div className="col-span-1 sm:col-span-3">
                 <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
-                  We support hiring across the UK, Europe, the Middle East, and the USA
+                  We support hiring across the UK, Europe, the Middle East, and
+                  the USA
                 </h2>
               </div>
             </div>
@@ -50,7 +51,10 @@ export default function HowWeHelpSection() {
             className="space-y-8 lg:space-y-10 col-span-1"
           >
             {/* Chat Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg cursor-pointer" onClick={() => router.push('/companies')}>
+            <div
+              className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg cursor-pointer"
+              onClick={() => router.push("/companies")}
+            >
               {/* Chat Messages */}
               <div className="space-y-3 md:space-y-4 mb-8 md:mb-0">
                 {/* User message */}
@@ -140,7 +144,10 @@ export default function HowWeHelpSection() {
             className="space-y-6 md:space-y-8 col-span-1 flex flex-col items-end"
           >
             {/* Career Guidance Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full cursor-pointer" onClick={() => router.push('/job-seekers')}>
+            <div
+              className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full cursor-pointer"
+              onClick={() => router.push("/job-seekers")}
+            >
               {/* Resume Preview Box */}
               <div className="mb-6 md:mb-8 relative">
                 <div className="">

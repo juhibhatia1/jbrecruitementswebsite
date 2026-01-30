@@ -49,21 +49,20 @@ const services = [
     id: 4,
     title: "Superstar Shout-Out",
     description:
-      "A targeted LinkedIn announcement amplifying your availability to decision-makers. Posted from Juhi Bhatia's personal LinkedIn.",
+      "Targeted LinkedIn announcement to decision-makers",
     iconPath: "/icons/job-seekers/superstar.svg",
     features: [
-      "Tailored LinkedIn post highlighting your profile, key skills, and availability",
-      "Strategic positioning designed to attract hiring managers and recruiters",
-      "Enhanced visibility among employers and decision-makers",
-      "Published via Juhi Bhatia’s personal LinkedIn to maximize reach and credibility",
-      "USD 180 | 5 days",
+      "Custom post showcasing your profile, skills & availability",
+      "Strategic positioning to attract hiring managers",
+      "Increased visibility with employers & key decision-makers",
+      "Published via Juhi Bhatia’s LinkedIn for wider reach & credibility. USD 180 | 5 days"
     ],
   },
   {
     id: 5,
     title: "Ask Me Anything",
     description:
-      "Direct, practical guidance for real-world career challenges and decisions.",
+      "Direct, practical guidance over email for real-world career challenges and decisions.",
     iconPath: "/icons/job-seekers/ask-me-anything.svg",
     features: [
       "Career changes and transitions",

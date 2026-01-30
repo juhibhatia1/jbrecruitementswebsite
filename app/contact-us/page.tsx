@@ -67,7 +67,7 @@ export default function ContactPage() {
                     <CiMail size={24} className="text-[#605dba]" />
                   </div>
                   <span className="text-[#252e3d] text-base sm:text-lg font-semibold">
-                    juhi@jbrecruitments.com
+                    contact@jbrecruitments.com
                   </span>
                 </div>
 

@@ -68,7 +68,6 @@ export default function JobSeekersPage() {
                     <li>Fill out the short form</li>
                     <li>Upload your resume</li>
                     <li>Get notified about suitable openings</li>
-                    <li>Receive guidance to enhance your profile</li>
                   </ol>
                 </div>
               </div>
