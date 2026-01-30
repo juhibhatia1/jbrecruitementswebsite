@@ -84,7 +84,7 @@ export default function WhyCompaniesPrefer() {
                   className="mb-4"
                 />
                 <p
-                  className="text-[#374151] text-sm sm:text-base md:text-lg leading-relaxed font-medium font-serif"
+                  className="text-[#374151] text-base sm:text-base md:text-lg leading-relaxed font-medium font-serif"
                   style={{ fontFamily: "Palatino Linotype, serif" }}
                 >
                   {card.text}

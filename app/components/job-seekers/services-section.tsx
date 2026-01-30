@@ -48,14 +48,13 @@ const services = [
   {
     id: 4,
     title: "Superstar Shout-Out",
-    description:
-      "Targeted LinkedIn announcement to decision-makers",
+    description: "Targeted LinkedIn announcement to decision-makers",
     iconPath: "/icons/job-seekers/superstar.svg",
     features: [
       "Custom post showcasing your profile, skills & availability",
       "Strategic positioning to attract hiring managers",
       "Increased visibility with employers & key decision-makers",
-      "Published via Juhi Bhatia’s LinkedIn for wider reach & credibility. USD 180 | 5 days"
+      "Published via Juhi Bhatia’s LinkedIn for wider reach & credibility. USD 180 | 5 days",
     ],
   },
   {
@@ -129,20 +128,22 @@ export default function ServicesSection() {
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="mb-8 flex items-center gap-2">
-          <img
-            src="/home/icons8-ai-48.avif"
-            alt="Help Icon"
-            className="w-6 h-6 md:w-7 md:h-7"
-          />
-          <span className="text-sm sm:text-base font-semibold text-[#605dba]">
-            Our Services
-          </span>
-        </div>
+        <div className="relative flex items-center justify-center mb-12 md:mb-16">
+          <div className="absolute left-0 flex items-center gap-2">
+            <img
+              src="/home/icons8-ai-48.avif"
+              alt="Help Icon"
+              className="w-6 h-6 md:w-7 md:h-7"
+            />
+            <span className="text-sm sm:text-base font-semibold text-[#605dba]">
+              Our Services
+            </span>
+          </div>
 
-        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d] mb-12 md:mb-16">
-          How We Can Help
-        </h2>
+          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d]">
+            How We Can Help
+          </h2>
+        </div>
 
         {/* Grid Layout matching why-companies-prefer */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

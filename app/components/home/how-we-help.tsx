@@ -14,8 +14,8 @@ export default function HowWeHelpSection() {
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="mb-6 md:mb-8 col-span-1 flex items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="md:mb-8 col-span-1 flex items-center gap-2">
                 <img
                   src="/home/icons8-ai-48.avif"
                   alt="Help Icon"

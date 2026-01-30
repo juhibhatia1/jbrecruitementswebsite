@@ -35,10 +35,9 @@ export default function JobSeekersPage() {
 
               <div
                 className="mt-8 space-y-8"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
               >
                 <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3">
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
                     Your Career Support Starts Here
                   </h3>
                   <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -50,7 +49,7 @@ export default function JobSeekersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
                     Stay Updated With Latest Roles
                   </h4>
                   <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -61,7 +60,7 @@ export default function JobSeekersPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold text-[#252e3d] mb-3">
+                  <h4 className="text-lg font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Palatino Linotype, sans-seriff" }}>
                     Simple Process for Candidates
                   </h4>
                   <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-1">

@@ -16,7 +16,7 @@ export default function HireWithConfidence() {
             Hire with Confidence
           </h1>
           <p
-            className="mx-auto max-w-3xl text-[#252e3d] text-base md:text-lg lg:text-xl leading-relaxed"
+            className="mx-auto max-w-3xl text-[#252e3d] text-base md:text-lg lg:text-xl leading-relaxed text-left"
             style={{ fontFamily: "Palatino Linotype, sans-serif" }}
           >
             Hiring is one of the most crucial decisions a business makes. At JB
