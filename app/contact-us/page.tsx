@@ -66,9 +66,12 @@ export default function ContactPage() {
                   <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba] flex-shrink-0 min-w-[48px] min-h-[48px]">
                     <CiMail size={24} className="text-[#605dba]" />
                   </div>
-                  <span className="text-[#252e3d] text-base sm:text-lg font-semibold">
+                  <a
+                    href="mailto:contact@jbrecruitments.com"
+                    className="text-[#252e3d] text-base sm:text-lg font-semibold hover:text-[#605dba] transition-colors cursor-pointer"
+                  >
                     contact@jbrecruitments.com
-                  </span>
+                  </a>
                 </div>
 
                 <div className="flex items-center gap-4 group">
@@ -92,7 +95,10 @@ export default function ContactPage() {
                   <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Companies
                   </h4>
-                  <p className="text-sm sm:text-base text-gray-600">
+                  <p
+                    className="text-sm sm:text-base text-gray-600"
+                    style={{ fontFamily: "Palatino Linotype, sans-serif" }}
+                  >
                     We help businesses hire candidates who are not just
                     qualified, but truly aligned with their culture and goals.
                   </p>
@@ -102,7 +108,10 @@ export default function ContactPage() {
                   <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Job Seekers
                   </h4>
-                  <p className="text-sm sm:text-base text-gray-600">
+                  <p
+                    className="text-sm sm:text-base text-gray-600"
+                    style={{ fontFamily: "Palatino Linotype, sans-serif" }}
+                  >
                     We support individuals throughout their career journey with
                     tools and guidance that help them stand out and succeed.
                   </p>

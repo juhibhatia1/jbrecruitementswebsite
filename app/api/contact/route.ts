@@ -25,14 +25,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Configure the transporter
-    // Note: 'service: "gmail"' is used here. If using another provider,
-    // you may need to switch to 'host' and 'port' configuration.
+    // Configure the transporter for Office 365
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user,
         pass,
+      },
+      tls: {
+        ciphers: "SSLv3",
       },
     });
 

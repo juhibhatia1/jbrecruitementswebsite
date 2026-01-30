@@ -4,12 +4,22 @@ import { useState, useRef } from "react";
 import { AiOutlineMessage } from "react-icons/ai";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 
-const testimonials = [
+interface testimonials {
+  id: number;
+  name: string; 
+  role?: string;
+  company: string;
+  image: string;
+  text: string;
+  rating: number;
+}
+
+const testimonials: testimonials[] = [
   {
     id: 1,
     name: "Delicia Pillay",
-    role: "Head of Resourcing Sub-Saharan Africa",
-    // company: "TechFlow Inc",
+    company: "British Council",
+    // role: "TechFlow Inc",
     image: "/home/testimonials/delicia-pillay.avif",
     text: "I wholeheartedly recommend Juhi Bhatia, who worked with us as a freelance talent mapper. She is reliable, assertive, and consistently delivers high-quality work on time with great attention to detail. Juhi communicates effectively, addresses challenges proactively, and contributes innovative solutions. Her warm, professional demeanor fosters strong relationships and a collaborative environment. She would be a valuable asset to any organization.",
     rating: 5,
@@ -17,8 +27,8 @@ const testimonials = [
   {
     id: 2,
     name: "Mohammed Barakat",
-    role: "Human Resources Director Assoc",
-    // company: "StartupHub",
+    company: "MONIIFY",
+    // role: "StartupHub",
     image: "/home/testimonials/mohammed-barakat.avif",
     text: "I had the pleasure of working with Juhi as part of my team, where she led the talent acquisition department with professionalism and insight. Juhi demonstrated a deep understanding of recruitment strategies and candidate engagement, consistently attracting high-quality talent in a competitive market.What stood out most was her ability to quickly grasp the nature of our business and culture, ensuring not only strong technical matches but also cultural alignment. Juhi brought structure, clarity, and energy to our hiring process and collaborated seamlessly with stakeholders across departments.I wouldn’t hesitate to work with Juhi again and can confidently recommend her to any organization looking for a committed talent acquisition Manager.",
     rating: 5,
@@ -26,8 +36,8 @@ const testimonials = [
   {
     id: 3,
     name: "Shridhar Iyer",
-    role: "Director of Finance at Unity",
-    // company: "CloudNine Systems",
+    company: "Unity",
+    // role: "CloudNine Systems",
     image: "/home/testimonials/shridhar-iyer.avif",
     text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
     rating: 5,
@@ -35,8 +45,8 @@ const testimonials = [
   {
     id: 4,
     name: "Smitha Dasan",
-    role: "Excellence in Hiring Quality and Exceptional Candidate Experience",
-    company: "NexGen Labs",
+    company: "Palo Alto Networks",
+    // role: "NexGen Labs",
     image: "/home/testimonials/smitha-dasan.avif",
     text: "Juhi is a dedicated, self-motivated and a smart recruiter; totally committed to the work assigned. She is a very methodical and organised recruiter which makes the recruitment so much easy.Juhi has been working for the Shared Services group and had performed really well; understands the talent market and work closely with the stakeholders to hire the top talent.I have relied on her for critical/niche roles and and she has always proved herself with quality results. The hiring focus is on quality and diversity, Juhi is able to plan her work accordingly and drive the results in stipulated time period.Definitely an asset to any organisation she represents and I highly recommend her. I would like to wish Juhi all the best for her future endeavours.",
     rating: 5,
@@ -44,17 +54,17 @@ const testimonials = [
   {
     id: 5,
     name: "Nick Macleay",
-    role: "Omnia Solutions Ltd",
-    // company: "InnovateCo",
+    company: "Omnia SOlutions Ltd",
+    // role: "InnovateCo",
     image: "/home/testimonials/omnia.avif",
     text: "Juhi, has helped me on a couple of recruitment assignments, they were not easy sourcing positions, and roles that she has not worked on before. Juhi was very quick, she listens to what we needed and delivered me a short list within 48 hrs and the 2 of the candidates that she short listed made 2nd and final stage interviews. I will definitely use Juhi again for my sourcing projects.",
     rating: 5,
   },
   {
     id: 6,
-    name: "Envision People",
-    role: "Recruitment Director",
-    // company: "DataSphere",
+    name: "Philippa Glanville",
+    company: "Envision People",
+    // role: "DataSphere",
     image: "/home/testimonials/envision-people.webp",
     text: "Juhi has been supporting my recruitment drives for the last 6 months. She has worked on sourcing and first level screening of candidates. I have found Juhi to be highly proactive and has a great level of understanding the roles with basic information. I would highly recommend Juhi as a recruiter or resourcer for any roles in the UK or Europe regions.",
     rating: 5,
@@ -62,8 +72,8 @@ const testimonials = [
   {
     id: 7,
     name: "Juliana Pagliaro",
-    role: "Co-founder & Chief of People",
-    // company: "NextGen Solutions",
+    company: "PAGLIARO & PARTNERS",
+    // role: "NextGen Solutions",
     image: "/home/testimonials/juliana-pagliaro.avif",
     text: "Juhi is a pleasure to work with. She has a strong work ethic that shows every day in her work. Juhi takes direction quickly and runs with tasks. She was responsible for end to end recruitment in the MENA region at British Council during the time I was her Line Manager. She is a responsible and trust worthy person, these qualities are essential to make a success in the workplace. Juhi's strengths also lie in stakeholder and candidate engagement. Her calm demeanour goes a long way when working with others.",
     rating: 5,
@@ -181,6 +191,16 @@ export default function Testimonials() {
             onTouchEnd={handleTouchEnd}
             className="relative bg-white rounded-3xl p-4 sm:p-8 md:p-12 transition-all duration-500 border border-gray-200 h-full flex flex-col justify-between"
           >
+            {/* Author Info */}
+            <div className="text-center mb-3">
+              <p className="text-lg sm:text-xl md:text-3xl font-bold text-black">
+                {testimonials[activeTestimonial].company}
+              </p>
+              <p className="text-sm sm:text-base md:text-lg text-[#05070F] my-1">
+                {testimonials[activeTestimonial].name}
+              </p>
+            </div>
+
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">
               {[...Array(5)].map((_, i) => (
@@ -214,16 +234,6 @@ export default function Testimonials() {
             <p className="text-center text-base sm:text-lg md:text-xl text-[#333333] leading-relaxed mb-8 transition-all duration-500">
               {testimonials[activeTestimonial].text}
             </p>
-
-            {/* Author Info */}
-            <div className="text-center">
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-[#333333] mb-1">
-                {testimonials[activeTestimonial].name}
-              </p>
-              <p className="text-sm sm:text-base md:text-lg text-[#737373]">
-                {testimonials[activeTestimonial].role}
-              </p>
-            </div>
 
             {/* Mobile Navigation Arrows */}
             <div className="md:hidden flex items-center justify-center gap-4 mt-8">
