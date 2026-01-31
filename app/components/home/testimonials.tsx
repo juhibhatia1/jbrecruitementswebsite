@@ -72,7 +72,7 @@ const testimonials: testimonials[] = [
   {
     id: 7,
     name: "Nick Macleay",
-    company: "Omnia SOlutions Ltd",
+    company: "Omnia Solutions Ltd",
     // role: "InnovateCo",
     image: "/home/testimonials/omnia.avif",
     text: "Juhi, has helped me on a couple of recruitment assignments, they were not easy sourcing positions, and roles that she has not worked on before. Juhi was very quick, she listens to what we needed and delivered me a short list within 48 hrs and the 2 of the candidates that she short listed made 2nd and final stage interviews. I will definitely use Juhi again for my sourcing projects.",

@@ -173,7 +173,7 @@ export default function HireWithConfidence() {
                 <li className="font-medium">● Role-Specific Evaluation</li>
                 <li className="font-medium">● Context-Driven Shortlisting</li>
                 <li className="font-medium">● Better Hiring Decisions</li>
-                <li className="font-medium">● Real-World Problem Assessment</li>
+                <li className="font-medium">● Strategy-Based Assessment</li>
                 <li className="font-medium">● A Trusted Name in Careers</li>
               </ul>
             </div>

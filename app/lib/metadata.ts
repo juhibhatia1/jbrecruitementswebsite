@@ -19,6 +19,8 @@ export const defaultMetadata: Metadata = {
     "JB Solutions",
     "HR firms",
     "HR consulting",
+    "recruitment firm",
+    "recruitment brand",
     "recruitment agency",
     "talent acquisition",
     "executive search",

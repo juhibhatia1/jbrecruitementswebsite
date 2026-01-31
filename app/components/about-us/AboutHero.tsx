@@ -20,7 +20,7 @@ export default function AboutHero() {
             {/* Right: Text Content */}
             <div className="space-y-6 col-span-2">
               <p className="text-[#252E3D] text-base md:text-lg leading-loose">
-                JB is a recruitment agency dedicated to creating meaningful
+                JB is a recruitment brand dedicated to creating meaningful
                 connections between companies and talented professionals. We
                 believe hiring should feel thoughtful, structured, and
                 positively human - not rushed or transactional.

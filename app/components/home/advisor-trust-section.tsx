@@ -173,7 +173,7 @@ export default function AdvisorTrustSection() {
             {/* Name + CTA */}
             <div className="mt-6 md:mt-8 flex items-center gap-3 md:gap-4 text-xl sm:text-2xl md:text-3xl text-[#c5c5c5]">
               <span>Juhi Bhatia</span>
-              <button onClick={() => router.push('/contact-us')} className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm cursor-pointer font-medium text-white">
+              <button onClick={() => router.push('/contact-us')} className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm cursor-pointer font-medium text-white hover:shadow-[0_6px_20px_rgba(74,144,226,0.23)] hover:scale-105 ease-in-out duration-300 ease-in-out">
                 Speak
               </button>
             </div>

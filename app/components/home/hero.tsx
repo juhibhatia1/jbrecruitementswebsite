@@ -8,8 +8,6 @@ export default function HeroSection() {
   const router = useRouter();
   return (
     <>
-      {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile */}
-      {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile -> Now FIXED always */}
       <div className="fixed top-0 left-0 w-screen h-[100dvh] z-0 overflow-hidden">
         {/* Background Images - Responsive */}
         {/* Mobile Image */}
@@ -18,11 +16,17 @@ export default function HeroSection() {
           alt="Professional recruitment and HR consulting services - JB Recruitments"
           className="absolute inset-0 w-full h-full object-cover object-[75%_70%] block sm:hidden"
         />
+        {/* XL+ AVIF Image (visible only on xl and above) */}
+        <img
+          src="/home/xl-background.png"
+          alt="Professional recruitment and HR consulting services - JB Recruitments"
+          className="absolute inset-0 w-full h-full object-cover xl:object-[75%_55%] hidden xl:block"
+        />
         {/* Desktop/Tablet Image */}
         <img
-          src="/home/hero-background.png"
+          src="/home/background-image.png"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
-          className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[900%_45%] hidden sm:block"
+          className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[80%_98%] hidden sm:block xl:hidden"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
@@ -40,7 +44,17 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8 crimson">
+                  {/* Non-mobile brand label: visible from sm and up, hidden on mobile */}
+                  <div className="hidden sm:block">
+                    <span
+                      className="inline-flex items-center gap-3 bg-white/2 border border-[#caa42b] text-[#e1b223] px-6 py-3 rounded-full text-sm sm:text-base font-semibold shadow-[0_0px_60px_rgba(202,164,43,0.14)] transform transition-all duration-300 ring-1 ring-[#caa42b]/25 backdrop-blur-md mb-2"
+                      aria-label="JB - A brand by Juhi Bhatia"
+                    >
+                      JB - A brand by Juhi Bhatia
+                    </span>
+                  </div>
+
+                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-4 crimson">
                     <div className="">Thoughtful</div>
                     <div className="">Hiring. Real</div>
                     <div className="">Outcomes.</div>

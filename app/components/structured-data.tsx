@@ -1,7 +1,7 @@
 export default function StructuredData() {
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "RecruitmentAgency",
+    "@type": "RecruitmentBrand",
     "@id": "https://jbrecruitment.com/#organization",
     name: "JB Recruitments",
     alternateName: "JB Solutions",

@@ -41,10 +41,21 @@ export async function POST(request: Request) {
       port: 465,
       secure: true, // TLS
       auth: {
-        user: "contact@jbrecruitments.com",
-        pass: process.env.NEXT_NODEMAILER_PASS,
+        user: user, // use env-configured user
+        pass: pass,
       },
     });
+
+    // Verify SMTP connection before attempting to send
+    try {
+      await transporter.verify();
+    } catch (verifyError) {
+      console.error("SMTP verify failed:", verifyError);
+      return NextResponse.json(
+        { error: "SMTP connection failed. Check SMTP host/port/credentials." },
+        { status: 502 },
+      );
+    }
 
     // Alternative Neospace configurations to try:
     // 1. If above doesn't work, try:
@@ -99,12 +110,25 @@ export async function POST(request: Request) {
         `,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    return NextResponse.json(
-      { success: true, message: "Email sent successfully!" },
-      { status: 200 },
-    );
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log(
+        "Email sent, messageId:",
+        info?.messageId,
+        "response:",
+        info?.response,
+      );
+      return NextResponse.json(
+        { success: true, message: "Email sent successfully!" },
+        { status: 200 },
+      );
+    } catch (sendError) {
+      console.error("Error in sendMail:", sendError);
+      return NextResponse.json(
+        { error: "Failed to deliver email. Check SMTP provider logs." },
+        { status: 502 },
+      );
+    }
   } catch (error) {
     console.error("Error sending email:", error);
     return NextResponse.json(

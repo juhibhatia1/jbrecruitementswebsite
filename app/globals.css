@@ -109,6 +109,15 @@ body {
   padding: 0;
 }
 
+/* Mobile: consistent spacing below headings (h1-h3) so content spacing is uniform */
+@media (max-width: 767px) {
+  h1,
+  h2,
+  h3 {
+    margin-bottom: 1rem; /* 16px */
+  }
+}
+
 /* Hide scrollbar utility */
 .scrollbar-hide {
   -ms-overflow-style: none; /* IE and Edge */
