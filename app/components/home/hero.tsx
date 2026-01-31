@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
@@ -10,11 +11,18 @@ export default function HeroSection() {
       {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile */}
       {/* Fixed hero that stays in place while content scrolls over it on desktop, relative on mobile -> Now FIXED always */}
       <div className="fixed top-0 left-0 w-screen h-[100dvh] z-0 overflow-hidden">
-        {/* Background Image */}
+        {/* Background Images - Responsive */}
+        {/* Mobile Image */}
         <img
-          src="/home/hero-background.avif"
+          src="/home/hero1.png"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
-          className="absolute inset-0 w-full h-full object-cover object-[82%_50%] sm:object-[85%_50%] md:object-[80%_50%] lg:object-[80%_0%] xl:object-[90%_12%]"
+          className="absolute inset-0 w-full h-full object-cover object-[75%_70%] block sm:hidden"
+        />
+        {/* Desktop/Tablet Image */}
+        <img
+          src="/home/hero-background.png"
+          alt="Professional recruitment and HR consulting services - JB Recruitments"
+          className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[900%_45%] hidden sm:block"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
@@ -35,7 +43,7 @@ export default function HeroSection() {
                   <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-8 crimson">
                     <div className="">Thoughtful</div>
                     <div className="">Hiring. Real</div>
-                    <div className="">Outcomes</div>
+                    <div className="">Outcomes.</div>
                   </h1>
                 </motion.div>
 

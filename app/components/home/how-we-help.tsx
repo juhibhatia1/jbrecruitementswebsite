@@ -59,7 +59,7 @@ export default function HowWeHelpSection() {
               <div className="space-y-3 md:space-y-4 mb-8 md:mb-0">
                 {/* User message */}
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 md:px-5 py-2.5 md:py-3 max-w-xs">
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 md:px-5 py-2.5 md:py-3 max-w-xs">
                     <p className="text-gray-700 text-sm md:text-base">
                       Can I share my requirements with you?
                     </p>
@@ -68,7 +68,7 @@ export default function HowWeHelpSection() {
 
                 {/* Bot response */}
                 <div className="flex justify-end">
-                  <div className="bg-indigo-600 rounded-2xl rounded-tr-md px-5 md:px-6 py-2.5 md:py-3">
+                  <div className="bg-indigo-600 rounded-2xl rounded-tr-none px-5 md:px-6 py-2.5 md:py-3">
                     <p className="text-white text-sm md:text-base font-medium">
                       Yes, please.
                     </p>
@@ -77,7 +77,7 @@ export default function HowWeHelpSection() {
 
                 {/* Done message */}
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 md:px-5 py-2.5 md:py-3 flex items-center gap-2">
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 md:px-5 py-2.5 md:py-3 flex items-center gap-2">
                     <p className="text-gray-700 text-sm md:text-base">Done</p>
                     <div className="w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full flex items-center justify-center">
                       <svg
@@ -97,13 +97,11 @@ export default function HowWeHelpSection() {
                   </div>
                 </div>
 
-                {/* Follow up message with blue glow */}
-                <div className="flex justify-start relative">
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 md:px-5 py-2.5 md:py-3 relative">
-                    <p className="text-gray-700 text-sm md:text-base">
+                <div className="flex justify-end">
+                  <div className="bg-indigo-600 rounded-2xl rounded-tr-none px-5 md:px-6 py-2.5 md:py-3">
+                    <p className="text-white text-sm md:text-base font-medium">
                       We'll follow up shortly.
                     </p>
-                    {/* Blue glow effect */}
                     <div className="absolute -bottom-4 -right-6 w-24 h-24 bg-blue-400/40 rounded-full blur-2xl"></div>
                   </div>
                 </div>
@@ -172,29 +170,30 @@ export default function HowWeHelpSection() {
                 </p>
               </div>
             </div>
-            {/* Explore More pill aligned right beneath the card */}
-            <div className="w-full flex justify-end">
-              <Link
-                href="/about-us"
-                className="inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-md text-gray-900 text-base md:text-lg font-semibold hover:bg-indigo-50 transition-colors"
-              >
-                <span>Explore More</span>
-                <svg
-                  className="w-5 h-5 text-gray-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
-              </Link>
-            </div>
           </ScrollAnimation>
+        </div>
+
+        {/* Explore More pill aligned right beneath the card */}
+        <div className="w-full flex justify-end mt-10 lg:mt-12">
+          <Link
+            href="/about-us"
+            className="inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-md text-gray-900 text-base md:text-lg font-semibold hover:bg-indigo-50 transition-colors"
+          >
+            <span>Explore More</span>
+            <svg
+              className="w-5 h-5 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
+          </Link>
         </div>
       </div>
     </div>

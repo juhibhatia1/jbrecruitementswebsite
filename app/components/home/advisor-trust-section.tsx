@@ -4,6 +4,7 @@ import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
 import ScrollAnimation from "../ui/scroll-animation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Items {
   id: number;
@@ -115,6 +116,7 @@ function MarqueeItems() {
 
 export default function AdvisorTrustSection() {
   const [paused, setPaused] = useState(false);
+  const router = useRouter();
   return (
     <section
       className="bg-[#1b1b1b] text-white relative z-10"
@@ -133,9 +135,7 @@ export default function AdvisorTrustSection() {
         {/* Heading */}
         <ScrollAnimation variant="fadeUp">
           <h2 className="mx-auto text-center text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
-            Guidance you can trust at every stage of
-            <br className="hidden sm:block" />
-            hiring.
+            Guidance you can trust at every stage of hiring.
           </h2>
         </ScrollAnimation>
 
@@ -173,7 +173,7 @@ export default function AdvisorTrustSection() {
             {/* Name + CTA */}
             <div className="mt-6 md:mt-8 flex items-center gap-3 md:gap-4 text-xl sm:text-2xl md:text-3xl text-[#c5c5c5]">
               <span>Juhi Bhatia</span>
-              <button className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm font-medium text-white">
+              <button onClick={() => router.push('/contact-us')} className="rounded-full bg-radial-[at_50%_75%] from-[#5a58ab] to-[#5d8aba] px-4 py-1.5 text-sm cursor-pointer font-medium text-white">
                 Speak
               </button>
             </div>
@@ -182,7 +182,7 @@ export default function AdvisorTrustSection() {
             <div className="mt-8 h-px w-full bg-white" />
 
             {/* Metrics */}
-            <div className="mt-6 flex flex-wrap justify-between gap-8 md:gap-12 lg:gap-16 text-[#7b7b7b]">
+            <div className="mt-6 flex flex-wrap justify-between gap-8 md:gap-12 lg:gap-4 text-[#7b7b7b]">
               <div className="flex items-baseline gap-2 md:gap-3">
                 <span className="text-3xl md:text-4xl font-semibold text-white">
                   84%
@@ -310,7 +310,7 @@ export default function AdvisorTrustSection() {
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
       <div className="pb-16 md:pb-24 lg:pb-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-0">
           <ScrollAnimation variant="fadeUp" delay={0.4}>
             <div className="marquee">
               <div

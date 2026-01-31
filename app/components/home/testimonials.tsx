@@ -33,15 +33,15 @@ const testimonials: testimonials[] = [
     text: "I had the pleasure of working with Juhi as part of my team, where she led the talent acquisition department with professionalism and insight. Juhi demonstrated a deep understanding of recruitment strategies and candidate engagement, consistently attracting high-quality talent in a competitive market.What stood out most was her ability to quickly grasp the nature of our business and culture, ensuring not only strong technical matches but also cultural alignment. Juhi brought structure, clarity, and energy to our hiring process and collaborated seamlessly with stakeholders across departments.I wouldn’t hesitate to work with Juhi again and can confidently recommend her to any organization looking for a committed talent acquisition Manager.",
     rating: 5,
   },
-  {
-    id: 3,
-    name: "Shridhar Iyer",
-    company: "Palo Alto Networks",
-    // role: "CloudNine Systems",
-    image: "/home/testimonials/shridhar-iyer.avif",
-    text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
-    rating: 5,
-  },
+  // {
+  //   id: 3,
+  //   name: "Shridhar Iyer",
+  //   company: "Palo Alto Networks",
+  //   // role: "CloudNine Systems",
+  //   image: "/home/testimonials/shridhar-iyer.avif",
+  //   text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
+  //   rating: 5,
+  // },
   {
     id: 4,
     name: "Smitha Dasan",
@@ -53,6 +53,24 @@ const testimonials: testimonials[] = [
   },
   {
     id: 5,
+    name: "Tridib Banerjee",
+    company: "Amazon",
+    // role: "TechFlow Inc",
+    image: "/home/testimonials/tridib-banerjee.jpeg",
+    text: "Juhi has been a great support in terms of getting the right talent across, abiding by the timeliness commitments and getting the necessary on-boarding done on time. She is customer centric and diligent in her deliverables.",
+    rating: 5,
+  },
+  {
+    id: 6,
+    name: "Ajay Saluja",
+    company: "Palo Alto Networks",
+    // role: "TechFlow Inc",
+    image: "/home/testimonials/ajay-saluja.jpeg",
+    text: "I worked very closely with Juhi to ramp up our Shared Services Function. My impression about her was extremely positive - very dedicated and respected timelines! She also understood my requirements and brought out relevant profiles. She worked her way through some challenging hiring through innovative ways. Juhi was a perfect example of a Talent Acquisition Partner - focused, dependable, objectives-oriented and was well recognised for her friendly behaviour.",
+    rating: 5,
+  },
+  {
+    id: 7,
     name: "Nick Macleay",
     company: "Omnia SOlutions Ltd",
     // role: "InnovateCo",
@@ -61,7 +79,7 @@ const testimonials: testimonials[] = [
     rating: 5,
   },
   {
-    id: 6,
+    id: 8,
     name: "Philippa Glanville",
     company: "Envision People",
     // role: "DataSphere",
@@ -70,7 +88,7 @@ const testimonials: testimonials[] = [
     rating: 5,
   },
   {
-    id: 7,
+    id: 9,
     name: "Juliana Pagliaro",
     company: "PAGLIARO & PARTNERS",
     // role: "NextGen Solutions",
@@ -137,7 +155,7 @@ export default function Testimonials() {
           </h2>
 
           {/* Avatar Row */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 px-4 py-4 mx-auto scrollbar-hide">
+          <div className="flex items-center md:justify-center gap-2 sm:gap-3 md:gap-4 mb-8 md:mb-12 px-4 py-4 mx-auto overflow-x-auto scrollbar-hide max-w-full snap-x snap-mandatory">
             {testimonials.map((testimonial, index) => (
               <button
                 key={testimonial.id}
@@ -145,16 +163,20 @@ export default function Testimonials() {
                 onClick={() => setActiveTestimonial(index)}
                 aria-pressed={activeTestimonial === index}
                 aria-label={`Show testimonial from ${testimonial.name}`}
-                className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] flex-shrink-0 ${
+                className={`relative rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer focus-visible:ring-[#605dba] flex-shrink-0 snap-center ${
                   activeTestimonial === index
                     ? "w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 ring-2 ring-[#605dba] ring-offset-2 scale-110 z-10 opacity-100"
-                    : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300 opacity-80 hover:opacity-100"
+                    : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300 opacity-70 hover:opacity-100"
                 }`}
               >
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-full h-full rounded-full object-contain"
+                  className={`w-full h-full rounded-full object-contain transition-all duration-300 ${
+                    activeTestimonial === index
+                      ? "grayscale-0"
+                      : "grayscale hover:grayscale-0"
+                  }`}
                 />
               </button>
             ))}
@@ -190,7 +212,7 @@ export default function Testimonials() {
           >
             {/* Author Info */}
             <div className="text-center mb-3">
-              <h3 className="text-lg sm:text-xl md:text-3xl font-bold text-black">
+              <h3 className="text-lg sm:text-xl md:text-3xl font-bold text-black mb-3">
                 {testimonials[activeTestimonial].company}
               </h3>
               <p className="text-sm sm:text-base md:text-lg text-[#05070F] my-1">
