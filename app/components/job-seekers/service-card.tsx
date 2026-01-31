@@ -138,7 +138,7 @@ export default function ServiceCard({
           }}
         >
           {/* Description */}
-          <div className="text-gray-600 text-sm sm:text-base md:text-[15px] text-center leading-relaxed mb-4">
+          <div className="text-black text-sm sm:text-base md:text-[15px] text-center leading-relaxed mb-4">
             {backDescription ||
               description ||
               "Get expert assistance tailored to your career goals."}

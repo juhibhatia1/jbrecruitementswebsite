@@ -159,9 +159,9 @@ export default function HireWithConfidence() {
               </p>
             </div>
 
-            <div className="flex items-center gap-6 md:gap-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 md:gap-8">
               {/* Image */}
-              <div className="flex-shrink-0 w-72 sm:w-92 md:w-100 lg:w-112 h-48 md:h-56 rounded-xl relative">
+              <div className="flex-shrink-0 w-full sm:w-72 md:w-72 lg:w-100 xl:w-112 h-48 sm:h-40 md:h-56 rounded-xl relative mr-0 sm:mr-6">
                 <Image
                   src="/companies/card-2.png"
                   alt="Industry-aware Screening"
@@ -169,7 +169,7 @@ export default function HireWithConfidence() {
                   className="object-contain"
                 />
               </div>
-              <ul className="space-y-3 text-[#737373]">
+              <ul className="space-y-3 text-[#737373] w-full md:w-auto flex-1">
                 <li className="font-medium">● Role-Specific Evaluation</li>
                 <li className="font-medium">● Context-Driven Shortlisting</li>
                 <li className="font-medium">● Better Hiring Decisions</li>

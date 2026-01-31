@@ -44,13 +44,13 @@ export default function WhatWeDo() {
 
               {/* Toggles */}
               {/* Toggles */}
-              <div className="flex flex-col gap-3 max-w-xs">
+              <div className="flex flex-col gap-3 max-w-[250px]">
                 {/* Company Toggle */}
                 <button
                   onClick={() => setActiveTab("company")}
                   className={`relative flex items-center justify-between px-6 py-4 rounded-xl border-2 transition-all duration-300 font-bold text-lg group cursor-pointer ${
                     activeTab === "company"
-                      ? "bg-[#252E3D] border-[#252E3D] text-white shadow-lg scale-[1.02]"
+                      ? "bg-[#252E3D] border-[#252E3D] text-white shadow-lg"
                       : "bg-white border-gray-200 text-gray-400 hover:border-[#252E3D] hover:text-[#252E3D] hover:bg-gray-50"
                   }`}
                   style={{ fontFamily: "Raleway, sans-serif" }}
