@@ -134,13 +134,13 @@ export default function AdvisorTrustSection() {
 
         {/* Heading */}
         <ScrollAnimation variant="fadeUp">
-          <h2 className="mx-auto text-center text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+          <h2 className="mx-auto text-center text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight">
             Guidance you can trust at every stage of hiring.
           </h2>
         </ScrollAnimation>
 
         {/* Content */}
-        <div className="mt-12 md:mt-20 lg:mt-24 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center md:p-4">
+        <div className="mt-12 md:mt-20 lg:mt-12 grid grid-cols-1 gap-8 md:gap-12 lg:gap-16 lg:grid-cols-12 lg:items-center md:p-4">
           {/* Image */}
           <ScrollAnimation
             variant="scaleUp"
