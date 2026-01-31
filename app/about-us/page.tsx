@@ -9,7 +9,7 @@ export const metadata = aboutMetadata;
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-[#FAFAFA] pt-0 sm:pt-10">
       <main>
         <AboutHero />
         <MissionVision />

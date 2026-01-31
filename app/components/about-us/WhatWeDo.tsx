@@ -26,19 +26,15 @@ export default function WhatWeDo() {
 
   return (
     <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-14 items-start">
           {/* Left: Headers & Toggles */}
           <div className="lg:col-span-5 space-y-6">
             <ScrollAnimation variant="fadeUp">
-              <h2
-                className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-3"
-              >
+              <h2 className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-3">
                 What we do
               </h2>
-              <p
-                className="text-[#252E3D] text-sm sm:text-base leading-relaxed max-w-md mb-6"
-              >
+              <p className="text-[#252E3D] text-sm sm:text-base leading-relaxed max-w-md mb-6">
                 We proudly support{" "}
                 <span className="font-semibold">
                   both companies and job seekers

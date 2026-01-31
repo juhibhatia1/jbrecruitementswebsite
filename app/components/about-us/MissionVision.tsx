@@ -6,7 +6,7 @@ import ScrollAnimation from "../ui/scroll-animation";
 export default function MissionVision() {
   return (
     <section className="w-full bg-[#FAFAFA] pb-12 md:pb-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-stretch">
           {/* Left: Large Image */}
           <ScrollAnimation
@@ -29,14 +29,10 @@ export default function MissionVision() {
               delay={0.2}
               className="flex-1 bg-gradient-to-br from-white to-[#E6E6FA] p-6 md:p-10 rounded-3xl border border-[#E6E6FA]"
             >
-              <h2
-                className="text-[#252E3D] text-xl sm:text-2xl md:text-3xl font-bold mb-4"
-              >
+              <h2 className="text-[#252E3D] text-xl sm:text-2xl md:text-3xl font-bold mb-4">
                 Our Mission
               </h2>
-              <p
-                className="text-[#252E3D] text-[15px] md:text-base leading-relaxed"
-              >
+              <p className="text-[#252E3D] text-[15px] md:text-base leading-relaxed">
                 JB is a recruitment agency dedicated to creating meaningful
                 connections between companies and talented professionals. We
                 believe hiring should feel thoughtful, structured, and
@@ -64,14 +60,10 @@ export default function MissionVision() {
                 }}
               />
 
-              <h2
-                className="text-white text-xl sm:text-2xl md:text-3xl font-bold mb-4 relative z-10"
-              >
+              <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-bold mb-4 relative z-10">
                 Our Vision
               </h2>
-              <p
-                className="text-gray-200 text-[15px] md:text-base leading-relaxed relative z-10"
-              >
+              <p className="text-gray-200 text-[15px] md:text-base leading-relaxed relative z-10">
                 To be the trusted bridge between growing companies and ambitious
                 professionals, setting new standards for recruitment excellence.
               </p>

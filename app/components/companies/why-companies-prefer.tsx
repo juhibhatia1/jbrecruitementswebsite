@@ -35,13 +35,11 @@ export default function WhyCompaniesPrefer() {
 
   return (
     <section className="w-full bg-[#FAFAFC] py-12 md:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Header */}
         <ScrollAnimation variant="fadeUp">
           <div className="text-center mb-12 md:mb-16">
-            <h2
-              className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight"
-            >
+            <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
               Why Companies Prefer JB?
             </h2>
           </div>
@@ -55,9 +53,7 @@ export default function WhyCompaniesPrefer() {
             className="h-full flex items-center"
           >
             <div className="pr-4 lg:pr-8">
-              <p
-                className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium"
-              >
+              <p className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium">
                 You get candidates who fit the role, fit the team, and move your
                 organisation forward. We take pride in being a recruitment
                 partner that feels like an extension of your internal HR
@@ -81,9 +77,7 @@ export default function WhyCompaniesPrefer() {
                   alt="icon"
                   className="mb-4"
                 />
-                <p
-                  className="text-[#374151] text-base sm:text-base md:text-lg leading-relaxed font-medium font-serif"
-                >
+                <p className="text-[#374151] text-base sm:text-base md:text-lg leading-relaxed font-medium font-serif">
                   {card.text}
                 </p>
               </div>

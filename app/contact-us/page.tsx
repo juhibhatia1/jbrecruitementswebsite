@@ -16,7 +16,7 @@ export default function ContactPage() {
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="flex-grow bg-white">
-        <div className="mx-auto max-w-7xl px-4 md:px-0 pt-20 sm:pt-24 pb-12 md:pb-24 flex items-start md:items-center relative">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-32 pb-12 md:pb-24 flex items-start md:items-center relative">
           {/* Subtle circular background blur */}
           <div className="pointer-events-none -z-10 absolute inset-0 flex">
             <div className="absolute left-6 top-6 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-[#eef0ff] via-[#f7f7ff] to-transparent opacity-60 blur-3xl hidden sm:block" />
@@ -24,15 +24,11 @@ export default function ContactPage() {
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
             {/* LEFT CONTENT */}
             <ScrollAnimation variant="fadeUp" className="space-y-8">
-              <h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#252e3d] leading-tight"
-              >
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#252e3d] leading-tight">
                 Let’s Connect
               </h1>
 
-              <p
-                className="text-[#252e3d] leading-relaxed text-base sm:text-lg"
-              >
+              <p className="text-[#252e3d] leading-relaxed text-base sm:text-lg">
                 Whether you're an organisation looking to hire or a professional
                 exploring your next opportunity, we’re here to support you with
                 clarity, warmth, and expertise.
@@ -76,9 +72,7 @@ export default function ContactPage() {
                   <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-[#605dba] flex-shrink-0 min-w-[48px] min-h-[48px]">
                     <PiHandsClappingFill size={24} className="text-[#605dba]" />
                   </div>
-                  <span
-                    className="text-[#252e3d] text-xs sm:text-base"
-                  >
+                  <span className="text-[#252e3d] text-xs sm:text-base">
                     We assist Employers and Candidates across regions and
                     industries, offering flexible recruitment support and
                     consultation.
@@ -92,9 +86,7 @@ export default function ContactPage() {
                   <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Companies
                   </h4>
-                  <p
-                    className="text-sm sm:text-base text-gray-600"
-                  >
+                  <p className="text-sm sm:text-base text-gray-600">
                     We help businesses hire candidates who are not just
                     qualified, but truly aligned with their culture and goals.
                   </p>
@@ -104,9 +96,7 @@ export default function ContactPage() {
                   <h4 className="font-semibold text-xl sm:text-2xl lg:text-3xl text-[#252E3D] mb-2 xl:mb-3">
                     Job Seekers
                   </h4>
-                  <p
-                    className="text-sm sm:text-base text-gray-600"
-                  >
+                  <p className="text-sm sm:text-base text-gray-600">
                     We support individuals throughout their career journey with
                     tools and guidance that help them stand out and succeed.
                   </p>

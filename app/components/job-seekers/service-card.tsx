@@ -145,7 +145,7 @@ export default function ServiceCard({
           </div>
 
           {/* Feature List */}
-          <div className="space-y-2 px-2 md:px-0">
+          <div className="space-y-2 px-2 md:px-6">
             {displayFeatures.map((feature, index) => (
               <div key={index} className="flex items-center text-gray-700">
                 <div className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full mr-2.5 flex-shrink-0"></div>

@@ -36,7 +36,7 @@ const testimonials: testimonials[] = [
   {
     id: 3,
     name: "Shridhar Iyer",
-    company: "Unity",
+    company: "Palo Alto Networks",
     // role: "CloudNine Systems",
     image: "/home/testimonials/shridhar-iyer.avif",
     text: "Juhi is one of the best recruiters I have ever worked with. She helped me complete hiring almost a dozen professionals for an upcoming project within tight timelines. Juhi was a delight to partner with - understanding our requirements & urgency, keeping the momentum, juggling multiple interview schedules, open for ideas, willing to seek help and ensuring we diversify our talent. She was brave to speak her mind, challenge our views but accommodate business constraints as we went thru the process. The pressure was immense but her happy demeanor was the perfect antidote. I’m sure she will make a meaningful impact in all her roles. Best wishes to her for a successful career.",
@@ -124,7 +124,7 @@ export default function Testimonials() {
       className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16 overflow-x-hidden"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-0 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 overflow-hidden">
         {/* Section Header */}
         <div className="text-center mb-10 md:mb-14">
           <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
@@ -132,9 +132,7 @@ export default function Testimonials() {
             <span>Testimonials</span>
           </div>
 
-          <h2
-            className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6"
-          >
+          <h2 className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6">
             What our customers love about us
           </h2>
 

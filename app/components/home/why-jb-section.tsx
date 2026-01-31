@@ -18,7 +18,7 @@ export default function WhyJBSection() {
 
   return (
     <section className="w-full py-12 md:py-16 lg:py-20 border-t border-slate-200">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           {/* Left Image */}
           <ScrollAnimation
@@ -49,9 +49,7 @@ export default function WhyJBSection() {
                   </span>
                 </div>
 
-                <h2
-                  className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-semibold leading-[1.1]"
-                >
+                <h2 className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-semibold leading-[1.1]">
                   Why Choose Us
                 </h2>
 

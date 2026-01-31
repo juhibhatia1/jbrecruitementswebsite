@@ -7,7 +7,7 @@ export const metadata = companiesMetadata;
 export default function CompaniesPage() {
   return (
     <div className="min-h-screen bg-[#F9F9FB]">
-      <main className="pt-20 sm:pt-0">
+      <main className="pt-20 sm:pt-10">
         <HireWithConfidence />
         <WhyCompaniesPrefer />
       </main>

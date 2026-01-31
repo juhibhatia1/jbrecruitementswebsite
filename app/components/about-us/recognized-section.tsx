@@ -20,7 +20,7 @@ export default function RecognizedSection() {
         <source src="/bg-video.mp4" type="video/mp4" />
       </video>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-0">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
           <div
             className="rounded-[40px] p-6 sm:p-10 md:p-12 2xl:p-16 text-center text-white relative overflow-hidden shadow-2xl bg-cover bg-center bg-no-repeat"

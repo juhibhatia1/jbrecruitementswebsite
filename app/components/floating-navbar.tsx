@@ -11,7 +11,7 @@ export default function FloatingNavbar() {
         className="fixed left-0 right-0 top-2 z-50"
         style={{ fontFamily: "Raleway, sans-serif" }}
       >
-        <div className="mx-auto max-w-7xl px-4 md:px-0">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo (left) */}
             <button

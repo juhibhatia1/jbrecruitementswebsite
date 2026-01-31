@@ -10,7 +10,7 @@ export default function HowWeHelpSection() {
   const router = useRouter();
   return (
     <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-0">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">

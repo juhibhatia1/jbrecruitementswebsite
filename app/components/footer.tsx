@@ -1,3 +1,6 @@
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -6,18 +9,19 @@ export default function Footer() {
       className="relative z-20 bg-white border-t border-[#bababa]"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-0 py-8 md:py-10">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
         {/* Top Row */}
         <div className="flex flex-col gap-12 items-center md:flex-row md:items-center md:justify-between">
           {/* Left: Logo + Nav */}
           <div className="flex flex-col items-center md:items-start w-full md:w-auto">
             {/* Logo */}
-            <div
-              className="mb-8 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-black"
-              style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-            >
-              JB
-            </div>
+            <Image
+              src="/logo.avif"
+              alt="JobBoard Logo"
+              width={100}
+              height={100}
+              className="mb-3"
+            />
 
             {/* Navigation */}
             <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 font-medium text-base text-[#252E3D] md:justify-start">

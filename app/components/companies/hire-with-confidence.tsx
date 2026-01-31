@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function HireWithConfidence() {
   return (
     <section className="w-full bg-gradient-to-b from-slate-50 to-white md:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+      <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <h1 className="text-[#26262A] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6 crimson">
@@ -27,7 +27,7 @@ export default function HireWithConfidence() {
             {/* Top Section: Image + Content side by side */}
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-6 items-center justify-center">
               {/* Image */}
-              <div className="flex-shrink-0 rounded-xl w-full md:w-64 h-48 md:h-56 relative">
+              <div className="flex-shrink-0 w-full md:w-100 h-48 md:h-56 rounded-xl relative">
                 <Image
                   src="/companies/card-1.png"
                   alt="Complete Recruitment Support"
@@ -59,15 +59,22 @@ export default function HireWithConfidence() {
               </div>
 
               {/* Two-column feature list */}
-              <ul className="grid grid-cols-1 sm:grid-cols-2 justify-center items-center gap-3 text-base text-[#737373]">
-                <li className="font-medium raleway">
+              <ul
+                className="grid grid-cols-1 sm:grid-cols-2 
+               gap-y-3 gap-x-24 md:gap-x-44 lg:gap-x-28 
+               text-base text-[#737373] 
+               w-fit mx-auto"
+              >
+                <li className="font-medium raleway text-left">
                   ● 300,000+ global talent network
                 </li>
-                <li className="font-medium raleway">● Data-driven approach</li>
-                <li className="font-medium raleway">
+                <li className="font-medium raleway text-left">
+                  ● Data-driven approach
+                </li>
+                <li className="font-medium raleway text-left">
                   ● 48-hour shortlist turnaround
                 </li>
-                <li className="font-medium raleway">
+                <li className="font-medium raleway text-left">
                   ● Flexible payment options
                 </li>
               </ul>
@@ -154,7 +161,7 @@ export default function HireWithConfidence() {
 
             <div className="flex items-center gap-6 md:gap-8">
               {/* Image */}
-              <div className="flex-shrink-0 w-full md:w-100 h-48 md:h-56 rounded-xl relative">
+              <div className="flex-shrink-0 w-72 sm:w-92 md:w-100 lg:w-112 h-48 md:h-56 rounded-xl relative">
                 <Image
                   src="/companies/card-2.png"
                   alt="Industry-aware Screening"
