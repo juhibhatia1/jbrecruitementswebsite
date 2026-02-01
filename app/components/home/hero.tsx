@@ -32,9 +32,9 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
         {/* Content (positioned over the image) */}
-        <div className="absolute inset-0 flex flex-col">
+        <div className="absolute inset-0 flex flex-col overflow-y-auto">
           {/* Hero Content */}
-          <div className="flex-1 flex items-center px-4 sm:px-6 md:px-12 lg:px-36 py-8 md:py-0 mt-16 sm:mt-20">
+          <div className="flex-1 flex items-start justify-center px-4 sm:px-6 md:px-12 lg:px-36 py-4 max-h-[650px]:py-2 md:py-12 mt-16 sm:mt-20 max-h-[650px]:mt-12 pb-8 max-h-[650px]:pb-6 sm:pb-16">
             <div className="w-full max-w-7xl mx-auto">
               {/* ... content remains ... */}
               <div className="max-w-2xl lg:max-w-3xl">
@@ -47,17 +47,25 @@ export default function HeroSection() {
                   {/* Non-mobile brand label: visible from sm and up, hidden on mobile */}
                   <div className="hidden sm:block">
                     <span
-                      className="inline-flex items-center gap-3 bg-white/2 border border-[#caa42b] text-[#e1b223] px-6 py-3 rounded-full text-sm sm:text-base font-semibold shadow-[0_0px_60px_rgba(202,164,43,0.14)] transform transition-all duration-300 ring-1 ring-[#caa42b]/25 backdrop-blur-md mb-2"
+                      className="inline-flex items-center gap-3 bg-white/2 border border-[#caa42b] text-[#e1b223] px-4 max-h-[650px]:px-3 py-2 max-h-[650px]:py-1.5 rounded-full text-xs max-h-[650px]:text-[11px] sm:text-base font-semibold shadow-[0_0px_60px_rgba(202,164,43,0.14)] transform transition-all duration-300 ring-1 ring-[#caa42b]/25 backdrop-blur-md mb-2 max-h-[650px]:mb-1"
                       aria-label="JB - A brand by Juhi Bhatia"
                     >
                       JB - A brand by Juhi Bhatia
                     </span>
                   </div>
 
-                  <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-semibold leading-[1.1] mb-6 md:my-4 crimson">
-                    <div className="">Thoughtful</div>
-                    <div className="">Hiring. Real</div>
-                    <div className="">Outcomes.</div>
+                  <h1 className="text-white text-2xl max-h-[650px]:text-xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.1] max-h-[650px]:leading-[1.05] mb-3 max-h-[650px]:mb-2 sm:mb-6 md:my-4 crimson">
+                    {/* Layout for small screens and xl+ */}
+                    <div className="block md:hidden xl:block">
+                      <div className="">Thoughtful</div>
+                      <div className="">Hiring. Real</div>
+                      <div className="">Outcomes.</div>
+                    </div>
+                    {/* Layout for md and lg screens */}
+                    <div className="hidden md:block xl:hidden">
+                      <div className="">Thoughtful Hiring.</div>
+                      <div className="">Real Outcomes.</div>
+                    </div>
                   </h1>
                 </motion.div>
 
@@ -67,7 +75,7 @@ export default function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <p className="text-[#D6D6D6] text-base md:text-lg 2xl:text-xl leading-relaxed mb-4 md:mb-10 max-w-xl md:max-w-3xl w-full raleway">
+                  <p className="text-[#D6D6D6] text-sm max-h-[650px]:text-xs md:text-lg 2xl:text-xl leading-relaxed max-h-[650px]:leading-snug mb-3 max-h-[650px]:mb-2 sm:mb-6 md:mb-10 max-w-xl md:max-w-3xl w-full raleway">
                     JB is more than a recruitment agency - we’re a brand
                     defining trust, visibility & lasting impact. At JB, we help
                     companies hire the right people, fast. Our process is
@@ -98,14 +106,14 @@ export default function HeroSection() {
                       </motion.span>
                     </div>
                     <button
-                      className="bg-[#3399FE] text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:bg-[#285b8d] transition-all shadow-lg cursor-pointer"
+                      className="bg-[#3399FE] text-white px-5 max-h-[650px]:px-4 py-2.5 max-h-[650px]:py-2 md:px-8 md:py-4 rounded-full text-sm max-h-[650px]:text-xs md:text-lg font-medium hover:bg-[#285b8d] transition-all shadow-lg cursor-pointer"
                       onClick={() => router.push("/companies")}
                     >
                       Build Your Team
                     </button>
 
                     <button
-                      className="bg-transparent border border-white/80 text-white px-7 py-3.5 md:px-8 md:py-4 rounded-full text-base md:text-lg font-medium hover:scale-105 transform transition-all backdrop-blur-sm ease-in-out duration-300 cursor-pointer"
+                      className="bg-transparent border border-white/80 text-white px-5 max-h-[650px]:px-4 py-2.5 max-h-[650px]:py-2 md:px-8 md:py-4 rounded-full text-sm max-h-[650px]:text-xs md:text-lg font-medium hover:scale-105 transform transition-all backdrop-blur-sm ease-in-out duration-300 cursor-pointer"
                       onClick={() => router.push("/job-seekers")}
                     >
                       Explore Opportunities

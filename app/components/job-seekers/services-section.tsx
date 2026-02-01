@@ -128,8 +128,8 @@ export default function ServicesSection() {
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="relative flex items-center justify-center mb-12 md:mb-16">
-          <div className="absolute left-0 flex items-center gap-2">
+        <div className="relative flex flex-col items-left md:items-center md:flex-row md:items-center justify-center mb-12 md:mb-16 md:pl-12">
+          <div className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mb-3 md:mb-0">
             <img
               src="/home/icons8-ai-48.avif"
               alt="Help Icon"
@@ -140,7 +140,7 @@ export default function ServicesSection() {
             </span>
           </div>
 
-          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d]">
+          <h2 className="text-left md:text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d]">
             How We Can Help
           </h2>
         </div>

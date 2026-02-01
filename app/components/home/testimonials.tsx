@@ -151,7 +151,7 @@ export default function Testimonials() {
           </div>
 
           <h2 className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6">
-            What our customers love about us
+            What Companies love about us
           </h2>
 
           {/* Avatar Row */}

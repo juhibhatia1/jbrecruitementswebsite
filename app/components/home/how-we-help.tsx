@@ -15,14 +15,14 @@ export default function HowWeHelpSection() {
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              <div className="md:mb-8 col-span-1 flex items-center gap-2">
+              <div className="md:mb-8 col-span-1 flex items-center gap-1 lg:gap-2">
                 <img
                   src="/home/icons8-ai-48.avif"
                   alt="Help Icon"
-                  className="w-6 h-6 md:w-7 md:h-7"
+                  className="w-6 h-6 md:w-4 md:h-4 lg:w-7 lg:h-7"
                 />
                 <p
-                  className="text-[#605dba] text-base md:text-lg font-medium"
+                  className="text-[#605dba] text-base md:text-sm lg:text-lg font-medium"
                   style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   How We Help
@@ -30,7 +30,7 @@ export default function HowWeHelpSection() {
               </div>
 
               <div className="col-span-1 sm:col-span-4">
-                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-[33.3px] leading-tight font-semibold">
+                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-[28px] xl:text-[33.3px] leading-tight font-semibold">
                   We support hiring across the UK, Europe, the Middle East, and
                   the USA
                 </h2>

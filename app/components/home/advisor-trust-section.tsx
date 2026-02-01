@@ -72,7 +72,7 @@ function MarqueeItems() {
       id: 6,
       title: "Link Hub - Global Creator Ranking",
       description:
-        "Ranked #13 among the world’s Top 100 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
+        "Among the world’s Top 50 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
       imageSrc: "/home/advisor-trust/image.png",
       imageAlt: "Link Hub Logo",
       sizeWidth: 100,
