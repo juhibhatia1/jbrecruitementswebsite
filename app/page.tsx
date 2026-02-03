@@ -10,15 +10,12 @@ export default function Home() {
   return (
     <div>
       <HeroSection />
-      {/* Content wrapper that scrolls over the fixed hero */}
-      <div className="relative z-10 bg-white">
-        <HowWeHelpSection />
-        <HiringJourney />
-        <WhyJBSection />
-        <Testimonials />
-        <AdvisorTrustSection />
-        <FAQsSection />
-      </div>
+      <HowWeHelpSection />
+      <HiringJourney />
+      <WhyJBSection />
+      <Testimonials />
+      <AdvisorTrustSection />
+      <FAQsSection />
     </div>
   );
 }

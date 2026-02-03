@@ -8,7 +8,7 @@ export default function HeroSection() {
   const router = useRouter();
   return (
     <>
-      <div className="fixed top-0 left-0 w-screen h-[100dvh] z-0 overflow-hidden">
+      <div className="relative w-full min-h-[100dvh] flex items-center overflow-hidden">
         {/* Background Images - Responsive */}
         {/* Mobile Image */}
         <img
@@ -32,9 +32,9 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
         {/* Content (positioned over the image) */}
-        <div className="absolute inset-0 flex flex-col overflow-y-auto">
+        <div className="relative w-full z-10">
           {/* Hero Content */}
-          <div className="flex-1 flex items-start justify-center px-4 sm:px-6 md:px-12 lg:px-36 py-4 max-h-[650px]:py-2 md:py-12 mt-16 sm:mt-20 max-h-[650px]:mt-12 pb-8 max-h-[650px]:pb-6 sm:pb-16">
+          <div className="flex items-center justify-center px-4 sm:px-6 md:px-12 lg:px-36 py-8 md:py-12 mt-16 sm:mt-20 pb-8 sm:pb-16">
             <div className="w-full max-w-7xl mx-auto">
               {/* ... content remains ... */}
               <div className="max-w-2xl lg:max-w-3xl">
@@ -125,9 +125,6 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* Spacer to push content below the fixed hero (always needed now that hero is fixed) */}
-      <div className="block h-[100dvh]" aria-hidden />
     </>
   );
 }

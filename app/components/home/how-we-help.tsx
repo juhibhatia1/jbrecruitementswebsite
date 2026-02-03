@@ -14,7 +14,7 @@ export default function HowWeHelpSection() {
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
           <ScrollAnimation variant="fadeUp">
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="md:mb-8 col-span-1 flex items-center gap-1 lg:gap-2">
                 <img
                   src="/home/icons8-ai-48.avif"
@@ -29,9 +29,9 @@ export default function HowWeHelpSection() {
                 </p>
               </div>
 
-              <div className="col-span-1 sm:col-span-4">
-                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-[28px] xl:text-[33.3px] leading-tight font-semibold">
-                  We support hiring across the UK, Europe, the Middle East, and
+              <div className="col-span-1 sm:col-span-3">
+                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
+                  We support hiring across the UK, <br/>Europe, the Middle East, &
                   the USA
                 </h2>
               </div>

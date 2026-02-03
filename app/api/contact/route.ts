@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     const mailOptions = {
       from: user,
       to: user, // Sending to self/admin. Change if you want to send to a specific admin email.
-      replyTo: email, // Allow replying directly to the sender
+      replyTo: email, // Customer's email - so you can reply directly to them
       subject: subject || `New Contact Form Submission from ${name}`,
       text: `
           Name: ${name}
