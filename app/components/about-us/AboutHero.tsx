@@ -9,7 +9,7 @@ export default function AboutHero() {
 
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <ScrollAnimation variant="fadeUp">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-12 items-start">
             {/* Left: Title */}
             <div className="col-span-1">
               <h1 className="text-[#252E3D] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">

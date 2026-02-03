@@ -28,7 +28,7 @@ export default function HireWithConfidence() {
               {/* Image */}
               <div className="flex-shrink-0 w-full md:w-100 h-48 md:h-56 rounded-xl relative">
                 <Image
-                  src="/companies/card-1.png"
+                  src="/companies/card-1.avif"
                   alt="Complete Recruitment Support"
                   fill
                   className="object-contain"
@@ -162,7 +162,7 @@ export default function HireWithConfidence() {
               {/* Image */}
               <div className="flex-shrink-0 w-full sm:w-72 md:w-72 lg:w-100 xl:w-112 h-48 sm:h-40 md:h-56 rounded-xl relative mr-0 sm:mr-6">
                 <Image
-                  src="/companies/card-2.png"
+                  src="/companies/card-2.avif"
                   alt="Industry-aware Screening"
                   fill
                   className="object-contain"

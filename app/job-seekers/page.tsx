@@ -29,14 +29,14 @@ export default function JobSeekersPage() {
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-start">
             {/* Left Content */}
             <div className="pt-0 lg:pt-10">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-[#252e3d]">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-12 md:mb-16">
                 Career Insights & Guidance
               </h1>
 
-              <div className="mt-8 space-y-8">
+              <div className="space-y-8">
                 <div>
                   <h3
-                    className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-3"
+                    className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-2"
                     style={{ fontFamily: "Crimson Text, serif" }}
                   >
                     Your Career Support Starts Here
@@ -51,7 +51,7 @@ export default function JobSeekersPage() {
 
                 <div>
                   <h4
-                    className="text-base sm:text-lg font-semibold text-[#252e3d] mb-2"
+                    className="text-lg sm:text-lg font-semibold text-[#252e3d] mb-2"
                     style={{ fontFamily: "Crimson Text, serif" }}
                   >
                     Stay Updated With Latest Roles
@@ -65,7 +65,7 @@ export default function JobSeekersPage() {
 
                 <div>
                   <h4
-                    className="text-lg font-semibold text-[#252e3d] mb-3"
+                    className="text-lg sm:text-lg font-semibold text-[#252e3d] mb-2"
                     style={{ fontFamily: "Crimson Text, serif" }}
                   >
                     Simple Process for Candidates

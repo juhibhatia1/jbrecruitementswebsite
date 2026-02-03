@@ -14,7 +14,7 @@ export default function MissionVision() {
             className="relative min-h-[300px] md:min-h-[400px] lg:h-full w-full rounded-3xl overflow-hidden"
           >
             <Image
-              src="/about-us/card-bg.png" // Note: Need to make sure this image exists or use placeholder
+              src="/about-us/card-bg.avif" // Note: Need to make sure this image exists or use placeholder
               alt="Team collaborating in a modern office"
               fill
               className="object-contain"

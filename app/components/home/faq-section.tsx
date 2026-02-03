@@ -130,7 +130,7 @@ export default function FAQsSection() {
 
                 <p
                   className="mt-4 md:mt-6 text-base md:text-lg leading-relaxed text-[#293240]"
-                  style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
+                  style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   We’ve answered some of the most common questions from hiring
                   teams and professionals to help you understand how we work and

@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 export default function HowWeHelpSection() {
   const router = useRouter();
   return (
-    <div className="w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
+    <div className="relative w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-5 space-x-1 lg:mb-10">
@@ -19,10 +19,10 @@ export default function HowWeHelpSection() {
                 <img
                   src="/home/icons8-ai-48.avif"
                   alt="Help Icon"
-                  className="w-6 h-6 md:w-4 md:h-4 lg:w-7 lg:h-7"
+                  className="w-4 h-4 md:w-4 md:h-4 lg:w-7 lg:h-7"
                 />
                 <p
-                  className="text-[#605dba] text-base md:text-sm lg:text-lg font-medium"
+                  className="text-[#605dba] text-base md:text-md lg:text-lg font-medium"
                   style={{ fontFamily: "Raleway, sans-serif" }}
                 >
                   How We Help
@@ -30,9 +30,9 @@ export default function HowWeHelpSection() {
               </div>
 
               <div className="col-span-1 sm:col-span-3">
-                <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
-                  We support hiring across the UK, <br/>Europe, the Middle East, &
-                  the USA
+                <h2 className="text-[#252e3d] text-xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-semibold">
+                  We support hiring across the UK, <br />
+                  Europe, the Middle East, & the USA
                 </h2>
               </div>
             </div>

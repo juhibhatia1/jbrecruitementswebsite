@@ -17,7 +17,7 @@ export default function WhyJBSection() {
   ];
 
   return (
-    <section className="w-full py-12 md:py-16 lg:py-20 border-t border-slate-200">
+    <section className="w-full py-12 md:py-16 lg:py-20 border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           {/* Left Image */}
@@ -38,7 +38,7 @@ export default function WhyJBSection() {
           <ScrollAnimation variant="fadeUp" delay={0.2}>
             <div className="space-y-8">
               {/* Header */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <PiBrainLight size={24} className="text-[#605dba]" />
                   <span

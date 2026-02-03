@@ -38,7 +38,7 @@ export default function WhyCompaniesPrefer() {
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Header */}
         <ScrollAnimation variant="fadeUp">
-          <div className="text-center mb-12 md:mb-16">
+          <div className="text-center mb-0 md:mb-16">
             <h2 className="text-[#252e3d] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
               Why Companies Prefer JB?
             </h2>

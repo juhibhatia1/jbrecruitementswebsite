@@ -112,6 +112,7 @@ export async function POST(request: Request) {
 
     try {
       const info = await transporter.sendMail(mailOptions);
+      console.log("Mail options:", mailOptions);
       console.log(
         "Email sent, messageId:",
         info?.messageId,

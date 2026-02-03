@@ -12,19 +12,19 @@ export default function HeroSection() {
         {/* Background Images - Responsive */}
         {/* Mobile Image */}
         <img
-          src="/home/hero1.png"
+          src="/home/hero1.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
           className="absolute inset-0 w-full h-full object-cover object-[75%_70%] block sm:hidden"
         />
         {/* XL+ AVIF Image (visible only on xl and above) */}
         <img
-          src="/home/xl-background.png"
+          src="/home/xl-background.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
           className="absolute inset-0 w-full h-full object-cover xl:object-[75%_55%] hidden xl:block"
         />
         {/* Desktop/Tablet Image */}
         <img
-          src="/home/background-image.png"
+          src="/home/background-image.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
           className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[80%_98%] hidden sm:block xl:hidden"
         />

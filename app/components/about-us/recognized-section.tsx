@@ -24,7 +24,7 @@ export default function RecognizedSection() {
         <ScrollAnimation variant="fadeUp">
           <div
             className="rounded-[40px] p-6 sm:p-10 md:p-12 2xl:p-16 text-center text-white relative overflow-hidden shadow-2xl bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/about-us/card-bg-image.jpeg')" }}
+            style={{ backgroundImage: "url('/about-us/card-bg-image.avif')" }}
           >
             {/* Overlay for better text readability */}
             <div className="absolute inset-0 bg-[#414956]/60 rounded-[40px]"></div>
@@ -56,7 +56,7 @@ export default function RecognizedSection() {
             {/* Content */}
             <div className="relative z-10 max-w-4xl mx-auto">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 mb-10 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 mb-3 md:mb-10 backdrop-blur-sm">
                 <BiWorld size={18} className="text-white/80" />
                 <span
                   className="text-sm font-medium tracking-wide text-white/90"

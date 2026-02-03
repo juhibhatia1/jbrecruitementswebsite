@@ -29,12 +29,12 @@ export default function WhatWeDo() {
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-14 items-start">
           {/* Left: Headers & Toggles */}
-          <div className="md:col-span-5 lg:col-span-5 space-y-6">
+          <div className="md:col-span-5 lg:col-span-5">
             <ScrollAnimation variant="fadeUp">
               <h2 className="text-[#252E3D] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-3">
                 What we do
               </h2>
-              <p className="text-[#252E3D] text-sm sm:text-lg leading-relaxed max-w-md mb-6">
+              <p className="text-[#252E3D] text-sm sm:text-lg leading-relaxed max-w-md mb-8">
                 We proudly support{" "}
                 <span className="font-semibold">
                   both companies and job seekers
@@ -43,7 +43,7 @@ export default function WhatWeDo() {
               </p>
 
               {/* Toggles */}
-              <div className="flex flex-col gap-3 max-w-[250px] mx-auto sm:mx-0">
+              <div className="flex flex-col gap-3 max-w-[250px] mx-auto md:mx-0">
                 {/* Company Toggle */}
                 <button
                   onClick={() => setActiveTab("company")}
@@ -88,7 +88,7 @@ export default function WhatWeDo() {
           </div>
 
           {/* Right: Dynamic List */}
-          <div className="md:col-span-7 lg:col-span-7 pt-2">
+          <div className="md:col-span-7 lg:col-span-7">
             <div className="space-y-3">
               <AnimatePresence mode="wait">
                 <motion.div

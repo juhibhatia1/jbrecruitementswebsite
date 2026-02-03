@@ -53,7 +53,7 @@ function MarqueeItems() {
       title: "The World Star - Professional Leadership Spotlight",
       description:
         "Recognised for human-first recruitment leadership, mental health advocacy, and building scalable global hiring systems.",
-      imageSrc: "/home/advisor-trust/1767120368951.jpg",
+      imageSrc: "/home/advisor-trust/1767120368951.avif",
       imageAlt: "LinkedIn Logo",
       sizeWidth: 100,
       sizeHeight: 100,
@@ -63,7 +63,7 @@ function MarqueeItems() {
       title: "Dubai Global Leaders - Talent & Business Leadership",
       description:
         "Honoured as a Dubai-based talent leader and entrepreneur driving modern, people-first recruitment at scale.",
-      imageSrc: "/home/advisor-trust/dubaigloballeaders_logo.jpg",
+      imageSrc: "/home/advisor-trust/dubaigloballeaders_logo.avif",
       imageAlt: "Dubai Global Leaders Logo",
       sizeWidth: 100,
       sizeHeight: 100,
@@ -73,7 +73,7 @@ function MarqueeItems() {
       title: "Link Hub - Global Creator Ranking",
       description:
         "Among the world’s Top 50 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
-      imageSrc: "/home/advisor-trust/image.png",
+      imageSrc: "/home/advisor-trust/image.avif",
       imageAlt: "Link Hub Logo",
       sizeWidth: 100,
       sizeHeight: 100,
@@ -125,7 +125,7 @@ export default function AdvisorTrustSection() {
       {/* ===== TOP: ADVISOR HIGHLIGHT ===== */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16 lg:py-20">
         {/* Eyebrow */}
-        <div className="mb-4 md:mb-6 flex justify-center">
+        <div className="mb-3 md:mb-6 flex justify-center">
           <span className="mb-3 flex items-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
             <PiPlugsConnectedBold size={24} />
             Thoughtful
@@ -204,109 +204,6 @@ export default function AdvisorTrustSection() {
           </ScrollAnimation>
         </div>
       </div>
-
-      {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
-      {/* <div className="pb-16 md:pb-24 lg:pb-20">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
-          <ScrollAnimation
-            variant="fadeUp"
-            delay={0.4}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 lg:gap-6"
-          >
-            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
-                <Image
-                  src={"/home/advisor-trust/arab-icons.avif"}
-                  alt="Arab Icons Logo"
-                  width={100}
-                  height={100}
-                  className="h-full w-auto object-contain"
-                  unoptimized
-                />
-              </div>
-              <h4
-                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-              >
-                Industry Recognition
-              </h4>
-              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
-                Featured by The Arab Icons for leadership and impact in global
-                talent acquisition.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
-                <Image
-                  src="/home/advisor-trust/favikon-logo.avif"
-                  alt="Favikon Logo"
-                  width={100}
-                  height={100}
-                  className="h-full w-auto object-contain"
-                  unoptimized
-                />
-              </div>
-              <h4
-                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-              >
-                Ranked #1 Careers & Office creator
-              </h4>
-              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
-                Recognised by Favikon as the #1 Careers & Office LinkedIn
-                creator in the United Arab Emirates.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center md:border-r md:border-white/20 md:px-4 lg:px-6">
-              <div className="mb-6 flex h-[100px] w-full max-w-[120px] items-center justify-center">
-                <Image
-                  src="/home/advisor-trust/linkedin-logo.avif"
-                  alt="Favikon Logo"
-                  width={100}
-                  height={100}
-                  className="h-full w-auto object-contain"
-                  unoptimized
-                />
-              </div>
-              <h4
-                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-              >
-                Global Leadership in Content
-              </h4>
-              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
-                Ranked Number 1 worldwide on LinkedIn in the Careers & Office
-                category.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center md:px-4 lg:px-6">
-              <div className="mb-14 flex h-[64px] w-full max-w-[120px] items-center justify-center">
-                <Image
-                  src="/home/advisor-trust/uae-lens.avif"
-                  alt="UAE Lens Logo"
-                  width={100}
-                  height={100}
-                  className="h-full w-auto object-contain"
-                  unoptimized
-                />
-              </div>
-              <h4
-                className="text-lg md:text-xl lg:text-2xl font-semibold mb-3"
-                style={{ fontFamily: "Palatino Linotype, sans-seriff" }}
-              >
-                Talent & Career Advocate
-              </h4>
-              <p className="text-sm md:text-base leading-relaxed text-[#c5c5c5] max-w-xs">
-                11+ years leading recruitment across US, Europe, Middle East &
-                UK.
-              </p>
-            </div>
-          </ScrollAnimation>
-        </div>
-      </div> */}
 
       {/* ===== BOTTOM: INDUSTRY RECOGNITION ===== */}
       <div className="pb-16 md:pb-24 lg:pb-20">

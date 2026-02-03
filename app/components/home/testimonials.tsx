@@ -56,7 +56,7 @@ const testimonials: testimonials[] = [
     name: "Tridib Banerjee",
     company: "Amazon",
     // role: "TechFlow Inc",
-    image: "/home/testimonials/tridib-banerjee.jpeg",
+    image: "/home/testimonials/tridib-banerjee.avif",
     text: "Juhi has been a great support in terms of getting the right talent across, abiding by the timeliness commitments and getting the necessary on-boarding done on time. She is customer centric and diligent in her deliverables.",
     rating: 5,
   },
@@ -65,7 +65,7 @@ const testimonials: testimonials[] = [
     name: "Ajay Saluja",
     company: "Palo Alto Networks",
     // role: "TechFlow Inc",
-    image: "/home/testimonials/ajay-saluja.jpeg",
+    image: "/home/testimonials/ajay-saluja.avif",
     text: "I worked very closely with Juhi to ramp up our Shared Services Function. My impression about her was extremely positive - very dedicated and respected timelines! She also understood my requirements and brought out relevant profiles. She worked her way through some challenging hiring through innovative ways. Juhi was a perfect example of a Talent Acquisition Partner - focused, dependable, objectives-oriented and was well recognised for her friendly behaviour.",
     rating: 5,
   },
@@ -83,7 +83,7 @@ const testimonials: testimonials[] = [
     name: "Philippa Glanville",
     company: "Envision People",
     // role: "DataSphere",
-    image: "/home/testimonials/envision-people.webp",
+    image: "/home/testimonials/envision-people.avif",
     text: "Juhi has been supporting my recruitment drives for the last 6 months. She has worked on sourcing and first level screening of candidates. I have found Juhi to be highly proactive and has a great level of understanding the roles with basic information. I would highly recommend Juhi as a recruiter or resourcer for any roles in the UK or Europe regions.",
     rating: 5,
   },
@@ -139,13 +139,13 @@ export default function Testimonials() {
 
   return (
     <section
-      className="bg-gradient-to-br from-gray-50 to-white py-12 md:py-16 overflow-x-hidden"
+      className="relative bg-gradient-to-br from-gray-50 to-white py-12 md:py-16 overflow-x-hidden"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <div className="mx-auto max-w-7xl px-4 md:px-6 overflow-hidden">
         {/* Section Header */}
         <div className="text-center mb-10 md:mb-14">
-          <div className="mb-4 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
+          <div className="mb-3 flex items-center justify-center gap-2 text-[#605dba] text-base md:text-lg font-medium">
             <AiOutlineMessage size={24} className="text-[#605dba]" />
             <span>Testimonials</span>
           </div>
