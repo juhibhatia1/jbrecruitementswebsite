@@ -42,7 +42,7 @@ export default function ContactForm() {
 
   return (
     <div
-      className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full mx-auto border border-[#bababa]"
+      className="bg-white rounded-xl shadow-lg p-6 sm:p-8 sm:py-6 w-full mx-auto border border-[#bababa]"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-[#252E3D]">

@@ -9,8 +9,7 @@ export default function StructuredData() {
     // Uncomment after saving logo.png to public folder:
     // logo: 'https://jbrecruitment.com/logo.png',
     image: "https://jbrecruitment.com/opengraph-image",
-    description:
-      "Premier HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Expert recruitment services for businesses of all sizes, ensuring the perfect match between talent and opportunity.",
+    description: "A recruitment brand by Juhi Bhatia",
     slogan: "Connecting Talent with Opportunity",
     founder: {
       "@type": "Person",

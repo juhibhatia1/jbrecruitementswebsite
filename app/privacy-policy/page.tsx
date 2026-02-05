@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-32 pb-12 md:pb-24">
-        <div className="max-w-4xl">
+        <div className="w-full">
           <p className="text-xs sm:text-sm text-gray-500 mb-3">
             Last updated: February 5, 2026
           </p>
@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
           </p>
         </div>
 
-        <div className="mt-10 max-w-4xl">
+        <div className="mt-10 w-full">
           <ol className="list-decimal list-inside space-y-6 text-sm sm:text-base text-gray-700 leading-relaxed">
             <li>
               The data we cover includes names, emails, phone numbers, education

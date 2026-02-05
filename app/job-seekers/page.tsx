@@ -26,14 +26,14 @@ export default function JobSeekersPage() {
             />
           </div>
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-start">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-10 md:gap-12 lg:gap-2 items-start">
             {/* Left Content */}
-            <div className="pt-0 lg:pt-10">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-12 md:mb-16">
+            <div className="pt-0 lg:pt-0 col-span-1 lg:col-span-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-12 md:mb-12">
                 Career Insights & Guidance
               </h1>
 
-              <div className="space-y-8">
+              <div className="space-y-7">
                 <div>
                   <h3
                     className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-2"
@@ -77,7 +77,7 @@ export default function JobSeekersPage() {
                   </ol>
                 </div>
 
-                <div className="max-w-[520px]">
+                <div className="w-full">
                   <h4
                     className="text-lg sm:text-lg font-semibold text-[#252e3d] mb-2"
                     style={{ fontFamily: "Crimson Text, serif" }}
@@ -88,29 +88,31 @@ export default function JobSeekersPage() {
                     Please review our service terms carefully before making a
                     purchase.
                   </p>
-                  <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-2">
+                  <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-2 lg:pr-6">
                     <li>
-                      <span className="font-semibold">No Refund Policy</span>{" "}
+                      <span className="font-semibold">No Refund Policy:</span>{" "}
                       All services are non-refundable once payment has been
                       made, as work begins immediately on strategy, review, and
                       documentation.
                     </li>
                     <li>
-                      <span className="font-semibold">Revision Window</span>{" "}
+                      <span className="font-semibold">Revision Window:</span>{" "}
                       Revision requests must be shared within 10 days of
                       receiving the first edited draft (or within 10 days of
                       LinkedIn optimization for LinkedIn services). Requests
                       after this period may require an additional fee.
                     </li>
                     <li>
-                      <span className="font-semibold">Client Responsibility</span>{" "}
+                      <span className="font-semibold">
+                        Client Responsibility:
+                      </span>{" "}
                       Clients are responsible for providing accurate
                       information, career details, and required documents on
                       time. Delays in sharing information may impact turnaround
                       time.
                     </li>
                     <li>
-                      <span className="font-semibold">Service Scope</span>{" "}
+                      <span className="font-semibold">Service Scope:</span>{" "}
                       Services include editing, optimization, and professional
                       structuring of provided information. We do not guarantee
                       job placement, interview calls, or hiring outcomes.
@@ -121,8 +123,10 @@ export default function JobSeekersPage() {
             </div>
 
             {/* Right Content: Form */}
-            <div className="w-full">
-              <JobSeekersForm />
+            <div className="w-full flex justify-center lg:justify-start col-span-1">
+              <div className="w-full max-w-sm sm:max-w-md lg:max-w-none">
+                <JobSeekersForm />
+              </div>
             </div>
           </div>
         </div>

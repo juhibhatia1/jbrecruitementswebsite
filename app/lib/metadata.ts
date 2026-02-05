@@ -8,7 +8,7 @@ export const defaultMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default:
-      "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
+      "JB Recruitments - A recruitment brand by Juhi Bhatia",
     template: "%s | JB Recruitments",
   },
   description:
@@ -66,7 +66,7 @@ export const defaultMetadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "JB Recruitments",
-    title: "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
+    title: "JB Recruitments - A recruitment brand by Juhi Bhatia",
     description:
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Transform your hiring process with expert recruitment services.",
     images: [
@@ -80,7 +80,7 @@ export const defaultMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "JB Recruitments - Premier HR Consulting & Talent Acquisition Firm",
+    title: "JB Recruitments - A recruitment brand by Juhi Bhatia",
     description:
       "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions.",
     images: [ogImage],

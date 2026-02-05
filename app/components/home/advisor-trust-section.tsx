@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
@@ -54,7 +54,7 @@ function MarqueeItems() {
       description:
         "Recognised for human-first recruitment leadership, mental health advocacy, and building scalable global hiring systems.",
       imageSrc: "/home/advisor-trust/1767120368951.avif",
-      imageAlt: "LinkedIn Logo",
+      imageAlt: "The World Star Logo",
       sizeWidth: 100,
       sizeHeight: 100,
     },
@@ -72,9 +72,19 @@ function MarqueeItems() {
       id: 6,
       title: "Link Hub - Global Creator Ranking",
       description:
-        "Among the world’s Top 50 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
+        "Among the world's Top 50 LinkedIn creators to comment on in 2026 based on 1.7 million comment interactions.",
       imageSrc: "/home/advisor-trust/image.avif",
       imageAlt: "Link Hub Logo",
+      sizeWidth: 100,
+      sizeHeight: 100,
+    },
+    {
+      id: 7,
+      title: "Featured Professional Spotlight",
+      description:
+        "12+ years in global recruitment, championing human-first hiring and scalable systems as JB's Founder & CEO.",
+      imageSrc: "/home/advisor-trust/spotlight-on-global-professional-logo.jpg",
+      imageAlt: "Featured Professional Spotlight Logo",
       sizeWidth: 100,
       sizeHeight: 100,
     },

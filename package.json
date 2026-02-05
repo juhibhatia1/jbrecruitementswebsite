@@ -2,7 +2,7 @@
   "name": "jb-recruitment-solutions",
   "version": "1.0.0",
   "private": true,
-  "description": "JB Recruitment Solutions - Premier HR consulting firm specializing in talent acquisition, executive search, and workforce solutions",
+  "description": "JB Recruitment Solutions - A recruitment brand by Juhi Bhatia",
   "author": "JB Recruitment Solutions",
   "scripts": {
     "dev": "next dev",

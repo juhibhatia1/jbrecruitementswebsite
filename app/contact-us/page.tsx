@@ -16,7 +16,7 @@ export default function ContactPage() {
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="flex-grow bg-white">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-32 pb-12 md:pb-24 flex items-start md:items-center relative">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 pt-20 sm:pt-32 md:pt-24 pb-12 md:pb-24 flex items-start md:items-center relative">
           {/* Subtle circular background blur */}
           <div className="pointer-events-none -z-10 absolute inset-0 flex">
             <div className="absolute left-6 top-6 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-[#eef0ff] via-[#f7f7ff] to-transparent opacity-60 blur-3xl hidden sm:block" />
