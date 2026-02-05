@@ -102,7 +102,6 @@ export default function HowWeHelpSection() {
                     <p className="text-white text-sm md:text-base font-medium">
                       We'll follow up shortly.
                     </p>
-                    <div className="absolute -bottom-4 -right-6 w-24 h-24 bg-blue-400/40 rounded-full blur-2xl"></div>
                   </div>
                 </div>
               </div>
