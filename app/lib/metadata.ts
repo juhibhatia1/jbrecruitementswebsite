@@ -227,3 +227,33 @@ export const jobSeekersMetadata: Metadata = {
     canonical: `${siteUrl}/job-seekers`,
   },
 };
+
+export const privacyMetadata: Metadata = {
+  title: "Privacy Policy - JB Recruitments",
+  description:
+    "Read how JB Recruitments collects, uses, stores, and protects candidate resumes and personal information during the recruitment process.",
+  keywords: [
+    "privacy policy",
+    "candidate data",
+    "resume privacy",
+    "data protection",
+    "recruitment privacy policy",
+  ],
+  openGraph: {
+    title: "Privacy Policy - JB Recruitments",
+    description:
+      "Learn how JB Recruitments handles candidate data, including collection, storage, access, retention, and security practices.",
+    url: `${siteUrl}/privacy-policy`,
+    images: [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Privacy Policy - JB Recruitments",
+      },
+    ],
+  },
+  alternates: {
+    canonical: `${siteUrl}/privacy-policy`,
+  },
+};

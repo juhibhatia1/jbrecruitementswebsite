@@ -76,6 +76,47 @@ export default function JobSeekersPage() {
                     <li>Get notified about suitable openings</li>
                   </ol>
                 </div>
+
+                <div className="max-w-[520px]">
+                  <h4
+                    className="text-lg sm:text-lg font-semibold text-[#252e3d] mb-2"
+                    style={{ fontFamily: "Crimson Text, serif" }}
+                  >
+                    Terms & Conditions
+                  </h4>
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3">
+                    Please review our service terms carefully before making a
+                    purchase.
+                  </p>
+                  <ol className="list-inside list-decimal text-sm sm:text-base text-gray-700 space-y-2">
+                    <li>
+                      <span className="font-semibold">No Refund Policy</span>{" "}
+                      All services are non-refundable once payment has been
+                      made, as work begins immediately on strategy, review, and
+                      documentation.
+                    </li>
+                    <li>
+                      <span className="font-semibold">Revision Window</span>{" "}
+                      Revision requests must be shared within 10 days of
+                      receiving the first edited draft (or within 10 days of
+                      LinkedIn optimization for LinkedIn services). Requests
+                      after this period may require an additional fee.
+                    </li>
+                    <li>
+                      <span className="font-semibold">Client Responsibility</span>{" "}
+                      Clients are responsible for providing accurate
+                      information, career details, and required documents on
+                      time. Delays in sharing information may impact turnaround
+                      time.
+                    </li>
+                    <li>
+                      <span className="font-semibold">Service Scope</span>{" "}
+                      Services include editing, optimization, and professional
+                      structuring of provided information. We do not guarantee
+                      job placement, interview calls, or hiring outcomes.
+                    </li>
+                  </ol>
+                </div>
               </div>
             </div>
 

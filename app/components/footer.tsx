@@ -44,6 +44,9 @@ export default function Footer() {
               <Link href="/contact-us" className="hover:underline">
                 Contact Us
               </Link>
+              <Link href="/privacy-policy" className="hover:underline">
+                Privacy Policy
+              </Link>
             </nav>
           </div>
 
@@ -80,7 +83,7 @@ export default function Footer() {
             </Link>
 
             {/* Facebook */}
-            <Link
+            {/* <Link
               href="#"
               aria-label="Facebook"
               className="hover:text-slate-900 relative group"
@@ -93,10 +96,10 @@ export default function Footer() {
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                 Coming Soon
               </span>
-            </Link>
+            </Link> */}
 
             {/* X (Twitter) */}
-            <Link
+            {/* <Link
               href="#"
               aria-label="X"
               className="hover:text-slate-900 relative group"
@@ -109,7 +112,7 @@ export default function Footer() {
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                 Coming Soon
               </span>
-            </Link>
+            </Link> */}
           </div>
         </div>
 
