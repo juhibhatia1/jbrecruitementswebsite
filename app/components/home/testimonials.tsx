@@ -71,6 +71,15 @@ const testimonials: testimonials[] = [
   },
   {
     id: 7,
+    name: "Grant Stevens-Bulmer",
+    company: "Bang & Olufsen",
+    // role: "NextGen Solutions",
+    image: "/home/testimonials/stevens-bulmer.jpg",
+    text: "Juhi Bhatia was a fantastic freelance recruiter who supported B&O with searching for Software talent. She excelled at sourcing strong potential candidates across global markets and consistently demonstrated a proactive, thoughtful approach to talent research. What stood out most was her ability to actively listen to feedback on market mapping and quickly pivot her strategy to deliver more focused, high‑quality profiles. Her adaptability, communication, and commitment made her a valuable partner in our hiring efforts.",
+    rating: 5,
+  },
+  {
+    id: 8,
     name: "Nick Macleay",
     company: "Omnia Solutions Ltd",
     // role: "InnovateCo",
@@ -79,7 +88,7 @@ const testimonials: testimonials[] = [
     rating: 5,
   },
   {
-    id: 8,
+    id: 9,
     name: "Philippa Glanville",
     company: "Envision People",
     // role: "DataSphere",
@@ -88,7 +97,7 @@ const testimonials: testimonials[] = [
     rating: 5,
   },
   {
-    id: 9,
+    id: 10,
     name: "Juliana Pagliaro",
     company: "PAGLIARO & PARTNERS",
     // role: "NextGen Solutions",
