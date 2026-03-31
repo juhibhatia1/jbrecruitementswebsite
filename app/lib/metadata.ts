@@ -12,7 +12,7 @@ export const defaultMetadata: Metadata = {
     template: "%s | JB Recruitments",
   },
   description:
-    "JB Recruitments is a leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Connect with top talent and transform your hiring process with our expert recruitment services.",
+    "JB Recruitments is a brand focused on recruitment and talent acquisition, helping companies find the right people, faster.",
   keywords: [
     "JB Recruitments",
     "JB Recruitment",
@@ -68,7 +68,7 @@ export const defaultMetadata: Metadata = {
     siteName: "JB Recruitments",
     title: "JB Recruitments - A recruitment brand by Juhi Bhatia",
     description:
-      "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions. Transform your hiring process with expert recruitment services.",
+      "A brand focused on recruitment and talent acquisition, helping companies find the right people, faster.",
     images: [
       {
         url: ogImage,
@@ -82,7 +82,7 @@ export const defaultMetadata: Metadata = {
     card: "summary_large_image",
     title: "JB Recruitments - A recruitment brand by Juhi Bhatia",
     description:
-      "Leading HR consulting firm specializing in talent acquisition, executive search, and workforce solutions.",
+      "A brand focused on recruitment and talent acquisition, helping companies find the right people, faster.",
     images: [ogImage],
     creator: "@JBRecruitment",
   },

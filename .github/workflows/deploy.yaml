@@ -1,0 +1,85 @@
+name: Vercel Production Deployment
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log workflow context
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Starting Vercel production deployment workflow"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Repository: $GITHUB_REPOSITORY"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Ref: $GITHUB_REF"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] SHA: $GITHUB_SHA"
+
+      - name: Validate required Vercel secrets
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Validating required Vercel secrets"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "Missing VERCEL_TOKEN secret. Add it in GitHub repo settings: Secrets and variables > Actions."
+            exit 1
+          fi
+          if [ -z "$VERCEL_ORG_ID" ]; then
+            echo "Missing VERCEL_ORG_ID secret."
+            exit 1
+          fi
+          if [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "Missing VERCEL_PROJECT_ID secret."
+            exit 1
+          fi
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Secret validation passed"
+
+      - name: Install Vercel CLI
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Installing Vercel CLI"
+          npm install --global vercel@latest
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Installed Vercel CLI version: $(vercel --version)"
+
+      - name: Pull Vercel Environment Information
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Pulling Vercel production environment configuration"
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Vercel environment pull completed"
+
+      - name: Build Project Artifacts
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Building production artifacts with Vercel"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Vercel build completed"
+
+      - name: Remove Git metadata and environment variables
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Removing .git and .github directories before deployment"
+          rm -rf .git
+          rm -rf .github
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Cleanup completed"
+
+      - name: Deploy Project Artifacts to Vercel
+        run: |
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Deploying prebuilt artifacts to Vercel production"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Vercel production deployment finished"
+        env:
+          VERCEL_GIT_COMMIT_SHA: ""
+          VERCEL_GIT_COMMIT_MESSAGE: ""
+          VERCEL_GIT_COMMIT_AUTHOR_LOGIN: ""
+          VERCEL_GIT_COMMIT_AUTHOR_NAME: ""
+          CI: ""
