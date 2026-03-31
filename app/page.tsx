@@ -1,10 +1,14 @@
+import dynamic from "next/dynamic";
 import HeroSection from "./components/home/hero";
 import HowWeHelpSection from "./components/home/how-we-help";
-import WhyJBSection from "./components/home/why-jb-section";
-import HiringJourney from "./components/home/hiring-journey";
-import Testimonials from "./components/home/testimonials";
-import AdvisorTrustSection from "./components/home/advisor-trust-section";
-import FAQsSection from "./components/home/faq-section";
+
+const HiringJourney = dynamic(() => import("./components/home/hiring-journey"));
+const WhyJBSection = dynamic(() => import("./components/home/why-jb-section"));
+const Testimonials = dynamic(() => import("./components/home/testimonials"));
+const AdvisorTrustSection = dynamic(
+  () => import("./components/home/advisor-trust-section"),
+);
+const FAQsSection = dynamic(() => import("./components/home/faq-section"));
 
 export default function Home() {
   return (

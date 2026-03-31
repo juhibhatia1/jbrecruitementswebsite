@@ -1,10 +1,16 @@
 "use client";
 import Image from "next/image";
 import NavigationMenu from "./ui/navbar";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function FloatingNavbar() {
   const router = useRouter();
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <>
       <nav

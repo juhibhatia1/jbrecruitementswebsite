@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { addContactSubmission } from "@/lib/submissions-store";
+import { extractRequestMeta } from "@/lib/request-analytics";
+import { getMailerTransporter } from "@/lib/mailer";
 
 export async function POST(request: Request) {
   try {
+    const requestMeta = extractRequestMeta(request);
+
     const { name, email, message, phone, subject, company } =
       await request.json();
 
@@ -14,70 +18,46 @@ export async function POST(request: Request) {
       );
     }
 
+    // Save to database immediately (independent of email)
+    let dbSaved = false;
+    try {
+      await addContactSubmission({
+        name,
+        email,
+        phone,
+        company,
+        subject,
+        message,
+        requestMeta,
+      });
+      dbSaved = true;
+    } catch (dbError) {
+      console.error("Database save error:", dbError);
+      // Continue to attempt email even if DB save fails
+    }
+
     const user = process.env.NEXT_NODEMAILER_USER;
     const pass = process.env.NEXT_NODEMAILER_PASS;
 
     if (!user || !pass) {
       console.error("Missing email credentials in environment variables.");
+      // If DB was saved, return success with warning
+      if (dbSaved) {
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Submission saved, but email service unavailable.",
+          },
+          { status: 200 },
+        );
+      }
       return NextResponse.json(
         { error: "Server configuration error." },
         { status: 500 },
       );
     }
 
-    // Temporary Gmail configuration (working solution)
-    // Using Gmail while finding correct Neospace SMTP settings
-    // const transporter = nodemailer.createTransport({
-    //   service: "gmail",
-    //   auth: {
-    //     user,
-    //     pass,
-    //   },
-    // });
-
-    // When you find your Neospace SMTP settings, replace above with:
-    const transporter = nodemailer.createTransport({
-      host: "smtp0001.neo.space",
-      port: 465,
-      secure: true, // TLS
-      auth: {
-        user: user, // use env-configured user
-        pass: pass,
-      },
-    });
-
-    // Verify SMTP connection before attempting to send
-    try {
-      await transporter.verify();
-    } catch (verifyError) {
-      console.error("SMTP verify failed:", verifyError);
-      return NextResponse.json(
-        { error: "SMTP connection failed. Check SMTP host/port/credentials." },
-        { status: 502 },
-      );
-    }
-
-    // Alternative Neospace configurations to try:
-    // 1. If above doesn't work, try:
-    // host: "mail.neospace.com.my"
-    //
-    // 2. Or server-specific (check your Neospace control panel):
-    // host: "server123.neospace.com.my" (replace 123 with your server number)
-    //
-    // 3. Or try with port 465:
-    // port: 465, secure: true
-
-    // Alternative configuration if above doesn't work:
-    // Try port 465 with secure: true
-    // const transporter = nodemailer.createTransport({
-    //   host: "mail.jbrecruitments.com",
-    //   port: 465,
-    //   secure: true,
-    //   auth: {
-    //     user,
-    //     pass,
-    //   },
-    // });
+    const transporter = getMailerTransporter();
 
     const mailOptions = {
       from: user,
@@ -110,8 +90,10 @@ export async function POST(request: Request) {
         `,
     };
 
+    let emailSent = false;
     try {
       const info = await transporter.sendMail(mailOptions);
+      emailSent = true;
       console.log("Mail options:", mailOptions);
       console.log(
         "Email sent, messageId:",
@@ -119,21 +101,42 @@ export async function POST(request: Request) {
         "response:",
         info?.response,
       );
-      return NextResponse.json(
-        { success: true, message: "Email sent successfully!" },
-        { status: 200 },
-      );
     } catch (sendError) {
       console.error("Error in sendMail:", sendError);
+      emailSent = false;
+    }
+
+    // Return success if DB was saved (email is secondary)
+    if (dbSaved) {
       return NextResponse.json(
-        { error: "Failed to deliver email. Check SMTP provider logs." },
+        {
+          success: true,
+          message: emailSent
+            ? "Email sent successfully!"
+            : "Submission saved (email pending).",
+        },
+        { status: 200 },
+      );
+    }
+
+    // If DB save failed and email also failed
+    if (!emailSent) {
+      return NextResponse.json(
+        {
+          error: "Failed to process submission. Please try again later.",
+        },
         { status: 502 },
       );
     }
-  } catch (error) {
-    console.error("Error sending email:", error);
+
     return NextResponse.json(
-      { error: "Failed to send email." },
+      { success: true, message: "Submission processed." },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error in contact submission:", error);
+    return NextResponse.json(
+      { error: "Failed to process submission." },
       { status: 500 },
     );
   }

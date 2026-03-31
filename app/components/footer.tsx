@@ -2,8 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer
       className="relative z-20 bg-white border-t border-[#bababa]"
@@ -60,10 +67,13 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
+              <Image
                 src="/footer/linkedin-logo.avif"
                 alt="LinkedIn"
+                width={20}
+                height={20}
                 className="h-5 w-5"
+                loading="lazy"
               />
             </Link>
 
@@ -75,10 +85,13 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
+              <Image
                 src="/footer/instagram-logo.avif"
                 alt="Instagram"
+                width={20}
+                height={20}
                 className="h-5 w-5"
+                loading="lazy"
               />
             </Link>
 

@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import axios from "axios";
+import { usePathname } from "next/navigation";
 
 export default function JobSeekersForm() {
+  const pathname = usePathname();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -47,9 +48,18 @@ export default function JobSeekersForm() {
     data.append("resume", resume);
 
     try {
-      await axios.post("/api/job-seekers", data, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await fetch("/api/job-seekers", {
+        method: "POST",
+        headers: {
+          "x-pathname": pathname,
+        },
+        body: data,
       });
+
+      if (!response.ok) {
+        throw new Error("Job seeker submission failed");
+      }
+
       setStatus("success");
       setFormData({
         name: "",
@@ -173,7 +183,7 @@ export default function JobSeekersForm() {
         <button
           type="submit"
           disabled={status === "loading"}
-          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#282828] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
+          className="w-full mt-4 rounded-full bg-linear-to-r from-[#1f2937] to-[#282828] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
         >
           {status === "loading" ? "Submitting..." : "Submit"}
         </button>

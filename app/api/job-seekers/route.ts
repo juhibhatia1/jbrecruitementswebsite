@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import ImageKit from "imagekit";
-import nodemailer from "nodemailer";
+import { addJobSeekerSubmission } from "@/lib/submissions-store";
+import { extractRequestMeta } from "@/lib/request-analytics";
+import { getMailerTransporter } from "@/lib/mailer";
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
@@ -10,6 +12,7 @@ const imagekit = new ImageKit({
 
 export async function POST(request: Request) {
   try {
+    const requestMeta = extractRequestMeta(request);
     const formData = await request.formData();
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
@@ -30,13 +33,37 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Upload to ImageKit
-    const uploadResponse = await imagekit.upload({
-      file: buffer,
-      fileName: file.name,
-      folder: "/job-seekers-resumes",
-    });
+    let fileUrl = "";
+    try {
+      const uploadResponse = await imagekit.upload({
+        file: buffer,
+        fileName: file.name,
+        folder: "/job-seekers-resumes",
+      });
+      fileUrl = uploadResponse.url;
+    } catch (uploadError) {
+      console.error("ImageKit upload failed:", uploadError);
+      // Continue without file upload, save to DB if we can
+    }
 
-    const fileUrl = uploadResponse.url;
+    // Save to database immediately (independent of email)
+    let dbSaved = false;
+    try {
+      await addJobSeekerSubmission({
+        name,
+        email,
+        phone,
+        location,
+        description,
+        resumeUrl: fileUrl || undefined,
+        resumeFileName: file.name || undefined,
+        requestMeta,
+      });
+      dbSaved = true;
+    } catch (dbError) {
+      console.error("Database save error:", dbError);
+      // Continue to attempt email even if DB save fails
+    }
 
     // Configure Nodemailer
     const user = process.env.NEXT_NODEMAILER_USER;
@@ -44,21 +71,23 @@ export async function POST(request: Request) {
 
     if (!user || !pass) {
       console.error("Missing Nodemailer credentials");
+      // If DB was saved, return success with warning
+      if (dbSaved) {
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Application saved, but email service unavailable.",
+          },
+          { status: 200 },
+        );
+      }
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 },
       );
     }
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp0001.neo.space",
-      port: 465,
-      secure: true, // TLS
-      auth: {
-        user: "contact@jbrecruitments.com",
-        pass: process.env.NEXT_NODEMAILER_PASS,
-      },
-    });
+    const transporter = getMailerTransporter();
 
     const mailOptions = {
       from: user,
@@ -74,7 +103,7 @@ export async function POST(request: Request) {
         Description:
         ${description || "No description provided"}
 
-        Resume: ${fileUrl}
+        Resume: ${fileUrl || "No file URL"}
       `,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -92,14 +121,43 @@ export async function POST(request: Request) {
           </div>
 
           <div style="margin-top: 20px;">
-            <a href="${fileUrl}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View Resume</a>
-            <p style="margin-top: 10px; font-size: 12px; color: #666;">Or copy link: ${fileUrl}</p>
+            ${
+              fileUrl
+                ? `<a href="${fileUrl}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View Resume</a>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">Or copy link: ${fileUrl}</p>`
+                : "<p>Resume: Pending upload</p>"
+            }
           </div>
         </div>
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    let emailSent = false;
+    try {
+      await transporter.sendMail(mailOptions);
+      emailSent = true;
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      emailSent = false;
+    }
+
+    // Return success if DB was saved (email is secondary)
+    if (dbSaved) {
+      return NextResponse.json({
+        success: true,
+        message: emailSent
+          ? "Application submitted successfully!"
+          : "Application saved (email pending).",
+      });
+    }
+
+    // If DB save failed and email also failed
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: "Failed to process application." },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,

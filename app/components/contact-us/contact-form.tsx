@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import axios from "axios";
+import { usePathname } from "next/navigation";
 
 export default function ContactForm() {
+  const pathname = usePathname();
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -25,7 +26,19 @@ export default function ContactForm() {
     event.preventDefault();
     setStatus("loading");
     try {
-      await axios.post("/api/contact", formData);
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-pathname": pathname,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Contact form submission failed");
+      }
+
       setStatus("success");
       setFormData({
         name: "",
@@ -49,9 +62,7 @@ export default function ContactForm() {
         Get in Touch with Us
       </h2>
 
-      <p
-        className="text-[#252e3d] text-sm sm:text-base lg:text-lg mt-2"
-      >
+      <p className="text-[#252e3d] text-sm sm:text-base lg:text-lg mt-2">
         Share your questions, thoughts, or ideas - we're here to help and ready
         to listen.
       </p>
@@ -136,7 +147,7 @@ export default function ContactForm() {
         <button
           type="submit"
           disabled={status === "loading"}
-          className="w-full mt-4 rounded-full bg-gradient-to-r from-[#1f2937] to-[#252E3D] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
+          className="w-full mt-4 rounded-full bg-linear-to-r from-[#1f2937] to-[#252E3D] py-3 text-white font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-50"
         >
           {status === "loading" ? "Sending..." : "Submit"}
         </button>
