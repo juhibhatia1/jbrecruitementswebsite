@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitments.com";
 const ogImage = "/opengraph-image";
 
 export const defaultMetadata: Metadata = {

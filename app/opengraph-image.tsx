@@ -8,7 +8,8 @@ export const size = {
 };
 export const contentType = "image/png";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitment.com";
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jbrecruitments.com";
 
 export default async function Image() {
   return new ImageResponse(

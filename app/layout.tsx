@@ -56,17 +56,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <StructuredData />
-        <meta
-          name="google-site-verification"
-          content="YOUR_VERIFICATION_CODE"
-        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="canonical" href={siteUrl} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased`}

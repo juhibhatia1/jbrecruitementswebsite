@@ -2,20 +2,20 @@ export default function StructuredData() {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "RecruitmentBrand",
-    "@id": "https://jbrecruitment.com/#organization",
+    "@id": "https://jbrecruitments.com/#organization",
     name: "JB Recruitments",
     alternateName: "JB Solutions",
-    url: "https://jbrecruitment.com",
+    url: "https://jbrecruitments.com",
     // Uncomment after saving logo.png to public folder:
-    // logo: 'https://jbrecruitment.com/logo.png',
-    image: "https://jbrecruitment.com/opengraph-image",
+    // logo: 'https://jbrecruitments.com/logo.png',
+    image: "https://jbrecruitments.com/opengraph-image",
     description: "A recruitment brand by Juhi Bhatia",
     slogan: "Connecting Talent with Opportunity",
     founder: {
       "@type": "Person",
       name: "Juhi Bhatia",
       jobTitle: "Founder & CEO",
-      image: "https://jbrecruitment.com/home/profile-pic.jpg",
+      image: "https://jbrecruitments.com/home/profile-pic.jpg",
       sameAs: ["https://www.linkedin.com/in/juhiibhatia/"],
     },
     foundingDate: "2020",
@@ -54,15 +54,15 @@ export default function StructuredData() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": "https://jbrecruitment.com/#website",
-    url: "https://jbrecruitment.com",
+    "@id": "https://jbrecruitments.com/#website",
+    url: "https://jbrecruitments.com",
     name: "JB Recruitments",
     publisher: {
-      "@id": "https://jbrecruitment.com/#organization",
+      "@id": "https://jbrecruitments.com/#organization",
     },
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://jbrecruitment.com/search?q={search_term_string}",
+      target: "https://jbrecruitments.com/search?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };
@@ -75,19 +75,19 @@ export default function StructuredData() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://jbrecruitment.com",
+        item: "https://jbrecruitments.com",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Contact",
-        item: "https://jbrecruitment.com/contact-us",
+        item: "https://jbrecruitments.com/contact-us",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "Job Seekers",
-        item: "https://jbrecruitment.com/job-seekers",
+        item: "https://jbrecruitments.com/job-seekers",
       },
     ],
   };
