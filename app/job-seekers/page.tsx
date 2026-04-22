@@ -33,7 +33,7 @@ export default function JobSeekersPage() {
                 Career Insights & Guidance
               </h1>
 
-              <div className="space-y-7">
+              <div className="space-y-5">
                 <div>
                   <h3
                     className="text-lg sm:text-xl font-semibold text-[#252e3d] mb-2"
@@ -75,6 +75,14 @@ export default function JobSeekersPage() {
                     <li>Upload your resume</li>
                     <li>Get notified about suitable openings</li>
                   </ol>
+                </div>
+
+                <div className="w-full">
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed font-medium">
+                    • We do not charge candidates for job opportunities. However,
+                    we offer paid career services (listed below) designed to
+                    help you stand out in the job market.
+                  </p>
                 </div>
 
                 <div className="w-full">

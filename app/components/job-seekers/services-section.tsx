@@ -71,6 +71,20 @@ const services = [
       "USD 30 | 48 hours",
     ],
   },
+  {
+    id: 6,
+    title: "Interview Prep",
+    description:
+      "Direct, practical support to help you crack your interviews with confidence.",
+    iconPath: "/icons/job-seekers/interview-prep.svg",
+    features: [
+      "Profile and role review",
+      "Top 10 likely interview questions",
+      "Structured answers using the STAR method",
+      "Delivered via email",
+      "USD 100",
+    ],
+  },
 ];
 
 export default function ServicesSection() {
@@ -128,7 +142,7 @@ export default function ServicesSection() {
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="relative flex flex-col items-left md:items-center md:flex-row md:items-center justify-center mb-0 md:mb-16 md:pl-12">
+        <div className="relative flex flex-col items-left md:flex-row md:items-center justify-center mb-0 md:mb-16 md:pl-12">
           <div className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mb-3 md:mb-0">
             <img
               src="/home/icons8-ai-48.avif"
@@ -147,16 +161,6 @@ export default function ServicesSection() {
 
         {/* Grid Layout matching why-companies-prefer */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* 1. Text Block (Top-Left) */}
-          <div className="h-full flex items-center">
-            <div className="pr-4 lg:pr-8">
-              <p className="text-[#374151] text-base md:text-lg lg:text-[19px] leading-relaxed font-medium">
-                Beyond core recruitment, we support your hiring process with
-                thoughtful coordination, clear communication, and end-to-end
-                assistance.
-              </p>
-            </div>
-          </div>
 
           {/* Service Cards 2-6 */}
           {services.map((s, index) => (
@@ -176,16 +180,16 @@ export default function ServicesSection() {
 
         {/* Bundle Offer Below Cards */}
         <div className="mt-12 flex justify-center">
-          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] shadow-lg px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center">
+          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center">
             <div
-              className="absolute inset-0 -z-10 blur-2xl bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
+              className="absolute inset-0 -z-10 blur-2xl bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
               aria-hidden="true"
             ></div>
             <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm border border-[#e8e3ff]">
               Limited Bundle
             </span>
             <h2 className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
-              All services bundled together at a special price of USD 400.
+              All services bundled together at a special price of USD 480.
             </h2>
             <span className="text-md text-[#4b5563]">
               Highlighting every upgrade in one move.
