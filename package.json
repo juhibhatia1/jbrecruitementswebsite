@@ -6,7 +6,7 @@
   "author": "JB Recruitment Solutions",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "seo:check": "echo 'Checking SEO implementation...' && node -e \"console.log('✅ Sitemap: http://localhost:3000/sitemap.xml'); console.log('✅ Robots: http://localhost:3000/robots.txt'); console.log('✅ OG Image: http://localhost:3000/opengraph-image'); console.log('Run dev server and visit these URLs to verify')\"",
