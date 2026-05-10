@@ -3,6 +3,7 @@ import ImageKit from "imagekit";
 import { addJobSeekerSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
+import path from "path";
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
         Resume: ${fileUrl || "No file URL"}
       `,
       html: `
+        <div style="text-align:center; padding:12px 0 8px 0;"><img src="cid:jb-logo" alt="JB Recruitment" style="width:84px; height:auto; display:inline-block;" /></div>
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #3b82f6;">New Job Application</h2>
           <p><strong>Name:</strong> ${name}</p>
@@ -115,9 +117,7 @@ export async function POST(request: Request) {
           
           <div style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 5px;">
             <p><strong>Description:</strong></p>
-            <p style="white-space: pre-wrap;">${(
-              description || "No description provided"
-            ).replace(/\n/g, "<br>")}</p>
+            <p style="white-space: pre-wrap;">${(description || "No description provided").replace(/\n/g, "<br>")}</p>
           </div>
 
           <div style="margin-top: 20px;">
@@ -130,11 +130,71 @@ export async function POST(request: Request) {
           </div>
         </div>
       `,
+      attachments: [
+        {
+          filename: "logo.avif",
+          path: path.join(process.cwd(), "public", "logo.avif"),
+          cid: "jb-logo",
+        },
+      ],
+    };
+
+    const candidateMailOptions = {
+      from: `"JB Recruitment Solutions" <${user}>`,
+      to: email, // Send to candidate
+      subject:
+        "Thank you for sharing your profile with JB Recruitment Solutions",
+      text: `Hi ${name},
+
+Thank you so much for taking the time to share your profile with us.
+
+We’ve received your details and will definitely reach out if we come across any potential opportunities that align with your experience.
+
+We understand that job searching can sometimes feel overwhelming, so here’s a small tip that can really make a difference: Try to actively grow your network and engage with hiring teams. It helps improve your visibility significantly. LinkedIn allows up to 100 connection requests per week, so you can use this to connect with people in your industry or target companies.
+
+Also, make sure your resume is ATS-friendly and your LinkedIn profile is well-optimized with the right keywords and skills for the roles you’re aiming for.
+
+If you need any support with this or would like career guidance, you can explore the “Services” section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
+
+Wishing you all the very best in your job search - Team JB is rooting for you.
+
+LinkedIn: linkedin.com/in/juhiibhatia/
+Instagram: instagram.com/juhibhatia_globalrecruiter`,
+      html: `
+        <div style="text-align:center; padding:12px 0 8px 0;"><img src="cid:jb-logo" alt="JB Recruitment" style="width:84px; height:auto; display:inline-block;" /></div>
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6; white-space: pre-wrap;">
+Hi ${name}
+
+Thank you so much for taking the time to share your profile with us.
+
+We’ve received your details and will definitely reach out if we come across any potential opportunities that align with your experience.
+
+We understand that job searching can sometimes feel overwhelming, so here’s a small tip that can really make a difference: Try to actively grow your network and engage with hiring teams. It helps improve your visibility significantly. LinkedIn allows up to 100 connection requests per week, so you can use this to connect with people in your industry or target companies.
+
+Also, make sure your resume is ATS-friendly and your LinkedIn profile is well-optimized with the right keywords and skills for the roles you’re aiming for.
+
+If you need any support with this or would like career guidance, you can explore the “Services” section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
+
+Wishing you all the very best in your job search - Team JB is rooting for you.
+
+LinkedIn: linkedin.com/in/juhiibhatia/
+Instagram: instagram.com/juhibhatia_globalrecruiter
+        </div>
+      `,
+      attachments: [
+        {
+          filename: "logo.avif",
+          path: path.join(process.cwd(), "public", "logo.avif"),
+          cid: "jb-logo",
+        },
+      ],
     };
 
     let emailSent = false;
     try {
       await transporter.sendMail(mailOptions);
+      // Send auto-reply to the candidate
+      await transporter.sendMail(candidateMailOptions);
       emailSent = true;
     } catch (emailError) {
       console.error("Error sending email:", emailError);
