@@ -29,7 +29,7 @@ const services = [
       "Motivation and role-fit are articulated strategically",
       "Easily customizable version for multiple applications",
       "Professional and persuasive",
-      "USD 80 | 5 days",
+      "USD 50 | 5 days",
     ],
   },
   {
@@ -54,7 +54,7 @@ const services = [
       "Custom post showcasing your profile, skills & availability",
       "Strategic positioning to attract hiring managers",
       "Increased visibility with employers & key decision-makers",
-      "Published via Juhi Bhatia’s LinkedIn for wider reach & credibility. USD 180 | 5 days",
+      "Published via Juhi Bhatia’s LinkedIn for wider reach & credibility. USD 160 | 5 days",
     ],
   },
   {
@@ -68,7 +68,7 @@ const services = [
       "Remote jobs and interviews",
       "Burnout, layoffs, and clarity",
       "Resume or LinkedIn direction",
-      "USD 30 | 48 hours",
+      "USD 40 | 48 hours",
     ],
   },
   {
