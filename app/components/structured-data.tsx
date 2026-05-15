@@ -8,7 +8,7 @@ export default function StructuredData() {
     url: "https://jbrecruitments.com",
     // Uncomment after saving logo.png to public folder:
     // logo: 'https://jbrecruitments.com/logo.png',
-    image: "https://jbrecruitments.com/opengraph-image",
+    image: "https://jbrecruitments.com/logo.avif",
     description: "A recruitment brand by Juhi Bhatia",
     slogan: "Connecting Talent with Opportunity",
     founder: {
