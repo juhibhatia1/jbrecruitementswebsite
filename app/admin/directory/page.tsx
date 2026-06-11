@@ -1,0 +1,52 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import DirectoryDashboard from "@/app/components/admin/directory-dashboard";
+import { ADMIN_SESSION_COOKIE, isValidAdminSessionToken } from "@/lib/admin-auth";
+import { getAllSubmissions } from "@/lib/submissions-store";
+
+import type { AdminSubmission } from "@/lib/submission-types";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminDirectoryPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+
+  if (!isValidAdminSessionToken(token)) {
+    redirect("/admin");
+  }
+
+  let submissions: AdminSubmission[] = [];
+  let serializedPurchases: any[] = [];
+  let dbError: string | null = null;
+
+  try {
+    // Fetch all submissions consolidated
+    submissions = await getAllSubmissions();
+
+    // Fetch all purchases
+    const purchases = await prisma.purchase.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Convert purchases Date objects to strings for Client Component compatibility
+    serializedPurchases = purchases.map((p) => ({
+      ...p,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+      mockInterviewDate: p.mockInterviewDate ? p.mockInterviewDate.toISOString() : null,
+    }));
+  } catch (err: any) {
+    console.error("Database connection error in admin directory:", err);
+    dbError = "Database server is currently offline or sleeping. Please refresh in a few seconds to retry.";
+  }
+
+  return (
+    <DirectoryDashboard
+      submissions={submissions}
+      purchases={serializedPurchases}
+      dbError={dbError}
+    />
+  );
+}

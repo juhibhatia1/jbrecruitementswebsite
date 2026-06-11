@@ -7,6 +7,8 @@ import {
 } from "@/lib/admin-auth";
 import { getAllSubmissions } from "@/lib/submissions-store";
 
+import type { AdminSubmission } from "@/lib/submission-types";
+
 export default async function AdminSubmissionsPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
@@ -15,7 +17,15 @@ export default async function AdminSubmissionsPage() {
     redirect("/admin");
   }
 
-  const submissions = await getAllSubmissions();
+  let submissions: AdminSubmission[] = [];
+  let dbError: string | null = null;
 
-  return <SubmissionsDashboard submissions={submissions} />;
+  try {
+    submissions = await getAllSubmissions();
+  } catch (err: any) {
+    console.error("Database connection error in admin submissions:", err);
+    dbError = "Database server is currently offline or sleeping. Please refresh in a few seconds to retry.";
+  }
+
+  return <SubmissionsDashboard submissions={submissions} dbError={dbError} />;
 }

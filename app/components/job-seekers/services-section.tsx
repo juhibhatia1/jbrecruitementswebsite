@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ServiceCard from "./service-card";
+import PaymentModal from "./payment-modal";
 
 const services = [
   {
     id: 1,
     title: "Resume Review & Rewriting",
+    amount: 80,
     description:
       "ATS-optimised resumes aligned with your target roles and recruiter search systems.",
     iconPath: "/icons/job-seekers/resume-review.svg",
@@ -21,6 +23,7 @@ const services = [
   {
     id: 2,
     title: "Cover Letter Writing",
+    amount: 50,
     description:
       "A master cover letter that communicates impact, motivation, and adaptability.",
     iconPath: "/icons/job-seekers/cover-letter.svg",
@@ -35,6 +38,7 @@ const services = [
   {
     id: 3,
     title: "LinkedIn Optimization",
+    amount: 80,
     description:
       "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
     iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
@@ -48,6 +52,7 @@ const services = [
   {
     id: 4,
     title: "Superstar Shout-Out",
+    amount: 160,
     description: "Targeted LinkedIn announcement to decision-makers",
     iconPath: "/icons/job-seekers/superstar.svg",
     features: [
@@ -60,6 +65,7 @@ const services = [
   {
     id: 5,
     title: "Ask Me Anything",
+    amount: 40,
     description:
       "Direct, practical guidance over email for real-world career challenges and decisions.",
     iconPath: "/icons/job-seekers/ask-me-anything.svg",
@@ -74,6 +80,7 @@ const services = [
   {
     id: 6,
     title: "Interview Prep",
+    amount: 100,
     description:
       "Direct, practical support to help you crack your interviews with confidence.",
     iconPath: "/icons/job-seekers/interview-prep.svg",
@@ -91,6 +98,15 @@ export default function ServicesSection() {
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
+  
+  // Payment Modal States
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedService, setSelectedService] = useState<{
+    title: string;
+    amount: number;
+    description: string;
+  } | null>(null);
+
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // start auto-flip sequence after initial 3s delay
@@ -101,14 +117,14 @@ export default function ServicesSection() {
 
   // Sequential auto-flip every 6 seconds after `started`
   useEffect(() => {
-    if (isPaused || !started) return;
+    if (isPaused || !started || isModalOpen) return;
 
     const interval = setInterval(() => {
       setCurrentFlipIndex((prev) => (prev + 1) % services.length);
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isPaused, started]);
+  }, [isPaused, started, isModalOpen]);
 
   const clearResumeTimeout = useCallback(() => {
     if (resumeTimeoutRef.current) {
@@ -134,6 +150,28 @@ export default function ServicesSection() {
       setIsPaused(false);
     }, 5000);
   }, [pauseAutoFlip]);
+
+  const handleBuyClick = (title: string, amount: number, description: string) => {
+    // For the bundle offer click, trigger CLICK_BUY telemetry
+    if (title === "All Career Services Bundle") {
+      fetch("/api/analytics/funnel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
+      }).catch((e) => console.error("Telemetry failed:", e));
+    }
+    setSelectedService({ title, amount, description });
+    setIsModalOpen(true);
+  };
+
+  // Log bundle view on mount
+  useEffect(() => {
+    fetch("/api/analytics/funnel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ serviceName: "All Career Services Bundle", eventType: "VIEW" }),
+    }).catch((e) => console.error("Telemetry failed:", e));
+  }, []);
 
   useEffect(() => {
     return () => clearResumeTimeout();
@@ -161,8 +199,7 @@ export default function ServicesSection() {
 
         {/* Grid Layout matching why-companies-prefer */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-          {/* Service Cards 2-6 */}
+          {/* Service Cards 1-6 */}
           {services.map((s, index) => (
             <ServiceCard
               key={s.id}
@@ -170,17 +207,18 @@ export default function ServicesSection() {
               description={s.description}
               iconPath={s.iconPath}
               features={s.features}
-              shouldFlip={started && currentFlipIndex === index}
+              shouldFlip={started && currentFlipIndex === index && !isModalOpen}
               onManualFlip={pauseTemporarily}
               onHoverStart={pauseAutoFlip}
               onHoverEnd={resumeAutoFlip}
+              onBuyClick={() => handleBuyClick(s.title, s.amount, s.description)}
             />
           ))}
         </div>
 
         {/* Bundle Offer Below Cards */}
         <div className="mt-12 flex justify-center">
-          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center">
+          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center max-w-lg">
             <div
               className="absolute inset-0 -z-10 blur-2xl bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
               aria-hidden="true"
@@ -191,12 +229,31 @@ export default function ServicesSection() {
             <h2 className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
               All services bundled together at a special price of USD 480.
             </h2>
-            <span className="text-md text-[#4b5563]">
+            <span className="text-sm sm:text-md text-[#4b5563]">
               Highlighting every upgrade in one move.
             </span>
+            <button
+              onClick={() =>
+                handleBuyClick(
+                  "All Career Services Bundle",
+                  480,
+                  "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep."
+                )
+              }
+              className="mt-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md active:scale-[0.98]"
+            >
+              Get Bundle Offer
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Stripe Payment Modal */}
+      <PaymentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        service={selectedService}
+      />
     </section>
   );
 }

@@ -3,7 +3,9 @@ import ImageKit from "imagekit";
 import { addJobSeekerSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { randomUUID } from "crypto";
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
@@ -11,8 +13,90 @@ const imagekit = new ImageKit({
   urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "",
 });
 
+const LOCAL_RESUME_DIRECTORY = path.join(
+  process.cwd(),
+  "public",
+  "uploads",
+  "job-seekers-resumes",
+);
+
+function logJobSeekerEvent(
+  requestId: string,
+  stage: string,
+  details?: Record<string, unknown>,
+) {
+  const payload = {
+    scope: "job-seekers-api",
+    requestId,
+    stage,
+    timestamp: new Date().toISOString(),
+    ...details,
+  };
+
+  console.log("[job-seekers]", JSON.stringify(payload));
+}
+
+function logJobSeekerError(
+  requestId: string,
+  stage: string,
+  error: unknown,
+  details?: Record<string, unknown>,
+) {
+  const normalizedError =
+    error instanceof Error
+      ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        }
+      : error;
+
+  const payload = {
+    scope: "job-seekers-api",
+    requestId,
+    stage,
+    timestamp: new Date().toISOString(),
+    ...details,
+    error: normalizedError,
+  };
+
+  console.error("[job-seekers]", JSON.stringify(payload));
+}
+
+function sanitizeFileName(fileName: string) {
+  const extension = path.extname(fileName);
+  const baseName = path.basename(fileName, extension);
+
+  const sanitizedBaseName = baseName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
+  return `${sanitizedBaseName || "resume"}-${randomUUID()}${extension.toLowerCase()}`;
+}
+
+async function saveResumeLocally(fileName: string, buffer: Buffer) {
+  await mkdir(LOCAL_RESUME_DIRECTORY, { recursive: true });
+  const storedFileName = sanitizeFileName(fileName);
+  const storedFilePath = path.join(LOCAL_RESUME_DIRECTORY, storedFileName);
+
+  await writeFile(storedFilePath, buffer);
+
+  return `/uploads/job-seekers-resumes/${storedFileName}`;
+}
+
 export async function POST(request: Request) {
+  const requestId = randomUUID();
+
   try {
+    logJobSeekerEvent(requestId, "request.received", {
+      method: "POST",
+      pathname: request.headers.get("x-pathname") || "unknown",
+      contentType: request.headers.get("content-type") || "unknown",
+      userAgent: request.headers.get("user-agent") || "unknown",
+    });
+
     const requestMeta = extractRequestMeta(request);
     const formData = await request.formData();
     const name = formData.get("name") as string;
@@ -23,28 +107,84 @@ export async function POST(request: Request) {
     const file = formData.get("resume") as File;
 
     if (!name || !email || !file) {
+      logJobSeekerEvent(requestId, "request.validation_failed", {
+        hasName: Boolean(name),
+        hasEmail: Boolean(email),
+        hasResume: Boolean(file),
+      });
       return NextResponse.json(
         { error: "Name, email, and resume are required." },
         { status: 400 },
       );
     }
 
+    logJobSeekerEvent(requestId, "request.parsed", {
+      name,
+      email,
+      phoneProvided: Boolean(phone),
+      locationProvided: Boolean(location),
+      descriptionLength: description?.length || 0,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type || "unknown",
+      requestMeta,
+    });
+
     // Convert file to buffer for ImageKit
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to ImageKit
+    logJobSeekerEvent(requestId, "resume.buffer_created", {
+      fileName: file.name,
+      bufferSize: buffer.length,
+    });
+
+    // Upload to ImageKit, then fall back to local storage if unavailable.
     let fileUrl = "";
     try {
+      logJobSeekerEvent(requestId, "resume.imagekit_upload_started", {
+        fileName: file.name,
+        targetFolder: "/job-seekers-resumes",
+      });
+
       const uploadResponse = await imagekit.upload({
         file: buffer,
         fileName: file.name,
         folder: "/job-seekers-resumes",
       });
       fileUrl = uploadResponse.url;
+      logJobSeekerEvent(requestId, "resume.imagekit_upload_succeeded", {
+        fileName: file.name,
+        fileUrl,
+        imagekitFileId: uploadResponse.fileId,
+      });
     } catch (uploadError) {
-      console.error("ImageKit upload failed:", uploadError);
-      // Continue without file upload, save to DB if we can
+      logJobSeekerError(
+        requestId,
+        "resume.imagekit_upload_failed",
+        uploadError,
+        {
+          fileName: file.name,
+          fileSize: file.size,
+        },
+      );
+
+      try {
+        fileUrl = await saveResumeLocally(file.name, buffer);
+        logJobSeekerEvent(requestId, "resume.local_save_succeeded", {
+          fileName: file.name,
+          fileUrl,
+        });
+      } catch (localUploadError) {
+        logJobSeekerError(
+          requestId,
+          "resume.local_save_failed",
+          localUploadError,
+          {
+            fileName: file.name,
+          },
+        );
+      }
     }
 
     // Save to database immediately (independent of email)
@@ -61,8 +201,15 @@ export async function POST(request: Request) {
         requestMeta,
       });
       dbSaved = true;
+      logJobSeekerEvent(requestId, "database.save_succeeded", {
+        email,
+        fileUrl: fileUrl || null,
+      });
     } catch (dbError) {
-      console.error("Database save error:", dbError);
+      logJobSeekerError(requestId, "database.save_failed", dbError, {
+        email,
+        fileUrl: fileUrl || null,
+      });
       // Continue to attempt email even if DB save fails
     }
 
@@ -71,7 +218,11 @@ export async function POST(request: Request) {
     const pass = process.env.NEXT_NODEMAILER_PASS;
 
     if (!user || !pass) {
-      console.error("Missing Nodemailer credentials");
+      logJobSeekerEvent(requestId, "email.credentials_missing", {
+        hasUser: Boolean(user),
+        hasPass: Boolean(pass),
+        dbSaved,
+      });
       // If DB was saved, return success with warning
       if (dbSaved) {
         return NextResponse.json(
@@ -131,6 +282,10 @@ export async function POST(request: Request) {
         </div>
       `,
       attachments: [
+        {
+          filename: file.name,
+          content: buffer,
+        },
         {
           filename: "logo.avif",
           path: path.join(process.cwd(), "public", "logo.avif"),
@@ -192,17 +347,39 @@ Instagram: instagram.com/juhibhatia_globalrecruiter
 
     let emailSent = false;
     try {
+      logJobSeekerEvent(requestId, "email.admin_send_started", {
+        to: user,
+        replyTo: email,
+        hasResumeAttachment: true,
+      });
       await transporter.sendMail(mailOptions);
+      logJobSeekerEvent(requestId, "email.admin_send_succeeded", {
+        to: user,
+      });
+
+      logJobSeekerEvent(requestId, "email.candidate_send_started", {
+        to: email,
+      });
       // Send auto-reply to the candidate
       await transporter.sendMail(candidateMailOptions);
       emailSent = true;
+      logJobSeekerEvent(requestId, "email.candidate_send_succeeded", {
+        to: email,
+      });
     } catch (emailError) {
-      console.error("Error sending email:", emailError);
+      logJobSeekerError(requestId, "email.send_failed", emailError, {
+        adminEmail: user,
+        candidateEmail: email,
+      });
       emailSent = false;
     }
 
     // Return success if DB was saved (email is secondary)
     if (dbSaved) {
+      logJobSeekerEvent(requestId, "request.completed", {
+        outcome: emailSent ? "success" : "saved_with_email_pending",
+        fileUrl: fileUrl || null,
+      });
       return NextResponse.json({
         success: true,
         message: emailSent
@@ -213,18 +390,28 @@ Instagram: instagram.com/juhibhatia_globalrecruiter
 
     // If DB save failed and email also failed
     if (!emailSent) {
+      logJobSeekerEvent(requestId, "request.completed", {
+        outcome: "failed",
+        dbSaved,
+        emailSent,
+        fileUrl: fileUrl || null,
+      });
       return NextResponse.json(
         { error: "Failed to process application." },
         { status: 500 },
       );
     }
 
+    logJobSeekerEvent(requestId, "request.completed", {
+      outcome: "success_without_db_save",
+      fileUrl: fileUrl || null,
+    });
     return NextResponse.json({
       success: true,
       message: "Application submitted successfully!",
     });
   } catch (error) {
-    console.error("Error processing job application:", error);
+    logJobSeekerError(requestId, "request.unhandled_error", error);
     return NextResponse.json(
       { error: "Failed to process application." },
       { status: 500 },

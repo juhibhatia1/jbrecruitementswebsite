@@ -4,11 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminSubmission } from "@/lib/submission-types";
+import { IoAlertCircle } from "react-icons/io5";
 
 type FilterValue = "all" | "contact" | "job-seeker";
 
 interface SubmissionsDashboardProps {
   submissions: AdminSubmission[];
+  dbError?: string | null;
 }
 
 function formatDateTime(value: string): string {
@@ -36,6 +38,7 @@ function isToday(isoDate: string): boolean {
 
 export default function SubmissionsDashboard({
   submissions,
+  dbError,
 }: SubmissionsDashboardProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -133,6 +136,12 @@ export default function SubmissionsDashboard({
               >
                 Submissions
               </Link>
+              <Link
+                href="/admin/directory"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                User Directory
+              </Link>
             </div>
           </div>
 
@@ -163,6 +172,21 @@ export default function SubmissionsDashboard({
             </div>
           </div>
         </header>
+
+        {dbError && (
+          <div className="p-5 bg-amber-50 border-l-4 border-amber-500 rounded-3xl text-amber-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start gap-2.5">
+              <IoAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" />
+              <span>{dbError}</span>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer self-start sm:self-auto"
+            >
+              Retry Connection
+            </button>
+          </div>
+        )}
 
         <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

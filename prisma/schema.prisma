@@ -59,3 +59,34 @@ model JobSeekerSubmission {
   @@index([email])
   @@index([createdAt])
 }
+
+model Purchase {
+  id                    String   @id @default(cuid())
+  candidateName         String
+  candidateEmail        String
+  serviceName           String
+  amount                Float
+  currency              String   @default("USD")
+  stripePaymentIntentId String   @unique
+  status                String   // "PENDING", "COMPLETED", "FAILED"
+  country               String?
+  mockInterviewStatus   String?  // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
+  mockInterviewDate     DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([candidateEmail])
+  @@index([createdAt])
+}
+
+model FunnelEvent {
+  id          String   @id @default(cuid())
+  serviceName String
+  eventType   String   // "VIEW", "CLICK_BUY", "COMPLETED"
+  createdAt   DateTime @default(now())
+
+  @@index([serviceName])
+  @@index([eventType])
+  @@index([createdAt])
+}
+

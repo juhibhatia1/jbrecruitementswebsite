@@ -13,6 +13,7 @@ type ServiceCardProps = {
   onManualFlip?: () => void;
   onHoverStart?: () => void;
   onHoverEnd?: () => void;
+  onBuyClick?: () => void;
 };
 
 export default function ServiceCard({
@@ -25,6 +26,7 @@ export default function ServiceCard({
   onManualFlip,
   onHoverStart,
   onHoverEnd,
+  onBuyClick,
 }: ServiceCardProps) {
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -43,6 +45,17 @@ export default function ServiceCard({
       setIsFlipped(false);
     }
   }, [shouldFlip, isHovered, isManualFlip]);
+
+  // Trigger VIEW funnel event on card flip
+  useEffect(() => {
+    if (isFlipped) {
+      fetch("/api/analytics/funnel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceName: title, eventType: "VIEW" }),
+      }).catch((e) => console.error("Telemetry failed:", e));
+    }
+  }, [isFlipped, title]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -78,7 +91,7 @@ export default function ServiceCard({
 
   return (
     <div
-      className="relative w-full h-68 sm:h-64 md:h-72 lg:h-64 group"
+      className="relative w-full h-[340px] sm:h-80 md:h-[340px] lg:h-80 group"
       style={{ perspective: "1200px" }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -131,30 +144,51 @@ export default function ServiceCard({
 
         {/* Back Side */}
         <div
-          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-center p-5 sm:p-6 md:p-7 border border-gray-100"
+          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-between p-4 sm:p-5 border border-gray-100"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
-          {/* Description */}
-          <div className="text-black text-sm sm:text-base md:text-[15px] text-center leading-relaxed mb-4">
-            {backDescription ||
-              description ||
-              "Get expert assistance tailored to your career goals."}
+          <div className="flex-grow flex flex-col justify-center">
+            {/* Description */}
+            <div className="text-[#252e3d] text-xs sm:text-sm text-center leading-relaxed mb-3 font-medium">
+              {backDescription ||
+                description ||
+                "Get expert assistance tailored to your career goals."}
+            </div>
+
+            {/* Feature List */}
+            <div className="space-y-1.5 px-1 sm:px-3 mb-3">
+              {displayFeatures.map((feature, index) => (
+                <div key={index} className="flex items-center text-gray-700">
+                  <div className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full mr-2.5 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-[13px] leading-snug">
+                    {feature}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Feature List */}
-          <div className="space-y-2 px-2 md:px-6">
-            {displayFeatures.map((feature, index) => (
-              <div key={index} className="flex items-center text-gray-700">
-                <div className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full mr-2.5 flex-shrink-0"></div>
-                <span className="text-xs sm:text-sm md:text-[13px] leading-snug">
-                  {feature}
-                </span>
-              </div>
-            ))}
-          </div>
+          {/* Buy Now Button */}
+          {onBuyClick && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                // Trigger CLICK_BUY funnel event
+                fetch("/api/analytics/funnel", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
+                }).catch((e) => console.error("Telemetry failed:", e));
+                onBuyClick();
+              }}
+              className="w-full bg-[#5a58ab] hover:bg-[#4a489b] text-white text-xs sm:text-sm font-semibold py-2 px-3 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer"
+            >
+              Buy Now
+            </button>
+          )}
         </div>
       </div>
     </div>

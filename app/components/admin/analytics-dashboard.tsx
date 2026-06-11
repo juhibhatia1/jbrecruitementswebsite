@@ -8,12 +8,55 @@ import {
   buildSubmissionAnalytics,
   type AnalyticsBucket,
 } from "@/lib/admin-analytics";
+import {
+  IoSearch,
+  IoClose,
+  IoAlertCircle,
+  IoArrowBack,
+  IoGrid,
+  IoList,
+  IoChevronBack,
+  IoChevronForward,
+  IoWalletOutline,
+  IoMailOutline,
+  IoGlobeOutline,
+  IoLaptopOutline,
+  IoBarChartOutline,
+  IoOpenOutline,
+} from "react-icons/io5";
+
+interface PurchaseData {
+  id: string;
+  candidateName: string;
+  candidateEmail: string;
+  serviceName: string;
+  amount: number;
+  currency: string;
+  stripePaymentIntentId: string;
+  status: string;
+  country: string | null;
+  mockInterviewStatus: string | null;
+  mockInterviewDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface FunnelEventData {
+  id: string;
+  serviceName: string;
+  eventType: string;
+  createdAt: string;
+}
 
 interface AnalyticsDashboardProps {
   submissions: AdminSubmission[];
+  purchases?: PurchaseData[];
+  funnelEvents?: FunnelEventData[];
+  dbError?: string | null;
 }
 
 type RangeFilter = "7d" | "30d" | "all";
+type TabValue = "submissions" | "services";
 
 function percent(part: number, total: number): string {
   if (total === 0) {
@@ -64,14 +107,775 @@ function BarList({
   );
 }
 
+// Sub-component for candidate/submission details modal
+interface DetailModalProps {
+  item: any;
+  metricFamily: "submissions" | "revenue" | "conversion";
+  onClose: () => void;
+}
+
+function DetailModal({ item, metricFamily, onClose }: DetailModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#252e3d]/40 backdrop-blur-xs">
+      <div className="relative w-full max-w-2xl bg-white rounded-3xl border border-slate-200 p-6 shadow-xl max-h-[85vh] overflow-y-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 rounded-lg p-1.5 hover:bg-slate-100 transition"
+        >
+          <IoClose className="w-5 h-5" />
+        </button>
+
+        <h3 className="text-xl font-bold text-[#252e3d] pr-8 border-b border-slate-100 pb-3" style={{ fontFamily: "Crimson Text, serif" }}>
+          {item.name || item.candidateName || "Record Details"}
+        </h3>
+
+        <div className="mt-5 space-y-4 text-sm text-slate-700">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Email Address</span>
+              <span className="font-medium">{item.email || item.candidateEmail || "N/A"}</span>
+            </div>
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Date / Timestamp</span>
+              <span className="font-medium">{new Date(item.date || item.createdAt).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Type / Service</span>
+              <span className="font-semibold text-[#5a58ab]">{item.typeOrService || item.serviceName || "N/A"}</span>
+            </div>
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Value / Status</span>
+              <span className="font-medium">{item.valueOrStatus || item.status || "N/A"}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Location / Country</span>
+              <span className="font-medium">{item.locationOrDetail || item.country || "N/A"}</span>
+            </div>
+            {item.phone && (
+              <div>
+                <span className="block text-xs text-slate-400 uppercase font-semibold">Phone</span>
+                <span className="font-medium">{item.phone}</span>
+              </div>
+            )}
+          </div>
+
+          {item.subtext && (
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Identifier / Info</span>
+              <span className="font-mono text-xs text-slate-500">{item.subtext}</span>
+            </div>
+          )}
+
+          {item.resumeUrl && (
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Uploaded Resume</span>
+              <a
+                href={item.resumeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-[#3055cc] hover:underline font-semibold text-xs"
+              >
+                <IoOpenOutline className="w-4 h-4" />
+                {item.resumeFileName || "View Resume File"}
+              </a>
+            </div>
+          )}
+
+          {item.message && (
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Message / Note</span>
+              <p className="whitespace-pre-wrap leading-relaxed text-slate-600">{item.message}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sub-component for Drilldown panel Takeover
+interface DrilldownViewProps {
+  initialMetric: string;
+  onClose: () => void;
+  submissions: AdminSubmission[];
+  purchases: PurchaseData[];
+  funnelEvents: FunnelEventData[];
+  submissionAnalytics: any;
+  grossRevenue: number;
+  totalOrders: number;
+  aov: number;
+  overallConversionRate: number;
+  serviceStats: any;
+}
+
+function DrilldownView({
+  initialMetric,
+  onClose,
+  submissions,
+  purchases,
+  funnelEvents,
+  submissionAnalytics,
+  grossRevenue,
+  totalOrders,
+  aov,
+  overallConversionRate,
+  serviceStats,
+}: DrilldownViewProps) {
+  const [metric, setMetric] = useState(initialMetric);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [page, setPage] = useState(1);
+  const [pillFilter, setPillFilter] = useState("all");
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+
+  const metricFamily = useMemo(() => {
+    if (
+      ["total_submissions", "contacts", "job_seekers", "last_24h", "unique_emails", "unique_ips"].includes(
+        metric
+      )
+    ) {
+      return "submissions";
+    }
+    if (["revenue", "orders", "aov"].includes(metric)) {
+      return "revenue";
+    }
+    return "conversion";
+  }, [metric]);
+
+  // Compile raw items according to selected metric
+  const rawItems = useMemo<any[]>(() => {
+    switch (metric) {
+      case "total_submissions":
+        return submissions.map((s) => {
+          const anyS = s as any;
+          return {
+            id: anyS.id,
+            name: anyS.name,
+            email: anyS.email,
+            typeOrService: anyS.type === "contact" ? "Contact Form" : "Job Seeker",
+            valueOrStatus: "Submitted",
+            locationOrDetail: anyS.requestMeta?.country || "Unknown",
+            date: anyS.createdAt,
+            subtext: anyS.type === "contact" ? anyS.company || "" : anyS.location || "",
+            phone: anyS.phone,
+            message: anyS.type === "contact" ? anyS.message : anyS.description || "",
+            resumeUrl: anyS.type === "job-seeker" ? anyS.resumeUrl : undefined,
+            resumeFileName: anyS.type === "job-seeker" ? anyS.resumeFileName : undefined,
+          };
+        });
+
+      case "contacts":
+        return (submissions.filter((s) => s.type === "contact") as any[])
+          .map((s) => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            typeOrService: "Contact Form",
+            valueOrStatus: s.subject || "General Enquiry",
+            locationOrDetail: s.company || "No Company",
+            date: s.createdAt,
+            phone: s.phone,
+            message: s.message,
+          }));
+
+      case "job_seekers":
+        return (submissions.filter((s) => s.type === "job-seeker") as any[])
+          .map((s) => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            typeOrService: "Job Seeker",
+            valueOrStatus: s.resumeUrl ? "Resume Uploaded" : "No Resume",
+            locationOrDetail: s.location || s.requestMeta?.country || "Unknown",
+            date: s.createdAt,
+            phone: s.phone,
+            message: s.description || "",
+            resumeUrl: s.resumeUrl,
+            resumeFileName: s.resumeFileName,
+          }));
+
+      case "last_24h": {
+        const start = Date.now() - 24 * 60 * 60 * 1000;
+        return submissions
+          .filter((s) => new Date(s.createdAt).getTime() >= start)
+          .map((s) => {
+            const anyS = s as any;
+            return {
+              id: anyS.id,
+              name: anyS.name,
+              email: anyS.email,
+              typeOrService: anyS.type === "contact" ? "Contact Form" : "Job Seeker",
+              valueOrStatus: "Submitted",
+              locationOrDetail: anyS.requestMeta?.country || "Unknown",
+              date: anyS.createdAt,
+              phone: anyS.phone,
+              message: anyS.type === "contact" ? anyS.message : anyS.description || "",
+              resumeUrl: anyS.type === "job-seeker" ? anyS.resumeUrl : undefined,
+              resumeFileName: anyS.type === "job-seeker" ? anyS.resumeFileName : undefined,
+            };
+          });
+      }
+
+      case "unique_emails": {
+        const emailGroups: Record<string, typeof submissions> = {};
+        submissions.forEach((s) => {
+          const email = s.email.toLowerCase().trim();
+          if (!emailGroups[email]) emailGroups[email] = [];
+          emailGroups[email].push(s);
+        });
+
+        return Object.entries(emailGroups).map(([email, list]) => {
+          const latest = list[0] as any; // ordered desc by default
+          return {
+            id: email,
+            name: latest.name,
+            email: email,
+            typeOrService: latest.type === "contact" ? "Contact Form" : "Job Seeker",
+            valueOrStatus: `${list.length} ${list.length === 1 ? "submission" : "submissions"}`,
+            locationOrDetail: latest.requestMeta?.country || "Unknown",
+            date: latest.createdAt,
+            phone: latest.phone,
+            message: `Submission history contains ${list.length} submission(s). Last submission message/description: ${
+              latest.type === "contact" ? latest.message : latest.description || "N/A"
+            }`,
+          };
+        });
+      }
+
+      case "unique_ips": {
+        const ipGroups: Record<string, typeof submissions> = {};
+        submissions.forEach((s) => {
+          const ip = s.requestMeta?.ipAddress;
+          if (ip) {
+            if (!ipGroups[ip]) ipGroups[ip] = [];
+            ipGroups[ip].push(s);
+          }
+        });
+
+        return Object.entries(ipGroups).map(([ip, list]) => {
+          const latest = list[0] as any;
+          return {
+            id: ip,
+            name: ip,
+            email: latest.email,
+            typeOrService: `${latest.requestMeta?.browser || "Other"} (${latest.requestMeta?.os || "Other"})`,
+            valueOrStatus: `${list.length} ${list.length === 1 ? "submission" : "submissions"}`,
+            locationOrDetail: latest.requestMeta?.country || "Unknown",
+            date: latest.createdAt,
+            subtext: latest.requestMeta?.userAgent || "",
+          };
+        });
+      }
+
+      case "revenue":
+      case "orders":
+      case "aov":
+        return purchases
+          .filter((p) => p.status === "COMPLETED")
+          .map((p) => ({
+            id: p.id,
+            name: p.candidateName,
+            email: p.candidateEmail,
+            typeOrService: p.serviceName,
+            valueOrStatus: `$${p.amount.toFixed(2)}`,
+            locationOrDetail: p.country || "Unknown",
+            date: p.createdAt,
+            subtext: `Intent ID: ${p.stripePaymentIntentId} | Status: ${p.mockInterviewStatus || "No Interview"}`,
+          }));
+
+      case "conversion":
+        return Object.entries(serviceStats).map(([name, s]: [string, any]) => {
+          const ctr = s.views > 0 ? (s.clicks / s.views) * 100 : 0;
+          const overall = s.views > 0 ? (s.purchases / s.views) * 100 : 0;
+          return {
+            id: name,
+            name: name,
+            email: `${s.views} Views`,
+            typeOrService: `${s.clicks} Clicks (${ctr.toFixed(1)}% CTR)`,
+            valueOrStatus: `${s.purchases} Sales`,
+            locationOrDetail: `$${s.revenue.toFixed(2)} Revenue`,
+            date: `${overall.toFixed(2)}% Conversion`,
+            subtext: `Card views: ${s.views} | Buy Clicks: ${s.clicks} | Completions: ${s.purchases}`,
+          };
+        });
+
+      default:
+        return [];
+    }
+  }, [metric, submissions, purchases, serviceStats]);
+
+  // Pill Filters calculation
+  const pillOptions = useMemo(() => {
+    const options = [{ key: "all", label: `All (${rawItems.length})` }];
+
+    if (metricFamily === "submissions") {
+      const contactsCount = rawItems.filter((i) => i.typeOrService === "Contact Form").length;
+      const jobSeekersCount = rawItems.filter((i) => i.typeOrService === "Job Seeker").length;
+      if (contactsCount > 0) options.push({ key: "contact", label: `Contact Form (${contactsCount})` });
+      if (jobSeekersCount > 0) options.push({ key: "job-seeker", label: `Job Seeker (${jobSeekersCount})` });
+    } else if (metricFamily === "revenue") {
+      // Group by Service
+      const serviceCounts: Record<string, number> = {};
+      rawItems.forEach((i) => {
+        serviceCounts[i.typeOrService] = (serviceCounts[i.typeOrService] || 0) + 1;
+      });
+      Object.entries(serviceCounts).forEach(([svc, count]) => {
+        options.push({ key: svc, label: `${svc} (${count})` });
+      });
+    }
+
+    return options;
+  }, [rawItems, metricFamily]);
+
+  // Apply Search & Pill Filters
+  const filteredItems = useMemo(() => {
+    let list = rawItems;
+
+    // Search query
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      list = list.filter(
+        (i) =>
+          i.name.toLowerCase().includes(query) ||
+          i.email.toLowerCase().includes(query) ||
+          i.typeOrService.toLowerCase().includes(query) ||
+          i.locationOrDetail.toLowerCase().includes(query)
+      );
+    }
+
+    // Pill filter
+    if (pillFilter !== "all") {
+      if (metricFamily === "submissions") {
+        const typeLabel = pillFilter === "contact" ? "Contact Form" : "Job Seeker";
+        list = list.filter((i) => i.typeOrService === typeLabel);
+      } else if (metricFamily === "revenue") {
+        list = list.filter((i) => i.typeOrService === pillFilter);
+      }
+    }
+
+    return list;
+  }, [rawItems, searchQuery, pillFilter, metricFamily]);
+
+  // Pagination calculations
+  const itemsPerPage = 8;
+  const totalPages = Math.max(Math.ceil(filteredItems.length / itemsPerPage), 1);
+  const paginatedItems = useMemo(() => {
+    const startIdx = (page - 1) * itemsPerPage;
+    return filteredItems.slice(startIdx, startIdx + itemsPerPage);
+  }, [filteredItems, page]);
+
+  // Reset page on filters changes
+  useMemo(() => {
+    setPage(1);
+  }, [searchQuery, pillFilter, metric]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#252e3d]/50 backdrop-blur-xs p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-6xl bg-[#f4f6fb] rounded-3xl border border-slate-200 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Header Block (Sticky/static at top of modal) */}
+        <header className="bg-white p-5 border-b border-slate-200 flex-shrink-0 flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 hover:border-[#5a58ab] hover:bg-slate-50 transition cursor-pointer text-slate-600 hover:text-[#5a58ab]"
+              >
+                <IoArrowBack className="w-5 h-5" />
+              </button>
+
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                  Drilldown Analysis
+                </p>
+                <h1 className="text-xl sm:text-2xl font-bold text-[#252e3d] flex items-center gap-2" style={{ fontFamily: "Crimson Text, serif" }}>
+                  {metric.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                </h1>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer text-slate-500"
+            >
+              <IoClose className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Metric Summary Badges Bar */}
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            {metricFamily === "submissions" ? (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mr-2">
+                  Pipeline:
+                </span>
+                <button
+                  onClick={() => setMetric("total_submissions")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "total_submissions"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Total Pipeline: <span className="font-bold">{submissions.length}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("contacts")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "contacts"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Contact Form: <span className="font-bold">{submissionAnalytics.contact}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("job_seekers")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "job_seekers"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Job Seekers: <span className="font-bold">{submissionAnalytics.jobSeekers}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("last_24h")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "last_24h"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  24 Hours: <span className="font-bold">{submissionAnalytics.last24Hours}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("unique_emails")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "unique_emails"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Emails: <span className="font-bold">{submissionAnalytics.uniqueEmails}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("unique_ips")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "unique_ips"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Unique IPs: <span className="font-bold">{submissionAnalytics.uniqueIps}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mr-2">
+                  Sales metrics:
+                </span>
+                <button
+                  onClick={() => setMetric("revenue")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "revenue"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Revenue: <span className="font-bold">${grossRevenue.toFixed(0)}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("orders")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "orders"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Orders: <span className="font-bold">{totalOrders}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("aov")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "aov"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  AOV: <span className="font-bold">${aov.toFixed(0)}</span>
+                </button>
+                <button
+                  onClick={() => setMetric("conversion")}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold transition ${
+                    metric === "conversion"
+                      ? "bg-[#5a58ab] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Conversions: <span className="font-bold">{overallConversionRate.toFixed(1)}%</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Scrollable Popup Body */}
+        <div className="flex-grow overflow-y-auto p-5 sm:p-6 space-y-5">
+
+        {/* Filter Controls Row */}
+        <section className="flex flex-col gap-4 bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-slate-800">
+                {filteredItems.length} records
+              </span>
+
+              {/* Search bar */}
+              <div className="relative">
+                <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search name, email, country..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 py-2 w-56 md:w-72 bg-slate-50 hover:bg-slate-100 focus:bg-white text-xs sm:text-sm text-slate-700 outline-none rounded-xl border border-slate-200 transition focus:border-[#5a58ab]"
+                />
+              </div>
+            </div>
+
+            {/* View Mode Toggle (Table / Cards) */}
+            <div className="flex bg-slate-100 rounded-xl p-0.5 self-start md:self-auto shadow-2xs border border-slate-200">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  viewMode === "table" ? "bg-white text-[#252e3d] shadow-2xs" : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <IoList className="w-4 h-4" />
+                Table
+              </button>
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  viewMode === "cards" ? "bg-white text-[#252e3d] shadow-2xs" : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <IoGrid className="w-4 h-4" />
+                Cards
+              </button>
+            </div>
+          </div>
+
+          {/* Pill filters row */}
+          {pillOptions.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+              {pillOptions.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setPillFilter(opt.key)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    pillFilter === opt.key
+                      ? "bg-[#5a58ab] text-white shadow-2xs"
+                      : "bg-slate-50 text-slate-600 border border-slate-250 hover:bg-slate-100"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Detailed Data Section */}
+        <section className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm min-h-[400px] flex flex-col justify-between">
+          <div>
+            {filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <IoAlertCircle className="w-10 h-10 mb-2 text-slate-300" />
+                <p className="text-sm font-semibold">No records match your filters.</p>
+              </div>
+            ) : viewMode === "table" ? (
+              /* TABLE VIEW MODE */
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="py-3 px-4">
+                        {metric === "unique_ips" ? "IP Address" : "Candidate Name"}
+                      </th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">
+                        {metric === "conversion" ? "Views" : "Type / Service"}
+                      </th>
+                      <th className="py-3 px-4">
+                        {metric === "conversion" ? "Clicks (CTR)" : "Detail / Value"}
+                      </th>
+                      <th className="py-3 px-4">
+                        {metric === "conversion" ? "Sales (CR)" : "Country / Info"}
+                      </th>
+                      <th className="py-3 px-4">
+                        {metric === "conversion" ? "Revenue" : "Date / Time"}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                    {paginatedItems.map((item, idx) => (
+                      <tr
+                        key={item.id || idx}
+                        onClick={() => setSelectedItem(item)}
+                        className="hover:bg-slate-50/80 transition duration-150 cursor-pointer"
+                      >
+                        <td className="py-3 px-4 font-bold text-[#3055cc] hover:underline">
+                          {item.name}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">{item.email}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              item.typeOrService.includes("Contact")
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : item.typeOrService.includes("Job Seeker")
+                                ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                : "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {item.typeOrService}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-900">
+                          {item.valueOrStatus}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500 font-medium">
+                          {item.locationOrDetail}
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-400">
+                          {metric === "conversion" ? item.date : new Date(item.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* CARDS VIEW MODE */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-2">
+                {paginatedItems.map((item, idx) => (
+                  <article
+                    key={item.id || idx}
+                    onClick={() => setSelectedItem(item)}
+                    className="border border-slate-150 rounded-2xl p-4 bg-slate-50/50 hover:bg-white hover:shadow-md hover:border-[#5a58ab]/40 transition duration-200 cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">
+                          {metric === "unique_ips" ? "IP Node" : "Candidate"}
+                        </span>
+                        <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                          {item.typeOrService.split(" (")[0]}
+                        </span>
+                      </div>
+
+                      <h4 className="font-bold text-slate-800 text-[15px] truncate">{item.name}</h4>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{item.email}</p>
+
+                      <div className="mt-3 space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-2">
+                        <p>
+                          <span className="font-semibold text-slate-400">Value/Detail:</span>{" "}
+                          {item.valueOrStatus}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-slate-400">Location:</span>{" "}
+                          {item.locationOrDetail}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 border-t border-slate-100 pt-2.5 flex justify-between items-center text-[10px] text-slate-400 font-semibold">
+                      <span>
+                        {metric === "conversion" ? item.date : new Date(item.date).toLocaleDateString()}
+                      </span>
+                      <span className="text-[#3055cc] hover:underline flex items-center gap-0.5">
+                        Details &rarr;
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Controls bar */}
+          <div className="mt-6 border-t border-slate-150 pt-4 flex items-center justify-between">
+            <span className="text-xs text-slate-400">
+              Showing {Math.min((page - 1) * itemsPerPage + 1, filteredItems.length)}–
+              {Math.min(page * itemsPerPage, filteredItems.length)} of {filteredItems.length}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-250 hover:bg-slate-50 transition disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+              >
+                <IoChevronBack className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-semibold text-slate-600 px-2">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                disabled={page === totalPages}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-250 hover:bg-slate-50 transition disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+              >
+                <IoChevronForward className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+      </div>
+
+      {/* Detail overlay modal */}
+      {selectedItem && (
+        <DetailModal
+          item={selectedItem}
+          metricFamily={metricFamily}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AnalyticsDashboard({
   submissions,
+  purchases = [],
+  funnelEvents = [],
+  dbError = null,
 }: AnalyticsDashboardProps) {
   const router = useRouter();
   const [range, setRange] = useState<RangeFilter>("30d");
+  const [activeTab, setActiveTab] = useState<TabValue>("submissions");
+  const [chartInterval, setChartInterval] = useState<"weekly" | "monthly">("weekly");
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [activeDrilldown, setActiveDrilldown] = useState<string | null>(null);
 
-  const rangeFiltered = useMemo(() => {
+  // 1. Date Range Filtering
+  const rangeFilteredSubmissions = useMemo(() => {
     if (range === "all") {
       return submissions;
     }
@@ -84,9 +888,245 @@ export default function AnalyticsDashboard({
     });
   }, [range, submissions]);
 
-  const analytics = useMemo(() => {
-    return buildSubmissionAnalytics(rangeFiltered);
-  }, [rangeFiltered]);
+  const rangeFilteredPurchases = useMemo(() => {
+    if (range === "all") {
+      return purchases;
+    }
+
+    const days = range === "7d" ? 7 : 30;
+    const start = Date.now() - days * 24 * 60 * 60 * 1000;
+
+    return purchases.filter((item) => {
+      return new Date(item.createdAt).getTime() >= start;
+    });
+  }, [range, purchases]);
+
+  const rangeFilteredFunnelEvents = useMemo(() => {
+    if (range === "all") {
+      return funnelEvents;
+    }
+
+    const days = range === "7d" ? 7 : 30;
+    const start = Date.now() - days * 24 * 60 * 60 * 1000;
+
+    return funnelEvents.filter((item) => {
+      return new Date(item.createdAt).getTime() >= start;
+    });
+  }, [range, funnelEvents]);
+
+  // 2. Compute Analytics for Submissions Tab
+  const submissionAnalytics = useMemo(() => {
+    return buildSubmissionAnalytics(rangeFilteredSubmissions);
+  }, [rangeFilteredSubmissions]);
+
+  // 3. Compute Analytics for Services Tab
+  const completedPurchases = useMemo(() => {
+    return rangeFilteredPurchases.filter((p) => p.status === "COMPLETED");
+  }, [rangeFilteredPurchases]);
+
+  const grossRevenue = useMemo(() => {
+    return completedPurchases.reduce((sum, p) => sum + p.amount, 0);
+  }, [completedPurchases]);
+
+  const totalOrders = completedPurchases.length;
+
+  const aov = totalOrders > 0 ? grossRevenue / totalOrders : 0;
+
+  const totalViews = useMemo(() => {
+    return rangeFilteredFunnelEvents.filter((e) => e.eventType === "VIEW").length;
+  }, [rangeFilteredFunnelEvents]);
+
+  const overallConversionRate = totalViews > 0 ? (totalOrders / totalViews) * 100 : 0;
+
+  // 4. Service Specific Statistics
+  const serviceStats = useMemo(() => {
+    const serviceConfig: Record<string, { price: number }> = {
+      "Resume Review & Rewriting": { price: 80 },
+      "Cover Letter Writing": { price: 50 },
+      "LinkedIn Optimization": { price: 80 },
+      "Superstar Shout-Out": { price: 160 },
+      "Ask Me Anything": { price: 40 },
+      "Interview Prep": { price: 100 },
+      "All Career Services Bundle": { price: 480 },
+    };
+
+    const stats: Record<
+      string,
+      {
+        views: number;
+        clicks: number;
+        purchases: number;
+        revenue: number;
+        price: number;
+      }
+    > = {};
+
+    // Initialize with standard services
+    Object.keys(serviceConfig).forEach((title) => {
+      stats[title] = {
+        views: 0,
+        clicks: 0,
+        purchases: 0,
+        revenue: 0,
+        price: serviceConfig[title].price,
+      };
+    });
+
+    // Populate from telemetry events
+    rangeFilteredFunnelEvents.forEach((e) => {
+      const name = e.serviceName;
+      if (!stats[name]) {
+        stats[name] = { views: 0, clicks: 0, purchases: 0, revenue: 0, price: 0 };
+      }
+      if (e.eventType === "VIEW") {
+        stats[name].views += 1;
+      } else if (e.eventType === "CLICK_BUY") {
+        stats[name].clicks += 1;
+      }
+    });
+
+    // Populate from database purchases
+    completedPurchases.forEach((p) => {
+      const name = p.serviceName;
+      if (!stats[name]) {
+        stats[name] = { views: 0, clicks: 0, purchases: 0, revenue: 0, price: p.amount };
+      }
+      stats[name].purchases += 1;
+      stats[name].revenue += p.amount;
+    });
+
+    // Keep numbers mathematically logical
+    Object.keys(stats).forEach((name) => {
+      const s = stats[name];
+      s.clicks = Math.max(s.clicks, s.purchases);
+      s.views = Math.max(s.views, s.clicks);
+    });
+
+    return stats;
+  }, [rangeFilteredFunnelEvents, completedPurchases]);
+
+  // 5. Proactive Alerts Calculations
+  const proactiveAlerts = useMemo(() => {
+    const alerts: {
+      serviceName: string;
+      views: number;
+      purchases: number;
+      conversionRate: number;
+      recommendation: string;
+    }[] = [];
+
+    Object.entries(serviceStats).forEach(([sName, s]) => {
+      // Trigger alert if service has at least 3 views and conversion rate < 1.5%
+      if (s.views >= 3) {
+        const convRate = (s.purchases / s.views) * 100;
+        if (convRate < 1.5) {
+          const ctr = s.views > 0 ? (s.clicks / s.views) * 100 : 0;
+          const checkoutRate = s.clicks > 0 ? (s.purchases / s.clicks) * 100 : 0;
+          let recommendation = "";
+
+          if (ctr < 10) {
+            recommendation = `Low click-through rate (${ctr.toFixed(1)}%). Consider revising the features list or adding a "Top Value" tag to make this service card more eye-catching.`;
+          } else if (checkoutRate < 20) {
+            recommendation = `High drop-off at checkout (${checkoutRate.toFixed(1)}% complete). The price of $${s.price} might represent friction. Consider introducing a temporary 10-15% discount or adding checkout assurance badges.`;
+          } else {
+            recommendation = `Overall conversion rate is low (${convRate.toFixed(1)}%). Suggest displaying a snippet of a sample deliverable, or adding candidate testimonials for this service.`;
+          }
+
+          alerts.push({
+            serviceName: sName,
+            views: s.views,
+            purchases: s.purchases,
+            conversionRate: convRate,
+            recommendation,
+          });
+        }
+      }
+    });
+
+    return alerts;
+  }, [serviceStats]);
+
+  // 6. Chart Revenue Grouping Data
+  const revenueTrend = useMemo(() => {
+    if (chartInterval === "monthly") {
+      const groups: Record<string, number> = {};
+      completedPurchases.forEach((p) => {
+        const d = new Date(p.createdAt);
+        const key = d.toLocaleString("en-US", { month: "short", year: "numeric" });
+        groups[key] = (groups[key] || 0) + p.amount;
+      });
+
+      const sorted = Object.entries(groups)
+        .map(([label, amount]) => ({
+          label,
+          amount,
+          dateVal: new Date(label).getTime(),
+        }))
+        .sort((a, b) => a.dateVal - b.dateVal);
+
+      return sorted.map(({ label, amount }) => ({ label, amount }));
+    } else {
+      const groups: Record<string, number> = {};
+      completedPurchases.forEach((p) => {
+        const d = new Date(p.createdAt);
+        const day = d.getDay();
+        const diff = d.getDate() - day; // Adjust to Sunday of that week
+        const sunday = new Date(d.setDate(diff));
+        const key = `Wk of ${sunday.toLocaleString("en-US", { month: "short", day: "numeric" })}`;
+        groups[key] = (groups[key] || 0) + p.amount;
+      });
+
+      const sorted = Object.entries(groups)
+        .map(([label, amount]) => {
+          const dateStr = label.replace("Wk of ", "");
+          const dateVal = new Date(`${dateStr}, ${new Date().getFullYear()}`).getTime();
+          return { label, amount, dateVal };
+        })
+        .sort((a, b) => a.dateVal - b.dateVal);
+
+      return sorted.map(({ label, amount }) => ({ label, amount }));
+    }
+  }, [completedPurchases, chartInterval]);
+
+  // SVG Chart Computations
+  const chartParams = useMemo(() => {
+    if (revenueTrend.length === 0) return null;
+    const maxVal = Math.max(...revenueTrend.map((d) => d.amount), 100);
+    const chartWidth = 500;
+    const chartHeight = 220;
+    const padding = { top: 20, right: 20, bottom: 35, left: 50 };
+    const graphWidth = chartWidth - padding.left - padding.right;
+    const graphHeight = chartHeight - padding.top - padding.bottom;
+
+    const points = revenueTrend.map((d, i) => {
+      const x =
+        padding.left +
+        (revenueTrend.length > 1
+          ? (i / (revenueTrend.length - 1)) * graphWidth
+          : graphWidth / 2);
+      const y = padding.top + graphHeight - (d.amount / maxVal) * graphHeight;
+      return { x, y, label: d.label, amount: d.amount };
+    });
+
+    const linePath =
+      points.length > 1
+        ? `M ${points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" L ")}`
+        : "";
+
+    const areaPath =
+      points.length > 1
+        ? `${linePath} L ${points[points.length - 1].x.toFixed(1)},${(padding.top + graphHeight).toFixed(1)} L ${points[0].x.toFixed(1)},${(padding.top + graphHeight).toFixed(1)} Z`
+        : "";
+
+    const yTicksCount = 4;
+    const yGridLines = Array.from({ length: yTicksCount + 1 }).map((_, i) => {
+      const val = (maxVal / yTicksCount) * i;
+      const y = padding.top + graphHeight - (val / maxVal) * graphHeight;
+      return { val, y };
+    });
+
+    return { points, linePath, areaPath, yGridLines, chartWidth, chartHeight, padding };
+  }, [revenueTrend]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -104,6 +1144,7 @@ export default function AnalyticsDashboard({
   return (
     <main className="min-h-screen bg-[#f4f6fb] px-4 py-8 text-[#252e3d] sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl space-y-6">
+        {/* Header Block */}
         <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -111,26 +1152,31 @@ export default function AnalyticsDashboard({
                 Admin Dashboard
               </p>
               <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl">
-                Submission Analytics
+                Analytics Suite
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                Built from submission records and request headers (source,
-                referrer, user-agent, IP/geo headers).
+                Monitor submissions, candidate conversion funnels, and revenue metrics in real time.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/admin/dashboard"
-                className="rounded-xl bg-[#252e3d] px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-xl bg-[#252e3d] px-4 py-2 text-sm font-semibold text-white transition"
               >
                 Analytics
               </Link>
               <Link
                 href="/admin/submissions"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
                 Submissions
+              </Link>
+              <Link
+                href="/admin/directory"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                User Directory
               </Link>
               <button
                 onClick={handleLogout}
@@ -142,127 +1188,698 @@ export default function AnalyticsDashboard({
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {[
-              { key: "7d", label: "Last 7 Days" },
-              { key: "30d", label: "Last 30 Days" },
-              { key: "all", label: "All Time" },
-            ].map((item) => (
+          <div className="mt-6 flex flex-wrap items-center justify-between border-t border-slate-100 pt-5 gap-3">
+            {/* Tabs Selector */}
+            <div className="flex bg-slate-100 rounded-xl p-1">
               <button
-                key={item.key}
-                onClick={() => setRange(item.key as RangeFilter)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  range === item.key
-                    ? "bg-[#252e3d] text-white"
-                    : "border border-slate-200 bg-white text-slate-700"
+                onClick={() => setActiveTab("submissions")}
+                className={`rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                  activeTab === "submissions"
+                    ? "bg-white text-[#252e3d] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
-                {item.label}
+                Form Submissions
               </button>
-            ))}
+              <button
+                onClick={() => setActiveTab("services")}
+                className={`rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                  activeTab === "services"
+                    ? "bg-white text-[#252e3d] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Premium Services & Revenue
+              </button>
+            </div>
+
+            {/* Range Selector */}
+            <div className="flex gap-1 bg-white border border-slate-200 rounded-full p-0.5 shadow-2xs">
+              {[
+                { key: "7d", label: "7D" },
+                { key: "30d", label: "30D" },
+                { key: "all", label: "ALL" },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setRange(item.key as RangeFilter)}
+                  className={`rounded-full px-4 py-1 text-xs font-semibold uppercase ${
+                    range === item.key
+                      ? "bg-[#252e3d] text-white shadow-2xs"
+                      : "bg-transparent text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Total
-            </p>
-            <p className="mt-1 text-2xl font-semibold">{analytics.total}</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Contact
-            </p>
-            <p className="mt-1 text-2xl font-semibold">{analytics.contact}</p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Job Seekers
-            </p>
-            <p className="mt-1 text-2xl font-semibold">
-              {analytics.jobSeekers}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Last 24h
-            </p>
-            <p className="mt-1 text-2xl font-semibold">
-              {analytics.last24Hours}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Unique Emails
-            </p>
-            <p className="mt-1 text-2xl font-semibold">
-              {analytics.uniqueEmails}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Unique IPs
-            </p>
-            <p className="mt-1 text-2xl font-semibold">{analytics.uniqueIps}</p>
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Conversion Signals
-            </h3>
-            <div className="mt-4 space-y-3 text-sm text-slate-700">
-              <p>
-                With phone: {analytics.conversionSignals.withPhone} (
-                {percent(
-                  analytics.conversionSignals.withPhone,
-                  analytics.total,
-                )}
-                )
-              </p>
-              <p>
-                Company provided: {analytics.conversionSignals.withCompany} (
-                {percent(
-                  analytics.conversionSignals.withCompany,
-                  analytics.contact,
-                )}
-                )
-              </p>
-              <p>
-                Candidate note provided:{" "}
-                {analytics.conversionSignals.withDescription} (
-                {percent(
-                  analytics.conversionSignals.withDescription,
-                  analytics.jobSeekers,
-                )}
-                )
-              </p>
-              <p>
-                Resume uploaded: {analytics.withResume} (
-                {percent(analytics.withResume, analytics.jobSeekers)})
-              </p>
-              <p>Repeat submitters: {analytics.repeatSubmitters}</p>
-              <p>Submissions in last 7 days: {analytics.last7Days}</p>
+        {/* Database Resiliency Warning Banner */}
+        {dbError && (
+          <div className="p-5 bg-amber-50 border-l-4 border-amber-500 rounded-3xl text-amber-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start gap-2.5">
+              <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>{dbError}</span>
             </div>
-          </section>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer self-start sm:self-auto"
+            >
+              Retry Connection
+            </button>
+          </div>
+        )}
 
-          <BarList title="Daily Trend (14 Days)" items={analytics.dailyTrend} />
-        </section>
+        {/* Tab content 1: Submissions */}
+        {activeTab === "submissions" && (
+          <div className="space-y-6">
+            {/* Submission KPIs (Wrap each card in a button with click handler to set activeDrilldown) */}
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <button
+                onClick={() => setActiveDrilldown("total_submissions")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Total
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.total}</p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <BarList title="Top Source Paths" items={analytics.topSources} />
-          <BarList title="Top Referrers" items={analytics.topReferrers} />
-          <BarList title="Top Countries" items={analytics.topCountries} />
-          <BarList title="Device Breakdown" items={analytics.deviceBreakdown} />
-          <BarList
-            title="Browser Breakdown"
-            items={analytics.browserBreakdown}
-          />
-          <BarList title="OS Breakdown" items={analytics.osBreakdown} />
-        </section>
+              <button
+                onClick={() => setActiveDrilldown("contacts")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Contact Form
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.contact}</p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("job_seekers")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Job Seekers
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">
+                  {submissionAnalytics.jobSeekers}
+                </p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("last_24h")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Last 24h
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">
+                  {submissionAnalytics.last24Hours}
+                </p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("unique_emails")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Unique Emails
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">
+                  {submissionAnalytics.uniqueEmails}
+                </p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("unique_ips")}
+                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Unique IPs
+                </p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.uniqueIps}</p>
+                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
+                  View Detail &rarr;
+                </span>
+              </button>
+            </section>
+
+            {/* Submission Conversion & Trends */}
+            <section className="grid gap-4 lg:grid-cols-2">
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Conversion Signals
+                </h3>
+                <div className="mt-4 space-y-3 text-sm text-slate-700">
+                  <div className="flex justify-between border-b border-slate-50 pb-2">
+                    <span>With phone:</span>
+                    <span className="font-semibold">
+                      {submissionAnalytics.conversionSignals.withPhone} (
+                      {percent(
+                        submissionAnalytics.conversionSignals.withPhone,
+                        submissionAnalytics.total,
+                      )}
+                      )
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-50 pb-2">
+                    <span>Company provided:</span>
+                    <span className="font-semibold">
+                      {submissionAnalytics.conversionSignals.withCompany} (
+                      {percent(
+                        submissionAnalytics.conversionSignals.withCompany,
+                        submissionAnalytics.contact,
+                      )}
+                      )
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-50 pb-2">
+                    <span>Candidate note provided:</span>
+                    <span className="font-semibold">
+                      {submissionAnalytics.conversionSignals.withDescription} (
+                      {percent(
+                        submissionAnalytics.conversionSignals.withDescription,
+                        submissionAnalytics.jobSeekers,
+                      )}
+                      )
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-50 pb-2">
+                    <span>Resume uploaded:</span>
+                    <span className="font-semibold">
+                      {submissionAnalytics.withResume} (
+                      {percent(submissionAnalytics.withResume, submissionAnalytics.jobSeekers)})
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-50 pb-2">
+                    <span>Repeat submitters:</span>
+                    <span className="font-semibold">{submissionAnalytics.repeatSubmitters}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Submissions in last 7 days:</span>
+                    <span className="font-semibold">{submissionAnalytics.last7Days}</span>
+                  </div>
+                </div>
+              </section>
+
+              <BarList title="Daily Trend (14 Days)" items={submissionAnalytics.dailyTrend} />
+            </section>
+
+            {/* Demographics & Technical Details */}
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <BarList title="Top Source Paths" items={submissionAnalytics.topSources} />
+              <BarList title="Top Referrers" items={submissionAnalytics.topReferrers} />
+              <BarList title="Top Countries" items={submissionAnalytics.topCountries} />
+              <BarList title="Device Breakdown" items={submissionAnalytics.deviceBreakdown} />
+              <BarList title="Browser Breakdown" items={submissionAnalytics.browserBreakdown} />
+              <BarList title="OS Breakdown" items={submissionAnalytics.osBreakdown} />
+            </section>
+          </div>
+        )}
+
+        {/* Tab content 2: Services & Sales Funnels */}
+        {activeTab === "services" && (
+          <div className="space-y-6">
+            {/* Proactive Alert System Warning Display */}
+            {proactiveAlerts.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-rose-500">
+                  Optimization Warnings
+                </h3>
+                <div className="grid gap-3">
+                  {proactiveAlerts.map((alert) => (
+                    <article
+                      key={alert.serviceName}
+                      className="rounded-2xl border border-rose-100 bg-[#fffcfc] p-4 text-sm flex flex-col md:flex-row md:items-start gap-4 shadow-2xs"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 flex-shrink-0 text-rose-600 mt-1">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.5"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-grow space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="font-bold text-rose-900 text-[15px]">
+                            {alert.serviceName} underperforming
+                          </h4>
+                          <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+                            {alert.conversionRate.toFixed(2)}% Conversion
+                          </span>
+                        </div>
+                        <p className="text-xs text-rose-700">
+                          Currently registering <span className="font-bold">{alert.views} views</span> and{" "}
+                          <span className="font-bold">{alert.purchases} checkouts</span>. Minimum performance benchmark is{" "}
+                          <span className="font-bold">1.50%</span>.
+                        </p>
+                        <div className="mt-3 rounded-xl bg-white p-3 border border-rose-100/50 text-slate-700">
+                          <span className="text-[10px] font-bold text-[#5a58ab] uppercase tracking-wider block">
+                            Optimization Recommendation
+                          </span>
+                          <p className="text-xs mt-1 leading-relaxed">{alert.recommendation}</p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Services KPIs (Wrapped in buttons with activeDrilldown handlers) */}
+            <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <button
+                onClick={() => setActiveDrilldown("revenue")}
+                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Gross Revenue
+                </p>
+                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-[#5a58ab]">
+                  ${grossRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("orders")}
+                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Completed Purchases
+                </p>
+                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-800">
+                  {totalOrders}
+                </p>
+                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("aov")}
+                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Avg. Order Value (AOV)
+                </p>
+                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-800">
+                  ${aov.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
+                  View Detail &rarr;
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveDrilldown("conversion")}
+                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
+                  Overall Conversion Rate
+                </p>
+                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-600">
+                  {overallConversionRate.toFixed(2)}%
+                </p>
+                <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider mt-2 block">
+                  View Detail &rarr;
+                </span>
+              </button>
+            </section>
+
+            {/* Revenue Trends & Distribution Charts */}
+            <section className="grid gap-6 lg:grid-cols-3">
+              {/* Gross Revenue Chart */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Revenue Performance Metrics
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Gross revenue trends grouped by {chartInterval}.
+                    </p>
+                  </div>
+                  <div className="flex bg-slate-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setChartInterval("weekly")}
+                      className={`rounded-md px-3 py-1 text-xs font-bold transition ${
+                        chartInterval === "weekly"
+                          ? "bg-white text-slate-800 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Weekly
+                    </button>
+                    <button
+                      onClick={() => setChartInterval("monthly")}
+                      className={`rounded-md px-3 py-1 text-xs font-bold transition ${
+                        chartInterval === "monthly"
+                          ? "bg-white text-slate-800 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                  </div>
+                </div>
+
+                {chartParams ? (
+                  <div className="relative pt-2">
+                    <svg
+                      viewBox={`0 0 ${chartParams.chartWidth} ${chartParams.chartHeight}`}
+                      className="w-full h-auto overflow-visible"
+                    >
+                      <defs>
+                        <linearGradient id="glow-grad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#5a58ab" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#5a58ab" stopOpacity="0.00" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Y-axis grid lines & ticks */}
+                      {chartParams.yGridLines.map((line, idx) => (
+                        <g key={idx}>
+                          <line
+                            x1={chartParams.padding.left}
+                            y1={line.y}
+                            x2={chartParams.chartWidth - chartParams.padding.right}
+                            y2={line.y}
+                            stroke="#e2e8f0"
+                            strokeWidth="1"
+                            strokeDasharray="4 4"
+                          />
+                          <text
+                            x={chartParams.padding.left - 10}
+                            y={line.y + 4}
+                            textAnchor="end"
+                            className="text-[10px] font-semibold fill-slate-400"
+                          >
+                            ${line.val.toFixed(0)}
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Guide indicator line */}
+                      {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
+                        <line
+                          x1={chartParams.points[hoveredPointIndex].x}
+                          y1={chartParams.padding.top}
+                          x2={chartParams.points[hoveredPointIndex].x}
+                          y2={chartParams.chartHeight - chartParams.padding.bottom}
+                          stroke="#cbd5e1"
+                          strokeWidth="1.5"
+                          strokeDasharray="2 2"
+                        />
+                      )}
+
+                      {/* Gradient glow shape */}
+                      {chartParams.areaPath && (
+                        <path d={chartParams.areaPath} fill="url(#glow-grad)" />
+                      )}
+
+                      {/* Trend line */}
+                      {chartParams.linePath && (
+                        <path
+                          d={chartParams.linePath}
+                          fill="none"
+                          stroke="#5a58ab"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      )}
+
+                      {/* Point triggers */}
+                      {chartParams.points.map((p, idx) => (
+                        <g key={idx}>
+                          {/* Circle target */}
+                          <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r="14"
+                            fill="transparent"
+                            className="cursor-pointer"
+                            onMouseEnter={() => setHoveredPointIndex(idx)}
+                            onMouseLeave={() => setHoveredPointIndex(null)}
+                          />
+                          {/* Inner visible dot */}
+                          <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r={hoveredPointIndex === idx ? "6" : "4"}
+                            fill="#ffffff"
+                            stroke="#5a58ab"
+                            strokeWidth="2.5"
+                            className="pointer-events-none transition-all duration-200"
+                          />
+                        </g>
+                      ))}
+
+                      {/* X-axis labels */}
+                      {chartParams.points.map((p, idx) => {
+                        const step = Math.max(Math.ceil(chartParams.points.length / 5), 1);
+                        if (idx % step !== 0 && idx !== chartParams.points.length - 1) return null;
+                        return (
+                          <text
+                            key={idx}
+                            x={p.x}
+                            y={chartParams.chartHeight - 12}
+                            textAnchor="middle"
+                            className="text-[10px] font-semibold fill-slate-400"
+                          >
+                            {p.label}
+                          </text>
+                        );
+                      })}
+                    </svg>
+
+                    {/* Chart Tooltip box overlay */}
+                    {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
+                      <div
+                        className="absolute z-10 pointer-events-none rounded-xl bg-[#252e3d] p-3 text-xs text-white shadow-lg border border-slate-700/50 transition-all duration-150"
+                        style={{
+                          left: `${(chartParams.points[hoveredPointIndex].x / chartParams.chartWidth) * 100}%`,
+                          top: `${(chartParams.points[hoveredPointIndex].y / chartParams.chartHeight) * 100 - 15}%`,
+                          transform: "translate(-50%, -100%)",
+                        }}
+                      >
+                        <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                          {chartParams.points[hoveredPointIndex].label}
+                        </div>
+                        <div className="mt-1 font-bold text-sm text-[#a8a6f3]">
+                          ${chartParams.points[hoveredPointIndex].amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                    No sales recorded within this range filter.
+                  </div>
+                )}
+              </div>
+
+              {/* Service Distribution breakdown */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Service Revenue Breakdown
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Revenue distributions by product.
+                  </p>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  {totalOrders === 0 ? (
+                    <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                      No sales distributions to map.
+                    </div>
+                  ) : (
+                    Object.entries(serviceStats)
+                      .map(([name, s]) => ({ name, ...s }))
+                      .sort((a, b) => b.revenue - a.revenue)
+                      .map((service) => {
+                        const share = grossRevenue > 0 ? (service.revenue / grossRevenue) * 100 : 0;
+                        if (service.revenue === 0) return null;
+                        return (
+                          <div key={service.name} className="flex flex-col">
+                            <div className="flex justify-between items-center text-sm mb-1">
+                              <span className="font-semibold text-slate-700 truncate max-w-[70%]" title={service.name}>
+                                {service.name}
+                              </span>
+                              <span className="font-bold text-slate-900">
+                                ${service.revenue.toFixed(0)}{" "}
+                                <span className="text-[10px] font-normal text-slate-400">({service.purchases} sales)</span>
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-[#5a58ab] to-[#8c8ae6] transition-all duration-500"
+                                style={{ width: `${Math.max(share, 3)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                              <span>Share of total: {share.toFixed(1)}%</span>
+                              <span>Price: ${service.price}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Sales Funnel Conversions per Service */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Sales Funnel Conversions
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Track drop-off friction from Card Views &rarr; Buy Now Clicks &rarr; Complete Checkouts.
+                </p>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(serviceStats).map(([name, stats]) => {
+                  const ctr = stats.views > 0 ? (stats.clicks / stats.views) * 100 : 0;
+                  const checkoutRate = stats.clicks > 0 ? (stats.purchases / stats.clicks) * 100 : 0;
+                  const overallConv = stats.views > 0 ? (stats.purchases / stats.views) * 100 : 0;
+
+                  return (
+                    <article
+                      key={name}
+                      className="rounded-2xl border border-slate-150 p-5 bg-[#fafbfd] hover:bg-white hover:shadow-sm transition-all duration-300 flex flex-col justify-between"
+                    >
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 truncate" title={name}>
+                          {name}
+                        </h4>
+
+                        <div className="mt-4 space-y-3">
+                          {/* Views */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-slate-400"></span>
+                                Card Views
+                              </span>
+                              <span className="font-semibold text-slate-700">{stats.views}</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-200">
+                              <div className="h-full rounded-full bg-slate-400" style={{ width: "100%" }} />
+                            </div>
+                          </div>
+
+                          {/* Clicks */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-[#5a58ab] font-medium flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-[#8c8ae6]"></span>
+                                Buy Clicks (CTR)
+                              </span>
+                              <span className="font-semibold text-slate-700">
+                                {stats.clicks}{" "}
+                                <span className="text-[10px] font-normal text-slate-400">({ctr.toFixed(1)}%)</span>
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-150 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-[#8c8ae6]"
+                                style={{ width: `${Math.max(ctr, 2)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Completed */}
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-emerald-600 font-medium flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                Completed (Conv)
+                              </span>
+                              <span className="font-semibold text-slate-700">
+                                {stats.purchases}{" "}
+                                <span className="text-[10px] font-normal text-slate-400">({overallConv.toFixed(1)}%)</span>
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-150 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-emerald-500"
+                                style={{ width: `${Math.max(overallConv, 2)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 border-t border-slate-100 pt-4 grid grid-cols-2 gap-2 text-center text-[10px] uppercase font-bold text-slate-400">
+                        <div className="rounded-xl bg-white p-2 border border-slate-100">
+                          <span className="block text-[9px] font-normal text-slate-400">Dropoff Rate</span>
+                          <span className="text-rose-500 text-xs font-bold mt-0.5 block">
+                            {(100 - ctr).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="rounded-xl bg-white p-2 border border-slate-100">
+                          <span className="block text-[9px] font-normal text-slate-400">Checkout Rate</span>
+                          <span className="text-emerald-500 text-xs font-bold mt-0.5 block">
+                            {checkoutRate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        )}
       </div>
+
+      {/* Render Drilldown Popup Overlay */}
+      {activeDrilldown && (
+        <DrilldownView
+          initialMetric={activeDrilldown}
+          onClose={() => setActiveDrilldown(null)}
+          submissions={submissions}
+          purchases={purchases}
+          funnelEvents={funnelEvents}
+          submissionAnalytics={submissionAnalytics}
+          grossRevenue={grossRevenue}
+          totalOrders={totalOrders}
+          aov={aov}
+          overallConversionRate={overallConversionRate}
+          serviceStats={serviceStats}
+        />
+      )}
     </main>
   );
 }
