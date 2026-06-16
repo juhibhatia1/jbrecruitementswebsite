@@ -172,6 +172,21 @@ function DetailModal({ item, metricFamily, onClose }: DetailModalProps) {
             </div>
           )}
 
+          {item.stripePaymentIntentId && (
+            <div>
+              <span className="block text-xs text-slate-400 uppercase font-semibold">Stripe Transaction</span>
+              <a
+                href={`https://dashboard.stripe.com/payments/${item.stripePaymentIntentId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[#5a58ab] hover:underline font-semibold font-mono text-xs mt-1"
+              >
+                View on Stripe Dashboard
+                <IoOpenOutline className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
           {item.resumeUrl && (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="block text-xs text-slate-400 uppercase font-semibold mb-1">Uploaded Resume</span>
@@ -387,6 +402,7 @@ function DrilldownView({
             locationOrDetail: p.country || "Unknown",
             date: p.createdAt,
             subtext: `Intent ID: ${p.stripePaymentIntentId} | Status: ${p.mockInterviewStatus || "No Interview"}`,
+            stripePaymentIntentId: p.stripePaymentIntentId,
           }));
 
       case "conversion":

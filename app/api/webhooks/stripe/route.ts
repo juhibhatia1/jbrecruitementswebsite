@@ -12,7 +12,7 @@ function getStripe() {
       throw new Error("STRIPE_SECRET_KEY is not configured on the server.");
     }
     stripe = new Stripe(key, {
-      apiVersion: "2025-01-27" as any,
+      apiVersion: "2026-05-27.dahlia",
     });
   }
   return stripe;
@@ -43,7 +43,12 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripeClient.webhooks.constructEvent(body, signature, webhookSecret);
+    event = stripeClient.webhooks.constructEvent(
+      body,
+      signature,
+      webhookSecret,
+      300 // Explicitly set 300 seconds (5 minutes) tolerance to protect against replay attacks
+    );
   } catch (err: any) {
     console.error(`Webhook signature verification failed: ${err.message}`);
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
@@ -66,7 +71,17 @@ export async function POST(request: Request) {
     }
 
     try {
-      // Find and update the Purchase record
+      // Find the Purchase record first to check status (protect against duplicate webhook deliveries)
+      const existingPurchase = await prisma.purchase.findUnique({
+        where: { stripePaymentIntentId: paymentIntent.id },
+      });
+
+      if (existingPurchase && existingPurchase.status === "COMPLETED") {
+        console.log(`Purchase with PaymentIntent ID ${paymentIntent.id} is already COMPLETED. Skipping fulfillment.`);
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // Update the Purchase record
       const purchase = await prisma.purchase.update({
         where: { stripePaymentIntentId: paymentIntent.id },
         data: {

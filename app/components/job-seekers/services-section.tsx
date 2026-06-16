@@ -133,23 +133,26 @@ export default function ServicesSection() {
     }
   }, []);
 
-  const pauseAutoFlip = useCallback(() => {
+  const handleHoverStart = useCallback(() => {
     clearResumeTimeout();
     setIsPaused(true);
+    setCurrentFlipIndex(-1); // Close any open auto-flipped cards immediately
   }, [clearResumeTimeout]);
 
-  const resumeAutoFlip = useCallback(() => {
+  const handleHoverEnd = useCallback((index: number) => {
     clearResumeTimeout();
     setIsPaused(false);
+    setCurrentFlipIndex((index + 1) % services.length); // Resume auto-flip from the next card
   }, [clearResumeTimeout]);
 
   const pauseTemporarily = useCallback(() => {
-    pauseAutoFlip();
+    clearResumeTimeout();
+    setIsPaused(true);
     setCurrentFlipIndex(-1); // Close any open cards immediately
     resumeTimeoutRef.current = setTimeout(() => {
       setIsPaused(false);
     }, 5000);
-  }, [pauseAutoFlip]);
+  }, [clearResumeTimeout]);
 
   const handleBuyClick = (title: string, amount: number, description: string) => {
     // For the bundle offer click, trigger CLICK_BUY telemetry
@@ -209,8 +212,8 @@ export default function ServicesSection() {
               features={s.features}
               shouldFlip={started && currentFlipIndex === index && !isModalOpen}
               onManualFlip={pauseTemporarily}
-              onHoverStart={pauseAutoFlip}
-              onHoverEnd={resumeAutoFlip}
+              onHoverStart={handleHoverStart}
+              onHoverEnd={() => handleHoverEnd(index)}
               onBuyClick={() => handleBuyClick(s.title, s.amount, s.description)}
             />
           ))}

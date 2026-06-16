@@ -921,7 +921,15 @@ export default function DirectoryDashboard({
                             <strong>Billing Country:</strong> {p.country || "Not provided"}
                           </p>
                           <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
-                            Ref: {p.stripePaymentIntentId}
+                            Ref:{" "}
+                            <a
+                              href={`https://dashboard.stripe.com/payments/${p.stripePaymentIntentId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#5a58ab] hover:underline font-semibold"
+                            >
+                              {p.stripePaymentIntentId}
+                            </a>
                           </p>
                         </div>
                       ),
