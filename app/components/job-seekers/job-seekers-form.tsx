@@ -1,7 +1,59 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+// ─── Inline alert popup ───────────────────────────────────────────────────────
+function InlineAlert({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm animate-fadeIn"
+      style={{ fontFamily: "Raleway, sans-serif" }}
+    >
+      {/* Warning icon */}
+      <svg
+        className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+          clipRule="evenodd"
+        />
+      </svg>
+      <span className="flex-1">{message}</span>
+      <button
+        onClick={onClose}
+        aria-label="Dismiss"
+        className="ml-auto shrink-0 text-red-400 hover:text-red-600 transition-colors"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// ─── Required asterisk ────────────────────────────────────────────────────────
+function Req() {
+  return <span className="text-[#282828] font-bold text-lg">*</span>;
+}
+
+// ─── Main form ────────────────────────────────────────────────────────────────
 export default function JobSeekersForm() {
   const pathname = usePathname();
   const [formData, setFormData] = useState({
@@ -15,6 +67,7 @@ export default function JobSeekersForm() {
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -34,7 +87,7 @@ export default function JobSeekersForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!resume) {
-      alert("Please upload a resume.");
+      setAlertMessage("Please upload your resume before submitting.");
       return;
     }
 
@@ -80,11 +133,21 @@ export default function JobSeekersForm() {
       className="w-full mx-auto pt-0 lg:pt-10"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
+      {/* Custom alert popup */}
+      {alertMessage && (
+        <div className="mb-4">
+          <InlineAlert
+            message={alertMessage}
+            onClose={() => setAlertMessage(null)}
+          />
+        </div>
+      )}
+
       <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Upload Resume */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
-            Upload resume
+            Upload resume <Req />
           </label>
           <div className="relative">
             <input
@@ -103,7 +166,7 @@ export default function JobSeekersForm() {
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
-            Name
+            Name <Req />
           </label>
           <input
             type="text"
@@ -111,6 +174,7 @@ export default function JobSeekersForm() {
             value={formData.name}
             onChange={handleChange}
             name="name"
+            required
             className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
           />
         </div>
@@ -118,7 +182,7 @@ export default function JobSeekersForm() {
         {/* Mail id */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
-            Mail id
+            Mail id <Req />
           </label>
           <input
             type="email"
@@ -126,6 +190,7 @@ export default function JobSeekersForm() {
             value={formData.email}
             onChange={handleChange}
             name="email"
+            required
             className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
           />
         </div>
@@ -133,7 +198,7 @@ export default function JobSeekersForm() {
         {/* Location */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
-            Location
+            Location <Req />
           </label>
           <div className="relative">
             <input
@@ -142,6 +207,7 @@ export default function JobSeekersForm() {
               value={formData.location}
               onChange={handleChange}
               name="location"
+              required
               className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
             />
           </div>
@@ -150,7 +216,7 @@ export default function JobSeekersForm() {
         {/* Phone Number */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
-            Phone Number
+            Phone Number <Req />
           </label>
           <div className="relative">
             <input
@@ -159,12 +225,13 @@ export default function JobSeekersForm() {
               value={formData.phone}
               onChange={handleChange}
               name="phone"
+              required
               className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
             />
           </div>
         </div>
 
-        {/* Description */}
+        {/* Description (optional) */}
         <div>
           <label className="block text-sm font-medium text-[#282828] mb-2">
             Description

@@ -2,9 +2,19 @@ import { NextResponse } from "next/server";
 import { addContactSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
+import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    // Limit to 5 submissions per hour
+    if (isRateLimited(ip, 5, 60 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many contact submissions. Please try again in an hour." },
+        { status: 429 },
+      );
+    }
+
     const requestMeta = extractRequestMeta(request);
 
     const { name, email, message, phone, subject, company } =

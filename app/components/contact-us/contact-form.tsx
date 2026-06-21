@@ -2,6 +2,11 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
+// ─── Required asterisk ────────────────────────────────────────────────────────
+function Req() {
+  return <span className="text-[#242424] font-bold text-lg">*</span>;
+}
+
 export default function ContactForm() {
   const pathname = usePathname();
   const [formData, setFormData] = useState({
@@ -71,7 +76,9 @@ export default function ContactForm() {
         {/* Name + Company */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-[#242424] font-semibold">Name</label>
+            <label className="text-sm text-[#242424] font-semibold">
+              Name <Req />
+            </label>
             <input
               type="text"
               placeholder="Jane Smith"
@@ -79,10 +86,12 @@ export default function ContactForm() {
               className="mt-1 w-full rounded-lg bg-[#f7f7f7] border border-gray-200 px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#605DBA] placeholder-[#979797] text-[#252e3d]"
               onChange={handleChange}
               name="name"
+              required
             />
           </div>
 
           <div>
+            {/* Company is optional — no asterisk */}
             <label className="text-sm text-[#242424] font-semibold">
               Company
             </label>
@@ -101,7 +110,7 @@ export default function ContactForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-sm text-[#242424] font-semibold">
-              Email
+              Email <Req />
             </label>
             <input
               type="email"
@@ -109,13 +118,14 @@ export default function ContactForm() {
               value={formData.email}
               onChange={handleChange}
               name="email"
+              required
               className="mt-1 w-full rounded-lg bg-[#f7f7f7] border border-gray-200 px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#605DBA] placeholder-[#979797] text-[#252e3d]"
             />
           </div>
 
           <div>
             <label className="text-sm text-[#242424] font-semibold">
-              Phone Number
+              Phone Number <Req />
             </label>
             <input
               type="tel"
@@ -123,6 +133,7 @@ export default function ContactForm() {
               value={formData.phone}
               onChange={handleChange}
               name="phone"
+              required
               className="mt-1 w-full rounded-lg bg-[#f7f7f7] border border-gray-200 px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#605DBA] placeholder-[#979797] text-[#252e3d]"
             />
           </div>
@@ -131,7 +142,7 @@ export default function ContactForm() {
         {/* Message */}
         <div>
           <label className="text-sm text-[#242424] font-semibold">
-            Messages
+            Messages <Req />
           </label>
           <textarea
             placeholder="Leave your message"
@@ -139,6 +150,7 @@ export default function ContactForm() {
             onChange={handleChange}
             name="message"
             rows={4}
+            required
             className="mt-1 w-full rounded-lg bg-[#f7f7f7] border border-gray-200 px-2 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#605DBA] placeholder-[#979797] text-[#252e3d]"
           />
         </div>

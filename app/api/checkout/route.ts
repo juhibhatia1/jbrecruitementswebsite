@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 
 let stripe: Stripe | null = null;
+
+const SERVICE_PRICING: Record<string, number> = {
+  "Resume Review & Rewriting": 80,
+  "Cover Letter Writing": 50,
+  "LinkedIn Optimization": 80,
+  "Superstar Shout-Out": 160,
+  "Ask Me Anything": 40,
+  "Interview Prep": 100,
+  "All Career Services Bundle": 480,
+};
 
 function getStripe() {
   if (!stripe) {
@@ -19,11 +30,28 @@ function getStripe() {
 
 export async function POST(request: Request) {
   try {
-    const { serviceName, amount, candidateName, candidateEmail } = await request.json();
-
-    if (!serviceName || !amount || !candidateName || !candidateEmail) {
+    const ip = getClientIp(request);
+    // Rate limit check: limit to 5 checkout attempts per hour
+    if (isRateLimited(ip, 5, 60 * 60 * 1000)) {
       return NextResponse.json(
-        { error: "Missing required fields: serviceName, amount, candidateName, candidateEmail" },
+        { error: "Too many checkout attempts. Please try again in an hour." },
+        { status: 429 },
+      );
+    }
+
+    const { serviceName, candidateName, candidateEmail } = await request.json();
+
+    if (!serviceName || !candidateName || !candidateEmail) {
+      return NextResponse.json(
+        { error: "Missing required fields: serviceName, candidateName, candidateEmail" },
+        { status: 400 },
+      );
+    }
+
+    const resolvedPrice = SERVICE_PRICING[serviceName];
+    if (resolvedPrice === undefined) {
+      return NextResponse.json(
+        { error: `Invalid or unrecognized service: ${serviceName}` },
         { status: 400 },
       );
     }
@@ -39,15 +67,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create Stripe PaymentIntent
+    // Create Stripe PaymentIntent using resolved server-side price
     const paymentIntent = await stripeClient.paymentIntents.create({
-      amount: Math.round(parseFloat(amount) * 100), // in cents
+      amount: Math.round(resolvedPrice * 100), // in cents
       currency: "usd",
       metadata: {
         candidateName,
         candidateEmail,
         serviceName,
-        amount: amount.toString(),
+        amount: resolvedPrice.toString(),
       },
       receipt_email: candidateEmail,
     });
@@ -58,7 +86,7 @@ export async function POST(request: Request) {
         candidateName,
         candidateEmail,
         serviceName,
-        amount: parseFloat(amount),
+        amount: resolvedPrice,
         currency: "USD",
         stripePaymentIntentId: paymentIntent.id,
         status: "PENDING",

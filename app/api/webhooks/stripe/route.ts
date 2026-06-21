@@ -106,8 +106,12 @@ export async function POST(request: Request) {
       }
 
       // Trigger the email alerts
-      await sendPurchaseEmails(purchase);
-      console.log(`Purchase emails sent successfully for Purchase ID: ${purchase.id}`);
+      const emailResult = await sendPurchaseEmails(purchase);
+      if (emailResult.success) {
+        console.log(`Purchase emails sent successfully for Purchase ID: ${purchase.id}`);
+      } else {
+        console.error(`Failed to send purchase emails for Purchase ID: ${purchase.id}. Error:`, emailResult.error);
+      }
 
     } catch (dbErr) {
       console.error("Failed to update purchase database record or send emails:", dbErr);

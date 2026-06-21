@@ -1,6 +1,21 @@
 /* Fonts are loaded via next/font in `app/layout.tsx` (Raleway + Crimson Text). */
 @import "tailwindcss";
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out both;
+}
+
 /* 
   FONT SETUP:
   - Crimson Text: Used for all headings (h1-h6) - serif font for elegant typography
@@ -238,4 +253,26 @@ th {
 
 .marquee-track.paused {
   animation-play-state: paused;
+}
+
+/* Thin custom styled scrollbar utility */
+@utility scrollbar-thin-styled {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(90, 88, 171, 0.4) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+    display: block !important;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(90, 88, 171, 0.4) !important;
+    border-radius: 9999px !important;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(90, 88, 171, 0.7) !important;
+  }
 }

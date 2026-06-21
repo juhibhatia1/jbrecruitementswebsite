@@ -3,6 +3,7 @@ import ImageKit from "imagekit";
 import { addJobSeekerSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
+import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -15,8 +16,7 @@ const imagekit = new ImageKit({
 
 const LOCAL_RESUME_DIRECTORY = path.join(
   process.cwd(),
-  "public",
-  "uploads",
+  "storage",
   "job-seekers-resumes",
 );
 
@@ -83,13 +83,22 @@ async function saveResumeLocally(fileName: string, buffer: Buffer) {
 
   await writeFile(storedFilePath, buffer);
 
-  return `/uploads/job-seekers-resumes/${storedFileName}`;
+  return `/api/admin/resumes?file=${storedFileName}`;
 }
 
 export async function POST(request: Request) {
   const requestId = randomUUID();
 
   try {
+    const ip = getClientIp(request);
+    // Limit to 5 submissions per hour
+    if (isRateLimited(ip, 5, 60 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many application submissions. Please try again in an hour." },
+        { status: 429 },
+      );
+    }
+
     logJobSeekerEvent(requestId, "request.received", {
       method: "POST",
       pathname: request.headers.get("x-pathname") || "unknown",
@@ -114,6 +123,47 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(
         { error: "Name, email, and resume are required." },
+        { status: 400 },
+      );
+    }
+
+    // Size limit check (5MB)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      logJobSeekerEvent(requestId, "request.validation_failed", {
+        reason: "file_too_large",
+        size: file.size,
+      });
+      return NextResponse.json(
+        { error: "Resume file exceeds the maximum allowed size of 5MB." },
+        { status: 400 },
+      );
+    }
+
+    // Extension & MIME verification
+    const allowedExtensions = [".pdf", ".doc", ".docx"];
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/octet-stream",
+    ];
+
+    const extension = path.extname(file.name).toLowerCase();
+    if (
+      !allowedExtensions.includes(extension) ||
+      (file.type && !allowedMimeTypes.includes(file.type.toLowerCase()))
+    ) {
+      logJobSeekerEvent(requestId, "request.validation_failed", {
+        reason: "invalid_file_type",
+        fileName: file.name,
+        fileType: file.type,
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Invalid file type. Only PDF and Word documents (.pdf, .doc, .docx) are allowed.",
+        },
         { status: 400 },
       );
     }

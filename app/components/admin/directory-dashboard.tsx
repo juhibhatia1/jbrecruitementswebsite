@@ -139,12 +139,29 @@ export default function DirectoryDashboard({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState("all");
+  const [serviceFilterOpen, setServiceFilterOpen] = useState(false);
   const [interviewFilter, setInterviewFilter] = useState("all");
+  const [interviewFilterOpen, setInterviewFilterOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>("firstSeen");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // Selected Candidate Drawer state
   const [selectedCandidateEmail, setSelectedCandidateEmail] = useState<string | null>(null);
+
+  // Regional breakdown modal state
+  const [showRegionModal, setShowRegionModal] = useState(false);
+
+  // Lock body scroll when modals or drawers are open
+  React.useEffect(() => {
+    if (showRegionModal || selectedCandidateEmail) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showRegionModal, selectedCandidateEmail]);
 
   // Scheduling states for the selected purchase
   const [schedulingPurchaseId, setSchedulingPurchaseId] = useState<string | null>(null);
@@ -402,24 +419,48 @@ export default function DirectoryDashboard({
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f6fb] px-4 py-8 text-[#252e3d] sm:px-6 lg:px-10">
+    <main 
+      onClick={() => {
+        setServiceFilterOpen(false);
+        setInterviewFilterOpen(false);
+      }}
+      className="min-h-screen bg-[#f4f6fb] px-4 py-8 text-[#252e3d] sm:px-6 lg:px-10"
+    >
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header Card */}
         <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
-                Admin Dashboard
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
-                Global User Directory
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Consolidate and search candidate profiles, check regional analytics, and schedule mock interview appointments.
-              </p>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 flex-grow">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
+                  Admin Dashboard
+                </p>
+                <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
+                  Global User Directory
+                </h1>
+                <p className="mt-2 text-sm text-slate-500 max-w-xl">
+                  Consolidate and search candidate profiles, check regional analytics, and schedule mock interview appointments.
+                </p>
+              </div>
+
+              {/* Total Users Interactive Card */}
+              <button
+                type="button"
+                onClick={() => setShowRegionModal(true)}
+                className="flex items-center gap-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 hover:border-[#5a58ab] rounded-2xl p-4 transition-all duration-300 text-left cursor-pointer group shadow-2xs md:min-w-[200px] shrink-0"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-[#5a58ab] group-hover:bg-[#5a58ab] group-hover:text-white transition-colors duration-300">
+                  <IoMap className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Users</span>
+                  <span className="text-2xl font-extrabold text-[#252e3d] group-hover:text-[#5a58ab] transition-colors">{candidates.length}</span>
+                  <span className="text-[10px] text-slate-400 block mt-0.5 group-hover:text-slate-500 transition-colors">Click for regional stats</span>
+                </div>
+              </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
               <Link
                 href="/admin/dashboard"
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
@@ -464,36 +505,6 @@ export default function DirectoryDashboard({
           </div>
         )}
 
-        {/* Regional Analytics */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-center">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Total Directory</span>
-            <span className="text-4xl font-extrabold text-[#252e3d] mt-2">{candidates.length}</span>
-            <span className="text-xs text-slate-400 mt-1">Candidates Consolidated</span>
-          </div>
-
-          {regionalAnalytics.map((region) => (
-            <div key={region.name} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-[#5a58ab]">
-                <IoMap />
-                <span className="text-xs font-bold uppercase tracking-wider">{region.name}</span>
-              </div>
-              <div className="mt-3 flex justify-between items-baseline">
-                <span className="text-2xl font-bold text-[#252e3d]">{region.count} <span className="text-xs text-slate-400 font-normal">users</span></span>
-                <span className="text-lg font-semibold text-emerald-600">${region.revenue}</span>
-              </div>
-              <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3">
-                <div
-                  className="bg-[#5a58ab] h-1.5 rounded-full"
-                  style={{
-                    width: `${candidates.length ? (region.count / candidates.length) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </section>
-
         {/* Directory Grid */}
         <section className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -511,66 +522,134 @@ export default function DirectoryDashboard({
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                <IoFilter className="text-slate-400" />
-                <select
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  className="bg-transparent text-xs font-semibold outline-none text-slate-700 cursor-pointer"
+              {/* Custom Service Filter Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nextVal = serviceFilterOpen ? null : "service";
+                    setServiceFilterOpen(nextVal === "service");
+                    setInterviewFilterOpen(false);
+                  }}
+                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[130px] justify-between"
                 >
-                  <option value="all">All Services</option>
-                  <option value="none">No Purchase</option>
-                  {uniqueServices.map((srv) => (
-                    <option key={srv} value={srv}>
-                      {srv}
-                    </option>
-                  ))}
-                </select>
+                  <span className="flex items-center gap-1.5">
+                    <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
+                    {serviceFilter === "all" ? "All Services" : serviceFilter === "none" ? "No Purchase" : serviceFilter}
+                  </span>
+                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                </button>
+                {serviceFilterOpen && (
+                  <div className="absolute left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setServiceFilter("all");
+                        setServiceFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "all" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                    >
+                      All Services
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setServiceFilter("none");
+                        setServiceFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "none" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                    >
+                      No Purchase
+                    </button>
+                    {uniqueServices.map((srv) => (
+                      <button
+                        key={srv}
+                        type="button"
+                        onClick={() => {
+                          setServiceFilter(srv);
+                          setServiceFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === srv ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                      >
+                        {srv}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">
-                <IoCalendar className="text-slate-400" />
-                <select
-                  value={interviewFilter}
-                  onChange={(e) => setInterviewFilter(e.target.value)}
-                  className="bg-transparent text-xs font-semibold outline-none text-slate-700 cursor-pointer"
+              {/* Custom Interview Filter Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nextVal = interviewFilterOpen ? null : "interview";
+                    setInterviewFilterOpen(nextVal === "interview");
+                    setServiceFilterOpen(false);
+                  }}
+                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[170px] justify-between"
                 >
-                  <option value="all">All Interview Statuses</option>
-                  <option value="none">Not Applicable</option>
-                  <option value="PENDING_SCHEDULE">Pending Schedule</option>
-                  <option value="SCHEDULED">Scheduled</option>
-                  <option value="COMPLETED">Completed</option>
-                </select>
+                  <span className="flex items-center gap-1.5">
+                    <IoCalendar className="text-[#5a58ab] w-3.5 h-3.5" />
+                    {interviewFilter === "all" ? "All Interview Statuses" : interviewFilter === "none" ? "Not Applicable" : interviewFilter === "PENDING_SCHEDULE" ? "Pending Schedule" : interviewFilter === "SCHEDULED" ? "Scheduled" : "Completed"}
+                  </span>
+                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                </button>
+                {interviewFilterOpen && (
+                  <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                    {[
+                      { val: "all", label: "All Interview Statuses" },
+                      { val: "none", label: "Not Applicable" },
+                      { val: "PENDING_SCHEDULE", label: "Pending Schedule" },
+                      { val: "SCHEDULED", label: "Scheduled" },
+                      { val: "COMPLETED", label: "Completed" }
+                    ].map((item) => (
+                      <button
+                        key={item.val}
+                        type="button"
+                        onClick={() => {
+                          setInterviewFilter(item.val);
+                          setInterviewFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${interviewFilter === item.val ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Grid Table */}
           <div className="overflow-x-auto rounded-2xl border border-slate-100">
-            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm xl:text-base">
+              <thead className="bg-slate-50 text-xs xl:text-sm font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
                   <th
                     onClick={() => handleSort("name")}
-                    className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
                   >
                     Candidate {sortField === "name" && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleSort("firstSeen")}
-                    className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
                   >
                     Registered {sortField === "firstSeen" && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
-                  <th className="px-6 py-4">Services Purchased</th>
-                  <th className="px-6 py-4">Mock Interview</th>
+                  <th className="px-6 py-4 xl:py-5">Services Purchased</th>
+                  <th className="px-6 py-4 xl:py-5">Mock Interview</th>
                   <th
                     onClick={() => handleSort("totalSpent")}
-                    className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
                   >
                     Total Spent {sortField === "totalSpent" && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
-                  <th className="px-6 py-4"></th>
+                  <th className="px-6 py-4 xl:py-5"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -595,16 +674,16 @@ export default function DirectoryDashboard({
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                         onClick={() => setSelectedCandidateEmail(candidate.email)}
                       >
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-slate-800">{candidate.name}</div>
-                          <div className="text-xs text-slate-400 mt-0.5">{candidate.email}</div>
+                        <td className="px-6 py-4 xl:py-5">
+                          <div className="font-semibold text-slate-800 xl:text-[15px]">{candidate.name}</div>
+                          <div className="text-xs xl:text-sm text-slate-400 mt-0.5">{candidate.email}</div>
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
+                        <td className="px-6 py-4 xl:py-5 text-slate-600 xl:text-[15px]">
                           {formatDate(candidate.firstSeen)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 xl:py-5">
                           {candidate.purchases.filter((p) => p.status === "COMPLETED").length === 0 ? (
-                            <span className="text-xs text-slate-400 italic">None</span>
+                            <span className="text-xs xl:text-sm text-slate-400 italic">None</span>
                           ) : (
                             <div className="flex flex-wrap gap-1">
                               {candidate.purchases
@@ -612,7 +691,7 @@ export default function DirectoryDashboard({
                                 .map((p) => (
                                   <span
                                     key={p.id}
-                                    className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10"
+                                    className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs xl:text-sm font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10"
                                   >
                                     {p.serviceName}
                                   </span>
@@ -620,31 +699,31 @@ export default function DirectoryDashboard({
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 xl:py-5">
                           {!latestInterview ? (
-                            <span className="text-xs text-slate-400 italic">Not Applicable</span>
+                            <span className="text-xs xl:text-sm text-slate-400 italic">Not Applicable</span>
                           ) : (
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${getInterviewBadgeColor(
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs xl:text-sm font-bold border ${getInterviewBadgeColor(
                                 latestInterview.mockInterviewStatus
                               )}`}
                             >
-                              {latestInterview.mockInterviewStatus === "COMPLETED" && <IoCheckmarkCircle />}
-                              {latestInterview.mockInterviewStatus === "SCHEDULED" && <IoCalendar />}
-                              {(latestInterview.mockInterviewStatus || "PENDING_SCHEDULE") ===
-                                "PENDING_SCHEDULE" && <IoHourglass />}
-                              {latestInterview.mockInterviewStatus === "SCHEDULED" && latestInterview.mockInterviewDate
-                                ? `${formatDate(latestInterview.mockInterviewDate)}`
-                                : latestInterview.mockInterviewStatus || "PENDING_SCHEDULE"}
+                               {latestInterview.mockInterviewStatus === "COMPLETED" && <IoCheckmarkCircle />}
+                               {latestInterview.mockInterviewStatus === "SCHEDULED" && <IoCalendar />}
+                               {(latestInterview.mockInterviewStatus || "PENDING_SCHEDULE") ===
+                                 "PENDING_SCHEDULE" && <IoHourglass />}
+                               {latestInterview.mockInterviewStatus === "SCHEDULED" && latestInterview.mockInterviewDate
+                                 ? `${formatDate(latestInterview.mockInterviewDate)}`
+                                 : latestInterview.mockInterviewStatus || "PENDING_SCHEDULE"}
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 font-bold text-slate-800">
+                        <td className="px-6 py-4 xl:py-5 font-bold text-slate-800 xl:text-[15px]">
                           USD {candidate.totalSpent}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 xl:py-5 text-right">
                           <button className="text-slate-400 group-hover:text-[#5a58ab] p-1.5 rounded-full hover:bg-slate-100 transition-colors">
-                            <IoChevronForward className="w-5 h-5" />
+                            <IoChevronForward className="w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" />
                           </button>
                         </td>
                       </tr>
@@ -685,7 +764,7 @@ export default function DirectoryDashboard({
             </div>
 
             {/* Scrollable Content */}
-            <div className="p-6 overflow-y-auto flex-grow space-y-6">
+            <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow space-y-6">
               {/* Demographics */}
               <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
                 <div className="flex justify-between items-start">
@@ -755,15 +834,20 @@ export default function DirectoryDashboard({
                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                             Appointment Status
                           </label>
-                          <select
-                            value={schedulingStatus}
-                            onChange={(e) => setSchedulingStatus(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs outline-none text-[#252e3d] cursor-pointer"
-                          >
-                            <option value="PENDING_SCHEDULE">Pending Schedule</option>
-                            <option value="SCHEDULED">Scheduled</option>
-                            <option value="COMPLETED">Completed</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={schedulingStatus}
+                              onChange={(e) => setSchedulingStatus(e.target.value)}
+                              className="w-full appearance-none px-3 py-2 pr-8 rounded-xl border border-slate-200 bg-white text-xs outline-none text-[#252e3d] cursor-pointer focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] transition-all"
+                            >
+                              <option value="PENDING_SCHEDULE" className="bg-white text-slate-800">Pending Schedule</option>
+                              <option value="SCHEDULED" className="bg-white text-slate-800">Scheduled</option>
+                              <option value="COMPLETED" className="bg-white text-slate-800">Completed</option>
+                            </select>
+                            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[8px]">
+                              ▼
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex gap-2 justify-end pt-2">
@@ -962,6 +1046,68 @@ export default function DirectoryDashboard({
                     ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Regional Contribution Drilldown Modal */}
+      {showRegionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 overscroll-contain">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-[#252e3d]/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setShowRegionModal(false)}
+          />
+
+          {/* Modal Container */}
+          <div className="relative bg-white w-full max-w-lg rounded-3xl border border-slate-200 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200 overscroll-contain">
+            {/* Header */}
+            <header className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe] flex-shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
+                  Regional User Breakdown
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Drilldown of user registration & revenue contribution</p>
+              </div>
+              <button
+                onClick={() => setShowRegionModal(false)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors cursor-pointer"
+              >
+                <IoClose className="w-5 h-5" />
+              </button>
+            </header>
+
+            {/* Scrollable Content with thin scrollbar styling */}
+            <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow space-y-4 scrollbar-thin-styled">
+              {regionalAnalytics.map((region) => {
+                const percent = candidates.length ? Math.round((region.count / candidates.length) * 100) : 0;
+                return (
+                  <div key={region.name} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 hover:bg-slate-100/50 transition-colors duration-200">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2.5 text-[#5a58ab]">
+                        <IoMap className="w-4 h-4" />
+                        <span className="text-sm font-bold uppercase tracking-wider text-slate-700">{region.name}</span>
+                      </div>
+                      <span className="text-sm font-bold text-emerald-600">${region.revenue}</span>
+                    </div>
+                    
+                    <div className="mt-2.5 flex justify-between items-baseline">
+                      <span className="text-lg font-extrabold text-[#252e3d]">
+                        {region.count} <span className="text-xs text-slate-400 font-normal">users</span>
+                      </span>
+                      <span className="text-xs font-semibold text-[#5a58ab] bg-indigo-50 px-2 py-0.5 rounded-md">{percent}%</span>
+                    </div>
+                    
+                    <div className="w-full bg-slate-200 h-2 rounded-full mt-2.5 overflow-hidden">
+                      <div
+                        className="bg-[#5a58ab] h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -44,10 +44,7 @@ Thank you for your purchase of "${purchase.serviceName}"!
 
 We have received your payment of ${purchase.amount} ${purchase.currency.toUpperCase()}. Your receipt is attached to this email as a PDF.
 
-To schedule your session or get started with your service, please click the link below:
-https://jbrecruitment.com/contact-us
-
-Or reply directly to this email and our team will get in touch with you shortly.
+Our team will contact you shortly to coordinate the next steps and get started with your service. You can also reply directly to this email if you have any immediate questions.
 
 Best regards,
 Team JB Recruitment Solutions`,
@@ -59,7 +56,7 @@ Team JB Recruitment Solutions`,
         <div style="padding: 20px 0;">
           <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Payment Confirmed!</h2>
           <p>Hi <strong>${purchase.candidateName}</strong>,</p>
-          <p>Thank you for purchasing <strong>${purchase.serviceName}</strong>. We're excited to work with you on your career journey!</p>
+          <p>Thank you for purchasing <strong>${purchase.serviceName} service</strong>. We're excited to work with you on your career journey!</p>
           
           <div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; font-size: 16px; color: #4a5568;">Purchase Summary</h3>
@@ -81,11 +78,7 @@ Team JB Recruitment Solutions`,
 
           <p>We've attached your official PDF receipt to this email. Please keep it for your records.</p>
           
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jbrecruitment.com/contact-us" style="background-color: #5a58ab; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(90, 88, 171, 0.4);">
-              Schedule Your Session
-            </a>
-          </div>
+          <p>Our team will contact you shortly to coordinate the next steps and get started with your service.</p>
           
           <p style="font-size: 14px; color: #718096; text-align: center;">Have questions or want to open the chat? You can also reply directly to this email to speak with our support team.</p>
         </div>

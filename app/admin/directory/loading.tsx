@@ -1,16 +1,22 @@
 export default function DirectoryLoading() {
   return (
-    <main className="min-h-screen bg-[#f4f6fb] px-4 py-8 text-[#252e3d] sm:px-6 lg:px-10 animate-pulse">
+    <main className="min-h-screen bg-[#f4f6fb] px-4 py-8 text-[#252e3d] sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header Skeleton */}
-        <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <div className="h-4 w-32 bg-slate-200 rounded-full" />
-              <div className="h-8 w-64 bg-slate-200 rounded-lg" style={{ fontFamily: "Crimson Text, serif" }} />
-              <div className="h-4 w-96 bg-slate-200 rounded-full" />
+        <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 flex-grow">
+              <div className="space-y-2">
+                <div className="h-4 w-32 bg-slate-200 rounded-full" />
+                <div className="h-8 w-64 bg-slate-200 rounded-lg" style={{ fontFamily: "Crimson Text, serif" }} />
+                <div className="h-4 w-96 bg-slate-200 rounded-full" />
+              </div>
+              {/* Consolidated Card Skeleton */}
+              <div className="h-20 w-52 bg-slate-200 rounded-2xl shrink-0" />
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
+              <div className="h-9 w-20 bg-slate-200 rounded-xl" />
               <div className="h-9 w-20 bg-slate-200 rounded-xl" />
               <div className="h-9 w-20 bg-slate-200 rounded-xl" />
               <div className="h-9 w-20 bg-slate-200 rounded-xl" />
@@ -18,23 +24,12 @@ export default function DirectoryLoading() {
           </div>
         </header>
 
-        {/* 5 Regional Analytics Boxes Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-2">
-              <div className="h-3.5 w-24 bg-slate-200 rounded-full" />
-              <div className="h-8 w-16 bg-slate-200 rounded-lg" />
-              <div className="h-3 w-28 bg-slate-200 rounded-full" />
-            </div>
-          ))}
-        </section>
-
         {/* Directory Table Grid Section */}
         <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 space-y-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100 pb-5">
             {/* Search Input and Filters Placeholders */}
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:max-w-3xl">
-              <div className="h-11 w-full sm:w-80 bg-slate-50 border border-slate-250 rounded-xl" />
+              <div className="h-11 w-full sm:w-80 bg-slate-200 rounded-xl" />
               <div className="flex gap-2">
                 <div className="h-11 w-28 bg-slate-200 rounded-xl" />
                 <div className="h-11 w-28 bg-slate-200 rounded-xl" />
@@ -82,8 +77,8 @@ export default function DirectoryLoading() {
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             <div className="h-4.5 w-32 bg-slate-200 rounded-full" />
             <div className="flex gap-2">
-              <div className="h-8 w-8 bg-slate-100 border border-slate-250 rounded-lg" />
-              <div className="h-8 w-8 bg-slate-100 border border-slate-250 rounded-lg" />
+              <div className="h-8 w-8 bg-slate-200 rounded-lg" />
+              <div className="h-8 w-8 bg-slate-200 rounded-lg" />
             </div>
           </div>
         </section>

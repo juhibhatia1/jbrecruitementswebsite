@@ -3,7 +3,7 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { IoCheckmarkCircle, IoChevronForward, IoCalendar, IoArrowBack } from "react-icons/io5";
+import { IoCheckmarkCircle, IoArrowBack } from "react-icons/io5";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -30,7 +30,9 @@ function SuccessContent() {
         Payment Successful!
       </h1>
       <p className="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
-        Thank you for your purchase. Your payment was validated. We've sent a PDF receipt and details to your email.
+        Thank you for your purchase. Your payment has been verified. We've sent
+        a PDF receipt and details to your email. Our team will contact you
+        shortly to coordinate the next steps.
       </p>
 
       {paymentIntent && (
@@ -38,32 +40,25 @@ function SuccessContent() {
           <span className="text-[10px] uppercase font-semibold text-gray-400 block mb-1 tracking-wider">
             Transaction Reference:
           </span>
-          <code className="text-xs font-mono break-all text-gray-700">{paymentIntent}</code>
+          <code className="text-xs font-mono break-all text-gray-700">
+            {paymentIntent}
+          </code>
         </div>
       )}
 
       <div className="space-y-3 mb-8">
-        <a
-          href="https://jbrecruitment.com/contact-us"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          <IoCalendar className="w-5 h-5" />
-          Schedule Your Session
-        </a>
-
         <Link
           href="/job-seekers"
-          className="w-full flex items-center justify-center gap-1 text-[#5a58ab] hover:text-[#4a489b] hover:underline py-2 text-sm font-semibold transition-all"
+          className="group w-full flex items-center justify-center gap-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base"
         >
-          <IoArrowBack className="w-4 h-4 mr-1" />
+          <IoArrowBack className="w-5 h-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
           Back to Career Guidance Page
         </Link>
       </div>
 
       <div className="border-t border-gray-100 pt-5 text-xs text-gray-400">
-        Have questions? Reply to your confirmation email or contact us at contact@jbrecruitments.com.
+        Have questions? Reply to your confirmation email or contact us at
+        contact@jbrecruitments.com.
       </div>
     </div>
   );
@@ -75,12 +70,14 @@ export default function PaymentSuccessPage() {
       className="min-h-screen bg-[#F9F9FB] text-[#252E3D] flex items-center justify-center pt-24 pb-16"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <Suspense fallback={
-        <div className="text-[#252e3d] text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5a58ab] mx-auto mb-4"></div>
-          <p>Processing payment confirmation...</p>
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="text-[#252e3d] text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5a58ab] mx-auto mb-4"></div>
+            <p>Loading payment details...</p>
+          </div>
+        }
+      >
         <SuccessContent />
       </Suspense>
     </div>

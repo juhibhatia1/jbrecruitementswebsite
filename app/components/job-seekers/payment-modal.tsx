@@ -9,6 +9,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { IoClose, IoLockClosed, IoSparkles, IoAlertCircle } from "react-icons/io5";
+import { useLenis } from "@/app/providers/lenis-provider";
 
 // Make sure to call loadStripe outside of a component’s render to avoid recreating the Stripe object on every render.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
@@ -29,6 +30,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { lenis } = useLenis();
 
   // Reset states when modal closes or service changes
   useEffect(() => {
@@ -40,6 +42,21 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
       setLoading(false);
     }
   }, [isOpen, service]);
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      if (lenis) lenis.stop();
+    } else {
+      document.body.style.overflow = "";
+      if (lenis) lenis.start();
+    }
+    return () => {
+      document.body.style.overflow = "";
+      if (lenis) lenis.start();
+    };
+  }, [isOpen, lenis]);
 
   if (!isOpen || !service) return null;
 
@@ -111,9 +128,6 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
         {/* Header */}
         <div className="p-6 pb-4 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
           <div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5a58ab] uppercase tracking-wider bg-[#5a58ab]/10 px-2.5 py-1 rounded-full">
-              <IoSparkles /> Premium Upgrade
-            </span>
             <h3 className="text-xl font-bold text-[#252e3d] mt-1.5" style={{ fontFamily: "Crimson Text, serif" }}>
               {service.title}
             </h3>
@@ -127,7 +141,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-6 overflow-y-auto flex-grow">
+        <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow">
           {error && (
             <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm flex items-start gap-2.5">
               <IoAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -172,7 +186,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
 
               <div className="bg-[#fcfdfe] border border-[#e8effd] p-4 rounded-2xl flex items-center justify-between mt-6">
                 <div>
-                  <span className="text-xs text-gray-400 block">Total Due:</span>
+                  <span className="text-xs text-gray-400 block">Amount:</span>
                   <span className="text-2xl font-bold text-[#252e3d]">USD {service.amount}</span>
                 </div>
                 <button
@@ -197,12 +211,6 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
               <CheckoutForm service={service} clientSecret={clientSecret} />
             </Elements>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-1.5 text-xs text-gray-400 font-medium">
-          <IoLockClosed className="w-3.5 h-3.5 text-gray-400" />
-          <span>Secured by Stripe — 256-bit encryption</span>
         </div>
       </div>
     </div>

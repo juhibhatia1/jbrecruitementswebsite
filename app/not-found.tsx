@@ -47,10 +47,14 @@ export default function NotFound() {
         <ScrollAnimation variant="fadeUp" delay={0.4}>
           <Link
             href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#252e3d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#252e3d]"
+            className="mt-6 inline-flex items-center gap-1 px-8 py-4 bg-[#252e3d] hover:bg-[#252e3d] text-white font-medium rounded-full transition-all duration-300 text-lg shadow-[0_10px_20px_rgba(96,93,186,0.3)] hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] hover:-translate-y-1 group"
+            style={{ fontFamily: "Raleway, sans-serif" }}
           >
-            Sip &amp; Restart
-            <RxArrowTopRight size={20} />
+            Take Me Home
+            <RxArrowTopRight
+              size={20}
+              className="transform group-hover:rotate-45 group-hover:translate-x-1 transition-transform duration-300"
+            />
           </Link>
         </ScrollAnimation>
       </div>
