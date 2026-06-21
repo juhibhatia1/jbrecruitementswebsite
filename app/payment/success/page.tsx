@@ -58,7 +58,7 @@ function SuccessContent() {
 
       <div className="border-t border-gray-100 pt-5 text-xs text-gray-400">
         Have questions? Reply to your confirmation email or contact us at
-        contact@jbrecruitments.com.
+        juhi@jbrecruitments.com.
       </div>
     </div>
   );

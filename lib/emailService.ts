@@ -15,7 +15,8 @@ interface PurchaseData {
 
 export async function sendPurchaseEmails(purchase: PurchaseData) {
   const user = process.env.NEXT_NODEMAILER_USER;
-  const adminEmail = process.env.ADMIN_EMAIL || user;
+  const adminEmail =
+    process.env.PURCHASE_ALERT_EMAIL || user;
 
   if (!user) {
     console.error("Mailer credentials missing. Cannot send emails.");

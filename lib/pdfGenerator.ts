@@ -325,7 +325,7 @@ export async function generateReceiptPdf(purchase: {
     }
   );
 
-  page.drawText("contact@jbrecruitments.com   |   jbrecruitments.com", {
+  page.drawText("juhi@jbrecruitments.com   |   jbrecruitments.com", {
     x: 50,
     y: 46,
     size: 8,
