@@ -3,6 +3,7 @@ import { addContactSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
+import { escapeHtml } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
@@ -85,16 +86,13 @@ export async function POST(request: Request) {
       html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #3b82f6;">New Contact Form Submission</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-            <p><strong>Company:</strong> ${company || "Not provided"}</p>
+            <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(phone) || "Not provided"}</p>
+            <p><strong>Company:</strong> ${escapeHtml(company) || "Not provided"}</p>
             <div style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 5px;">
               <p><strong>Message:</strong></p>
-              <p style="white-space: pre-wrap;">${message.replace(
-                /\n/g,
-                "<br>",
-              )}</p>
+              <p style="white-space: pre-wrap;">${escapeHtml(message).replace(/\n/g, "<br>")}</p>
             </div>
           </div>
         `,

@@ -4,6 +4,7 @@ import { addJobSeekerSubmission } from "@/lib/submissions-store";
 import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
+import { escapeHtml } from "@/lib/security";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -311,14 +312,14 @@ export async function POST(request: Request) {
         <div style="text-align:center; padding:12px 0 8px 0;"><img src="cid:jb-logo" alt="JB Recruitment" style="width:84px; height:auto; display:inline-block;" /></div>
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #3b82f6;">New Job Application</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-          <p><strong>Location:</strong> ${location || "Not provided"}</p>
+          <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+          <p><strong>Phone:</strong> ${escapeHtml(phone) || "Not provided"}</p>
+          <p><strong>Location:</strong> ${escapeHtml(location) || "Not provided"}</p>
           
           <div style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 5px;">
             <p><strong>Description:</strong></p>
-            <p style="white-space: pre-wrap;">${(description || "No description provided").replace(/\n/g, "<br>")}</p>
+            <p style="white-space: pre-wrap;">${escapeHtml(description || "No description provided").replace(/\n/g, "<br>")}</p>
           </div>
 
           <div style="margin-top: 20px;">
@@ -368,7 +369,7 @@ Instagram: instagram.com/juhibhatia_globalrecruiter`,
       html: `
         <div style="text-align:center; padding:12px 0 8px 0;"><img src="cid:jb-logo" alt="JB Recruitment" style="width:84px; height:auto; display:inline-block;" /></div>
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6; white-space: pre-wrap;">
-Hi ${name}
+Hi ${escapeHtml(name)}
 
 Thank you so much for taking the time to share your profile with us.
 

@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import { IoCheckmark } from "react-icons/io5";
 
 type ServiceCardProps = {
   title: string;
+  amount: number;
   description?: string;
   iconPath: string;
   features?: string[];
@@ -14,10 +16,14 @@ type ServiceCardProps = {
   onHoverStart?: () => void;
   onHoverEnd?: () => void;
   onBuyClick?: () => void;
+  // Multi-select props
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 };
 
 export default function ServiceCard({
   title,
+  amount,
   description,
   iconPath,
   features = [],
@@ -27,6 +33,8 @@ export default function ServiceCard({
   onHoverStart,
   onHoverEnd,
   onBuyClick,
+  isSelected = false,
+  onToggleSelect,
 }: ServiceCardProps) {
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -38,10 +46,9 @@ export default function ServiceCard({
       setIsFlipped(true);
       const timer = setTimeout(() => {
         setIsFlipped(false);
-      }, 5000); // Show back for 5 seconds
+      }, 5000);
       return () => clearTimeout(timer);
     } else if (!isHovered && !shouldFlip) {
-      // If parent tells us to stop flipping (shouldFlip -> false), close immediately
       setIsFlipped(false);
     }
   }, [shouldFlip, isHovered, isManualFlip]);
@@ -70,15 +77,12 @@ export default function ServiceCard({
   };
 
   const handleClick = () => {
-    // Manual toggle on tap/click - tapping again closes
     setIsFlipped((prev) => !prev);
     setIsManualFlip(true);
     if (onManualFlip) onManualFlip();
-    // Clear manual flag after a short duration so auto-flip can resume
     setTimeout(() => setIsManualFlip(false), 6000);
   };
 
-  // Default features if not provided
   const displayFeatures =
     features.length > 0
       ? features
@@ -97,6 +101,24 @@ export default function ServiceCard({
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
+      {/* Checkbox / select toggle — top-right corner */}
+      {onToggleSelect && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
+          aria-label={isSelected ? `Deselect ${title}` : `Select ${title}`}
+          className={`absolute top-3 right-3 z-30 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 shadow-sm
+            ${isSelected
+              ? "bg-[#5a58ab] border-[#5a58ab]"
+              : "bg-white border-gray-300 hover:border-[#5a58ab]"
+            }`}
+        >
+          {isSelected && <IoCheckmark className="text-white w-3.5 h-3.5" />}
+        </button>
+      )}
+
       <div
         className="relative w-full h-full transition-all duration-1000 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
         style={{
@@ -106,8 +128,13 @@ export default function ServiceCard({
       >
         {/* Front Side */}
         <div
-          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 border border-gray-100 group-hover:border-[#5a58ab]/30"
-          style={{ backfaceVisibility: "hidden" }}
+          className={`absolute inset-0 w-full h-full bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 border border-gray-100 group-hover:border-[#5a58ab]/30 antialiased
+            ${isSelected ? "bg-[#faf9ff]" : ""}`}
+          style={{ 
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "translate3d(0,0,0)"
+          }}
         >
           <div className="mb-3 transition-all duration-500 group-hover:scale-110 group-hover:rotate-2">
             <Image
@@ -125,6 +152,11 @@ export default function ServiceCard({
           >
             {title}
           </h3>
+
+          {/* Price badge */}
+          <span className="text-xs font-semibold text-[#5a58ab] bg-[#f0effd] px-2.5 py-0.5 rounded-full mb-2">
+            USD {amount}
+          </span>
 
           {description && (
             <p className="text-sm sm:text-base md:text-[15px] text-gray-600 text-center transition-colors duration-300 group-hover:text-gray-700 leading-relaxed">
@@ -144,21 +176,21 @@ export default function ServiceCard({
 
         {/* Back Side */}
         <div
-          className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-between p-4 sm:p-5 border border-gray-100"
+          className={`absolute inset-0 w-full h-full bg-white rounded-2xl shadow-lg flex flex-col justify-between p-4 sm:p-5 border border-gray-100 antialiased
+            ${isSelected ? "bg-[#faf9ff]" : ""}`}
           style={{
             backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg) translate3d(0,0,0)",
           }}
         >
           <div className="flex-grow flex flex-col justify-center">
-            {/* Description */}
             <div className="text-[#252e3d] text-xs sm:text-sm text-center leading-relaxed mb-3 font-medium">
               {backDescription ||
                 description ||
                 "Get expert assistance tailored to your career goals."}
             </div>
 
-            {/* Feature List */}
             <div className="space-y-1.5 px-1 sm:px-3 mb-3">
               {displayFeatures.map((feature, index) => (
                 <div key={index} className="flex items-center text-gray-700">
@@ -171,24 +203,43 @@ export default function ServiceCard({
             </div>
           </div>
 
-          {/* Buy Now Button */}
-          {onBuyClick && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                // Trigger CLICK_BUY funnel event
-                fetch("/api/analytics/funnel", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
-                }).catch((e) => console.error("Telemetry failed:", e));
-                onBuyClick();
-              }}
-              className="w-full bg-[#5a58ab] hover:bg-[#4a489b] text-white text-xs sm:text-sm font-semibold py-2 px-3 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer"
-            >
-              Buy Now
-            </button>
-          )}
+          {/* Action buttons */}
+          <div className="flex flex-row gap-2">
+            {/* Add to Cart / Remove toggle */}
+            {onToggleSelect && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSelect();
+                }}
+                className={`flex-1 text-[11px] sm:text-xs md:text-sm font-semibold py-2 px-1.5 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer border whitespace-nowrap overflow-hidden text-ellipsis
+                  ${isSelected
+                    ? "bg-[#f0effd] text-[#5a58ab] border-[#5a58ab]/30 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    : "bg-white text-[#5a58ab] border-[#5a58ab]/30 hover:bg-[#5a58ab]/5"
+                  }`}
+              >
+                {isSelected ? "✓ Added" : "+ Add to cart"}
+              </button>
+            )}
+
+            {/* Buy Now (single purchase) */}
+            {onBuyClick && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetch("/api/analytics/funnel", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
+                  }).catch((e) => console.error("Telemetry failed:", e));
+                  onBuyClick();
+                }}
+                className="flex-1 bg-[#5a58ab] hover:bg-[#4a489b] text-white text-[11px] sm:text-xs md:text-sm font-semibold py-2 px-1.5 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis text-center"
+              >
+                Buy Now
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

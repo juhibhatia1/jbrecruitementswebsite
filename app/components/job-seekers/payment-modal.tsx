@@ -8,23 +8,25 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { IoClose, IoLockClosed, IoSparkles, IoAlertCircle } from "react-icons/io5";
+import { IoClose, IoAlertCircle } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
 
-// Make sure to call loadStripe outside of a component’s render to avoid recreating the Stripe object on every render.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
+
+interface ServiceItem {
+  title: string;
+  amount: number;
+  description: string;
+}
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  service: {
-    title: string;
-    amount: number;
-    description: string;
-  } | null;
+  /** Accept an array of services for multi-service checkout */
+  services: ServiceItem[];
 }
 
-export default function PaymentModal({ isOpen, onClose, service }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, services }: PaymentModalProps) {
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -32,7 +34,14 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
   const [error, setError] = useState<string | null>(null);
   const { lenis } = useLenis();
 
-  // Reset states when modal closes or service changes
+  const totalAmount = services.reduce((sum, s) => sum + s.amount, 0);
+  const isMulti = services.length > 1;
+  const displayTitle =
+    services.length === 1
+      ? services[0].title
+      : `${services.length} Services`;
+
+  // Reset states when modal closes or services change
   useEffect(() => {
     if (!isOpen) {
       setCandidateName("");
@@ -41,7 +50,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
       setError(null);
       setLoading(false);
     }
-  }, [isOpen, service]);
+  }, [isOpen, services]);
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -58,7 +67,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
     };
   }, [isOpen, lenis]);
 
-  if (!isOpen || !service) return null;
+  if (!isOpen || services.length === 0) return null;
 
   const handleInitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,8 +84,7 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          serviceName: service.title,
-          amount: service.amount,
+          serviceNames: services.map((s) => s.title),
           candidateName,
           candidateEmail,
         }),
@@ -126,11 +134,19 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
       {/* Modal Container */}
       <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-[0_24px_50px_-12px_rgba(37,55,77,0.15)] border border-[#e6eefc] overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
+        <div className="p-6 pb-4 border-b border-gray-100 flex justify-between items-start bg-[#fcfdfe]">
           <div>
-            <h3 className="text-xl font-bold text-[#252e3d] mt-1.5" style={{ fontFamily: "Crimson Text, serif" }}>
-              {service.title}
+            <h3
+              className="text-xl font-bold text-[#252e3d] mt-1.5"
+              style={{ fontFamily: "Crimson Text, serif" }}
+            >
+              {displayTitle}
             </h3>
+            {isMulti && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {services.length} services selected
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -153,7 +169,8 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
             // Stage 1: Collect Name & Email
             <form onSubmit={handleInitPayment} className="space-y-4">
               <p className="text-sm text-gray-600 leading-relaxed">
-                Before proceeding to secure checkout, please provide your billing details to associate your payment.
+                Before proceeding to secure checkout, please provide your billing
+                details to associate your payment.
               </p>
 
               <div>
@@ -184,31 +201,56 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
                 />
               </div>
 
-              <div className="bg-[#fcfdfe] border border-[#e8effd] p-4 rounded-2xl flex items-center justify-between mt-6">
-                <div>
-                  <span className="text-xs text-gray-400 block">Amount:</span>
-                  <span className="text-2xl font-bold text-[#252e3d]">USD {service.amount}</span>
+              {/* Order Summary */}
+              <div className="bg-[#fcfdfe] border border-[#e8effd] p-4 rounded-2xl mt-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Order Summary
+                </p>
+
+                {/* Line items for multi-service */}
+                {isMulti && (
+                  <div className="space-y-2 mb-3 pb-3 border-b border-gray-100">
+                    {services.map((s) => (
+                      <div key={s.title} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 truncate mr-4">{s.title}</span>
+                        <span className="text-sm font-semibold text-[#252e3d] shrink-0">
+                          USD {s.amount}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] sm:text-xs text-gray-400 block whitespace-nowrap">
+                      {isMulti ? "Total Amount:" : "Amount:"}
+                    </span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#252e3d] whitespace-nowrap">
+                      USD {totalAmount}
+                    </span>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-[#5a58ab] hover:bg-[#4a489b] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      "Proceed to Payment"
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#5a58ab] hover:bg-[#4a489b] text-white px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    "Proceed to Payment"
-                  )}
-                </button>
               </div>
             </form>
           ) : (
             // Stage 2: Render Stripe Checkout Form
             <Elements stripe={stripePromise} options={options}>
-              <CheckoutForm service={service} clientSecret={clientSecret} />
+              <CheckoutForm totalAmount={totalAmount} clientSecret={clientSecret} />
             </Elements>
           )}
         </div>
@@ -217,16 +259,13 @@ export default function PaymentModal({ isOpen, onClose, service }: PaymentModalP
   );
 }
 
-// Inner checkout form that has access to Stripe Elements hooks
+// Inner checkout form
 interface CheckoutFormProps {
-  service: {
-    title: string;
-    amount: number;
-  };
+  totalAmount: number;
   clientSecret: string;
 }
 
-function CheckoutForm({ service, clientSecret }: CheckoutFormProps) {
+function CheckoutForm({ totalAmount, clientSecret }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -235,10 +274,7 @@ function CheckoutForm({ service, clientSecret }: CheckoutFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!stripe || !elements) {
-      // Stripe.js has not yet loaded.
-      return;
-    }
+    if (!stripe || !elements) return;
 
     setProcessing(true);
     setErrorMessage(null);
@@ -252,8 +288,6 @@ function CheckoutForm({ service, clientSecret }: CheckoutFormProps) {
       },
     });
 
-    // This point will only be reached if there is an immediate error when confirming the payment.
-    // Otherwise, your customer will be redirected to your `return_url`.
     if (error) {
       if (error.type === "card_error" || error.type === "validation_error") {
         setErrorMessage(error.message || "An error occurred.");
@@ -286,7 +320,7 @@ function CheckoutForm({ service, clientSecret }: CheckoutFormProps) {
             Processing Secure Payment...
           </>
         ) : (
-          `Pay USD ${service.amount}`
+          `Pay USD ${totalAmount}`
         )}
       </button>
     </form>

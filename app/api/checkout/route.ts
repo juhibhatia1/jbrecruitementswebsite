@@ -31,7 +31,7 @@ function getStripe() {
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    // Rate limit check: limit to 5 checkout attempts per hour
+    // Rate limit: 5 checkout attempts per hour per IP
     if (isRateLimited(ip, 5, 60 * 60 * 1000)) {
       return NextResponse.json(
         { error: "Too many checkout attempts. Please try again in an hour." },
@@ -39,22 +39,46 @@ export async function POST(request: Request) {
       );
     }
 
-    const { serviceName, candidateName, candidateEmail } = await request.json();
+    const body = await request.json();
+    const { candidateName, candidateEmail } = body;
 
-    if (!serviceName || !candidateName || !candidateEmail) {
+    if (!candidateName || !candidateEmail) {
       return NextResponse.json(
-        { error: "Missing required fields: serviceName, candidateName, candidateEmail" },
+        { error: "Missing required fields: candidateName, candidateEmail" },
         { status: 400 },
       );
     }
 
-    const resolvedPrice = SERVICE_PRICING[serviceName];
-    if (resolvedPrice === undefined) {
+    // ── Resolve service names & total price ─────────────────────────────────
+    // Support both legacy single `serviceName` and new multi `serviceNames[]`
+    let serviceNames: string[];
+
+    if (Array.isArray(body.serviceNames) && body.serviceNames.length > 0) {
+      serviceNames = body.serviceNames;
+    } else if (typeof body.serviceName === "string" && body.serviceName) {
+      serviceNames = [body.serviceName];
+    } else {
       return NextResponse.json(
-        { error: `Invalid or unrecognized service: ${serviceName}` },
+        { error: "Missing required field: serviceName or serviceNames" },
         { status: 400 },
       );
     }
+
+    // Validate every name and sum their prices
+    let totalAmount = 0;
+    for (const name of serviceNames) {
+      const price = SERVICE_PRICING[name];
+      if (price === undefined) {
+        return NextResponse.json(
+          { error: `Invalid or unrecognized service: ${name}` },
+          { status: 400 },
+        );
+      }
+      totalAmount += price;
+    }
+
+    // For DB storage, join multiple names with " + "
+    const combinedServiceName = serviceNames.join(" + ");
 
     let stripeClient;
     try {
@@ -67,26 +91,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create Stripe PaymentIntent using resolved server-side price
+    // Create Stripe PaymentIntent with server-computed total
     const paymentIntent = await stripeClient.paymentIntents.create({
-      amount: Math.round(resolvedPrice * 100), // in cents
+      amount: Math.round(totalAmount * 100), // in cents
       currency: "usd",
       metadata: {
         candidateName,
         candidateEmail,
-        serviceName,
-        amount: resolvedPrice.toString(),
+        serviceName: combinedServiceName,
+        serviceCount: serviceNames.length.toString(),
+        amount: totalAmount.toString(),
       },
       receipt_email: candidateEmail,
     });
 
-    // Save PENDING purchase in the database
+    // Save PENDING purchase record
     const purchase = await prisma.purchase.create({
       data: {
         candidateName,
         candidateEmail,
-        serviceName,
-        amount: resolvedPrice,
+        serviceName: combinedServiceName,
+        amount: totalAmount,
         currency: "USD",
         stripePaymentIntentId: paymentIntent.id,
         status: "PENDING",

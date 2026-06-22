@@ -10,7 +10,7 @@ function SuccessContent() {
   const paymentIntent = searchParams.get("payment_intent");
 
   return (
-    <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden">
+    <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden">
       {/* Decorative background blur */}
       <div
         className="absolute inset-0 -z-10 blur-2xl bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"

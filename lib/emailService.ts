@@ -34,14 +34,25 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
     return { success: false, error: "PDF generation failed" };
   }
 
+  const formatServicesList = (rawName: string) => {
+    const parts = rawName.split(" + ");
+    if (parts.length <= 1) return rawName;
+    if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+    return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+  };
+
+  const formattedServices = formatServicesList(purchase.serviceName);
+
+  const isMultiService = purchase.serviceName.includes(" + ");
+
   // 1. Candidate Email Options
   const candidateMailOptions = {
     from: `"JB Recruitment Solutions" <${user}>`,
     to: purchase.candidateEmail,
-    subject: `Your Receipt for ${purchase.serviceName} - JB Recruitment Solutions`,
+    subject: `Your Receipt for ${formattedServices} - JB Recruitment Solutions`,
     text: `Hi ${purchase.candidateName},
 
-Thank you for your purchase of "${purchase.serviceName}"!
+Thank you for your purchase of "${formattedServices}"!
 
 We have received your payment of ${purchase.amount} ${purchase.currency.toUpperCase()}. Your receipt is attached to this email as a PDF.
 
@@ -57,14 +68,14 @@ Team JB Recruitment Solutions`,
         <div style="padding: 20px 0;">
           <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Payment Confirmed!</h2>
           <p>Hi <strong>${purchase.candidateName}</strong>,</p>
-          <p>Thank you for purchasing <strong>${purchase.serviceName} service</strong>. We're excited to work with you on your career journey!</p>
+          <p>Thank you for purchasing <strong>${formattedServices}</strong>. We're excited to work with you on your career journey!</p>
           
           <div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; font-size: 16px; color: #4a5568;">Purchase Summary</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
-                <td style="padding: 6px 0; color: #718096;">Service:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${purchase.serviceName}</td>
+                <td style="padding: 6px 0; color: #718096;">${isMultiService ? "Services:" : "Service:"}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${formattedServices}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #718096;">Amount Paid:</td>
@@ -130,7 +141,7 @@ Purchase ID: ${purchase.id}`,
               <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7;"><a href="mailto:${purchase.candidateEmail}">${purchase.candidateEmail}</a></td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Service Name:</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">${isMultiService ? "Services Purchased:" : "Service Name:"}</td>
               <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-weight: bold; color: #5a58ab;">${purchase.serviceName}</td>
             </tr>
             <tr>
