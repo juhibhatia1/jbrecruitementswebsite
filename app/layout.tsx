@@ -7,6 +7,7 @@ import StructuredData from "./components/structured-data";
 import GoogleAnalytics from "./components/google-analytics";
 import FloatingNavbar from "./components/floating-navbar";
 import Footer from "./components/footer";
+import ChatWidget from "./components/chatbot/chat-widget";
 import { defaultMetadata, siteUrl } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
 import LenisProvider from "./providers/lenis-provider";
@@ -61,11 +62,11 @@ export default function RootLayout({
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
-        />
+          />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased`}
-      >
+        >
         <GoogleAnalytics />
         <Suspense fallback={null}>
           <Analytics />
@@ -75,6 +76,7 @@ export default function RootLayout({
           <FloatingNavbar />
           {children}
           <Footer />
+          <ChatWidget />
         </LenisProvider>
       </body>
     </html>

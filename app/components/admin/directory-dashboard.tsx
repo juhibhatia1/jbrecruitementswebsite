@@ -479,6 +479,12 @@ export default function DirectoryDashboard({
               >
                 User Directory
               </Link>
+              <Link
+                href="/admin/knowledge"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Chatbot & KB
+              </Link>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
