@@ -291,3 +291,16 @@ th {
     background-color: rgba(90, 88, 171, 0.7) !important;
   }
 }
+
+@keyframes loader-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-loader-bounce {
+  animation: loader-bounce 1s ease-in-out infinite;
+}

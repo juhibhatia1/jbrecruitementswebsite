@@ -501,7 +501,7 @@ export default function KnowledgeDashboard() {
       {/* ── MODAL: DOCUMENT PREVIEW ────────────────────────────────────────── */}
       {previewDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#252e3d]/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-4xl bg-white rounded-3xl border border-slate-200 p-6 shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="relative w-full max-w-4xl bg-white rounded-3xl border border-slate-200 p-6 shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
             <button
               onClick={() => setPreviewDoc(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 rounded-lg p-1.5 hover:bg-slate-100 transition"
@@ -518,18 +518,13 @@ export default function KnowledgeDashboard() {
               </h3>
             </header>
 
-            <div className="flex-grow overflow-y-auto bg-slate-50 rounded-2xl border border-slate-200/60 p-5 text-sm text-slate-700 font-mono whitespace-pre-wrap leading-relaxed">
+            <div 
+              className="flex-grow overflow-y-auto bg-slate-50 rounded-2xl border border-slate-200/60 p-5 text-sm text-slate-700 font-mono whitespace-pre-wrap leading-relaxed"
+              style={{ maxHeight: "calc(85vh - 150px)" }}
+              data-lenis-prevent
+            >
               {previewDoc.content}
             </div>
-
-            <footer className="mt-4 flex justify-end">
-              <button
-                onClick={() => setPreviewDoc(null)}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </footer>
           </div>
         </div>
       )}
@@ -646,7 +641,10 @@ export default function KnowledgeDashboard() {
             </header>
 
             {/* Conversation Messages Box */}
-            <div className="flex-grow overflow-y-auto space-y-4 p-4 rounded-2xl bg-white border border-slate-200 scrollbar-thin-styled">
+            <div 
+              className="flex-grow overflow-y-auto space-y-4 p-4 rounded-2xl bg-white border border-slate-200 scrollbar-thin-styled"
+              data-lenis-prevent
+            >
               {activeSession.messages.map((msg, idx) => {
                 if (msg.role === "system") return null;
 
@@ -680,15 +678,6 @@ export default function KnowledgeDashboard() {
                 );
               })}
             </div>
-
-            <footer className="mt-4 flex justify-end">
-              <button
-                onClick={() => setActiveSession(null)}
-                className="bg-slate-200 hover:bg-slate-350 text-slate-800 px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Close Chat Log
-              </button>
-            </footer>
           </div>
         </div>
       )}

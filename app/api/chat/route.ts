@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limiter";
-import { handleChatMessage } from "@/lib/rag/chat-engine";
+import { handleChatMessageStream } from "@/lib/rag/chat-engine";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 /**
  * Public chat route for the floating widget.
@@ -34,13 +37,91 @@ export async function POST(request: NextRequest) {
 
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    // Process chat response
-    const result = await handleChatMessage(sessionId, message, {
+    // Call streaming helper
+    const { stream: groqStream, history } = await handleChatMessageStream(sessionId, message, {
       ipAddress: ip,
       userAgent,
     });
 
-    return NextResponse.json(result);
+    const encoder = new TextEncoder();
+    let accumulatedContent = "";
+
+    const responseStream = new ReadableStream({
+      start(controller) {
+        // Run as non-blocking async IIFE in background to stream chunks immediately
+        (async () => {
+          try {
+            for await (const chunk of groqStream) {
+              const text = chunk.choices[0]?.delta?.content || "";
+              if (text) {
+                accumulatedContent += text;
+                // Format as Server-Sent Event
+                const sseLine = `data: ${JSON.stringify({ chunk: text })}\n\n`;
+                controller.enqueue(encoder.encode(sseLine));
+              }
+            }
+
+            // Once streaming is complete, parse delimiter-based text and save to database
+            try {
+              let responseText = accumulatedContent;
+              let suggestedQuestions: string[] = [];
+              const delimiter = "[Suggested Questions]:";
+              const parts = accumulatedContent.split(delimiter);
+
+              if (parts.length > 1) {
+                responseText = parts[0].trim();
+                suggestedQuestions = parts[1]
+                  .split("|")
+                  .map((q) => q.trim())
+                  .filter(Boolean);
+              }
+
+              const updatedMessages = [
+                ...history,
+                { role: "user", content: message, timestamp: new Date().toISOString() },
+                {
+                  role: "assistant",
+                  content: responseText,
+                  timestamp: new Date().toISOString(),
+                  suggestedQuestions: suggestedQuestions,
+                },
+              ];
+
+              await prisma.chatConversation.upsert({
+                where: { sessionId },
+                create: {
+                  sessionId,
+                  messages: updatedMessages as any,
+                  ipAddress: ip,
+                  userAgent,
+                },
+                update: {
+                  messages: updatedMessages as any,
+                  ipAddress: ip || null,
+                  userAgent: userAgent || null,
+                },
+              });
+            } catch (dbError) {
+              console.error("Error parsing or saving streamed response in database:", dbError, accumulatedContent);
+            }
+
+            controller.close();
+          } catch (error) {
+            console.error("Stream generation error:", error);
+            controller.error(error);
+          }
+        })();
+      },
+    });
+
+    return new Response(responseStream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     console.error("Error in public chat route:", error);
     return NextResponse.json(
@@ -52,3 +133,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
