@@ -81,12 +81,24 @@ export async function POST(request: Request) {
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
+      // Calculate delivery deadline based on service name (defaults to 5 days, 48 hours for Ask Me Anything, 3 days for Interview Prep)
+      const created = new Date(existingPurchase?.createdAt || new Date());
+      const service = existingPurchase?.serviceName || "";
+      let days = 5;
+      if (service.includes("Ask Me Anything")) {
+        days = 2;
+      } else if (service.includes("Interview Prep")) {
+        days = 3;
+      }
+      const deliveryDeadline = new Date(created.getTime() + days * 24 * 60 * 60 * 1000);
+
       // Update the Purchase record
       const purchase = await prisma.purchase.update({
         where: { stripePaymentIntentId: paymentIntent.id },
         data: {
           status: "COMPLETED",
           country: billingCountry,
+          deliveryDeadline,
         },
       });
 

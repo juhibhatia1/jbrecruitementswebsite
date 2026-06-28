@@ -16,6 +16,8 @@ import {
   IoHourglass,
   IoMap,
   IoTime,
+  IoChevronDown,
+  IoChevronUp,
 } from "react-icons/io5";
 
 interface AdminSubmission {
@@ -58,6 +60,10 @@ interface Purchase {
   country: string | null;
   mockInterviewStatus: string | null; // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
   mockInterviewDate: string | null;
+  deliveryStatus: string; // "PENDING", "COMPLETED"
+  deliveryDeadline: string | null;
+  completionNotes: string | null;
+  candidatePhone: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,49 +90,55 @@ type SortField = "name" | "firstSeen" | "totalSpent";
 type SortOrder = "asc" | "desc";
 
 // Map ISO country codes to global regions
-const REGION_MAPPING: Record<string, string> = {
-  // North America
-  US: "North America",
-  CA: "North America",
-  MX: "North America",
-  // Europe
-  GB: "Europe",
-  FR: "Europe",
-  DE: "Europe",
-  IT: "Europe",
-  ES: "Europe",
-  NL: "Europe",
-  BE: "Europe",
-  CH: "Europe",
-  SE: "Europe",
-  NO: "Europe",
-  DK: "Europe",
-  FI: "Europe",
-  IE: "Europe",
-  PT: "Europe",
-  PL: "Europe",
-  AT: "Europe",
-  RU: "Europe",
-  // Asia-Pacific
-  IN: "Asia-Pacific",
-  AU: "Asia-Pacific",
-  NZ: "Asia-Pacific",
-  SG: "Asia-Pacific",
-  JP: "Asia-Pacific",
-  CN: "Asia-Pacific",
-  MY: "Asia-Pacific",
-  TH: "Asia-Pacific",
-  ID: "Asia-Pacific",
-  PH: "Asia-Pacific",
-  VN: "Asia-Pacific",
-  HK: "Asia-Pacific",
-  KR: "Asia-Pacific",
-};
-
-function getRegion(countryCode: string | null): string {
-  if (!countryCode) return "Unknown";
+function getRegionCategory(countryCode: string | null): string {
+  if (!countryCode) return "Others";
   const code = countryCode.toUpperCase();
-  return REGION_MAPPING[code] || "Rest of World";
+  if (code === "IN") return "India";
+  if (code === "AE") return "UAE";
+  if (code === "GB") return "UK";
+  if (code === "US") return "US";
+  
+  // GCC members: SA, QA, KW, OM, BH (AE is GCC but has its own bucket)
+  const gccCodes = ["SA", "QA", "KW", "OM", "BH"];
+  if (gccCodes.includes(code)) return "GCC";
+  
+  return "Others";
+}
+
+// Helper to filter purchase records by creation date
+function matchPurchaseDate(purchaseDateStr: string, filterType: string, customDate: string): boolean {
+  if (filterType === "all") return true;
+  const pDate = new Date(purchaseDateStr);
+  const now = new Date();
+  
+  // Set times to midnight for date-only comparisons
+  const pDateStart = new Date(pDate.getFullYear(), pDate.getMonth(), pDate.getDate()).getTime();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  
+  switch (filterType) {
+    case "today":
+      return pDateStart === todayStart;
+    case "yesterday": {
+      const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+      return pDateStart === yesterdayStart;
+    }
+    case "last7": {
+      const sevenDaysAgoStart = todayStart - 7 * 24 * 60 * 60 * 1000;
+      return pDate.getTime() >= sevenDaysAgoStart;
+    }
+    case "last30": {
+      const thirtyDaysAgoStart = todayStart - 30 * 24 * 60 * 60 * 1000;
+      return pDate.getTime() >= thirtyDaysAgoStart;
+    }
+    case "custom": {
+      if (!customDate) return true;
+      const cDate = new Date(customDate);
+      const cDateStart = new Date(cDate.getFullYear(), cDate.getMonth(), cDate.getDate()).getTime();
+      return pDateStart === cDateStart;
+    }
+    default:
+      return true;
+  }
 }
 
 export default function DirectoryDashboard({
@@ -142,6 +154,8 @@ export default function DirectoryDashboard({
   const [serviceFilterOpen, setServiceFilterOpen] = useState(false);
   const [interviewFilter, setInterviewFilter] = useState("all");
   const [interviewFilterOpen, setInterviewFilterOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [customDateFilter, setCustomDateFilter] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("firstSeen");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
@@ -150,6 +164,7 @@ export default function DirectoryDashboard({
 
   // Regional breakdown modal state
   const [showRegionModal, setShowRegionModal] = useState(false);
+  const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
 
   // Lock body scroll when modals or drawers are open
   React.useEffect(() => {
@@ -157,6 +172,9 @@ export default function DirectoryDashboard({
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+    }
+    if (!showRegionModal) {
+      setExpandedRegion(null);
     }
     return () => {
       document.body.style.overflow = "";
@@ -232,10 +250,14 @@ export default function DirectoryDashboard({
         if (!existing.country && p.country) {
           existing.country = p.country;
         }
+        if (!existing.phone && p.candidatePhone) {
+          existing.phone = p.candidatePhone;
+        }
       } else {
         candidateMap.set(email, {
           name: p.candidateName,
           email: p.candidateEmail,
+          phone: p.candidatePhone || undefined,
           firstSeen: p.createdAt,
           totalSpent: purchaseAmount,
           country: p.country,
@@ -256,18 +278,31 @@ export default function DirectoryDashboard({
 
   // 2. Regional Analytics aggregates
   const regionalAnalytics = useMemo(() => {
-    const regions = {
-      "North America": { count: 0, revenue: 0 },
-      Europe: { count: 0, revenue: 0 },
-      "Asia-Pacific": { count: 0, revenue: 0 },
-      "Rest of World": { count: 0, revenue: 0 },
-      Unknown: { count: 0, revenue: 0 },
+    const regions: Record<
+      string,
+      { count: number; revenue: number; details: Record<string, { count: number; revenue: number }> }
+    > = {
+      India: { count: 0, revenue: 0, details: {} },
+      UAE: { count: 0, revenue: 0, details: {} },
+      UK: { count: 0, revenue: 0, details: {} },
+      US: { count: 0, revenue: 0, details: {} },
+      GCC: { count: 0, revenue: 0, details: {} },
+      Others: { count: 0, revenue: 0, details: {} },
     };
 
     candidates.forEach((c) => {
-      const region = getRegion(c.country) as keyof typeof regions;
-      regions[region].count += 1;
-      regions[region].revenue += c.totalSpent;
+      const region = getRegionCategory(c.country);
+      if (regions[region]) {
+        regions[region].count += 1;
+        regions[region].revenue += c.totalSpent;
+
+        const countryLabel = c.country ? c.country.toUpperCase() : "Unknown";
+        if (!regions[region].details[countryLabel]) {
+          regions[region].details[countryLabel] = { count: 0, revenue: 0 };
+        }
+        regions[region].details[countryLabel].count += 1;
+        regions[region].details[countryLabel].revenue += c.totalSpent;
+      }
     });
 
     return Object.entries(regions).map(([name, data]) => ({
@@ -332,6 +367,11 @@ export default function DirectoryDashboard({
             if (!matchStatus) return false;
           }
         }
+        // Purchase Date Filter
+        const hasMatchingDate = c.purchases.some((p) =>
+          matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
+        );
+        if (!hasMatchingDate) return false;
 
         return true;
       })
@@ -351,7 +391,7 @@ export default function DirectoryDashboard({
         if (valA > valB) return sortOrder === "asc" ? 1 : -1;
         return 0;
       });
-  }, [candidates, searchQuery, serviceFilter, interviewFilter, sortField, sortOrder]);
+  }, [candidates, searchQuery, serviceFilter, interviewFilter, dateFilter, customDateFilter, sortField, sortOrder]);
 
   // Handle scheduling save
   const handleSaveSchedule = async (purchaseId: string) => {
@@ -627,6 +667,31 @@ export default function DirectoryDashboard({
                   </div>
                 )}
               </div>
+
+              {/* Date Filter */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                >
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="last7">Last 7 Days</option>
+                  <option value="last30">Last 30 Days</option>
+                  <option value="custom">Custom Date</option>
+                </select>
+
+                {dateFilter === "custom" && (
+                  <input
+                    type="date"
+                    value={customDateFilter}
+                    onChange={(e) => setCustomDateFilter(e.target.value)}
+                    className="border border-slate-200 rounded-xl px-3 py-1.5 bg-slate-50 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#5a58ab] focus:bg-white"
+                  />
+                )}
+              </div>
             </div>
           </div>
 
@@ -649,6 +714,7 @@ export default function DirectoryDashboard({
                   </th>
                   <th className="px-6 py-4 xl:py-5">Services Purchased</th>
                   <th className="px-6 py-4 xl:py-5">Mock Interview</th>
+                  <th className="px-6 py-4 xl:py-5">Delivery Status</th>
                   <th
                     onClick={() => handleSort("totalSpent")}
                     className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
@@ -724,9 +790,23 @@ export default function DirectoryDashboard({
                             </span>
                           )}
                         </td>
+                        <td className="px-6 py-4 xl:py-5">
+                          {candidate.purchases.length === 0 ? (
+                            <span className="text-xs text-slate-400 italic">Not Applicable</span>
+                          ) : candidate.purchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length === 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-emerald-700 border border-emerald-100">
+                              <IoCheckmarkCircle className="w-3 h-3" /> All Delivered
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-amber-700 border border-amber-100">
+                              <IoHourglass className="w-3 h-3" /> {candidate.purchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length} Pending
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 xl:py-5 font-bold text-slate-800 xl:text-[15px]">
                           USD {candidate.totalSpent}
                         </td>
+
                         <td className="px-6 py-4 xl:py-5 text-right">
                           <button className="text-slate-400 group-hover:text-[#5a58ab] p-1.5 rounded-full hover:bg-slate-100 transition-colors">
                             <IoChevronForward className="w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" />
@@ -780,7 +860,7 @@ export default function DirectoryDashboard({
                   </div>
                   {selectedCandidate.country && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
-                      <IoLocation /> {selectedCandidate.country} ({getRegion(selectedCandidate.country)})
+                      <IoLocation /> {selectedCandidate.country} ({getRegionCategory(selectedCandidate.country)})
                     </span>
                   )}
                 </div>
@@ -1005,6 +1085,26 @@ export default function DirectoryDashboard({
                             </span>
                           </p>
                           <p>
+                            <strong>Delivery Status:</strong>{" "}
+                            <span
+                              className={`font-semibold ${
+                                p.deliveryStatus === "COMPLETED" ? "text-emerald-600" : "text-amber-600"
+                              }`}
+                            >
+                              {p.deliveryStatus || "PENDING"}
+                            </span>
+                          </p>
+                          {p.completionNotes && (
+                            <p className="text-[11px] bg-white border border-slate-100 p-2.5 rounded-xl text-slate-600 mt-1 italic leading-relaxed">
+                              <strong>Notes:</strong> {p.completionNotes}
+                            </p>
+                          )}
+                          {p.deliveryDeadline && (
+                            <p className="text-[10px]">
+                              <strong>Deadline:</strong> {new Date(p.deliveryDeadline).toLocaleDateString()}
+                            </p>
+                          )}
+                          <p>
                             <strong>Amount:</strong> {p.amount} {p.currency.toUpperCase()}
                           </p>
                           <p>
@@ -1021,6 +1121,7 @@ export default function DirectoryDashboard({
                               {p.stripePaymentIntentId}
                             </a>
                           </p>
+
                         </div>
                       ),
                     })),
@@ -1088,29 +1189,84 @@ export default function DirectoryDashboard({
             <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow space-y-4 scrollbar-thin-styled">
               {regionalAnalytics.map((region) => {
                 const percent = candidates.length ? Math.round((region.count / candidates.length) * 100) : 0;
+                const hasDetails = Object.keys(region.details).length > 0;
+                const isExpanded = expandedRegion === region.name;
+
                 return (
-                  <div key={region.name} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 hover:bg-slate-100/50 transition-colors duration-200">
+                  <div
+                    key={region.name}
+                    onClick={() => {
+                      if (hasDetails) {
+                        setExpandedRegion(isExpanded ? null : region.name);
+                      }
+                    }}
+                    className={`bg-slate-50 border rounded-2xl p-4 transition-all duration-200 ${
+                      hasDetails
+                        ? "cursor-pointer hover:bg-slate-100/70 hover:border-[#5a58ab]/40 border-slate-100"
+                        : "border-slate-100"
+                    }`}
+                  >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2.5 text-[#5a58ab]">
                         <IoMap className="w-4 h-4" />
-                        <span className="text-sm font-bold uppercase tracking-wider text-slate-700">{region.name}</span>
+                        <span className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                          {region.name}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-emerald-600">${region.revenue}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-emerald-600">${region.revenue.toLocaleString()}</span>
+                        {hasDetails && (
+                          isExpanded ? (
+                            <IoChevronUp className="w-4 h-4 text-slate-400" />
+                          ) : (
+                            <IoChevronDown className="w-4 h-4 text-slate-400" />
+                          )
+                        )}
+                      </div>
                     </div>
-                    
+
                     <div className="mt-2.5 flex justify-between items-baseline">
                       <span className="text-lg font-extrabold text-[#252e3d]">
                         {region.count} <span className="text-xs text-slate-400 font-normal">users</span>
                       </span>
-                      <span className="text-xs font-semibold text-[#5a58ab] bg-indigo-50 px-2 py-0.5 rounded-md">{percent}%</span>
+                      <span className="text-xs font-semibold text-[#5a58ab] bg-indigo-50 px-2 py-0.5 rounded-md">
+                        {percent}%
+                      </span>
                     </div>
-                    
+
                     <div className="w-full bg-slate-200 h-2 rounded-full mt-2.5 overflow-hidden">
                       <div
                         className="bg-[#5a58ab] h-2 rounded-full transition-all duration-500"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
+
+                    {/* Drilldown details */}
+                    {isExpanded && hasDetails && (
+                      <div className="mt-4 pt-3.5 border-t border-slate-200/50 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Country-wise breakdown:
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(region.details)
+                            .sort((a, b) => b[1].count - a[1].count)
+                            .map(([country, stats]) => (
+                              <div
+                                key={country}
+                                className="flex justify-between items-center bg-white border border-slate-100 rounded-xl px-3 py-2 text-[11px]"
+                              >
+                                <span className="font-semibold text-slate-600">{country}</span>
+                                <div className="text-right">
+                                  <span className="font-bold text-slate-700 block">{stats.count} users</span>
+                                  <span className="text-[9px] text-emerald-600 font-semibold block">
+                                    ${stats.revenue.toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

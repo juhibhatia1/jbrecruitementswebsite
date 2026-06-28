@@ -24,11 +24,14 @@ interface PaymentModalProps {
   onClose: () => void;
   /** Accept an array of services for multi-service checkout */
   services: ServiceItem[];
+  /** The currency to display and charge in: USD | AED | INR */
+  currency: string;
 }
 
-export default function PaymentModal({ isOpen, onClose, services }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, services, currency }: PaymentModalProps) {
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
+  const [candidatePhone, setCandidatePhone] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +49,7 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
     if (!isOpen) {
       setCandidateName("");
       setCandidateEmail("");
+      setCandidatePhone("");
       setClientSecret(null);
       setError(null);
       setLoading(false);
@@ -87,6 +91,8 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
           serviceNames: services.map((s) => s.title),
           candidateName,
           candidateEmail,
+          candidatePhone,
+          currency,
         }),
       });
 
@@ -201,6 +207,20 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                  WhatsApp Number
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={candidatePhone}
+                  onChange={(e) => setCandidatePhone(e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
+                />
+              </div>
+
               {/* Order Summary */}
               <div className="bg-[#fcfdfe] border border-[#e8effd] p-4 rounded-2xl mt-2">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -214,7 +234,7 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
                       <div key={s.title} className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 truncate mr-4">{s.title}</span>
                         <span className="text-sm font-semibold text-[#252e3d] shrink-0">
-                          USD {s.amount}
+                          {currency} {s.amount.toLocaleString()}
                         </span>
                       </div>
                     ))}
@@ -227,7 +247,7 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
                       {isMulti ? "Total Amount:" : "Amount:"}
                     </span>
                     <span className="text-xl sm:text-2xl font-bold text-[#252e3d] whitespace-nowrap">
-                      USD {totalAmount}
+                      {currency} {totalAmount.toLocaleString()}
                     </span>
                   </div>
                   <button
@@ -250,7 +270,7 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
           ) : (
             // Stage 2: Render Stripe Checkout Form
             <Elements stripe={stripePromise} options={options}>
-              <CheckoutForm totalAmount={totalAmount} clientSecret={clientSecret} />
+              <CheckoutForm totalAmount={totalAmount} clientSecret={clientSecret} currency={currency} />
             </Elements>
           )}
         </div>
@@ -263,9 +283,10 @@ export default function PaymentModal({ isOpen, onClose, services }: PaymentModal
 interface CheckoutFormProps {
   totalAmount: number;
   clientSecret: string;
+  currency: string;
 }
 
-function CheckoutForm({ totalAmount, clientSecret }: CheckoutFormProps) {
+function CheckoutForm({ totalAmount, clientSecret, currency }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -320,7 +341,7 @@ function CheckoutForm({ totalAmount, clientSecret }: CheckoutFormProps) {
             Processing Secure Payment...
           </>
         ) : (
-          `Pay USD ${totalAmount}`
+                  `Pay ${currency} ${totalAmount.toLocaleString()}`
         )}
       </button>
     </form>

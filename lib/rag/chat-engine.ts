@@ -1,7 +1,7 @@
 import Groq from "groq-sdk";
 import { prisma } from "../prisma";
 import { searchSimilarChunks } from "./vector-store";
-import { getSystemContextText } from "./system-context";
+import { getSystemContextText, type Currency } from "./system-context";
 
 // Initialize Groq client
 const groq = new Groq({
@@ -32,7 +32,7 @@ export interface ChatEngineResponse {
 export async function handleChatMessage(
   sessionId: string,
   userMessage: string,
-  meta?: { ipAddress?: string; userAgent?: string }
+  meta?: { ipAddress?: string; userAgent?: string; currency?: Currency }
 ): Promise<ChatEngineResponse> {
   const modelId = process.env.GROQ_MODEL || DEFAULT_MODEL;
 
@@ -63,8 +63,8 @@ export async function handleChatMessage(
     .map((chunk, idx) => `[Source ${idx + 1}: ${chunk.documentTitle}]\n${chunk.content}`)
     .join("\n\n");
 
-  // 3. Retrieve Hardcoded Site Context
-  const siteContext = getSystemContextText();
+  // 3. Retrieve Hardcoded Site Context (filtered by visitor currency)
+  const siteContext = getSystemContextText(meta?.currency || "USD");
 
   // 4. Construct System Prompt
   const systemPrompt = `You are the friendly, professional, and engaging AI Career Assistant for "JB Recruitment Solutions" (a recruitment brand by Juhi Bhatia). Your goal is to represent Juhi's brand warmly, assist job seekers and companies, and guide them towards hiring Juhi or purchasing her services.
@@ -82,7 +82,7 @@ STRICT INSTRUCTIONS:
 1. Tone: Friendly, highly engaging, warm, professional, and encouraging. Never sound like a generic computer program. Show interest in the user's career!
 2. ONLY answer visitor questions that are directly related to JB Recruitment Solutions, Juhi Bhatia, recruitment, career advisory services, job seeking, resume writing, or pricing. Do NOT answer any other general knowledge, political, historical, mathematical, coding, or unrelated queries.
 3. If the user asks an irrelevant or unrelated question (e.g. asking about prime ministers, politics, general facts, unrelated coding/math, or people who are not Juhi Bhatia), or if the answer is not found in the provided contexts, politely and friendly explain that you only have knowledge about JB Recruitment Solutions, Juhi Bhatia, and our career services, and decline to answer. Suggest they contact contact@jbrecruitments.com for other inquiries.
-4. We do NOT have a careers/jobs page, active job opening list, or direct job placement on our website. If a user asks for job openings or how to apply for jobs on our website, explain clearly and politely that we do not host a jobs/careers page or list active openings on our website. Suggest they send their resume to contact@jbrecruitments.com to be considered for client opportunities, or explore our career consulting packages by providing this exact markdown link: [Explore Career Services](/job-seekers).
+4. If a user asks for open roles or how to apply for jobs, respond with a warm, positive, and encouraging tone. Explain that while we do not publish active listings directly on our website, we work closely with clients to fill premium opportunities and continuously review talent for placement. Encourage them to send their resume to contact@jbrecruitments.com so we can consider them for current and upcoming client openings. Guide them to boost their profile using our career optimization packages, and provide this exact markdown link: [Explore Career Services](/job-seekers). NEVER use negative phrasing like "we do not host jobs" or "we do not have a careers page". Always focus on review opportunities and profile optimization.
 5. Keep answers short, direct, and concise (under 3-4 sentences, or 80-100 words maximum). Avoid writing long essays or detailed paragraphs. Keep lists extremely brief.
 6. Prioritize retrieved knowledge base details: When explaining how our services work or what is included, you MUST explicitly mention the unique details, terminology, and process steps described in the retrieved knowledge base documents (RAG / ADDITIONAL RELEVANT KNOWLEDGE) (such as the "proper intake process", "keyword integration", and "impact-focused bullets" for resume writing). Avoid repeating the exact high-level bullet points from the website context if detailed RAG content is available.
 7. Always offer exactly 2 follow-up suggestions/questions that are contextually relevant, engaging, and interactive. Make each question descriptive, clear, and focused (between 8 to 12 words) so they remain highly interactive and engaging without being too long (e.g., "How does the Superstar Shout-Out boost LinkedIn visibility?" or "Can you explain how we optimize resume keywords?").
@@ -176,7 +176,7 @@ STRICT INSTRUCTIONS:
 export async function handleChatMessageStream(
   sessionId: string,
   userMessage: string,
-  meta?: { ipAddress?: string; userAgent?: string }
+  meta?: { ipAddress?: string; userAgent?: string; currency?: Currency }
 ) {
   const modelId = process.env.GROQ_MODEL || DEFAULT_MODEL;
 
@@ -203,8 +203,8 @@ export async function handleChatMessageStream(
     .map((chunk, idx) => `[Source ${idx + 1}: ${chunk.documentTitle}]\n${chunk.content}`)
     .join("\n\n");
 
-  // 3. Retrieve Hardcoded Site Context
-  const siteContext = getSystemContextText();
+  // 3. Retrieve Hardcoded Site Context (filtered by visitor currency)
+  const siteContext = getSystemContextText(meta?.currency || "USD");
 
   // 4. Construct System Prompt
   const systemPrompt = `You are the friendly, professional, and engaging AI Career Assistant for "JB Recruitment Solutions" (a recruitment brand by Juhi Bhatia). Your goal is to represent Juhi's brand warmly, assist job seekers and companies, and guide them towards hiring Juhi or purchasing her services.

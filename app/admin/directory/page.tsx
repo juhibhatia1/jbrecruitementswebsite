@@ -36,6 +36,7 @@ export default async function AdminDirectoryPage() {
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
       mockInterviewDate: p.mockInterviewDate ? p.mockInterviewDate.toISOString() : null,
+      deliveryDeadline: p.deliveryDeadline ? p.deliveryDeadline.toISOString() : null,
     }));
   } catch (err: any) {
     console.error("Database connection error in admin directory:", err);

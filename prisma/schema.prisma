@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../lib/prisma-client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -64,6 +65,7 @@ model Purchase {
   id                    String   @id @default(cuid())
   candidateName         String
   candidateEmail        String
+  candidatePhone        String?
   serviceName           String
   amount                Float
   currency              String   @default("USD")
@@ -72,6 +74,9 @@ model Purchase {
   country               String?
   mockInterviewStatus   String?  // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
   mockInterviewDate     DateTime?
+  deliveryStatus        String   @default("PENDING") // "PENDING", "COMPLETED"
+  deliveryDeadline      DateTime?
+  completionNotes       String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

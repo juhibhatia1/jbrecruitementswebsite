@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limiter";
 import { handleChatMessageStream } from "@/lib/rag/chat-engine";
 import { prisma } from "@/lib/prisma";
+import { detectCurrencyFromRequest } from "@/lib/geo-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +37,19 @@ export async function POST(request: NextRequest) {
     }
 
     const userAgent = request.headers.get("user-agent") || "unknown";
+    
+    // Resolve user currency: trust client payload if valid, otherwise fallback to IP detection
+    const bodyCurrency = (body.currency as string | undefined)?.toUpperCase();
+    const currency =
+      bodyCurrency === "USD" || bodyCurrency === "AED" || bodyCurrency === "INR"
+        ? (bodyCurrency as any)
+        : await detectCurrencyFromRequest(request, ip);
 
     // Call streaming helper
     const { stream: groqStream, history } = await handleChatMessageStream(sessionId, message, {
       ipAddress: ip,
       userAgent,
+      currency,
     });
 
     const encoder = new TextEncoder();

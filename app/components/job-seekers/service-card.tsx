@@ -6,7 +6,9 @@ import { IoCheckmark } from "react-icons/io5";
 
 type ServiceCardProps = {
   title: string;
-  amount: number;
+  amount: number;      // base USD amount (kept for legacy use)
+  localAmount: number; // amount in selected currency
+  currency: string;    // e.g. "USD", "AED", "INR"
   description?: string;
   iconPath: string;
   features?: string[];
@@ -24,6 +26,8 @@ type ServiceCardProps = {
 export default function ServiceCard({
   title,
   amount,
+  localAmount,
+  currency,
   description,
   iconPath,
   features = [],
@@ -155,7 +159,7 @@ export default function ServiceCard({
 
           {/* Price badge */}
           <span className="text-xs font-semibold text-[#5a58ab] bg-[#f0effd] px-2.5 py-0.5 rounded-full mb-2">
-            USD {amount}
+            {currency} {localAmount.toLocaleString()}
           </span>
 
           {description && (

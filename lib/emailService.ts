@@ -45,6 +45,17 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
 
   const isMultiService = purchase.serviceName.includes(" + ");
 
+  const formatCurrency = (amount: number, currencyStr: string) => {
+    const currencyUpper = currencyStr.toUpperCase();
+    const locale = currencyUpper === "INR" ? "en-IN" : "en-US";
+    return `${amount.toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} ${currencyUpper}`;
+  };
+
+  const formattedAmount = formatCurrency(purchase.amount, purchase.currency);
+
   // 1. Candidate Email Options
   const candidateMailOptions = {
     from: `"JB Recruitment Solutions" <${user}>`,
@@ -54,7 +65,7 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
 
 Thank you for your purchase of "${formattedServices}"!
 
-We have received your payment of ${purchase.amount} ${purchase.currency.toUpperCase()}. Your receipt is attached to this email as a PDF.
+We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.
 
 Our team will contact you shortly to coordinate the next steps and get started with your service. You can also reply directly to this email if you have any immediate questions.
 
@@ -79,7 +90,7 @@ Team JB Recruitment Solutions`,
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #718096;">Amount Paid:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right; color: #5a58ab;">${purchase.amount} ${purchase.currency.toUpperCase()}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right; color: #5a58ab;">${formattedAmount}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #718096;">Receipt ID:</td>
@@ -121,7 +132,7 @@ Team JB Recruitment Solutions`,
 Candidate Name: ${purchase.candidateName}
 Candidate Email: ${purchase.candidateEmail}
 Service Name: ${purchase.serviceName}
-Amount: ${purchase.amount} ${purchase.currency.toUpperCase()}
+Amount: ${formattedAmount}
 Billing Country: ${purchase.country || "Not provided"}
 Transaction Date: ${purchase.createdAt.toLocaleString()}
 Purchase ID: ${purchase.id}`,
@@ -146,7 +157,7 @@ Purchase ID: ${purchase.id}`,
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Transaction Amount:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-weight: bold; color: #38a169;">${purchase.amount} ${purchase.currency.toUpperCase()}</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-weight: bold; color: #38a169;">${formattedAmount}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Billing Country:</td>

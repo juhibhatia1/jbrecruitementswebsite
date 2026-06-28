@@ -7,7 +7,7 @@ export default function FloatingNavbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/employee")) {
     return null;
   }
 

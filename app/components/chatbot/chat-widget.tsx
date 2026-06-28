@@ -22,6 +22,12 @@ interface Message {
 
 export default function ChatWidget() {
   const pathname = usePathname();
+
+  // Hide ChatWidget on admin and employee portals
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/employee")) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -98,6 +104,9 @@ export default function ChatWidget() {
     ]);
 
     try {
+      // Retrieve the cached geo-detected currency from sessionStorage (defaults to USD)
+      const detectedCurrency = typeof window !== "undefined" ? sessionStorage.getItem("jb_currency_v3") || "USD" : "USD";
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -106,6 +115,7 @@ export default function ChatWidget() {
         body: JSON.stringify({
           message: text,
           sessionId: sessionId,
+          currency: detectedCurrency,
         }),
       });
 

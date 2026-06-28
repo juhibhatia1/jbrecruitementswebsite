@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
 
 const BRAND_COLOR = rgb(0.353, 0.345, 0.671); // #5a58ab
 const DARK_COLOR = rgb(0.145, 0.18, 0.239);   // #252e3d
@@ -79,7 +80,7 @@ export async function generateReceiptPdf(purchase: {
 
   // ── Company info (right-aligned, vertically stacked in dark band) ──────────
   const companyName  = "JB Recruitment Solutions";
-  const companyEmail = "juhi@jbrecruitments.com";
+  const companyEmail = "contact@jbrecruitments.com";
   const companyWeb   = "jbrecruitments.com";
 
   const companyNameSize  = 11;
@@ -280,14 +281,15 @@ export async function generateReceiptPdf(purchase: {
 
   // ─── TABLE ROWS (Itemized Listing) ──────────────────────────────────────────
   const items = purchase.serviceName.split(" + ");
-  const pricingCatalog: Record<string, number> = {
-    "Resume Review & Rewriting": 80,
-    "Cover Letter Writing": 50,
-    "LinkedIn Optimization": 80,
-    "Superstar Shout-Out": 160,
-    "Ask Me Anything": 40,
-    "Interview Prep": 100,
-    "All Career Services Bundle": 480,
+
+  // Use MULTI_CURRENCY_PRICING for correct per-currency line item amounts.
+  // Fall back to evenly splitting purchase.amount if a service isn't found.
+  const currency = (purchase.currency || "USD").toUpperCase() as Currency;
+  const getItemPrice = (itemName: string): number => {
+    const row = MULTI_CURRENCY_PRICING[itemName];
+    if (row && row[currency] !== undefined) return row[currency];
+    // Fallback: split total evenly across all items
+    return purchase.amount / items.length;
   };
 
   let currentY = tableY - 35;
@@ -308,7 +310,7 @@ export async function generateReceiptPdf(purchase: {
       color: GRAY_COLOR,
     });
 
-    page.drawText(purchase.currency.toUpperCase(), {
+    page.drawText(currency, {
       x: 350,
       y: currentY + 8,
       size: 10,
@@ -316,8 +318,8 @@ export async function generateReceiptPdf(purchase: {
       color: DARK_COLOR,
     });
 
-    const itemPrice = pricingCatalog[item] || (purchase.amount / items.length);
-    page.drawText(`${itemPrice.toFixed(2)}`, {
+    const itemPrice = getItemPrice(item);
+    page.drawText(`${itemPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, {
       x: 465,
       y: currentY + 8,
       size: 10,
@@ -352,7 +354,7 @@ export async function generateReceiptPdf(purchase: {
   });
 
   const totalLabel = "TOTAL PAID";
-  const totalValText = `${purchase.amount.toFixed(2)} ${purchase.currency.toUpperCase()}`;
+  const totalValText = `${purchase.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
   const totalValSize = 10;
 
   // Let's draw them horizontally aligned or vertically stacked nicely centered

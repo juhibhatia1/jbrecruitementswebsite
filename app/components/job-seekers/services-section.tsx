@@ -4,95 +4,102 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import ServiceCard from "./service-card";
 import PaymentModal from "./payment-modal";
 import { IoCart, IoSparkles, IoClose, IoArrowForward } from "react-icons/io5";
+import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
 
-const BUNDLE_PRICE = 480;
+type Currency = "USD" | "AED" | "INR";
+
+const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  USD: "USD",
+  AED: "AED",
+  INR: "INR",
+};
+
+const BUNDLE_PRICE_BY_CURRENCY: Record<Currency, number> = {
+  USD: 480,
+  AED: 1600,
+  INR: 30000,
+};
 
 const services = [
   {
     id: 1,
     title: "Resume Review & Rewriting",
-    amount: 80,
     description:
       "ATS-optimised resumes aligned with your target roles and recruiter search systems.",
     iconPath: "/icons/job-seekers/resume-review.svg",
+    timeline: "5 days",
     features: [
       "ATS-compliant, keyword-optimized resumes",
       "Strategic skills keywords for Boolean search visibility",
       "Strong achievement-focused bullet points",
       "Clear professional positioning and value proposition",
-      "USD 80 | 5 days",
     ],
   },
   {
     id: 2,
     title: "Cover Letter Writing",
-    amount: 50,
     description:
       "A master cover letter that communicates impact, motivation, and adaptability.",
     iconPath: "/icons/job-seekers/cover-letter.svg",
+    timeline: "5 days",
     features: [
       "Strengths and achievements highlighted",
       "Motivation and role-fit are articulated strategically",
       "Easily customizable version for multiple applications",
       "Professional and persuasive",
-      "USD 50 | 5 days",
     ],
   },
   {
     id: 3,
     title: "LinkedIn Optimization",
-    amount: 80,
     description:
       "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
     iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
+    timeline: "5 days",
     features: [
       "Keywords optimized content",
       "Skills-based profile structuring",
       "LinkedIn banner optimisation for stronger personal branding",
-      "USD 80 | 5 days",
     ],
   },
   {
     id: 4,
     title: "Superstar Shout-Out",
-    amount: 160,
     description: "Targeted LinkedIn announcement to decision-makers",
     iconPath: "/icons/job-seekers/superstar.svg",
+    timeline: "5 days",
     features: [
       "Custom post showcasing your profile, skills & availability",
       "Strategic positioning to attract hiring managers",
       "Increased visibility with employers & key decision-makers",
-      "Published via Juhi Bhatia's LinkedIn for wider reach & credibility. USD 160 | 5 days",
+      "Published via Juhi Bhatia's LinkedIn for wider reach & credibility",
     ],
   },
   {
     id: 5,
     title: "Ask Me Anything",
-    amount: 40,
     description:
       "Direct, practical guidance over email for real-world career challenges and decisions.",
     iconPath: "/icons/job-seekers/ask-me-anything.svg",
+    timeline: "48 hours",
     features: [
       "Career changes and transitions",
       "Remote jobs and interviews",
       "Burnout, layoffs, and clarity",
       "Resume or LinkedIn direction",
-      "USD 40 | 48 hours",
     ],
   },
   {
     id: 6,
     title: "Interview Prep",
-    amount: 100,
     description:
       "Direct, practical support to help you crack your interviews with confidence.",
     iconPath: "/icons/job-seekers/interview-prep.svg",
+    timeline: "Delivered via email",
     features: [
       "Profile and role review",
       "Top 10 likely interview questions",
       "Structured answers using the STAR method",
-      "Delivered via email",
-      "USD 100",
     ],
   },
 ];
@@ -100,13 +107,13 @@ const services = [
 // All individual service names (excludes bundle)
 const ALL_SERVICE_TITLES = services.map((s) => s.title);
 
-// Sum of all individual services
-const INDIVIDUAL_TOTAL = services.reduce((sum, s) => sum + s.amount, 0);
-
 export default function ServicesSection() {
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
+
+  // ── Currency state ────────────────────────────────────────────────────────
+  const [currency, setCurrency] = useState<Currency>("USD");
 
   // Multi-select cart state
   const [selectedTitles, setSelectedTitles] = useState<Set<string>>(new Set());
@@ -119,6 +126,63 @@ export default function ServicesSection() {
   >([]);
 
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-detect currency from geo on mount — runs client-side so it uses the real browser IP
+  useEffect(() => {
+    const GEO_CACHE_KEY = "jb_currency_v3";
+
+    // Clean up stale keys from older versions
+    sessionStorage.removeItem("jb_currency");
+    sessionStorage.removeItem("jb_currency_v2");
+
+    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as Currency | null;
+    if (cached && ["USD", "AED", "INR"].includes(cached)) {
+      setCurrency(cached);
+      return;
+    }
+
+    const AED_COUNTRIES = new Set(["AE"]);
+    const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
+
+    // Use AbortController to timeout after 5s
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    // Fetch directly from ipapi.co in the browser — uses the real client IP
+    fetch("https://ipapi.co/json/", {
+      headers: { "Accept": "application/json" },
+      signal: controller.signal,
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+        return r.json();
+      })
+      .then((data: { country_code?: string; error?: boolean }) => {
+        if (data.error) throw new Error("ipapi.co returned an error response");
+        const code = (data.country_code || "").toUpperCase();
+        let detected: Currency = "USD";
+        if (AED_COUNTRIES.has(code)) detected = "AED";
+        else if (INR_COUNTRIES.has(code)) detected = "INR";
+        console.log(`[geo] Detected country: ${code} → currency: ${detected}`);
+        setCurrency(detected);
+        sessionStorage.setItem(GEO_CACHE_KEY, detected);
+      })
+      .catch((err) => {
+        console.warn("[geo] Could not detect location, defaulting to USD:", err.message);
+      })
+      .finally(() => clearTimeout(timeout));
+  }, []);
+
+  // Helpers to get the local amount for a service in the selected currency
+  const getLocalAmount = (title: string): number => {
+    return MULTI_CURRENCY_PRICING[title]?.[currency] ?? 0;
+  };
+
+  const BUNDLE_PRICE = BUNDLE_PRICE_BY_CURRENCY[currency];
+  const INDIVIDUAL_TOTAL = services.reduce(
+    (sum, s) => sum + getLocalAmount(s.title),
+    0
+  );
 
   // start auto-flip sequence after initial 3s delay
   useEffect(() => {
@@ -188,13 +252,17 @@ export default function ServicesSection() {
     });
   };
 
-  // Cart totals
+  // Cart totals (in selected currency)
   const cartServices = services.filter((s) => selectedTitles.has(s.title));
-  const cartTotal = cartServices.reduce((sum, s) => sum + s.amount, 0);
+  const cartTotal = cartServices.reduce(
+    (sum, s) => sum + getLocalAmount(s.title),
+    0
+  );
   const bundleSavings = cartTotal - BUNDLE_PRICE;
 
   // Open payment modal for a single service (Buy Now)
-  const handleBuyClick = (title: string, amount: number, description: string) => {
+  const handleBuyClick = (title: string, description: string) => {
+    const localAmt = getLocalAmount(title);
     if (title === "All Career Services Bundle") {
       fetch("/api/analytics/funnel", {
         method: "POST",
@@ -202,7 +270,7 @@ export default function ServicesSection() {
         body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
       }).catch((e) => console.error("Telemetry failed:", e));
     }
-    setCheckoutServices([{ title, amount, description }]);
+    setCheckoutServices([{ title, amount: localAmt, description }]);
     setIsModalOpen(true);
   };
 
@@ -212,7 +280,7 @@ export default function ServicesSection() {
     setCheckoutServices(
       cartServices.map((s) => ({
         title: s.title,
-        amount: s.amount,
+        amount: getLocalAmount(s.title),
         description: s.description,
       })),
     );
@@ -225,7 +293,6 @@ export default function ServicesSection() {
     setSelectedTitles(new Set());
     handleBuyClick(
       "All Career Services Bundle",
-      480,
       "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
     );
   };
@@ -245,7 +312,8 @@ export default function ServicesSection() {
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="relative flex flex-col items-left md:flex-row md:items-center justify-center mb-0 md:mb-16 md:pl-12">
+        {/* Section Header */}
+        <div className="relative flex flex-col items-left md:flex-row md:items-center justify-center mb-0 md:mb-12 md:pl-12">
           <div className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mb-3 md:mb-0">
             <img
               src="/home/icons8-ai-48.avif"
@@ -262,31 +330,41 @@ export default function ServicesSection() {
           </h2>
         </div>
 
-        {/* Multi-select hint */}
-        <p className="text-center text-sm text-gray-400 mb-6 -mt-4 md:-mt-10">
-          Select multiple services and pay in one go, or click{" "}
-          <span className="text-[#5a58ab] font-medium">Buy Now</span> for a single service.
-        </p>
+        {/* ── Info message ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-2 md:-mt-6">
+          <p className="text-sm text-gray-400">
+            Select multiple services and pay in one go, or click{" "}
+            <span className="text-[#5a58ab] font-medium">Buy Now</span> for a single service.
+          </p>
+        </div>
 
         {/* Grid Layout */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((s, index) => (
-            <ServiceCard
-              key={s.id}
-              title={s.title}
-              amount={s.amount}
-              description={s.description}
-              iconPath={s.iconPath}
-              features={s.features}
-              shouldFlip={started && currentFlipIndex === index && !isModalOpen}
-              onManualFlip={pauseTemporarily}
-              onHoverStart={handleHoverStart}
-              onHoverEnd={() => handleHoverEnd(index)}
-              onBuyClick={() => handleBuyClick(s.title, s.amount, s.description)}
-              isSelected={selectedTitles.has(s.title)}
-              onToggleSelect={() => handleToggleSelect(s.title)}
-            />
-          ))}
+          {services.map((s, index) => {
+            const localAmt = getLocalAmount(s.title);
+            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`;
+            const dynamicFeatures = [...s.features, dynamicPriceBullet];
+
+            return (
+              <ServiceCard
+                key={s.id}
+                title={s.title}
+                amount={MULTI_CURRENCY_PRICING[s.title]?.USD ?? 0}
+                localAmount={localAmt}
+                currency={CURRENCY_SYMBOLS[currency]}
+                description={s.description}
+                iconPath={s.iconPath}
+                features={dynamicFeatures}
+                shouldFlip={started && currentFlipIndex === index && !isModalOpen}
+                onManualFlip={pauseTemporarily}
+                onHoverStart={handleHoverStart}
+                onHoverEnd={() => handleHoverEnd(index)}
+                onBuyClick={() => handleBuyClick(s.title, s.description)}
+                isSelected={selectedTitles.has(s.title)}
+                onToggleSelect={() => handleToggleSelect(s.title)}
+              />
+            );
+          })}
         </div>
 
         {/* Bundle Offer Below Cards */}
@@ -300,12 +378,13 @@ export default function ServicesSection() {
               Limited Bundle
             </span>
             <h2 className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
-              All services bundled together at a special price of USD 480.
+              All services bundled together at a special price of{" "}
+              {CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()}.
             </h2>
             <span className="text-sm sm:text-md text-[#4b5563]">
               Save{" "}
               <span className="font-semibold text-[#5a58ab]">
-                USD {INDIVIDUAL_TOTAL - BUNDLE_PRICE}
+                {CURRENCY_SYMBOLS[currency]} {(INDIVIDUAL_TOTAL - BUNDLE_PRICE).toLocaleString()}
               </span>{" "}
               vs buying all separately.
             </span>
@@ -313,7 +392,6 @@ export default function ServicesSection() {
               onClick={() =>
                 handleBuyClick(
                   "All Career Services Bundle",
-                  480,
                   "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
                 )
               }
@@ -339,8 +417,15 @@ export default function ServicesSection() {
                       You've selected all 6 services!
                     </p>
                     <p className="text-white/70 text-xs mt-0.5">
-                      The <span className="text-yellow-300 font-semibold">Bundle Offer (USD 480)</span> saves you{" "}
-                      <span className="text-yellow-300 font-semibold">USD {bundleSavings}</span> vs buying them separately.
+                      The{" "}
+                      <span className="text-yellow-300 font-semibold">
+                        Bundle Offer ({CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()})
+                      </span>{" "}
+                      saves you{" "}
+                      <span className="text-yellow-300 font-semibold">
+                        {CURRENCY_SYMBOLS[currency]} {bundleSavings.toLocaleString()}
+                      </span>{" "}
+                      vs buying them separately.
                     </p>
                   </div>
                 </div>
@@ -354,7 +439,7 @@ export default function ServicesSection() {
             )}
 
             <div className="flex flex-col gap-3">
-              {/* Top Row: Selected service pills (swipeable horizontally on mobile, wrapped on desktop) */}
+              {/* Top Row: Selected service pills */}
               <div className="flex flex-row md:flex-wrap items-center gap-1.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {cartServices.map((s) => (
                   <span
@@ -387,8 +472,11 @@ export default function ServicesSection() {
                     </span>
                   </div>
                   <div>
+                    <p className="text-white/60 text-[10px] font-medium leading-none mb-0.5">
+                      {CURRENCY_SYMBOLS[currency]}
+                    </p>
                     <p className="text-white text-base md:text-lg font-bold leading-none">
-                      USD {cartTotal}
+                      {cartTotal.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -427,6 +515,7 @@ export default function ServicesSection() {
           setCheckoutServices([]);
         }}
         services={checkoutServices}
+        currency={CURRENCY_SYMBOLS[currency]}
       />
     </section>
   );

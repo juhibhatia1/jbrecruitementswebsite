@@ -1,3 +1,5 @@
+export type Currency = "USD" | "AED" | "INR";
+
 export interface SystemService {
   title: string;
   amount: number;
@@ -5,6 +7,17 @@ export interface SystemService {
   timeline: string;
   features: string[];
 }
+
+/** Per-currency pricing for all services */
+export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = {
+  "Resume Review & Rewriting":   { USD: 80,  AED: 300,  INR: 6000  },
+  "Cover Letter Writing":        { USD: 50,  AED: 200,  INR: 3000  },
+  "LinkedIn Optimization":       { USD: 80,  AED: 300,  INR: 6000  },
+  "Superstar Shout-Out":         { USD: 160, AED: 600,  INR: 10000 },
+  "Ask Me Anything":             { USD: 40,  AED: 150,  INR: 2500  },
+  "Interview Prep":              { USD: 100, AED: 300,  INR: 7000  },
+  "All Career Services Bundle":  { USD: 480, AED: 1600, INR: 30000 },
+};
 
 export const SYSTEM_SERVICES: SystemService[] = [
   {
@@ -133,16 +146,23 @@ A: Yes! The "All Career Services Bundle" packages all six individual services fo
 `;
 
 /**
- * Combines all site contexts into a single text representation.
+ * Combines all site contexts into a single text representation, filtered for a specific currency.
  */
-export function getSystemContextText(): string {
+export function getSystemContextText(currency: Currency = "USD"): string {
   let text = "=== ABOUT JB RECRUITMENT SOLUTIONS & JUHI BHATIA ===\n";
   text += SYSTEM_ABOUT.trim() + "\n\n";
   
-  text += "=== SERVICES & PRICING ===\n";
+  text += `=== SERVICES & PRICING (LOCAL CURRENCY: ${currency}) ===\n`;
+  text += `We show pricing in ${currency} because the visitor is located in a region using this currency.\n\n`;
+  
   SYSTEM_SERVICES.forEach((service) => {
+    const pricing = MULTI_CURRENCY_PRICING[service.title];
     text += `- Title: ${service.title}\n`;
-    text += `  Price: USD ${service.amount}\n`;
+    if (pricing && pricing[currency] !== undefined) {
+      text += `  Price: ${currency} ${pricing[currency].toLocaleString()}\n`;
+    } else {
+      text += `  Price: USD ${service.amount}\n`;
+    }
     text += `  Timeline: ${service.timeline}\n`;
     text += `  Description: ${service.description}\n`;
     text += `  Features:\n`;
@@ -153,7 +173,22 @@ export function getSystemContextText(): string {
   });
   
   text += "=== FAQS AND RECRUITMENT SERVICES INFO ===\n";
-  text += SYSTEM_FAQ.trim() + "\n";
+  // Replace references of USD 480 and USD 130 savings based on the selected currency
+  let faqText = SYSTEM_FAQ;
+  if (currency === "INR") {
+    faqText = faqText.replace(/USD 480/g, "INR 30,000");
+    faqText = faqText.replace(/USD 130/g, "INR 4,500");
+  } else if (currency === "AED") {
+    faqText = faqText.replace(/USD 480/g, "AED 1,600");
+    faqText = faqText.replace(/USD 130/g, "AED 250");
+  }
+  text += faqText.trim() + "\n";
+
+  text += `\n=== CURRENCY INFORMATION ===\n`;
+  text += `The user is visiting from a region where pricing is strictly set to ${currency}. `;
+  text += `You MUST answer all pricing, rates, package, and cost questions ONLY in ${currency}. Do not display or list prices in other currencies (like USD, AED, or INR) unless the user explicitly requests a comparison. `;
+  text += `The exact price for each service in ${currency} is specified above. Always format the currency symbol clearly.\n`;
   
   return text;
 }
+

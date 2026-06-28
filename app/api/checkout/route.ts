@@ -2,10 +2,20 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
+import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
+import { detectCurrencyFromRequest } from "@/lib/geo-utils";
 
 let stripe: Stripe | null = null;
 
-const SERVICE_PRICING: Record<string, number> = {
+// Supported Stripe currency codes for each of our display currencies
+const STRIPE_CURRENCY_MAP: Record<Currency, string> = {
+  USD: "usd",
+  AED: "aed",
+  INR: "inr",
+};
+
+// Fallback USD-only pricing (legacy safety net)
+const SERVICE_PRICING_USD: Record<string, number> = {
   "Resume Review & Rewriting": 80,
   "Cover Letter Writing": 50,
   "LinkedIn Optimization": 80,
@@ -40,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { candidateName, candidateEmail } = body;
+    const { candidateName, candidateEmail, candidatePhone } = body;
 
     if (!candidateName || !candidateEmail) {
       return NextResponse.json(
@@ -48,6 +58,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    // ── Resolve currency strictly from location ──────────────────────────────
+    const currency = await detectCurrencyFromRequest(request, ip);
 
     // ── Resolve service names & total price ─────────────────────────────────
     // Support both legacy single `serviceName` and new multi `serviceNames[]`
@@ -64,10 +77,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate every name and sum their prices
+    // Validate every service name and sum prices in the selected currency
     let totalAmount = 0;
     for (const name of serviceNames) {
-      const price = SERVICE_PRICING[name];
+      const pricingRow = MULTI_CURRENCY_PRICING[name];
+      const price = pricingRow
+        ? pricingRow[currency]
+        : SERVICE_PRICING_USD[name];
+
       if (price === undefined) {
         return NextResponse.json(
           { error: `Invalid or unrecognized service: ${name}` },
@@ -91,16 +108,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create Stripe PaymentIntent with server-computed total
+    const stripeCurrency = STRIPE_CURRENCY_MAP[currency];
+
+    // Create Stripe PaymentIntent with server-computed total in the correct currency
     const paymentIntent = await stripeClient.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // in cents
-      currency: "usd",
+      amount: Math.round(totalAmount * 100), // smallest unit (cents / paise / fils)
+      currency: stripeCurrency,
       metadata: {
         candidateName,
         candidateEmail,
         serviceName: combinedServiceName,
         serviceCount: serviceNames.length.toString(),
         amount: totalAmount.toString(),
+        displayCurrency: currency,
       },
       receipt_email: candidateEmail,
     });
@@ -110,9 +130,10 @@ export async function POST(request: Request) {
       data: {
         candidateName,
         candidateEmail,
+        candidatePhone: candidatePhone || null,
         serviceName: combinedServiceName,
         amount: totalAmount,
-        currency: "USD",
+        currency: currency,
         stripePaymentIntentId: paymentIntent.id,
         status: "PENDING",
       },
