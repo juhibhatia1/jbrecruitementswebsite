@@ -107,7 +107,7 @@ const services = [
 
 const OPPORTUNITIES_SERVICE = {
   id: 7,
-  title: "Job Opportunities",
+  title: "Mock Interviews",
   description: "Browse available mock interview practice sessions and book your slot to sharpen your interview skills.",
   iconPath: "/icons/job-seekers/interview-prep.svg",
   timeline: "Instant access",
@@ -397,8 +397,8 @@ export default function ServicesSection() {
                 iconPath={OPPORTUNITIES_SERVICE.iconPath}
                 features={[...OPPORTUNITIES_SERVICE.features, dynamicPriceBullet]}
                 shouldFlip={false}
-                onBuyClick={() => router.push("/opportunities")}
-                buyLabel="View Opportunities"
+                onBuyClick={() => router.push("/mock-interviews")}
+                buyLabel="Browse Sessions"
               />
             );
           })()}
