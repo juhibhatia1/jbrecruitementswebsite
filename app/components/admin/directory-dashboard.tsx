@@ -525,6 +525,12 @@ export default function DirectoryDashboard({
               >
                 Chatbot & KB
               </Link>
+              <Link
+                href="/admin/interviews"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Interviews
+              </Link>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}

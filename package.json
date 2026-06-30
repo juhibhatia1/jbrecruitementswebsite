@@ -5,14 +5,15 @@
   "description": "JB Recruitment Solutions - A recruitment brand by Juhi Bhatia",
   "author": "JB Recruitment Solutions",
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx server.ts --dev",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "tsx server.ts",
     "lint": "eslint",
     "seo:check": "echo 'Checking SEO implementation...' && node -e \"console.log('✅ Sitemap: http://localhost:3000/sitemap.xml'); console.log('✅ Robots: http://localhost:3000/robots.txt'); console.log('✅ OG Image: http://localhost:3000/opengraph-image'); console.log('Run dev server and visit these URLs to verify')\"",
     "seo:test": "npm run build && npm run start"
   },
   "dependencies": {
+    "@google/genai": "^2.10.0",
     "@prisma/client": "^5.22.0",
     "@stripe/react-stripe-js": "^6.6.0",
     "@stripe/stripe-js": "^9.8.0",
@@ -34,8 +35,8 @@
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
-    "sharp": "^0.34.5",
-    "stripe": "^22.2.0"
+    "stripe": "^22.2.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -44,10 +45,12 @@
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

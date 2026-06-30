@@ -18,6 +18,7 @@ type ServiceCardProps = {
   onHoverStart?: () => void;
   onHoverEnd?: () => void;
   onBuyClick?: () => void;
+  buyLabel?: string;
   // Multi-select props
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -37,6 +38,7 @@ export default function ServiceCard({
   onHoverStart,
   onHoverEnd,
   onBuyClick,
+  buyLabel = "Buy Now",
   isSelected = false,
   onToggleSelect,
 }: ServiceCardProps) {
@@ -240,7 +242,7 @@ export default function ServiceCard({
                 }}
                 className="flex-1 bg-[#5a58ab] hover:bg-[#4a489b] text-white text-[11px] sm:text-xs md:text-sm font-semibold py-2 px-1.5 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis text-center"
               >
-                Buy Now
+                {buyLabel}
               </button>
             )}
           </div>

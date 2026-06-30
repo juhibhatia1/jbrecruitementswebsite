@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import ServiceCard from "./service-card";
 import PaymentModal from "./payment-modal";
 import { IoCart, IoSparkles, IoClose, IoArrowForward } from "react-icons/io5";
@@ -104,10 +105,25 @@ const services = [
   },
 ];
 
+const OPPORTUNITIES_SERVICE = {
+  id: 7,
+  title: "Job Opportunities",
+  description: "Browse available mock interview practice sessions and book your slot to sharpen your interview skills.",
+  iconPath: "/icons/job-seekers/interview-prep.svg",
+  timeline: "Instant access",
+  features: [
+    "AI-powered or coach-led practice sessions",
+    "Role-specific interview questions and scenarios",
+    "Receive detailed performance feedback",
+    "Strengthen your confidence before real interviews",
+  ],
+};
+
 // All individual service names (excludes bundle)
 const ALL_SERVICE_TITLES = services.map((s) => s.title);
 
 export default function ServicesSection() {
+  const router = useRouter();
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
@@ -365,6 +381,27 @@ export default function ServicesSection() {
               />
             );
           })}
+
+          {/* Opportunities card — navigates to /opportunities */}
+          {(() => {
+            const localAmt = MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ?? 40;
+            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`;
+            return (
+              <ServiceCard
+                key={OPPORTUNITIES_SERVICE.id}
+                title={OPPORTUNITIES_SERVICE.title}
+                amount={40}
+                localAmount={localAmt}
+                currency={CURRENCY_SYMBOLS[currency]}
+                description={OPPORTUNITIES_SERVICE.description}
+                iconPath={OPPORTUNITIES_SERVICE.iconPath}
+                features={[...OPPORTUNITIES_SERVICE.features, dynamicPriceBullet]}
+                shouldFlip={false}
+                onBuyClick={() => router.push("/opportunities")}
+                buyLabel="View Opportunities"
+              />
+            );
+          })()}
         </div>
 
         {/* Bundle Offer Below Cards */}

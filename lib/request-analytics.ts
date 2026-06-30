@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { SubmissionRequestMeta } from "./submission-types";
 
 function firstHeaderValue(value: string | null): string | undefined {

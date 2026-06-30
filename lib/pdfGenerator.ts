@@ -52,7 +52,7 @@ export async function generateReceiptPdf(purchase: {
   try {
     const fs   = await import("fs");
     const path = await import("path");
-    const sharp = await import("sharp");
+    const _s = "sharp"; const sharp = await import(_s);
 
     const logoAvifPath = path.join(process.cwd(), "public", "logo.avif");
     if (fs.existsSync(logoAvifPath)) {
@@ -373,7 +373,7 @@ export async function generateReceiptPdf(purchase: {
   try {
     const fs = await import("fs");
     const path = await import("path");
-    const sharp = await import("sharp");
+    const _s = "sharp"; const sharp = await import(_s);
     
     const publicDir = path.join(process.cwd(), "public");
     const logoAvifPath = path.join(publicDir, "logo.avif");

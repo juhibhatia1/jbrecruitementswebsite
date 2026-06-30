@@ -134,3 +134,92 @@ model ChatConversation {
   @@index([sessionId])
   @@index([createdAt])
 }
+
+enum InterviewTemplateOwnerRole {
+  ADMIN
+  EMPLOYEE
+}
+
+enum CandidateInterviewPreference {
+  AI
+  MANUAL
+}
+
+enum CandidateApplicationStatus {
+  APPLIED
+  MANUAL_REVIEW_PENDING
+  AI_INVITED
+  INTERVIEW_STARTED
+  INTERVIEW_COMPLETED
+  TOKEN_EXPIRED
+  CANCELLED
+}
+
+enum InterviewSessionStatus {
+  CONNECTING
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  FAILED
+}
+
+model InterviewTemplate {
+  id                   String                     @id @default(cuid())
+  ownerRole            InterviewTemplateOwnerRole
+  jobRole              String
+  experienceLevel      String
+  techStack            String[]
+  requiredSkills       String[]
+  durationMinutes      Int
+  difficultyLevel      String
+  advancedConfig       Json?
+  interviewDescription String?
+  systemInstructions   String?
+  isActive             Boolean                    @default(false)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  applications         CandidateApplication[]
+
+  @@index([ownerRole, createdAt])
+  @@index([isActive, createdAt])
+}
+
+model CandidateApplication {
+  id                   String                       @id @default(cuid())
+  templateId           String
+  candidateName        String
+  candidateEmail       String
+  candidatePhone       String?
+  linkedInUrl          String?
+  interviewPreference  CandidateInterviewPreference
+  accessTokenHash      String                       @unique
+  accessTokenExpiresAt DateTime
+  status               CandidateApplicationStatus   @default(APPLIED)
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  template             InterviewTemplate            @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  session              InterviewSession?
+
+  @@index([templateId, createdAt])
+  @@index([candidateEmail])
+  @@index([status, accessTokenExpiresAt])
+}
+
+model InterviewSession {
+  id               String                 @id @default(cuid())
+  applicationId    String                 @unique
+  provider         String
+  modelUsed        String?
+  status           InterviewSessionStatus @default(CONNECTING)
+  transcript       Json
+  evaluationEvents Json
+  finalReport      Json?
+  startedAt        DateTime               @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  application      CandidateApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([completedAt])
+}

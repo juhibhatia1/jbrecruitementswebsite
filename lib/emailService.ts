@@ -1,5 +1,6 @@
 import { getMailerTransporter } from "./mailer";
 import { generateReceiptPdf } from "./pdfGenerator";
+import { escapeHtml } from "./security";
 import path from "path";
 
 interface PurchaseData {
@@ -191,6 +192,183 @@ Purchase ID: ${purchase.id}`,
     return { success: true };
   } catch (err) {
     console.error("Error sending purchase confirmation/alert emails:", err);
+    return { success: false, error: err };
+  }
+}
+
+interface InterviewInvitationData {
+  candidateName: string;
+  candidateEmail: string;
+  jobRole: string;
+  interviewPreference: "AI" | "MANUAL";
+  interviewLink?: string;
+  interviewDescription?: string | null;
+  durationMinutes: number;
+}
+
+export async function sendInterviewInvitationEmail(data: InterviewInvitationData) {
+  const user = process.env.NEXT_NODEMAILER_USER;
+  if (!user) {
+    console.error("Mailer credentials missing. Cannot send interview invitation email.");
+    return { success: false, error: "Mailer credentials missing" };
+  }
+
+  const transporter = getMailerTransporter();
+
+  const isAI = data.interviewPreference === "AI";
+
+  const subject = isAI
+    ? `Your AI Mock Interview Link for ${escapeHtml(data.jobRole)} — JB Recruitment Solutions`
+    : `Booking Confirmed for ${escapeHtml(data.jobRole)} — JB Recruitment Solutions`;
+
+  const textBody = isAI
+    ? `Hi ${data.candidateName},
+
+Thank you for booking your mock interview practice session for ${data.jobRole} at JB Recruitment Solutions.
+
+Your AI-powered mock interview is ready. Click the link below to begin when you are ready. The link expires in 7 days.
+
+Interview Link: ${data.interviewLink}
+
+Duration: approximately ${data.durationMinutes} minutes
+${data.interviewDescription ? `\nWhat to expect:\n${data.interviewDescription}` : ""}
+
+Tips before you start:
+- Use a quiet environment with minimal background noise.
+- Ensure your microphone is working.
+- Use Chrome or Edge for best compatibility.
+
+Best of luck!
+Team JB Recruitment Solutions`
+    : `Hi ${data.candidateName},
+
+Thank you for booking your mock interview practice session for ${data.jobRole} at JB Recruitment Solutions.
+
+We have received your booking and a coach will be in touch with you shortly to schedule your practice session.
+
+Best regards,
+Team JB Recruitment Solutions`;
+
+  const htmlBody = isAI
+    ? `
+      <div style="font-family: 'Raleway', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; color: #2d3748; line-height: 1.6;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #edf2f7;">
+          <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="width: 100px; height: auto;" />
+        </div>
+        <div style="padding: 20px 0;">
+          <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Your Mock Interview is Ready</h2>
+          <p>Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
+          <p>Thank you for booking your mock interview practice session for <strong>${escapeHtml(data.jobRole)}</strong>. Your AI-powered mock interview is now ready to begin.</p>
+          ${data.interviewDescription ? `<div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin: 16px 0;"><p style="margin: 0; font-size: 14px; color: #4a5568;">${escapeHtml(data.interviewDescription)}</p></div>` : ""}
+          <div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; color: #718096;">Role:</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${escapeHtml(data.jobRole)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #718096;">Duration:</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">~${data.durationMinutes} minutes</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #718096;">Format:</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">AI Mock Interview</td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${data.interviewLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Start Your Interview</a>
+          </div>
+          <p style="font-size: 13px; color: #718096;">This link expires in <strong>7 days</strong>. Use Chrome or Edge for the best experience. Ensure your microphone is working before starting.</p>
+        </div>
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
+          <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
+        </div>
+      </div>
+    `
+    : `
+      <div style="font-family: 'Raleway', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; color: #2d3748; line-height: 1.6;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #edf2f7;">
+          <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="width: 100px; height: auto;" />
+        </div>
+        <div style="padding: 20px 0;">
+          <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Booking Confirmed</h2>
+          <p>Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
+          <p>Thank you for booking your mock interview practice session for <strong>${escapeHtml(data.jobRole)}</strong>. We have received your booking and a coach will be in touch shortly to schedule your practice session.</p>
+          <p style="font-size: 14px; color: #718096;">If you have any questions in the meantime, feel free to reply to this email.</p>
+        </div>
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
+          <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+
+  const attachments = [
+    {
+      filename: "logo.avif",
+      path: path.join(process.cwd(), "public", "logo.avif"),
+      cid: "jb-logo",
+    },
+  ];
+
+  try {
+    await transporter.sendMail({
+      from: `"JB Recruitment Solutions" <${user}>`,
+      to: data.candidateEmail,
+      subject,
+      text: textBody,
+      html: htmlBody,
+      attachments,
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("Error sending interview invitation email:", err);
+    return { success: false, error: err };
+  }
+}
+
+interface NewApplicationAlertData {
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone?: string | null;
+  linkedInUrl?: string | null;
+  jobRole: string;
+  interviewPreference: "AI" | "MANUAL";
+  applicationId: string;
+}
+
+export async function sendNewApplicationAlertEmail(data: NewApplicationAlertData) {
+  const user = process.env.NEXT_NODEMAILER_USER;
+  const receiver = process.env.INTERVIEW_REPORT_EMAIL || user;
+  if (!user || !receiver) return { success: false, error: "Mailer credentials missing" };
+
+  const transporter = getMailerTransporter();
+
+  try {
+    await transporter.sendMail({
+      from: `"Application Alert" <${user}>`,
+      to: receiver,
+      subject: `New Booking: ${escapeHtml(data.candidateName)} — ${escapeHtml(data.jobRole)}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #5a58ab; border-radius: 8px; max-width: 600px; margin: 0 auto; color: #333;">
+          <h2 style="color: #5a58ab; margin-top: 0;">New Mock Interview Booking</h2>
+          <div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 7px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Name:</td><td style="padding: 7px 0; border-bottom: 1px solid #edf2f7;">${escapeHtml(data.candidateName)}</td></tr>
+              <tr><td style="padding: 7px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Email:</td><td style="padding: 7px 0; border-bottom: 1px solid #edf2f7;"><a href="mailto:${escapeHtml(data.candidateEmail)}">${escapeHtml(data.candidateEmail)}</a></td></tr>
+              <tr><td style="padding: 7px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Phone:</td><td style="padding: 7px 0; border-bottom: 1px solid #edf2f7;">${escapeHtml(data.candidatePhone || "Not provided")}</td></tr>
+              <tr><td style="padding: 7px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">LinkedIn:</td><td style="padding: 7px 0; border-bottom: 1px solid #edf2f7;">${data.linkedInUrl ? `<a href="${escapeHtml(data.linkedInUrl)}">${escapeHtml(data.linkedInUrl)}</a>` : "Not provided"}</td></tr>
+              <tr><td style="padding: 7px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Role:</td><td style="padding: 7px 0; border-bottom: 1px solid #edf2f7; font-weight: bold; color: #5a58ab;">${escapeHtml(data.jobRole)}</td></tr>
+              <tr><td style="padding: 7px 0; font-weight: bold;">Session Type:</td><td style="padding: 7px 0;">${data.interviewPreference === "AI" ? "AI Mock Interview" : "Coach Session"}</td></tr>
+            </table>
+          </div>
+          <p style="font-size: 13px; color: #718096; margin-top: 16px;">Application ID: <code>${escapeHtml(data.applicationId)}</code></p>
+        </div>
+      `,
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("Error sending new application alert email:", err);
     return { success: false, error: err };
   }
 }
