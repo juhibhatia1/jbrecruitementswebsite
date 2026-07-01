@@ -10,6 +10,7 @@ import {
   type InterviewTranscriptEntry,
 } from "./lib/interview/types";
 import { GeminiLiveInterviewProvider } from "./lib/interview/providers/gemini-live-provider";
+import { OpenAiRealtimeProvider } from "./lib/interview/providers/openai-realtime-provider";
 import { getMailerTransporter } from "./lib/mailer";
 import { escapeHtml } from "./lib/security";
 import { sendInterviewResultsToCandidate } from "./lib/emailService";
@@ -113,8 +114,9 @@ nextApp
 
     wss.on("connection", (clientWs) => {
       let authenticated = false;
-      let provider: GeminiLiveInterviewProvider | null = null;
+      let provider: any = null;
       let interviewSessionId: string | null = null;
+      let applicationId: string | null = null;
       let finalized = false;
       let candidateContext: {
         candidateName: string;
@@ -150,9 +152,9 @@ nextApp
           where: { id: interviewSessionId },
           data: {
             status,
-            transcript: accumulator.transcript,
-            evaluationEvents: accumulator.events,
-            finalReport,
+            transcript: accumulator.transcript as any,
+            evaluationEvents: accumulator.events as any,
+            finalReport: finalReport as any,
             completedAt: new Date(),
           },
         });
@@ -161,9 +163,9 @@ nextApp
           return;
         }
 
-        if (status === "COMPLETED") {
+        if (status === "COMPLETED" && applicationId) {
           await prisma.candidateApplication.update({
-            where: { session: { id: interviewSessionId } },
+            where: { id: applicationId },
             data: { status: "INTERVIEW_COMPLETED" },
           });
         }
@@ -278,10 +280,12 @@ nextApp
               await prisma.interviewSession.delete({ where: { id: application.session.id } });
             }
 
+            const defaultProvider = process.env.INTERVIEW_PROVIDER || "gemini-live";
+
             const session = await prisma.interviewSession.create({
               data: {
                 applicationId: application.id,
-                provider: "gemini-live",
+                provider: defaultProvider,
                 status: "CONNECTING",
                 transcript: [],
                 evaluationEvents: [],
@@ -294,6 +298,7 @@ nextApp
             });
 
             interviewSessionId = session.id;
+            applicationId = application.id;
             candidateContext = {
               candidateName: application.candidateName,
               candidateEmail: application.candidateEmail,
@@ -301,28 +306,28 @@ nextApp
               templateInstructions: application.template.systemInstructions,
             };
 
-            provider = new GeminiLiveInterviewProvider({
+            const callbackHandlers = {
               onReady: () => {
                 sendJson(clientWs, { type: "ready" });
               },
-              onStatus: (statusMessage) => {
+              onStatus: (statusMessage: string) => {
                 sendJson(clientWs, { type: "status", message: statusMessage });
               },
-              onError: (errorMessage) => {
+              onError: (errorMessage: string) => {
                 sendJson(clientWs, { type: "error", message: errorMessage });
               },
               onTranscript: (entry: InterviewTranscriptEntry) => {
                 accumulator.transcript.push(entry);
                 sendJson(clientWs, { type: "transcript", data: entry });
               },
-              onAudioChunk: (data, mimeType) => {
+              onAudioChunk: (data: string, mimeType: string) => {
                 sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType });
               },
-              onEvaluationEvent: (event) => {
+              onEvaluationEvent: (event: any) => {
                 accumulator.events.push(event);
                 sendJson(clientWs, { type: "backend_event", data: event });
               },
-              onFinalReport: (report) => {
+              onFinalReport: (report: InterviewFinalReport) => {
                 accumulator.finalReport = report;
                 sendJson(clientWs, { type: "final_report", data: report });
               },
@@ -332,7 +337,13 @@ nextApp
                   console.error("Failed to finalize interview session:", error);
                 });
               },
-            });
+            };
+
+            if (defaultProvider === "openai-realtime") {
+              provider = new OpenAiRealtimeProvider(callbackHandlers);
+            } else {
+              provider = new GeminiLiveInterviewProvider(callbackHandlers);
+            }
 
             clearTimeout(authTimeout);
             authenticated = true;

@@ -166,7 +166,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const micCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const sourceRef = useRef<MediaStreamSourceNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
   const playCtxRef = useRef<AudioContext | null>(null);
   const playbackCursorRef = useRef(0);
@@ -239,6 +239,10 @@ export default function InterviewRoom({ token }: { token: string }) {
       processor.connect(ctx.destination);
 
       processor.onaudioprocess = (e) => {
+        // Prevent echo feedback loops by not sending mic input while AI is speaking
+        if (Date.now() < aiSpeakingUntilRef.current) {
+          return;
+        }
         const input = e.inputBuffer.getChannelData(0);
         const downsampled = downsampleTo16k(input, ctx.sampleRate);
         const pcm = floatTo16BitPcm(downsampled);
@@ -296,7 +300,14 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       let stream: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
       } catch {
         if (!cancelled) {
           setErrorMsg(
