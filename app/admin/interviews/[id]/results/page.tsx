@@ -1,16 +1,20 @@
 import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  ADMIN_SESSION_COOKIE,
-  isValidAdminSessionToken,
-} from "@/lib/admin-auth";
+import { ADMIN_SESSION_COOKIE, isValidAdminSessionToken } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { InterviewFinalReport } from "@/lib/interview/types";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
+
+const STATUS_STYLES: Record<string, string> = {
+  INTERVIEW_COMPLETED: "bg-emerald-50 text-emerald-700",
+  INTERVIEW_STARTED:   "bg-blue-50 text-blue-700",
+  TOKEN_EXPIRED:       "bg-red-50 text-red-600",
+  AI_INVITED:          "bg-[#f0efff] text-[#5a58ab]",
+};
 
 export default async function AdminInterviewResultsPage({ params }: Props) {
   const cookieStore = await cookies();
@@ -23,7 +27,6 @@ export default async function AdminInterviewResultsPage({ params }: Props) {
     where: { id, ownerRole: "ADMIN" },
     select: { id: true, jobRole: true },
   });
-
   if (!template) notFound();
 
   const applications = await prisma.candidateApplication.findMany({
@@ -35,13 +38,23 @@ export default async function AdminInterviewResultsPage({ params }: Props) {
           id: true,
           status: true,
           finalReport: true,
-          startedAt: true,
-          completedAt: true,
           evaluationEvents: true,
+          completedAt: true,
         },
       },
     },
   });
+
+  const completed = applications.filter((a) => a.status === "INTERVIEW_COMPLETED").length;
+
+  const scoreOf = (app: typeof applications[0]) => {
+    const report = app.session?.finalReport as InterviewFinalReport | null;
+    if (report?.finalScore != null) return report.finalScore;
+    const events = (app.session?.evaluationEvents ?? []) as Array<{ score: number }>;
+    if (events.length > 0)
+      return Math.round(events.reduce((a, e) => a + Number(e.score), 0) / events.length);
+    return null;
+  };
 
   return (
     <div
@@ -49,145 +62,139 @@ export default async function AdminInterviewResultsPage({ params }: Props) {
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <div className="mx-auto max-w-6xl px-4 md:px-6 py-8">
-        <div className="mb-6 flex items-center gap-4">
-          <Link
-            href="/admin/interviews"
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#252e3d] transition"
-          >
-            ← Templates
-          </Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-sm text-slate-600">{template.jobRole}</span>
-        </div>
-
-        <h1 className="text-2xl font-bold text-[#252e3d] mb-2">Interview Results</h1>
-        <p className="text-sm text-slate-500 mb-8">
-          {applications.length} application{applications.length !== 1 ? "s" : ""} for{" "}
-          <strong>{template.jobRole}</strong>
-        </p>
-
-        {applications.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <p className="text-base font-semibold text-slate-600 mb-1">No applications yet</p>
-            <p className="text-sm text-slate-400">
-              Candidates who apply to this role will appear here.
+        {/* Header nav */}
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[#252e3d]">Interview Results</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {template.jobRole} — {applications.length} booking{applications.length !== 1 ? "s" : ""} · {completed} completed
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <NavLink href="/admin/dashboard" label="Analytics" />
+            <NavLink href="/admin/submissions" label="Submissions" />
+            <NavLink href="/admin/directory" label="User Directory" />
+            <NavLink href="/admin/knowledge" label="Chatbot & KB" />
+            <NavLink href="/admin/interviews" label="Interviews" active />
+          </div>
+        </header>
+
+        {/* Breadcrumb */}
+        <div className="mb-5 flex items-center gap-2 text-sm text-slate-500">
+          <Link href="/admin/interviews" className="hover:text-[#252e3d] transition">Templates</Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-[#252e3d] font-medium">{template.jobRole} · Results</span>
+        </div>
+
+        {/* Stats */}
+        {applications.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {[
+              { label: "Total Bookings", value: applications.length },
+              { label: "Completed", value: completed },
+              { label: "In Progress", value: applications.filter((a) => a.status === "INTERVIEW_STARTED").length },
+              {
+                label: "Avg Score",
+                value: (() => {
+                  const scores = applications.map(scoreOf).filter((s): s is number => s !== null);
+                  return scores.length > 0
+                    ? `${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)} / 10`
+                    : "—";
+                })(),
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white px-5 py-4">
+                <p className="text-xs text-slate-400 mb-1">{stat.label}</p>
+                <p className="text-xl font-bold text-[#252e3d]">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Table */}
+        {applications.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+            <p className="text-base font-semibold text-slate-600 mb-1">No bookings yet</p>
+            <p className="text-sm text-slate-400">Candidates who book this session will appear here.</p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {applications.map((app) => {
-              const report = app.session?.finalReport as InterviewFinalReport | null;
-              const events = (app.session?.evaluationEvents ?? []) as Array<{ score: number }>;
-              const avgScore =
-                events.length > 0
-                  ? Math.round(events.reduce((a, e) => a + Number(e.score), 0) / events.length)
-                  : null;
-
-              return (
-                <div
-                  key={app.id}
-                  className="rounded-2xl border border-slate-100 bg-white p-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-[#252e3d]">{app.candidateName}</p>
-                      <p className="text-sm text-slate-500">{app.candidateEmail}</p>
-                      {app.candidatePhone && (
-                        <p className="text-xs text-slate-400">{app.candidatePhone}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          app.status === "INTERVIEW_COMPLETED"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : app.status === "INTERVIEW_STARTED"
-                            ? "bg-blue-50 text-blue-700"
-                            : app.status === "TOKEN_EXPIRED"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        {app.status.replace(/_/g, " ")}
-                      </span>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          app.interviewPreference === "AI"
-                            ? "bg-[#f0efff] text-[#5a58ab]"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {app.interviewPreference}
-                      </span>
-                    </div>
-                  </div>
-
-                  {app.session && report && (
-                    <div className="mt-4 rounded-xl border border-slate-100 bg-[#f9fafc] p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Interview Report
-                        </p>
-                        {(report.finalScore ?? avgScore) !== null && (
-                          <span className="text-sm font-semibold text-[#5a58ab]">
-                            Score: {report.finalScore ?? avgScore} / 10
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-700 leading-relaxed mb-3">
-                        {report.summary}
-                      </p>
-                      {report.strengths?.length > 0 && (
-                        <div className="mb-2">
-                          <p className="text-xs font-semibold text-emerald-700 mb-1">Strengths</p>
-                          <ul className="space-y-0.5">
-                            {report.strengths.map((s, i) => (
-                              <li key={i} className="text-xs text-slate-600 flex gap-1.5">
-                                <span className="text-emerald-500">+</span> {s}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {report.improvements?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-amber-700 mb-1">Improvements</p>
-                          <ul className="space-y-0.5">
-                            {report.improvements.map((s, i) => (
-                              <li key={i} className="text-xs text-slate-600 flex gap-1.5">
-                                <span className="text-amber-500">△</span> {s}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {app.linkedInUrl && (
-                    <div className="mt-3">
-                      <a
-                        href={app.linkedInUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-[#5a58ab] underline underline-offset-2"
-                      >
-                        LinkedIn Profile
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="mt-2 text-xs text-slate-400">
-                    Applied {new Date(app.createdAt).toLocaleDateString()}
-                    {app.session?.completedAt &&
-                      ` · Completed ${new Date(app.session.completedAt).toLocaleDateString()}`}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                  <th className="px-5 py-3 text-left font-semibold">Candidate</th>
+                  <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Type</th>
+                  <th className="px-5 py-3 text-left font-semibold hidden sm:table-cell">Status</th>
+                  <th className="px-5 py-3 text-center font-semibold">Score</th>
+                  <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Date</th>
+                  <th className="px-5 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {applications.map((app) => {
+                  const score = scoreOf(app);
+                  const scoreColor =
+                    score === null ? "text-slate-400"
+                    : score >= 7 ? "text-emerald-600"
+                    : score >= 5 ? "text-amber-600"
+                    : "text-red-500";
+                  return (
+                    <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <p className="font-semibold text-[#252e3d]">{app.candidateName}</p>
+                        <p className="text-xs text-slate-400">{app.candidateEmail}</p>
+                      </td>
+                      <td className="px-5 py-3.5 hidden md:table-cell">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${app.interviewPreference === "AI" ? "bg-[#f0efff] text-[#5a58ab]" : "bg-gray-100 text-gray-600"}`}>
+                          {app.interviewPreference === "AI" ? "AI Interview" : "Coach Session"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 hidden sm:table-cell">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[app.status] ?? "bg-slate-50 text-slate-600"}`}>
+                          {app.status.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className={`text-base font-bold ${scoreColor}`}>
+                          {score !== null ? `${score}/10` : "—"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-slate-400 hidden md:table-cell">
+                        {app.session?.completedAt
+                          ? new Date(app.session.completedAt).toLocaleDateString()
+                          : new Date(app.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Link
+                          href={`/admin/interviews/${id}/results/${app.id}`}
+                          className="rounded-lg bg-[#252e3d] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2d3645] transition"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function NavLink({ href, label, active }: { href: string; label: string; active?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={
+        active
+          ? "rounded-xl bg-[#252e3d] px-4 py-2 text-sm font-semibold text-white"
+          : "rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+      }
+    >
+      {label}
+    </Link>
   );
 }

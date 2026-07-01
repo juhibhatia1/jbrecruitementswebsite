@@ -327,6 +327,121 @@ Team JB Recruitment Solutions`;
   }
 }
 
+interface InterviewResultsData {
+  candidateName: string;
+  candidateEmail: string;
+  jobRole: string;
+  completedAt: Date | null;
+  finalScore: number | null;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  evaluationEvents: Array<{ question: string; answerSummary: string; score: number; feedback: string }>;
+}
+
+export async function sendInterviewResultsToCandidate(data: InterviewResultsData) {
+  const user = process.env.NEXT_NODEMAILER_USER;
+  if (!user) return { success: false, error: "Mailer credentials missing" };
+
+  const transporter = getMailerTransporter();
+
+  let pdfBuffer: Buffer | null = null;
+  try {
+    const { generateInterviewReportPdf } = await import("./pdfGenerator");
+    pdfBuffer = await generateInterviewReportPdf(data);
+  } catch (pdfErr) {
+    console.error("Failed to generate interview report PDF:", pdfErr);
+  }
+
+  const scoreLine = data.finalScore !== null ? `\nYour Score: ${data.finalScore} / 10` : "";
+  const strengthsList = data.strengths.map((s) => `  + ${s}`).join("\n");
+  const improvementsList = data.improvements.map((s) => `  △ ${s}`).join("\n");
+
+  const subject = `Your Mock Interview Report: ${data.jobRole} — JB Recruitment Solutions`;
+
+  const textBody = `Hi ${data.candidateName},
+
+Your mock interview for ${data.jobRole} has been completed. Here is your performance report.
+${scoreLine}
+
+Summary:
+${data.summary}
+
+Strengths:
+${strengthsList || "See attached report."}
+
+Areas to Improve:
+${improvementsList || "See attached report."}
+
+Your full report is attached as a PDF.
+
+Best regards,
+Team JB Recruitment Solutions`;
+
+  const scoreHtml = data.finalScore !== null
+    ? `<div style="text-align:center;margin:24px 0 0;">
+        <div style="display:inline-block;background:#5a58ab;border-radius:12px;padding:16px 32px;">
+          <div style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:4px;">SCORE</div>
+          <div style="color:white;font-size:36px;font-weight:800;line-height:1;">${data.finalScore}<span style="font-size:16px;font-weight:400;opacity:0.7"> / 10</span></div>
+        </div>
+      </div>`
+    : "";
+
+  const htmlBody = `
+    <div style="font-family:'Raleway',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;color:#2d3748;">
+      <div style="background:#1a1f2b;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;">
+        <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="height:40px;width:auto;" />
+        <span style="color:rgba(255,255,255,0.5);font-size:11px;">Performance Report</span>
+      </div>
+      <div style="background:#5a58ab;padding:10px 28px;">
+        <span style="color:white;font-size:12px;font-weight:700;letter-spacing:0.5px;">MOCK INTERVIEW PERFORMANCE REPORT</span>
+      </div>
+      <div style="padding:28px;">
+        <p style="margin:0 0 4px;">Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
+        <p style="margin:0 0 20px;color:#4a5568;">Your mock interview for <strong>${escapeHtml(data.jobRole)}</strong> is complete. Here is your performance report.</p>
+        ${scoreHtml}
+        <div style="background:#f7fafc;border:1px solid #edf2f7;border-radius:8px;padding:16px;margin:20px 0;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#718096;">Summary</p>
+          <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.6;">${escapeHtml(data.summary)}</p>
+        </div>
+        ${data.strengths.length > 0 ? `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#15803d;">Strengths</p>
+          <ul style="margin:0;padding-left:0;list-style:none;">
+            ${data.strengths.map((s) => `<li style="font-size:13px;color:#2d3748;padding:4px 0;"><span style="color:#16a34a;font-weight:700;margin-right:8px;">+</span>${escapeHtml(s)}</li>`).join("")}
+          </ul>
+        </div>` : ""}
+        ${data.improvements.length > 0 ? `
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;">Areas to Improve</p>
+          <ul style="margin:0;padding-left:0;list-style:none;">
+            ${data.improvements.map((s) => `<li style="font-size:13px;color:#2d3748;padding:4px 0;"><span style="color:#d97706;font-weight:700;margin-right:8px;">△</span>${escapeHtml(s)}</li>`).join("")}
+          </ul>
+        </div>` : ""}
+        <p style="font-size:12px;color:#718096;margin-top:24px;">Your full performance report with question-by-question evaluation is attached as a PDF. Keep it for your records and use it to guide your preparation.</p>
+      </div>
+      <div style="background:#f7fafc;border-top:1px solid #edf2f7;padding:16px 28px;text-align:center;font-size:11px;color:#a0aec0;">
+        © ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.
+      </div>
+    </div>`;
+
+  const attachments: Array<{ filename: string; content?: Buffer; path?: string; cid?: string }> = [
+    { filename: "logo.avif", path: path.join(process.cwd(), "public", "logo.avif"), cid: "jb-logo" },
+  ];
+  if (pdfBuffer) {
+    const safeName = data.jobRole.replace(/[^a-zA-Z0-9_-]/g, "_");
+    attachments.push({ filename: `Interview-Report-${safeName}.pdf`, content: pdfBuffer });
+  }
+
+  try {
+    await transporter.sendMail({ from: `"JB Recruitment Solutions" <${user}>`, to: data.candidateEmail, subject, text: textBody, html: htmlBody, attachments });
+    return { success: true };
+  } catch (err) {
+    console.error("Error sending interview results email:", err);
+    return { success: false, error: err };
+  }
+}
+
 interface NewApplicationAlertData {
   candidateName: string;
   candidateEmail: string;

@@ -523,35 +523,48 @@ export default function InterviewRoom({ token }: { token: string }) {
   if (phase === "results") {
     return (
       <div
-        className="min-h-screen bg-[#0d1117] text-white"
+        className="min-h-screen bg-[#F9F9FB]"
         style={{ fontFamily: "Raleway, sans-serif" }}
       >
-        <div className="mx-auto max-w-2xl px-4 py-10">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-[#5a58ab] flex items-center justify-center shrink-0">
-              <span className="text-white text-xs font-bold">JB</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Interview Complete</h1>
-              <p className="text-xs text-gray-500">Thank you for your time</p>
-            </div>
-            <div className="ml-auto">
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs text-emerald-400 font-medium">
-                ✓ Completed
-              </span>
-            </div>
+        {/* Top bar */}
+        <div className="border-b border-slate-200 bg-white px-6 py-4 flex items-center gap-3">
+          <div className="w-7 h-7 rounded-md bg-[#5a58ab] flex items-center justify-center shrink-0">
+            <span className="text-white text-[10px] font-bold">JB</span>
           </div>
+          <span className="text-sm font-semibold text-[#252e3d]">JB Recruitment Solutions</span>
+          <span className="ml-auto rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-700 font-medium">
+            ✓ Session Complete
+          </span>
+        </div>
 
+        <div className="mx-auto max-w-2xl px-4 py-10">
           {finalReport ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Score + summary card */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h1 className="text-xl font-bold text-[#252e3d]">Interview Complete</h1>
+                    <p className="text-sm text-slate-500 mt-0.5">Your performance report is ready</p>
+                  </div>
+                  {finalReport.finalScore != null && (
+                    <div className="shrink-0 rounded-xl bg-[#5a58ab] px-5 py-3 text-center">
+                      <p className="text-2xl font-extrabold text-white leading-none">{finalReport.finalScore}</p>
+                      <p className="text-[10px] text-white/70 font-semibold mt-0.5">/ 10</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-slate-700 leading-relaxed">{finalReport.summary}</p>
+              </div>
+
+              {/* Strengths */}
               {finalReport.strengths.length > 0 && (
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-3">Strengths</h3>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-3">Strengths</h3>
                   <ul className="space-y-2">
                     {finalReport.strengths.map((s, i) => (
-                      <li key={i} className="text-sm text-gray-300 flex gap-2.5">
-                        <span className="text-emerald-400 mt-0.5 shrink-0">+</span>
+                      <li key={i} className="text-sm text-slate-700 flex gap-2.5">
+                        <span className="text-emerald-500 mt-0.5 shrink-0 font-bold">+</span>
                         {s}
                       </li>
                     ))}
@@ -559,33 +572,38 @@ export default function InterviewRoom({ token }: { token: string }) {
                 </div>
               )}
 
+              {/* Areas to improve */}
               {finalReport.improvements.length > 0 && (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-3">
-                    Areas to Improve
-                  </h3>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-3">Areas to Improve</h3>
                   <ul className="space-y-2">
                     {finalReport.improvements.map((s, i) => (
-                      <li key={i} className="text-sm text-gray-300 flex gap-2.5">
-                        <span className="text-amber-400 mt-0.5 shrink-0">△</span>
+                      <li key={i} className="text-sm text-slate-700 flex gap-2.5">
+                        <span className="text-amber-500 mt-0.5 shrink-0 font-bold">△</span>
                         {s}
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
+
+              {/* Email notice */}
+              <div className="rounded-2xl border border-[#e0e0f0] bg-[#f0efff] p-4 text-center">
+                <p className="text-sm text-[#5a58ab] font-medium">Full report with detailed feedback has been emailed to you.</p>
+              </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-              <div className="inline-block w-6 h-6 border-2 border-[#5a58ab] border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-sm text-gray-400">Generating your report…</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+              <div className="inline-block w-7 h-7 border-2 border-[#5a58ab] border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-sm font-semibold text-slate-600 mb-1">Generating your report…</p>
+              <p className="text-xs text-slate-400">This may take a moment. Please stay on the page.</p>
             </div>
           )}
 
           <div className="mt-8 text-center">
             <a
               href="/mock-interviews"
-              className="inline-block rounded-xl border border-[#5a58ab]/40 bg-[#5a58ab]/10 px-6 py-2.5 text-sm font-semibold text-[#a09fe0] hover:bg-[#5a58ab]/20 transition"
+              className="inline-block rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
             >
               ← Back to Sessions
             </a>

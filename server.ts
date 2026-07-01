@@ -12,6 +12,7 @@ import {
 import { GeminiLiveInterviewProvider } from "./lib/interview/providers/gemini-live-provider";
 import { getMailerTransporter } from "./lib/mailer";
 import { escapeHtml } from "./lib/security";
+import { sendInterviewResultsToCandidate } from "./lib/emailService";
 
 type ClientMessage =
   | { type: "auth"; token?: string; accessToken?: string }
@@ -168,12 +169,26 @@ nextApp
         }
 
         if (finalReport && candidateContext) {
-          await sendInterviewReportEmail({
-            role: candidateContext.role,
-            candidateName: candidateContext.candidateName,
-            candidateEmail: candidateContext.candidateEmail,
-            finalReport,
-          });
+          const events = accumulator.events as Array<{ question: string; answerSummary: string; score: number; feedback: string }>;
+          await Promise.allSettled([
+            sendInterviewReportEmail({
+              role: candidateContext.role,
+              candidateName: candidateContext.candidateName,
+              candidateEmail: candidateContext.candidateEmail,
+              finalReport,
+            }),
+            sendInterviewResultsToCandidate({
+              candidateName: candidateContext.candidateName,
+              candidateEmail: candidateContext.candidateEmail,
+              jobRole: candidateContext.role,
+              completedAt: new Date(),
+              finalScore: finalReport.finalScore,
+              summary: finalReport.summary,
+              strengths: finalReport.strengths,
+              improvements: finalReport.improvements,
+              evaluationEvents: events,
+            }),
+          ]);
 
           sendJson(clientWs, { type: "final_report", data: finalReport });
           sendJson(clientWs, { type: "interview_complete" });

@@ -447,3 +447,198 @@ export async function generateReceiptPdf(purchase: {
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
 }
+
+export async function generateInterviewReportPdf(data: {
+  candidateName: string;
+  candidateEmail: string;
+  jobRole: string;
+  completedAt: Date | null;
+  finalScore: number | null;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  evaluationEvents: Array<{ question: string; answerSummary: string; score: number; feedback: string }>;
+}) {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([595, 842]);
+  const { width, height } = page.getSize();
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const HEADER_DARK = rgb(0.102, 0.122, 0.169);
+  const headerBandH = 100;
+  const accentBarH  = 36;
+  const rightEdge   = width - 40;
+
+  // ── Dark header band ─────────────────────────────────────────────────────────
+  page.drawRectangle({ x: 0, y: height - headerBandH, width, height: headerBandH, color: HEADER_DARK });
+  page.drawRectangle({ x: 0, y: height - headerBandH - 2, width, height: 2, color: BRAND_COLOR });
+
+  // Logo
+  try {
+    const fs   = await import("fs");
+    const path = await import("path");
+    const _s = "sharp"; const sharp = await import(_s);
+    const logoAvifPath = path.join(process.cwd(), "public", "logo.avif");
+    if (fs.existsSync(logoAvifPath)) {
+      const pngBuffer = await sharp.default(fs.readFileSync(logoAvifPath)).png().toBuffer();
+      const logoImg   = await pdfDoc.embedPng(pngBuffer);
+      const targetH   = 52;
+      const targetW   = (logoImg.width / logoImg.height) * targetH;
+      page.drawImage(logoImg, { x: 40, y: height - headerBandH + (headerBandH - targetH) / 2, width: targetW, height: targetH });
+    }
+  } catch { /* skip */ }
+
+  // Company info right
+  const companyName  = "JB Recruitment Solutions";
+  const companyEmail = "contact@jbrecruitments.com";
+  page.drawText(companyName,  { x: rightEdge - boldFont.widthOfTextAtSize(companyName, 11),  y: height - 34, size: 11, font: boldFont, color: WHITE });
+  page.drawText(companyEmail, { x: rightEdge - font.widthOfTextAtSize(companyEmail, 8), y: height - 52, size: 8,  font, color: rgb(0.65, 0.70, 0.80) });
+  page.drawText("jbrecruitments.com", { x: rightEdge - font.widthOfTextAtSize("jbrecruitments.com", 8), y: height - 66, size: 8, font, color: rgb(0.65, 0.70, 0.80) });
+
+  // ── Accent bar ───────────────────────────────────────────────────────────────
+  const accentBarY = height - headerBandH - 2 - accentBarH;
+  page.drawRectangle({ x: 0, y: accentBarY, width, height: accentBarH, color: BRAND_COLOR });
+  const titleText = "MOCK INTERVIEW PERFORMANCE REPORT";
+  page.drawText(titleText, { x: 40, y: accentBarY + (accentBarH - 11) / 2, size: 11, font: boldFont, color: WHITE });
+  const dateText = data.completedAt ? new Date(data.completedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
+  if (dateText) {
+    page.drawText(dateText, { x: rightEdge - font.widthOfTextAtSize(dateText, 8), y: accentBarY + (accentBarH - 8) / 2 + 1, size: 8, font, color: rgb(0.85, 0.88, 1.0) });
+  }
+
+  // ── Candidate info card ──────────────────────────────────────────────────────
+  const cardTopY  = accentBarY - 20;
+  const cardH     = 70;
+  const cardBodyY = cardTopY - cardH;
+  page.drawRectangle({ x: 40, y: cardBodyY, width: width - 80, height: cardH, color: rgb(0.973, 0.976, 0.984) });
+  page.drawRectangle({ x: 40, y: cardBodyY, width: 3, height: cardH, color: BRAND_COLOR });
+
+  page.drawText("CANDIDATE", { x: 56, y: cardTopY - 8, size: 7.5, font: boldFont, color: GRAY_COLOR });
+  page.drawText(data.candidateName, { x: 56, y: cardTopY - 22, size: 12, font: boldFont, color: DARK_COLOR });
+  page.drawText(data.candidateEmail, { x: 56, y: cardTopY - 36, size: 9, font, color: GRAY_COLOR });
+  page.drawText(data.jobRole, { x: 56, y: cardTopY - 50, size: 9, font, color: GRAY_COLOR });
+
+  // Score badge on right
+  if (data.finalScore !== null) {
+    const scoreBadgeX = rightEdge - 60;
+    const scoreBadgeY = cardBodyY + 10;
+    page.drawRectangle({ x: scoreBadgeX, y: scoreBadgeY, width: 60, height: 50, color: BRAND_COLOR });
+    const scoreStr = `${data.finalScore}`;
+    const denomStr = " / 10";
+    page.drawText(scoreStr, { x: scoreBadgeX + (60 - boldFont.widthOfTextAtSize(scoreStr, 20)) / 2, y: scoreBadgeY + 26, size: 20, font: boldFont, color: WHITE });
+    page.drawText("SCORE", { x: scoreBadgeX + (60 - boldFont.widthOfTextAtSize("SCORE", 7)) / 2, y: scoreBadgeY + 12, size: 7, font: boldFont, color: rgb(0.85, 0.88, 1.0) });
+    void denomStr;
+  }
+
+  let cursorY = cardBodyY - 24;
+
+  // ── Summary ──────────────────────────────────────────────────────────────────
+  const wrapText = (text: string, maxWidth: number, fontSize: number, f: typeof font) => {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (f.widthOfTextAtSize(test, fontSize) > maxWidth) {
+        if (line) lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  const sectionLabel = (label: string, y: number, color: typeof DARK_COLOR) => {
+    page.drawText(label, { x: 40, y, size: 9, font: boldFont, color });
+    page.drawLine({ start: { x: 40, y: y - 4 }, end: { x: width - 40, y: y - 4 }, thickness: 0.5, color: LIGHT_GRAY });
+    return y - 16;
+  };
+
+  cursorY = sectionLabel("SUMMARY", cursorY, DARK_COLOR);
+  const summaryLines = wrapText(data.summary, width - 80, 9, font);
+  for (const ln of summaryLines) {
+    if (cursorY < 60) break;
+    page.drawText(ln, { x: 40, y: cursorY, size: 9, font, color: DARK_COLOR });
+    cursorY -= 14;
+  }
+  cursorY -= 10;
+
+  // ── Strengths ────────────────────────────────────────────────────────────────
+  if (data.strengths.length > 0 && cursorY > 80) {
+    cursorY = sectionLabel("STRENGTHS", cursorY, GREEN);
+    for (const s of data.strengths) {
+      if (cursorY < 60) break;
+      const lines = wrapText(`+  ${s}`, width - 90, 9, font);
+      for (const ln of lines) {
+        page.drawText(ln, { x: 50, y: cursorY, size: 9, font, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+    }
+    cursorY -= 8;
+  }
+
+  // ── Improvements ─────────────────────────────────────────────────────────────
+  if (data.improvements.length > 0 && cursorY > 80) {
+    const AMBER = rgb(0.8, 0.5, 0.1);
+    cursorY = sectionLabel("AREAS TO IMPROVE", cursorY, AMBER);
+    for (const s of data.improvements) {
+      if (cursorY < 60) break;
+      const lines = wrapText(`△  ${s}`, width - 90, 9, font);
+      for (const ln of lines) {
+        page.drawText(ln, { x: 50, y: cursorY, size: 9, font, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+    }
+    cursorY -= 8;
+  }
+
+  // ── Evaluation events table ───────────────────────────────────────────────────
+  if (data.evaluationEvents.length > 0 && cursorY > 100) {
+    cursorY = sectionLabel("QUESTION-BY-QUESTION EVALUATION", cursorY, DARK_COLOR);
+    for (const ev of data.evaluationEvents) {
+      if (cursorY < 80) break;
+      const qLines  = wrapText(`Q: ${ev.question}`, width - 100, 8.5, font);
+      const fbLines = wrapText(`   ${ev.feedback}`, width - 100, 8, font);
+      page.drawText(`Score: ${ev.score}/10`, { x: rightEdge - 60, y: cursorY, size: 8, font: boldFont, color: BRAND_COLOR });
+      for (const ln of qLines) {
+        if (cursorY < 60) break;
+        page.drawText(ln, { x: 40, y: cursorY, size: 8.5, font: boldFont, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+      for (const ln of fbLines) {
+        if (cursorY < 60) break;
+        page.drawText(ln, { x: 40, y: cursorY, size: 8, font, color: GRAY_COLOR });
+        cursorY -= 12;
+      }
+      page.drawLine({ start: { x: 40, y: cursorY - 4 }, end: { x: width - 40, y: cursorY - 4 }, thickness: 0.3, color: LIGHT_GRAY });
+      cursorY -= 14;
+    }
+  }
+
+  // ── Watermark ────────────────────────────────────────────────────────────────
+  try {
+    const fs   = await import("fs");
+    const path = await import("path");
+    const _s = "sharp"; const sharp = await import(_s);
+    const logoAvifPath = path.join(process.cwd(), "public", "logo.avif");
+    if (fs.existsSync(logoAvifPath)) {
+      const pngBuffer = await sharp.default(fs.readFileSync(logoAvifPath)).png().toBuffer();
+      const img       = await pdfDoc.embedPng(pngBuffer);
+      const logoW     = 250;
+      const logoH     = (img.height / img.width) * logoW;
+      page.drawImage(img, { x: (width - logoW) / 2, y: (height - logoH) / 2 - 20, width: logoW, height: logoH, opacity: 0.04 });
+    }
+  } catch { /* skip */ }
+
+  // ── Footer ───────────────────────────────────────────────────────────────────
+  page.drawLine({ start: { x: 50, y: 100 }, end: { x: width - 50, y: 100 }, thickness: 1, color: LIGHT_GRAY });
+  page.drawText("JB Recruitment Solutions — Mock Interview Performance Report", { x: 50, y: 80, size: 9, font: boldFont, color: DARK_COLOR });
+  page.drawText("This report was auto-generated following the completion of your AI mock interview session.", { x: 50, y: 63, size: 7.5, font, color: GRAY_COLOR });
+  page.drawText("juhi@jbrecruitments.com   |   jbrecruitments.com", { x: 50, y: 46, size: 7.5, font, color: GRAY_COLOR });
+  page.drawRectangle({ x: 0, y: 0, width, height: 8, color: BRAND_COLOR });
+
+  return Buffer.from(await pdfDoc.save());
+}
