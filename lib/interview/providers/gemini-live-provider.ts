@@ -9,8 +9,8 @@ import { mergeTranscriptChunk } from "../utils";
 
 const DEFAULT_MODEL_CANDIDATES = [
   "gemini-3.1-flash-live-preview",
-  "gemini-2.5-flash-live",
-  "gemini-2.5-flash-native-audio-preview-12-2025",
+  "gemini-live-2.5-flash-native-audio",
+  "gemini-1.5-flash-002",
 ];
 
 function getModelCandidates(modelOverride?: string): string[] {
@@ -53,6 +53,7 @@ function parseFunctionArgs(rawArgs: unknown): Record<string, unknown> {
 export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
   readonly providerName = "gemini-live";
   selectedModel: string | null = null;
+  readonly audioInputRate = 16000;
 
   private readonly apiKey: string;
   private readonly callbacks: RealtimeInterviewCallbacks;

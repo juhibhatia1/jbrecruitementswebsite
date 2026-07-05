@@ -6,6 +6,22 @@ import type {
 } from "../provider";
 import type { InterviewFinalReport } from "../types";
 
+// Supported GA voices for gpt-realtime-2
+export const OPENAI_REALTIME_VOICES = [
+  "alloy",
+  "ash",
+  "ballad",
+  "cedar",
+  "coral",
+  "echo",
+  "marin",
+  "sage",
+  "shimmer",
+  "verse",
+] as const;
+
+export type OpenAIRealtimeVoice = (typeof OPENAI_REALTIME_VOICES)[number];
+
 function safeParseMessage(raw: WebSocket.RawData): Record<string, any> | null {
   try {
     return JSON.parse(raw.toString()) as Record<string, any>;
@@ -17,10 +33,12 @@ function safeParseMessage(raw: WebSocket.RawData): Record<string, any> | null {
 export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   readonly providerName = "openai-realtime";
   readonly selectedModel: string | null;
+  readonly audioInputRate = 24000;
 
   private readonly apiKey: string;
   private readonly callbacks: RealtimeInterviewCallbacks;
   private readonly modelName: string;
+  private readonly voice: OpenAIRealtimeVoice;
 
   private setup: RealtimeInterviewSetup | null = null;
   private ws: WebSocket | null = null;
@@ -28,7 +46,11 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   private manuallyClosed = false;
   private sessionInitialized = false;
 
-  constructor(callbacks: RealtimeInterviewCallbacks, modelOverride?: string) {
+  constructor(
+    callbacks: RealtimeInterviewCallbacks,
+    modelOverride?: string,
+    voiceOverride?: string,
+  ) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       throw new Error("Missing OPENAI_API_KEY in environment variables.");
@@ -36,9 +58,23 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
 
     this.apiKey = apiKey;
     this.callbacks = callbacks;
-    this.modelName =
-      (modelOverride || process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2").trim();
+    this.modelName = (
+      modelOverride ||
+      process.env.OPENAI_REALTIME_MODEL ||
+      "gpt-realtime-2"
+    ).trim();
     this.selectedModel = this.modelName;
+
+    const rawVoice = (
+      voiceOverride ||
+      process.env.OPENAI_REALTIME_VOICE ||
+      "alloy"
+    ).trim();
+    this.voice = (
+      OPENAI_REALTIME_VOICES.includes(rawVoice as OpenAIRealtimeVoice)
+        ? rawVoice
+        : "alloy"
+    ) as OpenAIRealtimeVoice;
   }
 
   async connect(setup: RealtimeInterviewSetup): Promise<void> {
@@ -53,6 +89,8 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       this.ws = new WebSocket(url, {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
+          // Stable privacy-preserving identifier for abuse monitoring
+          "OpenAI-Safety-Identifier": "jb-recruitment-interview",
         },
       });
 
@@ -65,36 +103,16 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         const message = safeParseMessage(data);
         if (!message) return;
 
-        // Log every message from OpenAI for debugging schema issues
         console.log("[OpenAI Realtime MSG]:", JSON.stringify(message).slice(0, 300));
 
-        // Handle initialization success
-        if (message.type === "session.created" || message.type === "session.updated") {
+        // Only fire onReady once when the session is first created
+        if (message.type === "session.created") {
           this.callbacks.onStatus("Interview started (OpenAI active).");
           this.callbacks.onReady();
 
           if (!this.sessionInitialized) {
             this.sessionInitialized = true;
-
-            // Send opening prompt
-            this.sendJson({
-              type: "conversation.item.create",
-              item: {
-                type: "message",
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: this.setup!.openingPrompt,
-                  },
-                ],
-              },
-            });
-
-            // Trigger response generation
-            this.sendJson({
-              type: "response.create",
-            });
+            this.sendOpeningPrompt();
           }
 
           if (!settled) {
@@ -103,16 +121,24 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           }
         }
 
-        // Handle error responses
+        // session.updated confirms our config was accepted — no extra onReady
+        if (message.type === "session.updated") {
+          this.callbacks.onStatus("Session configured.");
+        }
+
         if (message.type === "error" || message.error) {
-          const errMsg = message.error?.message || message.message || JSON.stringify(message);
+          const errMsg =
+            message.error?.message || message.message || JSON.stringify(message);
           console.error("[OpenAI Realtime Error]:", errMsg);
 
-          // Provide a clearer message for common access issues
           let userFriendlyMsg = errMsg;
-          if (errMsg.includes("does not exist") || errMsg.includes("do not have access")) {
-            userFriendlyMsg = `OpenAI Realtime API access denied. The Realtime API requires a Tier 1+ paid OpenAI account. ` +
-              `Please ensure your account has billing set up at platform.openai.com. (Model: ${this.modelName})`;
+          if (
+            errMsg.includes("does not exist") ||
+            errMsg.includes("do not have access")
+          ) {
+            userFriendlyMsg =
+              `OpenAI Realtime API access denied. Requires Tier 1+ paid account with billing at platform.openai.com. ` +
+              `(Model: ${this.modelName})`;
           }
 
           this.callbacks.onError(userFriendlyMsg);
@@ -122,30 +148,46 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           }
         }
 
-        // Forward audio output delta
+        // Audio output chunk (GA event name)
         if (message.type === "response.output_audio.delta" && message.delta) {
           this.callbacks.onAudioChunk(message.delta, "audio/pcm;rate=24000");
         }
 
-        // Interviewer speech transcript completed
-        if (message.type === "response.output_audio_transcript.done" && message.transcript) {
+        // Interviewer transcript complete (GA event name)
+        if (
+          message.type === "response.output_audio_transcript.done" &&
+          message.transcript
+        ) {
           this.callbacks.onTranscript({
             role: "interviewer",
             text: String(message.transcript).trim(),
           });
         }
 
-        // Candidate speech transcript completed (via server VAD + Whisper)
-        if (message.type === "conversation.item.input_audio_transcription.completed" && message.transcript) {
+        // Candidate transcript from server VAD + transcription
+        if (
+          message.type === "conversation.item.input_audio_transcription.completed" &&
+          message.transcript
+        ) {
           this.callbacks.onTranscript({
             role: "candidate",
             text: String(message.transcript).trim(),
           });
         }
 
-        // Handle function calls
+        // Tool call arguments assembled
         if (message.type === "response.function_call_arguments.done") {
           this.handleFunctionCall(message);
+        }
+
+        // Response turn complete
+        if (message.type === "response.done") {
+          const response = message.response as Record<string, any> | undefined;
+          if (response?.status === "failed") {
+            const failReason = response?.status_details?.error?.message || "Unknown";
+            console.error("[OpenAI Realtime] Response failed:", failReason);
+            this.callbacks.onError(`AI response failed: ${failReason}`);
+          }
         }
       });
 
@@ -160,7 +202,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
 
       this.ws.on("close", (code, reasonBuffer) => {
         const reason = reasonBuffer ? reasonBuffer.toString() : "";
-        this.callbacks.onStatus(`OpenAI connection closed (code ${code}${reason ? `, reason: ${reason}` : ""}).`);
+        this.callbacks.onStatus(
+          `OpenAI connection closed (code ${code}${reason ? `, reason: ${reason}` : ""}).`,
+        );
 
         if (this.manuallyClosed) {
           if (!settled) {
@@ -179,31 +223,19 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   }
 
   sendAudioChunk(data: string): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
-
-    this.sendJson({
-      type: "input_audio_buffer.append",
-      audio: data,
-    });
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.sendJson({ type: "input_audio_buffer.append", audio: data });
   }
 
   endAudio(): void {
-    // OpenAI VAD automatically detects start/end of speech.
-    // We send input_audio_buffer.commit just in case of VAD latency.
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
-    this.sendJson({
-      type: "input_audio_buffer.commit",
-    });
+    // With server VAD active the model detects silence automatically.
+    // input_audio_buffer.commit is a no-op when VAD is enabled but harmless.
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.sendJson({ type: "input_audio_buffer.commit" });
   }
 
   endInterview(): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
     this.sendJson({
       type: "conversation.item.create",
@@ -219,9 +251,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       },
     });
 
-    this.sendJson({
-      type: "response.create",
-    });
+    this.sendJson({ type: "response.create" });
   }
 
   close(): void {
@@ -231,19 +261,30 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     }
   }
 
-  private sendSessionUpdate() {
+  private sendOpeningPrompt(): void {
+    this.sendJson({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: this.setup!.openingPrompt }],
+      },
+    });
+    this.sendJson({ type: "response.create" });
+  }
+
+  private sendSessionUpdate(): void {
     if (!this.setup) return;
 
+    // GA schema: no modalities field, nested session.audio.input/output
     this.sendJson({
       type: "session.update",
       session: {
         type: "realtime",
-        model: this.modelName,
         instructions: this.setup.systemInstructions,
-        output_modalities: ["audio", "text"],
         audio: {
           input: {
-            format: "pcm16",
+            format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
               threshold: 0.8,
@@ -251,12 +292,12 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
               silence_duration_ms: 1500,
             },
             transcription: {
-              model: "gpt-4o-transcribe",
+              model: "whisper-1",
             },
           },
           output: {
-            format: "pcm16",
-            voice: "alloy",
+            format: { type: "audio/pcm", rate: 24000 },
+            voice: this.voice,
           },
         },
         tools: [
@@ -296,7 +337,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     });
   }
 
-  private handleFunctionCall(message: Record<string, any>) {
+  private handleFunctionCall(message: Record<string, any>): void {
     let args: Record<string, any>;
     try {
       args = JSON.parse(message.arguments || "{}");
@@ -320,7 +361,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       const report: InterviewFinalReport = {
         summary: String(args.summary || ""),
         strengths: Array.isArray(args.strengths) ? args.strengths.map(String) : [],
-        improvements: Array.isArray(args.improvements) ? args.improvements.map(String) : [],
+        improvements: Array.isArray(args.improvements)
+          ? args.improvements.map(String)
+          : [],
         finalScore: Number(args.finalScore || 0),
       };
       this.callbacks.onFinalReport(report);
@@ -333,7 +376,6 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       result = { ok: false, error: `Unknown function: ${message.name}` };
     }
 
-    // Submit tool response back to OpenAI Realtime session
     this.sendJson({
       type: "conversation.item.create",
       item: {
@@ -343,16 +385,11 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       },
     });
 
-    // Request response so the model knows it is resolved
-    this.sendJson({
-      type: "response.create",
-    });
+    this.sendJson({ type: "response.create" });
   }
 
-  private sendJson(payload: Record<string, unknown>) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
+  private sendJson(payload: Record<string, unknown>): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify(payload));
   }
 }

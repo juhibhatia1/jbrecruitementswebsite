@@ -100,6 +100,20 @@ ${payload.finalReport.improvements.join("\n") || "N/A"}
   });
 }
 
+function buildGenericDevInstructions(role: string, candidateName: string): string {
+  return `You are an AI interviewer for a ${role} position at a tech company.
+Your name is Alex. Conduct a professional 5-question technical and behavioral interview.
+Ask one question at a time and wait for the candidate to respond before proceeding.
+After each answer, call save_interview_event with the question, a brief answer summary, your feedback, and a score.
+After all 5 questions, call finalize_interview_report with overall summary, strengths, improvements, and a finalScore.
+Keep responses concise and professional. Address the candidate as ${candidateName}.
+
+SCORING RULES — strict and non-negotiable:
+- 'score' in save_interview_event: integer from 1 to 10 only. Never decimals, never out of 100.
+- 10 = perfect answer. 1 = completely wrong or no answer. Typical good answers score 6-8.
+- 'finalScore' in finalize_interview_report: integer from 1 to 10, computed as the average of the individual question scores rounded to the nearest integer. Do NOT sum scores. Do NOT use percentages.`;
+}
+
 const nextApp = next({ dev, hostname: HOSTNAME, port: PORT });
 const nextHandler = nextApp.getRequestHandler();
 
@@ -111,6 +125,7 @@ nextApp
     });
 
     const wss = new WebSocketServer({ noServer: true });
+    const wssDev = dev ? new WebSocketServer({ noServer: true }) : null;
 
     wss.on("connection", (clientWs) => {
       let authenticated = false;
@@ -308,7 +323,7 @@ nextApp
 
             const callbackHandlers = {
               onReady: () => {
-                sendJson(clientWs, { type: "ready" });
+                sendJson(clientWs, { type: "ready", audioInputRate: provider?.audioInputRate ?? 16000 });
               },
               onStatus: (statusMessage: string) => {
                 sendJson(clientWs, { type: "status", message: statusMessage });
@@ -409,11 +424,112 @@ nextApp
       });
     });
 
+    // Dev-only: no token auth, no DB writes, provider/model/voice from URL params
+    if (wssDev) {
+      wssDev.on("connection", async (clientWs, request) => {
+        const reqUrl = new URL(request.url || "/", `http://localhost:${PORT}`);
+        const providerParam = reqUrl.searchParams.get("provider") || "gemini-live";
+        const modelParam = reqUrl.searchParams.get("model") || undefined;
+        const voiceParam = reqUrl.searchParams.get("voice") || undefined;
+        const role = reqUrl.searchParams.get("role") || "Software Engineer";
+        const candidateName = reqUrl.searchParams.get("name") || "Test Candidate";
+        const templateIdParam = reqUrl.searchParams.get("templateId") || null;
+
+        const devAccumulator: InterviewSessionAccumulator = {
+          transcript: [],
+          events: [],
+          finalReport: null,
+        };
+
+        let devProvider: any = null;
+
+        const devCallbacks = {
+          onReady: () => sendJson(clientWs, { type: "ready", audioInputRate: devProvider?.audioInputRate ?? 16000 }),
+          onStatus: (msg: string) => sendJson(clientWs, { type: "status", message: msg }),
+          onError: (msg: string) => sendJson(clientWs, { type: "error", message: msg }),
+          onTranscript: (entry: InterviewTranscriptEntry) => {
+            devAccumulator.transcript.push(entry);
+            sendJson(clientWs, { type: "transcript", data: entry });
+          },
+          onAudioChunk: (data: string, mimeType: string) =>
+            sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType }),
+          onEvaluationEvent: (event: any) => {
+            devAccumulator.events.push(event);
+            sendJson(clientWs, { type: "backend_event", data: event });
+          },
+          onFinalReport: (report: InterviewFinalReport) => {
+            devAccumulator.finalReport = report;
+            sendJson(clientWs, { type: "final_report", data: report });
+          },
+          onComplete: () => {
+            sendJson(clientWs, { type: "interview_complete" });
+          },
+        };
+
+        let devInstructions: string;
+        let resolvedRole = role;
+
+        if (templateIdParam) {
+          try {
+            const template = await prisma.interviewTemplate.findUnique({
+              where: { id: templateIdParam },
+              select: { systemInstructions: true, jobRole: true },
+            });
+            if (template?.systemInstructions) {
+              devInstructions = template.systemInstructions;
+              resolvedRole = template.jobRole;
+            } else {
+              devInstructions = buildGenericDevInstructions(role, candidateName);
+            }
+          } catch {
+            devInstructions = buildGenericDevInstructions(role, candidateName);
+          }
+        } else {
+          devInstructions = buildGenericDevInstructions(role, candidateName);
+        }
+
+        try {
+          if (providerParam === "openai-realtime") {
+            devProvider = new OpenAiRealtimeProvider(devCallbacks, modelParam, voiceParam);
+          } else {
+            devProvider = new GeminiLiveInterviewProvider(devCallbacks, modelParam);
+          }
+
+          void devProvider.connect({
+            systemInstructions: devInstructions,
+            openingPrompt: `Start the interview now by greeting ${candidateName} and asking your first question for the ${resolvedRole} role.`,
+            candidateName,
+          }).catch((err: Error) => {
+            sendJson(clientWs, { type: "error", message: err.message });
+          });
+        } catch (err: any) {
+          sendJson(clientWs, { type: "error", message: err.message });
+        }
+
+        clientWs.on("message", (raw) => {
+          if (!devProvider) return;
+          const msg = parseClientMessage(raw);
+          if (!msg) return;
+          if (msg.type === "audio_chunk" && msg.data) devProvider.sendAudioChunk(msg.data);
+          if (msg.type === "end_audio") devProvider.endAudio();
+          if (msg.type === "end_interview") devProvider.endInterview();
+        });
+
+        clientWs.on("close", () => {
+          devProvider?.close();
+        });
+      });
+    }
+
     server.on("upgrade", (request, socket, head) => {
       const requestUrl = new URL(request.url || "/", `http://${request.headers.host}`);
       if (requestUrl.pathname === "/ws/interview") {
         wss.handleUpgrade(request, socket, head, (ws) => {
           wss.emit("connection", ws, request);
+        });
+      } else if (requestUrl.pathname === "/ws/interview-dev" && wssDev) {
+        wssDev.handleUpgrade(request, socket, head, (ws) => {
+          wssDev.emit("connection", ws, request);
         });
       }
       // All other upgrade requests (e.g. Next.js HMR /_next/webpack-hmr) are

@@ -8,7 +8,7 @@ type SetupStep = "mic" | "connecting" | "starting" | "done";
 
 type ServerMessage =
   | { type: "status"; message: string }
-  | { type: "ready" }
+  | { type: "ready"; audioInputRate?: number }
   | { type: "error"; message: string }
   | { type: "transcript"; data: InterviewTranscriptEntry }
   | { type: "backend_event"; data: { at: string; question: string; score: number; feedback: string } }
@@ -18,9 +18,9 @@ type ServerMessage =
 
 // ── Audio helpers ────────────────────────────────────────────────────────────
 
-function downsampleTo16k(input: Float32Array, fromRate: number): Float32Array {
-  if (fromRate === 16000) return input;
-  const ratio = fromRate / 16000;
+function downsampleTo(input: Float32Array, fromRate: number, toRate: number): Float32Array {
+  if (fromRate === toRate) return input;
+  const ratio = fromRate / toRate;
   const outputLength = Math.floor(input.length / ratio);
   const output = new Float32Array(outputLength);
   for (let i = 0; i < outputLength; i++) {
@@ -171,6 +171,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const playCtxRef = useRef<AudioContext | null>(null);
   const playbackCursorRef = useRef(0);
   const aiSpeakingUntilRef = useRef(0);
+  const audioInputRateRef = useRef(16000);
 
   const phaseRef = useRef<Phase>("setup");
   phaseRef.current = phase;
@@ -244,7 +245,7 @@ export default function InterviewRoom({ token }: { token: string }) {
           return;
         }
         const input = e.inputBuffer.getChannelData(0);
-        const downsampled = downsampleTo16k(input, ctx.sampleRate);
+        const downsampled = downsampleTo(input, ctx.sampleRate, audioInputRateRef.current);
         const pcm = floatTo16BitPcm(downsampled);
         const b64 = arrayBufferToBase64(pcm);
         sendJson({ type: "audio_chunk", data: b64 });
@@ -364,6 +365,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
           case "ready":
             if (cancelled) return;
+            audioInputRateRef.current = msg.audioInputRate ?? 16000;
             setSetupStep("done");
             setSetupStatus("Interview starting…");
             if (streamRef.current) {

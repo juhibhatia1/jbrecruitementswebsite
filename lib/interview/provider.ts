@@ -24,6 +24,7 @@ export interface RealtimeInterviewSetup {
 export interface RealtimeInterviewProvider {
   readonly providerName: string;
   readonly selectedModel: string | null;
+  readonly audioInputRate: number;
   connect(setup: RealtimeInterviewSetup): Promise<void>;
   sendAudioChunk(data: string): void;
   endAudio(): void;
