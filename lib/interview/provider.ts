@@ -1,6 +1,7 @@
 import type {
   InterviewEvaluationEvent,
   InterviewFinalReport,
+  InterviewReferenceCard,
   InterviewTranscriptEntry,
 } from "./types";
 
@@ -12,6 +13,7 @@ export interface RealtimeInterviewCallbacks {
   onAudioChunk: (data: string, mimeType: string) => void;
   onEvaluationEvent: (event: InterviewEvaluationEvent) => void;
   onFinalReport: (report: InterviewFinalReport) => void;
+  onReferenceCard: (card: InterviewReferenceCard) => void;
   onComplete: () => void;
 }
 

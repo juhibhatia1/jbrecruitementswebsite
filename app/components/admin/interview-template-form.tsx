@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
+
 type AdvancedConfig = {
+  voiceOption: string;
   technicalCompetencies: string;
   behaviouralCompetencies: string;
   specificQuestions: string;
@@ -55,6 +58,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
     Boolean(existingTemplate?.advancedConfig),
   );
   const [advanced, setAdvanced] = useState<AdvancedConfig>({
+    voiceOption: existingTemplate?.advancedConfig?.voiceOption ?? "marin",
     technicalCompetencies: existingTemplate?.advancedConfig?.technicalCompetencies ?? "",
     behaviouralCompetencies: existingTemplate?.advancedConfig?.behaviouralCompetencies ?? "",
     specificQuestions: existingTemplate?.advancedConfig?.specificQuestions ?? "",
@@ -67,7 +71,6 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
 
   const [autoGenOnSave, setAutoGenOnSave] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [error, setError] = useState("");
@@ -157,8 +160,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
             setAutoGenerating(false);
           }
         }
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        router.push(redirectTo);
       }
     } catch {
       setError("Network error. Please try again.");
@@ -301,6 +303,19 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
 
         {showAdvanced && (
           <div className="mt-4 space-y-3">
+            <div>
+              <label className={labelClass}>AI Interviewer Voice</label>
+              <select
+                name="voiceOption"
+                value={advanced.voiceOption}
+                onChange={(e) => setAdvanced((prev) => ({ ...prev, voiceOption: e.target.value }))}
+                className={inputClass}
+              >
+                {OPENAI_REALTIME_VOICES.map((v) => (
+                  <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}{v === "marin" ? " (Default)" : ""}</option>
+                ))}
+              </select>
+            </div>
             {[
               {
                 name: "technicalCompetencies",
@@ -364,11 +379,6 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
         </p>
       )}
 
-      {saveSuccess && (
-        <p className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
-          Changes saved successfully.
-        </p>
-      )}
 
       {/* Auto-generate toggle */}
       <label className="flex items-center gap-2.5 cursor-pointer w-fit">
@@ -426,8 +436,23 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
         )}
       </div>
 
+      {/* Generation loader */}
+      {(generating || autoGenerating) && (
+        <div className="rounded-2xl border border-[#5a58ab]/20 bg-[#f5f4ff] p-6 flex items-start gap-4">
+          <div className="shrink-0 mt-0.5">
+            <div className="w-5 h-5 border-2 border-[#5a58ab] border-t-transparent rounded-full animate-spin" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#3d3b8a]">Generating AI Instructions…</p>
+            <p className="text-xs text-[#5a58ab]/80 mt-1 leading-relaxed">
+              This usually takes 30–40 seconds. The AI is analysing the role configuration and writing a complete interview guide — please keep this page open.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Generated content preview */}
-      {isEditing && (generatedDescription || generatedInstructions) && (
+      {isEditing && (generatedDescription || generatedInstructions) && !(generating || autoGenerating) && (
         <div className="rounded-2xl border border-slate-100 bg-white p-6 space-y-4">
           <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
             Generated Content

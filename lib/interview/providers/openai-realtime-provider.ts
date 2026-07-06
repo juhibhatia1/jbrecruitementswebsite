@@ -4,7 +4,7 @@ import type {
   RealtimeInterviewProvider,
   RealtimeInterviewSetup,
 } from "../provider";
-import type { InterviewFinalReport } from "../types";
+import type { InterviewFinalReport, InterviewReferenceCard } from "../types";
 
 // Supported GA voices for gpt-realtime-2
 export const OPENAI_REALTIME_VOICES = [
@@ -103,7 +103,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         const message = safeParseMessage(data);
         if (!message) return;
 
-        console.log("[OpenAI Realtime MSG]:", JSON.stringify(message).slice(0, 300));
+        if (message.type !== "response.function_call_arguments.delta" && message.type !== "response.audio_transcript.delta" && message.type !== "response.output_audio.delta") {
+          console.log("[OpenAI Realtime MSG]:", JSON.stringify(message).slice(0, 300));
+        }
 
         // Only fire onReady once when the session is first created
         if (message.type === "session.created") {
@@ -287,9 +289,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.8,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 1500,
+              threshold: 0.92,
+              prefix_padding_ms: 400,
+              silence_duration_ms: 1800,
             },
             transcription: {
               model: "whisper-1",
@@ -331,6 +333,19 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
               required: ["summary", "strengths", "improvements", "finalScore"],
             },
           },
+          {
+            type: "function",
+            name: "show_reference_card",
+            description: "Display a reference card with structured information on the candidate's screen.",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Card title" },
+                content: { type: "string", description: "Markdown content to display" },
+              },
+              required: ["title", "content"],
+            },
+          },
         ],
         tool_choice: "auto",
       },
@@ -338,6 +353,8 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   }
 
   private handleFunctionCall(message: Record<string, any>): void {
+    console.log("[OpenAI] Function call received:", message.name, String(message.arguments || "").slice(0, 150));
+
     let args: Record<string, any>;
     try {
       args = JSON.parse(message.arguments || "{}");
@@ -346,6 +363,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     }
 
     let result: Record<string, any>;
+    let needsContinuation = true;
 
     if (message.name === "save_interview_event") {
       const event = {
@@ -372,6 +390,17 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         this.callbacks.onComplete();
       }
       result = { ok: true, reportStored: true };
+    } else if (message.name === "show_reference_card") {
+      console.log("[OpenAI] show_reference_card tool called, args:", JSON.stringify(args));
+      const card: InterviewReferenceCard = {
+        id: `card-${Date.now()}`,
+        title: String(args.title || ""),
+        content: String(args.content || ""),
+      };
+      this.callbacks.onReferenceCard(card);
+      result = { ok: true };
+      // needsContinuation stays true — AI must continue after card to say
+      // "I've shared the structure on your screen. Whenever you're ready..."
     } else {
       result = { ok: false, error: `Unknown function: ${message.name}` };
     }
@@ -385,7 +414,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       },
     });
 
-    this.sendJson({ type: "response.create" });
+    if (needsContinuation) {
+      this.sendJson({ type: "response.create" });
+    }
   }
 
   private sendJson(payload: Record<string, unknown>): void {

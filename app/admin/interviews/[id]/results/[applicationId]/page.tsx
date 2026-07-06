@@ -3,8 +3,10 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ADMIN_SESSION_COOKIE, isValidAdminSessionToken } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import type { InterviewFinalReport, InterviewEvaluationEvent, InterviewTranscriptEntry } from "@/lib/interview/types";
+import type { InterviewFinalReport, InterviewEvaluationEvent, InterviewTranscriptEntry, InterviewReferenceCard } from "@/lib/interview/types";
 import ResultActions from "./result-actions";
+import { TranscriptTimeline } from "@/app/components/interviews/transcript-timeline";
+import { buildTimeline } from "@/app/components/interviews/timeline-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,8 @@ export default async function AdminResultDetailPage({ params }: Props) {
   const report  = app.session?.finalReport  as InterviewFinalReport | null;
   const events  = (app.session?.evaluationEvents ?? []) as InterviewEvaluationEvent[];
   const transcript = (app.session?.transcript ?? []) as InterviewTranscriptEntry[];
+  const referenceCards = (app.session?.referenceCards ?? []) as InterviewReferenceCard[];
+  const timelineItems = buildTimeline(transcript, referenceCards);
   const avgScore = events.length > 0
     ? Math.round(events.reduce((a, e) => a + Number(e.score), 0) / events.length)
     : null;
@@ -167,23 +171,14 @@ export default async function AdminResultDetailPage({ params }: Props) {
         )}
 
         {/* Transcript */}
-        {transcript.length > 0 && (
+        {timelineItems.length > 0 && (
           <div className="mt-5 rounded-2xl border border-slate-100 bg-white overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Full Transcript</p>
-              <span className="text-xs text-slate-400">{transcript.length} messages</span>
+              <span className="text-xs text-slate-400">{transcript.length} messages{referenceCards.length > 0 ? ` · ${referenceCards.length} reference card${referenceCards.length !== 1 ? "s" : ""}` : ""}</span>
             </div>
-            <div className="px-5 py-4 max-h-96 overflow-y-auto space-y-3">
-              {transcript.map((entry, i) => (
-                <div key={i} className={`flex gap-2.5 ${entry.role === "interviewer" ? "" : "flex-row-reverse"}`}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${entry.role === "interviewer" ? "bg-[#5a58ab]" : "bg-slate-200"}`}>
-                    <span className="text-[9px] font-bold text-white">{entry.role === "interviewer" ? "AI" : "C"}</span>
-                  </div>
-                  <div className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${entry.role === "interviewer" ? "bg-[#f0efff] text-[#252e3d]" : "bg-slate-100 text-slate-700"}`}>
-                    {entry.text}
-                  </div>
-                </div>
-              ))}
+            <div className="px-5 py-4 max-h-[32rem] overflow-y-auto">
+              <TranscriptTimeline items={timelineItems} />
             </div>
           </div>
         )}

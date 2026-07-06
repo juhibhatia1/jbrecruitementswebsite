@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(__dirname),
-  },
-  serverExternalPackages: [],
+  serverExternalPackages: ["sharp", "@xenova/transformers"],
   images: {
     remotePatterns: [
       {

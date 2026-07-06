@@ -4,7 +4,11 @@ import type {
   RealtimeInterviewProvider,
   RealtimeInterviewSetup,
 } from "../provider";
-import type { InterviewFinalReport, InterviewTranscriptEntry } from "../types";
+import type {
+  InterviewFinalReport,
+  InterviewReferenceCard,
+  InterviewTranscriptEntry,
+} from "../types";
 import { mergeTranscriptChunk } from "../utils";
 
 const DEFAULT_MODEL_CANDIDATES = [
@@ -117,7 +121,7 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
 
     this.sendJson({
       realtimeInput: {
-        text: "Interview is over. Please call finalize_interview_report now.",
+        text: "The interview session has ended. Please wrap up immediately: give a brief verbal thank-you, then call finalize_interview_report with done=true.",
       },
     });
 
@@ -312,44 +316,34 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
           {
             functionDeclarations: [
               {
-                name: "save_interview_event",
+                name: "show_reference_card",
                 description:
-                  "Store per-question interview result for backend persistence.",
+                  "Display a reference card in the candidate's UI for structured information that is hard to follow verbally — e.g. interview sections outline, DSA sample input/output, LLD entity list.",
                 parameters: {
                   type: "OBJECT",
                   properties: {
-                    question: { type: "STRING" },
-                    answerSummary: { type: "STRING" },
-                    score: { type: "NUMBER" },
-                    feedback: { type: "STRING" },
+                    title: { type: "STRING" },
+                    content: {
+                      type: "STRING",
+                      description: "Markdown content to display",
+                    },
                   },
-                  required: ["question", "answerSummary", "score", "feedback"],
+                  required: ["title", "content"],
                 },
               },
               {
                 name: "finalize_interview_report",
                 description:
-                  "Store final interview report and mark interview as completed.",
+                  "Signal that the interview is complete. Call this ONCE at the very end after the verbal closing.",
                 parameters: {
                   type: "OBJECT",
                   properties: {
-                    summary: { type: "STRING" },
-                    strengths: {
-                      type: "ARRAY",
-                      items: { type: "STRING" },
+                    done: {
+                      type: "BOOLEAN",
+                      description: "Must be true",
                     },
-                    improvements: {
-                      type: "ARRAY",
-                      items: { type: "STRING" },
-                    },
-                    finalScore: { type: "NUMBER" },
                   },
-                  required: [
-                    "summary",
-                    "strengths",
-                    "improvements",
-                    "finalScore",
-                  ],
+                  required: ["done"],
                 },
               },
             ],
@@ -369,6 +363,12 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
     }
 
     if (serverContent.outputTranscription?.text) {
+      if (!this.sawOutputTranscriptionThisTurn) {
+        // First outputTranscription chunk this turn — discard any text accumulated from
+        // modelTurn.parts (which can arrive before outputTranscription in the same turn).
+        // outputTranscription is authoritative; using both would duplicate the transcript.
+        this.pendingInterviewerTranscript = "";
+      }
       this.sawOutputTranscriptionThisTurn = true;
       this.pendingInterviewerTranscript = mergeTranscriptChunk(
         this.pendingInterviewerTranscript,
@@ -427,33 +427,21 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
       const args = parseFunctionArgs(functionCall.args);
       let result: Record<string, unknown>;
 
-      if (functionCall.name === "save_interview_event") {
-        const event = {
-          at: new Date().toISOString(),
-          question: String(args.question || ""),
-          answerSummary: String(args.answerSummary || ""),
-          score: Number(args.score || 0),
-          feedback: String(args.feedback || ""),
+      if (functionCall.name === "show_reference_card") {
+        console.log("[Gemini] show_reference_card tool called, args:", JSON.stringify(args));
+        const card: InterviewReferenceCard = {
+          id: `card-${Date.now()}`,
+          title: String(args.title || ""),
+          content: String(args.content || ""),
         };
-        this.callbacks.onEvaluationEvent(event);
-        result = { ok: true, stored: event };
+        this.callbacks.onReferenceCard(card);
+        result = { ok: true };
       } else if (functionCall.name === "finalize_interview_report") {
-        const report: InterviewFinalReport = {
-          summary: String(args.summary || ""),
-          strengths: Array.isArray(args.strengths)
-            ? args.strengths.map((item) => String(item))
-            : [],
-          improvements: Array.isArray(args.improvements)
-            ? args.improvements.map((item) => String(item))
-            : [],
-          finalScore: Number(args.finalScore || 0),
-        };
-        this.callbacks.onFinalReport(report);
         if (!this.completed) {
           this.completed = true;
           this.callbacks.onComplete();
         }
-        result = { ok: true, reportStored: true };
+        result = { ok: true };
       } else {
         result = { ok: false, error: `Unknown tool: ${String(functionCall.name)}` };
       }

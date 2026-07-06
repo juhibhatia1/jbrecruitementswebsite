@@ -214,6 +214,7 @@ model InterviewSession {
   transcript       Json
   evaluationEvents Json
   finalReport      Json?
+  referenceCards   Json                   @default("[]")
   startedAt        DateTime               @default(now())
   completedAt      DateTime?
   createdAt        DateTime               @default(now())

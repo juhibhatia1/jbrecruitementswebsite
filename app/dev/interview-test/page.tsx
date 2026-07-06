@@ -7,7 +7,9 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { InterviewFinalReport, InterviewTranscriptEntry } from "@/lib/interview/types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { InterviewEvaluationEvent, InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 
 // ── Audio helpers (same as interview-room.tsx) ──────────────────────────────
 
@@ -74,6 +76,10 @@ function pcmBytesToAudioBuffer(
 // ── Types ───────────────────────────────────────────────────────────────────
 
 type Phase = "config" | "connecting" | "live" | "done" | "error";
+
+type TranscriptItem =
+  | { kind: "speech"; entry: InterviewTranscriptEntry }
+  | { kind: "card"; card: InterviewReferenceCard };
 
 type Config = {
   provider: "gemini-live" | "openai-realtime";
@@ -190,8 +196,8 @@ export default function DevInterviewTestPage() {
       .then((data) => setTemplates(data.templates || []))
       .catch(() => {});
   }, []);
-  const [transcript, setTranscript] = useState<InterviewTranscriptEntry[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
+  const [evalEvents, setEvalEvents] = useState<InterviewEvaluationEvent[]>([]);
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
@@ -210,7 +216,7 @@ export default function DevInterviewTestPage() {
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcript]);
+  }, [transcriptItems]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -249,8 +255,8 @@ export default function DevInterviewTestPage() {
   const startInterview = async () => {
     setPhase("connecting");
     setStatusLog([]);
-    setTranscript([]);
-    setEvents([]);
+    setTranscriptItems([]);
+    setEvalEvents([]);
     setFinalReport(null);
     setErrorMsg("");
 
@@ -310,9 +316,11 @@ export default function DevInterviewTestPage() {
         stopMic();
         ws.close();
       } else if (msg.type === "transcript") {
-        setTranscript((prev) => [...prev, msg.data as InterviewTranscriptEntry]);
-      } else if (msg.type === "backend_event") {
-        setEvents((prev) => [...prev, msg.data]);
+        setTranscriptItems((prev) => [...prev, { kind: "speech", entry: msg.data as InterviewTranscriptEntry }]);
+      } else if (msg.type === "reference_card") {
+        setTranscriptItems((prev) => [...prev, { kind: "card", card: msg.data as InterviewReferenceCard }]);
+      } else if (msg.type === "evaluation_events") {
+        setEvalEvents(msg.data as InterviewEvaluationEvent[]);
       } else if (msg.type === "ai_audio_chunk") {
         playAudioChunk(msg.data, msg.mimeType);
       } else if (msg.type === "final_report") {
@@ -622,27 +630,33 @@ export default function DevInterviewTestPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Transcript */}
+              {/* Transcript + inline reference cards */}
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                   Transcript
                 </h3>
                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  {transcript.length === 0 && (
+                  {transcriptItems.length === 0 && (
                     <p className="text-xs text-gray-600 italic">Waiting for speech…</p>
                   )}
-                  {transcript.map((entry, i) => (
-                    <div key={i} className="text-xs">
-                      <span
-                        className={`font-semibold ${
-                          entry.role === "interviewer" ? "text-indigo-400" : "text-green-400"
-                        }`}
-                      >
-                        {entry.role === "interviewer" ? "AI" : "You"}:{" "}
-                      </span>
-                      <span className="text-gray-300">{entry.text}</span>
-                    </div>
-                  ))}
+                  {transcriptItems.map((item, i) => {
+                    if (item.kind === "card") {
+                      return <DevReferenceCard key={item.card.id} card={item.card} />;
+                    }
+                    const entry = item.entry;
+                    return (
+                      <div key={i} className="text-xs">
+                        <span
+                          className={`font-semibold ${
+                            entry.role === "interviewer" ? "text-indigo-400" : "text-green-400"
+                          }`}
+                        >
+                          {entry.role === "interviewer" ? "AI" : "You"}:{" "}
+                        </span>
+                        <span className="text-gray-300">{entry.text}</span>
+                      </div>
+                    );
+                  })}
                   <div ref={transcriptEndRef} />
                 </div>
               </div>
@@ -662,24 +676,27 @@ export default function DevInterviewTestPage() {
               </div>
             </div>
 
-            {/* Evaluation events */}
-            {events.length > 0 && (
+            {/* Evaluation events — appear after interview ends (post-processing) */}
+            {evalEvents.length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Evaluation Events ({events.length})
+                  Evaluation ({evalEvents.length} questions)
                 </h3>
                 <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {events.map((ev, i) => (
+                  {evalEvents.map((ev, i) => (
                     <div
                       key={i}
                       className="text-xs bg-gray-800 rounded-lg p-3 flex items-start gap-3"
                     >
-                      <span className="text-yellow-400 font-bold whitespace-nowrap">
+                      <span className={`font-bold whitespace-nowrap tabular-nums ${
+                        ev.score >= 8 ? "text-green-400" : ev.score >= 5 ? "text-yellow-400" : "text-red-400"
+                      }`}>
                         {ev.score}/10
                       </span>
                       <div>
                         <p className="text-gray-200 font-medium">{ev.question}</p>
-                        <p className="text-gray-400 mt-0.5">{ev.feedback}</p>
+                        <p className="text-gray-400 mt-0.5">{ev.answerSummary}</p>
+                        <p className="text-indigo-300/80 mt-0.5 italic">{ev.feedback}</p>
                       </div>
                     </div>
                   ))}
@@ -744,6 +761,40 @@ export default function DevInterviewTestPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function DevReferenceCard({ card }: { card: InterviewReferenceCard }) {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/5 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left"
+      >
+        <span className="text-xs font-semibold text-indigo-300">{card.title}</span>
+        <span className="text-indigo-500 text-xs">{expanded ? "▲" : "▼"}</span>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 border-t border-indigo-500/20 max-w-none mt-2 text-xs text-gray-300
+          [&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-indigo-200 [&_h1]:mt-3 [&_h1]:mb-1
+          [&_h2]:text-xs [&_h2]:font-bold [&_h2]:text-indigo-200 [&_h2]:mt-2 [&_h2]:mb-1
+          [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-indigo-300 [&_h3]:mt-2 [&_h3]:mb-0.5
+          [&_strong]:font-semibold [&_strong]:text-gray-100
+          [&_em]:italic [&_em]:text-gray-400
+          [&_blockquote]:border-l-2 [&_blockquote]:border-indigo-500/50 [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_blockquote]:italic [&_blockquote]:my-1
+          [&_hr]:border-indigo-500/20 [&_hr]:my-2
+          [&_pre]:bg-gray-950 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-indigo-500/20 [&_pre]:my-1
+          [&_code]:font-mono [&_code]:text-indigo-300 [&_code]:text-xs [&_code]:bg-gray-900 [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5
+          [&_pre_code]:text-gray-200 [&_pre_code]:bg-transparent [&_pre_code]:p-0
+          [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs [&_table]:my-1
+          [&_th]:border [&_th]:border-indigo-500/30 [&_th]:bg-indigo-500/15 [&_th]:px-2 [&_th]:py-1 [&_th]:text-indigo-300 [&_th]:font-semibold [&_th]:text-left
+          [&_td]:border [&_td]:border-indigo-500/20 [&_td]:px-2 [&_td]:py-1 [&_td]:text-gray-300
+          [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-indigo-400 [&_a]:underline">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.content}</ReactMarkdown>
+        </div>
+      )}
     </div>
   );
 }

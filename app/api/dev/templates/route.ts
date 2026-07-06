@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 
-  const templates = await prisma.interviewTemplate.findMany({
+  const dbTemplates = await prisma.interviewTemplate.findMany({
     where: { isActive: true },
     select: {
       id: true,
@@ -19,5 +19,14 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ templates });
+  const hardcodedDevTemplates = [
+    {
+      id: "__dev_dsa__",
+      jobRole: "DSA & System Design",
+      ownerRole: "ADMIN" as const,
+      interviewDescription: "Heavy reference-card test — Big-O table, Two Sum problem, URL shortener design. Best template for testing show_reference_card.",
+    },
+  ];
+
+  return NextResponse.json({ templates: [...hardcodedDevTemplates, ...dbTemplates] });
 }

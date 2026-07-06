@@ -10575,6 +10575,7 @@ export namespace Prisma {
     transcript: number
     evaluationEvents: number
     finalReport: number
+    referenceCards: number
     startedAt: number
     completedAt: number
     createdAt: number
@@ -10616,6 +10617,7 @@ export namespace Prisma {
     transcript?: true
     evaluationEvents?: true
     finalReport?: true
+    referenceCards?: true
     startedAt?: true
     completedAt?: true
     createdAt?: true
@@ -10704,6 +10706,7 @@ export namespace Prisma {
     transcript: JsonValue
     evaluationEvents: JsonValue
     finalReport: JsonValue | null
+    referenceCards: JsonValue
     startedAt: Date
     completedAt: Date | null
     createdAt: Date
@@ -10736,6 +10739,7 @@ export namespace Prisma {
     transcript?: boolean
     evaluationEvents?: boolean
     finalReport?: boolean
+    referenceCards?: boolean
     startedAt?: boolean
     completedAt?: boolean
     createdAt?: boolean
@@ -10752,6 +10756,7 @@ export namespace Prisma {
     transcript?: boolean
     evaluationEvents?: boolean
     finalReport?: boolean
+    referenceCards?: boolean
     startedAt?: boolean
     completedAt?: boolean
     createdAt?: boolean
@@ -10768,6 +10773,7 @@ export namespace Prisma {
     transcript?: boolean
     evaluationEvents?: boolean
     finalReport?: boolean
+    referenceCards?: boolean
     startedAt?: boolean
     completedAt?: boolean
     createdAt?: boolean
@@ -10795,6 +10801,7 @@ export namespace Prisma {
       transcript: Prisma.JsonValue
       evaluationEvents: Prisma.JsonValue
       finalReport: Prisma.JsonValue | null
+      referenceCards: Prisma.JsonValue
       startedAt: Date
       completedAt: Date | null
       createdAt: Date
@@ -11201,6 +11208,7 @@ export namespace Prisma {
     readonly transcript: FieldRef<"InterviewSession", 'Json'>
     readonly evaluationEvents: FieldRef<"InterviewSession", 'Json'>
     readonly finalReport: FieldRef<"InterviewSession", 'Json'>
+    readonly referenceCards: FieldRef<"InterviewSession", 'Json'>
     readonly startedAt: FieldRef<"InterviewSession", 'DateTime'>
     readonly completedAt: FieldRef<"InterviewSession", 'DateTime'>
     readonly createdAt: FieldRef<"InterviewSession", 'DateTime'>
@@ -11718,6 +11726,7 @@ export namespace Prisma {
     transcript: 'transcript',
     evaluationEvents: 'evaluationEvents',
     finalReport: 'finalReport',
+    referenceCards: 'referenceCards',
     startedAt: 'startedAt',
     completedAt: 'completedAt',
     createdAt: 'createdAt',
@@ -12705,6 +12714,7 @@ export namespace Prisma {
     transcript?: JsonFilter<"InterviewSession">
     evaluationEvents?: JsonFilter<"InterviewSession">
     finalReport?: JsonNullableFilter<"InterviewSession">
+    referenceCards?: JsonFilter<"InterviewSession">
     startedAt?: DateTimeFilter<"InterviewSession"> | Date | string
     completedAt?: DateTimeNullableFilter<"InterviewSession"> | Date | string | null
     createdAt?: DateTimeFilter<"InterviewSession"> | Date | string
@@ -12721,6 +12731,7 @@ export namespace Prisma {
     transcript?: SortOrder
     evaluationEvents?: SortOrder
     finalReport?: SortOrderInput | SortOrder
+    referenceCards?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -12740,6 +12751,7 @@ export namespace Prisma {
     transcript?: JsonFilter<"InterviewSession">
     evaluationEvents?: JsonFilter<"InterviewSession">
     finalReport?: JsonNullableFilter<"InterviewSession">
+    referenceCards?: JsonFilter<"InterviewSession">
     startedAt?: DateTimeFilter<"InterviewSession"> | Date | string
     completedAt?: DateTimeNullableFilter<"InterviewSession"> | Date | string | null
     createdAt?: DateTimeFilter<"InterviewSession"> | Date | string
@@ -12756,6 +12768,7 @@ export namespace Prisma {
     transcript?: SortOrder
     evaluationEvents?: SortOrder
     finalReport?: SortOrderInput | SortOrder
+    referenceCards?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -12777,6 +12790,7 @@ export namespace Prisma {
     transcript?: JsonWithAggregatesFilter<"InterviewSession">
     evaluationEvents?: JsonWithAggregatesFilter<"InterviewSession">
     finalReport?: JsonNullableWithAggregatesFilter<"InterviewSession">
+    referenceCards?: JsonWithAggregatesFilter<"InterviewSession">
     startedAt?: DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"InterviewSession"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
@@ -13694,6 +13708,7 @@ export namespace Prisma {
     transcript: JsonNullValueInput | InputJsonValue
     evaluationEvents: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: Date | string
     completedAt?: Date | string | null
     createdAt?: Date | string
@@ -13710,6 +13725,7 @@ export namespace Prisma {
     transcript: JsonNullValueInput | InputJsonValue
     evaluationEvents: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: Date | string
     completedAt?: Date | string | null
     createdAt?: Date | string
@@ -13724,6 +13740,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13740,6 +13757,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13755,6 +13773,7 @@ export namespace Prisma {
     transcript: JsonNullValueInput | InputJsonValue
     evaluationEvents: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: Date | string
     completedAt?: Date | string | null
     createdAt?: Date | string
@@ -13769,6 +13788,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13784,6 +13804,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14596,6 +14617,7 @@ export namespace Prisma {
     transcript?: SortOrder
     evaluationEvents?: SortOrder
     finalReport?: SortOrder
+    referenceCards?: SortOrder
     startedAt?: SortOrder
     completedAt?: SortOrder
     createdAt?: SortOrder
@@ -15348,6 +15370,7 @@ export namespace Prisma {
     transcript: JsonNullValueInput | InputJsonValue
     evaluationEvents: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: Date | string
     completedAt?: Date | string | null
     createdAt?: Date | string
@@ -15362,6 +15385,7 @@ export namespace Prisma {
     transcript: JsonNullValueInput | InputJsonValue
     evaluationEvents: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: Date | string
     completedAt?: Date | string | null
     createdAt?: Date | string
@@ -15437,6 +15461,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15451,6 +15476,7 @@ export namespace Prisma {
     transcript?: JsonNullValueInput | InputJsonValue
     evaluationEvents?: JsonNullValueInput | InputJsonValue
     finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

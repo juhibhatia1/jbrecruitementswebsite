@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { InterviewFinalReport, InterviewTranscriptEntry } from "@/lib/interview/types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 
 type Phase = "setup" | "live" | "results" | "error";
 type SetupStep = "mic" | "connecting" | "starting" | "done";
@@ -14,7 +16,12 @@ type ServerMessage =
   | { type: "backend_event"; data: { at: string; question: string; score: number; feedback: string } }
   | { type: "ai_audio_chunk"; data: string; mimeType: string }
   | { type: "final_report"; data: InterviewFinalReport }
+  | { type: "reference_card"; data: InterviewReferenceCard }
   | { type: "interview_complete" };
+
+type TranscriptItem =
+  | { kind: "speech"; entry: InterviewTranscriptEntry }
+  | { kind: "card"; card: InterviewReferenceCard };
 
 // ── Audio helpers ────────────────────────────────────────────────────────────
 
@@ -153,7 +160,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [setupStep, setSetupStep] = useState<SetupStep>("mic");
   const [setupStatus, setSetupStatus] = useState("Requesting microphone access…");
   const [errorMsg, setErrorMsg] = useState("");
-  const [transcript, setTranscript] = useState<InterviewTranscriptEntry[]>([]);
+  const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [aiSpeaking, setAiSpeaking] = useState(false);
 
@@ -175,6 +182,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   const phaseRef = useRef<Phase>("setup");
   phaseRef.current = phase;
+  const pendingCardsRef = useRef<InterviewReferenceCard[]>([]);
 
   const sendJson = useCallback((payload: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -374,9 +382,20 @@ export default function InterviewRoom({ token }: { token: string }) {
             setPhase("live");
             break;
 
-          case "transcript":
-            setTranscript((prev) => [...prev, msg.data]);
+          case "transcript": {
+            const entry = msg.data;
+            if (entry.role === "interviewer" && pendingCardsRef.current.length > 0) {
+              const pending = pendingCardsRef.current.splice(0);
+              setTranscriptItems((prev) => [
+                ...prev,
+                { kind: "speech", entry },
+                ...pending.map((card) => ({ kind: "card" as const, card })),
+              ]);
+            } else {
+              setTranscriptItems((prev) => [...prev, { kind: "speech", entry }]);
+            }
             break;
+          }
 
           case "ai_audio_chunk":
             playAiAudio(msg.data, msg.mimeType);
@@ -384,6 +403,11 @@ export default function InterviewRoom({ token }: { token: string }) {
 
           case "final_report":
             setFinalReport(msg.data);
+            break;
+
+          case "reference_card":
+            console.log("[Client] reference_card received:", msg.data);
+            pendingCardsRef.current.push(msg.data);
             break;
 
           case "interview_complete":
@@ -426,7 +450,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcript]);
+  }, [transcriptItems]);
 
   // ── Error ──────────────────────────────────────────────────────────────────
   if (phase === "error") {
@@ -673,20 +697,23 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
         </div>
 
-        {/* Right: transcript — scrolls internally */}
+        {/* Right: transcript + reference cards inline — scrolls internally */}
         <div className="flex-1 flex flex-col min-h-0 p-4 lg:p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-3 shrink-0">Transcript</p>
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
-            {transcript.length === 0 && (
+            {transcriptItems.length === 0 && (
               <div className="flex items-center justify-center h-32">
                 <p className="text-xs text-gray-600 text-center">
                   The conversation will appear here as the interview progresses.
                 </p>
               </div>
             )}
-            {transcript.map((entry, i) => (
-              <TranscriptBubble key={i} entry={entry} />
-            ))}
+            {transcriptItems.map((item, i) => {
+              if (item.kind === "card") {
+                return <ReferenceCard key={item.card.id} card={item.card} />;
+              }
+              return <TranscriptBubble key={i} entry={item.entry} />;
+            })}
             <div ref={transcriptEndRef} />
           </div>
         </div>
@@ -696,6 +723,40 @@ export default function InterviewRoom({ token }: { token: string }) {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function ReferenceCard({ card }: { card: InterviewReferenceCard }) {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="rounded-xl border border-[#5a58ab]/30 bg-[#5a58ab]/8 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left"
+      >
+        <span className="text-xs font-semibold text-[#a09fe0]">{card.title}</span>
+        <span className="text-[#5a58ab] text-xs">{expanded ? "▲" : "▼"}</span>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 border-t border-[#5a58ab]/20 max-w-none mt-2 text-xs text-gray-300
+          [&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-[#c4c2f0] [&_h1]:mt-3 [&_h1]:mb-1
+          [&_h2]:text-xs [&_h2]:font-bold [&_h2]:text-[#c4c2f0] [&_h2]:mt-2 [&_h2]:mb-1
+          [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-[#a09fe0] [&_h3]:mt-2 [&_h3]:mb-0.5
+          [&_strong]:font-semibold [&_strong]:text-gray-100
+          [&_em]:italic [&_em]:text-gray-400
+          [&_blockquote]:border-l-2 [&_blockquote]:border-[#5a58ab]/50 [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_blockquote]:italic [&_blockquote]:my-1
+          [&_hr]:border-[#5a58ab]/20 [&_hr]:my-2
+          [&_pre]:bg-[#0d1117] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[#5a58ab]/20 [&_pre]:my-1
+          [&_code]:font-mono [&_code]:text-[#a09fe0] [&_code]:text-xs [&_code]:bg-[#1a1a2e] [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5
+          [&_pre_code]:text-gray-200 [&_pre_code]:bg-transparent [&_pre_code]:p-0
+          [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs [&_table]:my-1
+          [&_th]:border [&_th]:border-[#5a58ab]/30 [&_th]:bg-[#5a58ab]/15 [&_th]:px-2 [&_th]:py-1 [&_th]:text-[#a09fe0] [&_th]:font-semibold [&_th]:text-left
+          [&_td]:border [&_td]:border-[#5a58ab]/20 [&_td]:px-2 [&_td]:py-1 [&_td]:text-gray-300
+          [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-[#a09fe0] [&_a]:underline">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.content}</ReactMarkdown>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TranscriptBubble({ entry }: { entry: InterviewTranscriptEntry }) {
   const isAI = entry.role === "interviewer";

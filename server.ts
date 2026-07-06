@@ -1,11 +1,14 @@
 import { createServer } from "node:http";
 import next from "next";
 import WebSocket, { WebSocketServer } from "ws";
+import OpenAI from "openai";
 import { prisma } from "./lib/prisma";
 import { hashInterviewAccessToken } from "./lib/interview/access-token";
 import { buildFallbackReport } from "./lib/interview/utils";
 import {
+  type InterviewEvaluationEvent,
   type InterviewFinalReport,
+  type InterviewReferenceCard,
   type InterviewSessionAccumulator,
   type InterviewTranscriptEntry,
 } from "./lib/interview/types";
@@ -26,6 +29,15 @@ const AUTH_TIMEOUT_MS = 10000;
 const PORT = Number(process.env.PORT || 3000);
 const HOSTNAME = process.env.HOST || "localhost";
 const dev = process.argv.includes("--dev");
+
+// Turbopack uses \\?\ extended-length paths internally; 8.3 short names (JAKKAA~1)
+// are not resolved under \\?\ on Windows, causing "Failed to benchmark file I/O".
+// Set TEMP/TMP to the full long-name path before the native addon loads.
+if (process.platform === "win32" && process.env.USERPROFILE) {
+  const longTemp = `${process.env.USERPROFILE}\\AppData\\Local\\Temp`;
+  process.env.TEMP = longTemp;
+  process.env.TMP = longTemp;
+}
 
 function sendJson(ws: WebSocket, payload: Record<string, unknown>) {
   if (ws.readyState === WebSocket.OPEN) {
@@ -101,20 +113,153 @@ ${payload.finalReport.improvements.join("\n") || "N/A"}
 }
 
 function buildGenericDevInstructions(role: string, candidateName: string): string {
-  return `You are an AI interviewer for a ${role} position at a tech company.
-Your name is Alex. Conduct a professional 5-question technical and behavioral interview.
-Ask one question at a time and wait for the candidate to respond before proceeding.
-After each answer, call save_interview_event with the question, a brief answer summary, your feedback, and a score.
-After all 5 questions, call finalize_interview_report with overall summary, strengths, improvements, and a finalScore.
-Keep responses concise and professional. Address the candidate as ${candidateName}.
+  return `You are an AI mock interviewer for JB Recruitment Solutions conducting a 10-minute mock interview for the role of ${role}. Address the candidate as ${candidateName}.
 
-SCORING RULES — strict and non-negotiable:
-- 'score' in save_interview_event: integer from 1 to 10 only. Never decimals, never out of 100.
-- 10 = perfect answer. 1 = completely wrong or no answer. Typical good answers score 6-8.
-- 'finalScore' in finalize_interview_report: integer from 1 to 10, computed as the average of the individual question scores rounded to the nearest integer. Do NOT sum scores. Do NOT use percentages.`;
+OPENING: Greet ${candidateName}, introduce yourself, state the role and duration. Call show_reference_card with title="Interview Structure" and a markdown table listing the 3 sections below. Say "I've shared the interview structure on your screen — take a moment to look it over." Then ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll kick things off." Wait for their explicit confirmation before proceeding.
+
+SECTIONS:
+Section 1 — Introduction (2 min): Once candidate confirms ready, ask them to introduce themselves — name, current role, years of experience, brief background.
+Section 2 — Technical Questions (6 min): Ask 2 technical questions relevant to ${role}, each with 2 follow-up probes.
+Section 3 — Problem Solving (2 min): Ask one practical scenario question.
+
+TIME MANAGEMENT: Never end early. If questions run out, probe earlier answers deeper. Fill all 10 minutes.
+
+ENGAGEMENT: React specifically to each answer. Vary acknowledgments. Never say "let me note that" or narrate tool calls.
+
+TOOL RULES: NEVER narrate or acknowledge tool calls verbally. Never say "I can't put something on screen". show_reference_card whenever structured visual content helps: (a) interview structure at opening; (b) any coding problem — show sample input/output BEFORE asking; (c) comparison tables or cheat sheets; (d) whenever candidate asks to see something on screen — always comply. No call limit. Call finalize_interview_report with done=true ONCE at the very end after verbal closing — never mid-interview.
+
+CLOSING: After 9 minutes elapsed and all sections done: thank ${candidateName}, give 2-sentence summary, wish them well. Then call finalize_interview_report.`;
 }
 
-const nextApp = next({ dev, hostname: HOSTNAME, port: PORT });
+function buildDsaDevInstructions(candidateName: string): string {
+  return `You are an AI mock interviewer for JB Recruitment Solutions conducting a 20-minute DSA & System Design mock interview. Address the candidate as ${candidateName}.
+
+OPENING: Greet ${candidateName}, introduce yourself, state the role and total duration (20 minutes). Call show_reference_card with title="Interview Structure" and content as a markdown table with 4 rows: "Section | Topic | Duration", "1 | Warm-up DSA | 5 min", "2 | Main Coding Problem | 10 min", "3 | System Design | 5 min". Say "I've shared today's structure on your screen — take a moment to look it over." Then ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll start." Wait for their explicit confirmation before proceeding.
+
+SECTION 1 — Warm-up DSA (5 min):
+Ask: "What is the time and space complexity of a binary search?" After the answer, call show_reference_card with title="Big-O Cheat Sheet" and a markdown table: "Operation | Array | Linked List | Hash Map | BST", with rows for Search, Insert, Delete filled with standard complexities.
+
+SECTION 2 — Main Coding Problem (10 min):
+Ask: "Given an array of integers, find two numbers that add up to a target sum. Return their indices."
+Immediately call show_reference_card with title="Two Sum — Problem Statement" and content:
+\`\`\`
+Input:  nums = [2, 7, 11, 15], target = 9
+Output: [0, 1]  # nums[0] + nums[1] = 9
+
+Constraints:
+- 2 <= nums.length <= 10^4
+- Each input has exactly one solution
+- Cannot use the same element twice
+\`\`\`
+After candidate responds with brute-force or partial: call show_reference_card with title="Two Sum — Approaches" and a markdown table comparing Brute Force O(n²) vs Hash Map O(n) with space and time complexity columns.
+Ask 2 follow-ups: (1) "Can you optimize to O(n)?" (2) "What if the array were sorted — how would your approach change?"
+
+SECTION 3 — System Design (5 min):
+Ask: "Design a URL shortener like bit.ly — walk me through the high-level components."
+Call show_reference_card with title="URL Shortener — Core Components" and markdown content listing: API Layer, Hash Function (MD5/Base62), Database (KV store), Cache (Redis), CDN.
+Ask follow-up: "How would you handle 1 billion URLs and 10k read requests per second?"
+
+TOOL RULES: NEVER narrate or acknowledge tool calls verbally. Never say "I can't put something on screen". show_reference_card whenever structured visual content helps: (a) interview structure at opening; (b) any coding or algorithm problem — show sample input/output card BEFORE asking; (c) comparison tables or cheat sheets; (d) whenever candidate asks to see something on screen — always comply immediately. No call limit. Call finalize_interview_report with done=true ONCE at the very end after verbal closing.
+
+CLOSING: Thank ${candidateName}, give 2-sentence summary of performance. Then call finalize_interview_report.`;
+}
+
+async function generatePostInterviewEvaluation(
+  transcript: InterviewTranscriptEntry[],
+  context: { role: string; experienceLevel: string; techStack: string[] },
+  referenceCards?: InterviewReferenceCard[],
+): Promise<{ events: InterviewEvaluationEvent[]; finalReport: InterviewFinalReport }> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY not configured");
+
+  const openai = new OpenAI({ apiKey });
+  const model = process.env.OPENAI_TEMPLATE_MODEL || "gpt-4o";
+
+  const transcriptText = transcript
+    .map((e) => `${e.role === "interviewer" ? "INTERVIEWER" : "CANDIDATE"}: ${e.text}`)
+    .join("\n\n");
+
+  const referenceCardsText = referenceCards && referenceCards.length > 0
+    ? "\n\nREFERENCE CARDS shown to candidate during interview:\n" +
+      referenceCards.map((c) => `[${c.title}]\n${c.content}`).join("\n\n")
+    : "";
+
+  const prompt = `You are evaluating an AI mock interview for: ${context.role} (${context.experienceLevel}).
+Tech stack: ${context.techStack.join(", ") || "General"}.${referenceCardsText}
+
+FULL TRANSCRIPT:
+${transcriptText}
+
+Identify every substantive question the interviewer asked and evaluate the candidate's response to each. Skip pleasantries and the self-introduction request (Section 1).
+
+Output valid JSON only, no markdown:
+{
+  "evaluationEvents": [
+    {
+      "question": "<exact question asked>",
+      "answerSummary": "<1-2 sentence summary of candidate's answer>",
+      "score": <integer 1-10>,
+      "feedback": "<1-2 sentence constructive feedback>"
+    }
+  ],
+  "finalReport": {
+    "summary": "<3-4 sentence overall performance summary>",
+    "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+    "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"],
+    "finalScore": <integer 1-10>
+  }
+}
+
+SCORING: score and finalScore must be integers 1-10 only. Never decimals, never out of 100. 10=perfect, 1=completely wrong. Typical good answers: 6-8. finalScore = average of all individual scores rounded to nearest integer.`;
+
+  const response = await openai.responses.create({
+    model,
+    instructions:
+      "You are a senior technical recruiter evaluating a mock interview. Output only valid JSON — no markdown, no code fences.",
+    input: prompt,
+    temperature: 0.3,
+  });
+
+  const rawText = response.output_text ?? "";
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON in evaluation response");
+
+  const parsed = JSON.parse(jsonMatch[0]) as {
+    evaluationEvents: Array<{
+      question: string;
+      answerSummary: string;
+      score: number;
+      feedback: string;
+    }>;
+    finalReport: {
+      summary: string;
+      strengths: string[];
+      improvements: string[];
+      finalScore: number;
+    };
+  };
+
+  const now = new Date().toISOString();
+  const events: InterviewEvaluationEvent[] = (parsed.evaluationEvents || []).map((e) => ({
+    at: now,
+    question: String(e.question || ""),
+    answerSummary: String(e.answerSummary || ""),
+    score: Math.min(10, Math.max(1, Math.round(Number(e.score) || 5))),
+    feedback: String(e.feedback || ""),
+  }));
+
+  const fr = parsed.finalReport || ({} as typeof parsed.finalReport);
+  const finalReport: InterviewFinalReport = {
+    summary: String(fr.summary || ""),
+    strengths: Array.isArray(fr.strengths) ? fr.strengths.map(String) : [],
+    improvements: Array.isArray(fr.improvements) ? fr.improvements.map(String) : [],
+    finalScore: Math.min(10, Math.max(1, Math.round(Number(fr.finalScore) || 5))),
+  };
+
+  return { events, finalReport };
+}
+
+const nextApp = next({ dev, hostname: HOSTNAME, port: PORT, webpack: dev });
 const nextHandler = nextApp.getRequestHandler();
 
 nextApp
@@ -137,6 +282,8 @@ nextApp
         candidateName: string;
         candidateEmail: string;
         role: string;
+        experienceLevel: string;
+        techStack: string[];
         templateInstructions: string;
       } | null = null;
 
@@ -144,6 +291,7 @@ nextApp
         transcript: [],
         events: [],
         finalReport: null,
+        referenceCards: [],
       };
 
       const authTimeout = setTimeout(() => {
@@ -157,11 +305,31 @@ nextApp
         }
         finalized = true;
 
-        const finalReport =
-          accumulator.finalReport ||
-          (candidateContext
-            ? buildFallbackReport(accumulator.events, candidateContext.role)
-            : null);
+        if (status === "COMPLETED" && candidateContext && !accumulator.finalReport) {
+          try {
+            const evalResult = await generatePostInterviewEvaluation(
+              accumulator.transcript,
+              {
+                role: candidateContext.role,
+                experienceLevel: candidateContext.experienceLevel,
+                techStack: candidateContext.techStack,
+              },
+              accumulator.referenceCards,
+            );
+            accumulator.events = evalResult.events;
+            accumulator.finalReport = evalResult.finalReport;
+            sendJson(clientWs, { type: "final_report", data: evalResult.finalReport });
+          } catch (err) {
+            console.error("Post-interview evaluation failed:", err);
+            // Fall back to utility report so results page still populates
+            accumulator.finalReport = buildFallbackReport(accumulator.events, candidateContext.role);
+            sendJson(clientWs, { type: "final_report", data: accumulator.finalReport });
+          }
+        } else if (accumulator.finalReport) {
+          sendJson(clientWs, { type: "final_report", data: accumulator.finalReport });
+        }
+
+        const finalReport = accumulator.finalReport;
 
         const updated = await prisma.interviewSession.updateMany({
           where: { id: interviewSessionId },
@@ -170,6 +338,7 @@ nextApp
             transcript: accumulator.transcript as any,
             evaluationEvents: accumulator.events as any,
             finalReport: finalReport as any,
+            referenceCards: accumulator.referenceCards as any,
             completedAt: new Date(),
           },
         });
@@ -186,7 +355,6 @@ nextApp
         }
 
         if (finalReport && candidateContext) {
-          const events = accumulator.events as Array<{ question: string; answerSummary: string; score: number; feedback: string }>;
           await Promise.allSettled([
             sendInterviewReportEmail({
               role: candidateContext.role,
@@ -203,12 +371,9 @@ nextApp
               summary: finalReport.summary,
               strengths: finalReport.strengths,
               improvements: finalReport.improvements,
-              evaluationEvents: events,
+              evaluationEvents: accumulator.events,
             }),
           ]);
-
-          sendJson(clientWs, { type: "final_report", data: finalReport });
-          sendJson(clientWs, { type: "interview_complete" });
         }
       };
 
@@ -318,6 +483,8 @@ nextApp
               candidateName: application.candidateName,
               candidateEmail: application.candidateEmail,
               role: application.template.jobRole,
+              experienceLevel: application.template.experienceLevel,
+              techStack: (application.template.techStack as string[]) || [],
               templateInstructions: application.template.systemInstructions,
             };
 
@@ -340,11 +507,18 @@ nextApp
               },
               onEvaluationEvent: (event: any) => {
                 accumulator.events.push(event);
-                sendJson(clientWs, { type: "backend_event", data: event });
               },
               onFinalReport: (report: InterviewFinalReport) => {
                 accumulator.finalReport = report;
-                sendJson(clientWs, { type: "final_report", data: report });
+              },
+              onReferenceCard: (card: InterviewReferenceCard) => {
+                const cardWithPosition: InterviewReferenceCard = {
+                  ...card,
+                  afterTranscriptIndex: accumulator.transcript.length,
+                };
+                console.log("[Server] Sending reference_card to client:", card.title);
+                accumulator.referenceCards.push(cardWithPosition);
+                sendJson(clientWs, { type: "reference_card", data: cardWithPosition });
               },
               onComplete: () => {
                 sendJson(clientWs, { type: "interview_complete" });
@@ -355,7 +529,8 @@ nextApp
             };
 
             if (defaultProvider === "openai-realtime") {
-              provider = new OpenAiRealtimeProvider(callbackHandlers);
+              const advCfg = application.template.advancedConfig as Record<string, string> | null;
+              provider = new OpenAiRealtimeProvider(callbackHandlers, undefined, advCfg?.voiceOption);
             } else {
               provider = new GeminiLiveInterviewProvider(callbackHandlers);
             }
@@ -439,6 +614,7 @@ nextApp
           transcript: [],
           events: [],
           finalReport: null,
+          referenceCards: [],
         };
 
         let devProvider: any = null;
@@ -455,21 +631,42 @@ nextApp
             sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType }),
           onEvaluationEvent: (event: any) => {
             devAccumulator.events.push(event);
-            sendJson(clientWs, { type: "backend_event", data: event });
           },
           onFinalReport: (report: InterviewFinalReport) => {
             devAccumulator.finalReport = report;
-            sendJson(clientWs, { type: "final_report", data: report });
+          },
+          onReferenceCard: (card: InterviewReferenceCard) => {
+            devAccumulator.referenceCards.push(card);
+            sendJson(clientWs, { type: "reference_card", data: card });
           },
           onComplete: () => {
             sendJson(clientWs, { type: "interview_complete" });
+            void (async () => {
+              try {
+                const evalResult = await generatePostInterviewEvaluation(
+                  devAccumulator.transcript,
+                  { role: resolvedRole, experienceLevel: "mid-level", techStack: [] },
+                  devAccumulator.referenceCards,
+                );
+                sendJson(clientWs, { type: "evaluation_events", data: evalResult.events });
+                sendJson(clientWs, { type: "final_report", data: evalResult.finalReport });
+              } catch (err) {
+                console.error("[dev] Post-interview evaluation failed:", err);
+                if (devAccumulator.finalReport) {
+                  sendJson(clientWs, { type: "final_report", data: devAccumulator.finalReport });
+                }
+              }
+            })();
           },
         };
 
         let devInstructions: string;
         let resolvedRole = role;
 
-        if (templateIdParam) {
+        if (templateIdParam === "__dev_dsa__") {
+          devInstructions = buildDsaDevInstructions(candidateName);
+          resolvedRole = "DSA & System Design";
+        } else if (templateIdParam) {
           try {
             const template = await prisma.interviewTemplate.findUnique({
               where: { id: templateIdParam },
@@ -497,7 +694,7 @@ nextApp
 
           void devProvider.connect({
             systemInstructions: devInstructions,
-            openingPrompt: `Start the interview now by greeting ${candidateName} and asking your first question for the ${resolvedRole} role.`,
+            openingPrompt: "Start the interview now.",
             candidateName,
           }).catch((err: Error) => {
             sendJson(clientWs, { type: "error", message: err.message });

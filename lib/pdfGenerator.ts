@@ -586,7 +586,7 @@ export async function generateInterviewReportPdf(data: {
     cursorY = sectionLabel("AREAS TO IMPROVE", cursorY, AMBER);
     for (const s of data.improvements) {
       if (cursorY < 60) break;
-      const lines = wrapText(`△  ${s}`, width - 90, 9, font);
+      const lines = wrapText(`^  ${s}`, width - 90, 9, font);
       for (const ln of lines) {
         page.drawText(ln, { x: 50, y: cursorY, size: 9, font, color: DARK_COLOR });
         cursorY -= 13;
