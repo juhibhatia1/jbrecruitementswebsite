@@ -99,6 +99,8 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
 
   const handleVoicePreview = (voice: string) => {
     if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
       audioRef.current.pause();
       audioRef.current.src = "";
     }
@@ -357,13 +359,13 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
                       <div className="flex-1 min-w-0">
                         <span className={`text-sm font-semibold ${selected ? "text-[#5a58ab]" : "text-[#252e3d]"}`}>
                           {v.charAt(0).toUpperCase() + v.slice(1)}
-                          {v === "marin" && <span className="ml-2 text-[10px] font-medium bg-[#5a58ab]/10 text-[#5a58ab] rounded-full px-2 py-0.5">Recommended</span>}
+                          {(v === "marin" || v === "cedar") && <span className="ml-2 text-[10px] font-medium bg-[#5a58ab]/10 text-[#5a58ab] rounded-full px-2 py-0.5">Recommended</span>}
                         </span>
                         <p className="text-[11px] text-slate-400 mt-0.5">{VOICE_DESCRIPTIONS[v]}</p>
                       </div>
                       <button
                         type="button"
-                        onClick={(e) => { e.preventDefault(); handleVoicePreview(v); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVoicePreview(v); }}
                         className={`shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${playing ? "bg-[#5a58ab] text-white" : "bg-slate-100 text-slate-600 hover:bg-[#5a58ab]/10 hover:text-[#5a58ab]"}`}
                       >
                         {playing ? (

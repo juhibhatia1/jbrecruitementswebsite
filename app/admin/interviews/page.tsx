@@ -6,6 +6,7 @@ import {
   isValidAdminSessionToken,
 } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { GenerateVoicesButton } from "./generate-voices-button";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,8 @@ export default async function AdminInterviewsPage() {
         </header>
 
         {/* New template CTA */}
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex flex-wrap items-start justify-end gap-3">
+          <GenerateVoicesButton />
           <Link
             href="/admin/interviews/new"
             className="rounded-xl bg-[#5a58ab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4a49a0] transition"
