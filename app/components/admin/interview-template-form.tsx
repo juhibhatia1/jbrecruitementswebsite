@@ -1,9 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
+
+const VOICE_DESCRIPTIONS: Record<string, string> = {
+  alloy: "Balanced · Neutral",
+  ash: "Warm · Measured",
+  ballad: "Smooth · Expressive",
+  cedar: "Calm · Confident",
+  coral: "Clear · Friendly",
+  echo: "Strong · Direct",
+  marin: "Natural · Professional",
+  sage: "Warm · Supportive",
+  shimmer: "Bright · Energetic",
+  verse: "Rich · Authoritative",
+};
 
 type AdvancedConfig = {
   voiceOption: string;
@@ -81,6 +94,25 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
     existingTemplate?.systemInstructions ?? "",
   );
   const [isActive, setIsActive] = useState(existingTemplate?.isActive ?? false);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleVoicePreview = (voice: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+    if (previewingVoice === voice) {
+      setPreviewingVoice(null);
+      return;
+    }
+    setPreviewingVoice(voice);
+    const audio = new Audio(`/api/voice-preview/${voice}`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => setPreviewingVoice(null);
+    audio.onerror = () => setPreviewingVoice(null);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -305,16 +337,57 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
           <div className="mt-4 space-y-3">
             <div>
               <label className={labelClass}>AI Interviewer Voice</label>
-              <select
-                name="voiceOption"
-                value={advanced.voiceOption}
-                onChange={(e) => setAdvanced((prev) => ({ ...prev, voiceOption: e.target.value }))}
-                className={inputClass}
-              >
-                {OPENAI_REALTIME_VOICES.map((v) => (
-                  <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}{v === "marin" ? " (Default)" : ""}</option>
-                ))}
-              </select>
+              <div className="mt-1 rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                {OPENAI_REALTIME_VOICES.map((v) => {
+                  const selected = advanced.voiceOption === v;
+                  const playing = previewingVoice === v;
+                  return (
+                    <label
+                      key={v}
+                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${selected ? "bg-[#f0efff]" : "bg-white hover:bg-slate-50"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="voiceOption"
+                        value={v}
+                        checked={selected}
+                        onChange={() => setAdvanced((prev) => ({ ...prev, voiceOption: v }))}
+                        className="accent-[#5a58ab] w-4 h-4 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm font-semibold ${selected ? "text-[#5a58ab]" : "text-[#252e3d]"}`}>
+                          {v.charAt(0).toUpperCase() + v.slice(1)}
+                          {v === "marin" && <span className="ml-2 text-[10px] font-medium bg-[#5a58ab]/10 text-[#5a58ab] rounded-full px-2 py-0.5">Recommended</span>}
+                        </span>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{VOICE_DESCRIPTIONS[v]}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); handleVoicePreview(v); }}
+                        className={`shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${playing ? "bg-[#5a58ab] text-white" : "bg-slate-100 text-slate-600 hover:bg-[#5a58ab]/10 hover:text-[#5a58ab]"}`}
+                      >
+                        {playing ? (
+                          <>
+                            <span className="inline-flex gap-0.5 items-end h-3">
+                              <span className="w-0.5 bg-white rounded-full animate-[voice-bar_0.8s_ease-in-out_infinite]" style={{ height: "40%" }} />
+                              <span className="w-0.5 bg-white rounded-full animate-[voice-bar_0.8s_ease-in-out_0.15s_infinite]" style={{ height: "100%" }} />
+                              <span className="w-0.5 bg-white rounded-full animate-[voice-bar_0.8s_ease-in-out_0.3s_infinite]" style={{ height: "60%" }} />
+                            </span>
+                            Stop
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                            Preview
+                          </>
+                        )}
+                      </button>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             {[
               {

@@ -12,6 +12,11 @@
   }
 }
 
+@keyframes voice-bar {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out both;
 }
