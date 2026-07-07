@@ -292,8 +292,12 @@ export default function InterviewRoom({ token }: { token: string }) {
 
     const startAt = Math.max(ctx.currentTime, playbackCursorRef.current);
     source.start(startAt);
-    playbackCursorRef.current = startAt + buffer.duration;
-    aiSpeakingUntilRef.current = Date.now() + Math.max(250, durationMs);
+    const endAt = startAt + buffer.duration;
+    playbackCursorRef.current = endAt;
+    
+    // Convert AudioContext scheduled end time back to wall-clock time (milliseconds)
+    const endAtWallTime = Date.now() + Math.max(0, endAt - ctx.currentTime) * 1000;
+    aiSpeakingUntilRef.current = Math.max(aiSpeakingUntilRef.current, endAtWallTime);
   }, []);
 
   // ── Main setup + WS effect ─────────────────────────────────────────────────
@@ -694,6 +698,24 @@ export default function InterviewRoom({ token }: { token: string }) {
           <div className="mt-3 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#5a58ab] animate-pulse" />
             <span className="text-xs text-gray-600">Your microphone is active</span>
+          </div>
+          <div className="mt-8">
+            <button
+              onClick={() => {
+                if (
+                  confirm(
+                    "Are you sure you want to end the interview early? The AI will compile your final report based on the completed answers.",
+                  )
+                ) {
+                  stopMic();
+                  sendJson({ type: "end_interview" });
+                  setPhase("results");
+                }
+              }}
+              className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition cursor-pointer"
+            >
+              End Interview Early
+            </button>
           </div>
         </div>
 

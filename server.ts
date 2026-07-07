@@ -538,8 +538,18 @@ nextApp
             clearTimeout(authTimeout);
             authenticated = true;
 
+            const baseInstructions = candidateContext.templateInstructions || "";
+            const dynamicGuidelines = `
+ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
+- You are a highly professional, rigorous, and intelligent technical interviewer.
+- Do NOT be overly generous. If the candidate answers poorly, gives a flat out incorrect explanation, or is too vague, do not ignore it. Politely and positively correct them, or guide them with constructive hints to help them perform better and learn.
+- Listen carefully to the candidate's answers. Respond with intelligence, depth, and clarity, directly addressing what the candidate actually said rather than blindly moving to the next scripted question.
+- Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
+- Maintain a warm, encouraging, but rigorous and professional tone.
+`;
+
             await provider.connect({
-              systemInstructions: candidateContext.templateInstructions,
+              systemInstructions: baseInstructions + dynamicGuidelines,
               openingPrompt: `Start the interview now by asking your first question for the ${candidateContext.role} role.`,
               candidateName: candidateContext.candidateName,
             });
@@ -692,8 +702,17 @@ nextApp
             devProvider = new GeminiLiveInterviewProvider(devCallbacks, modelParam);
           }
 
+          const previewInstructions = devInstructions + `
+ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
+- You are a highly professional, rigorous, and intelligent technical interviewer.
+- Do NOT be overly generous. If the candidate answers poorly, gives a flat out incorrect explanation, or is too vague, do not ignore it. Politely and positively correct them, or guide them with constructive hints to help them perform better and learn.
+- Listen carefully to the candidate's answers. Respond with intelligence, depth, and clarity, directly addressing what the candidate actually said rather than blindly moving to the next scripted question.
+- Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
+- Maintain a warm, encouraging, but rigorous and professional tone.
+`;
+
           void devProvider.connect({
-            systemInstructions: devInstructions,
+            systemInstructions: previewInstructions,
             openingPrompt: "Start the interview now.",
             candidateName,
           }).catch((err: Error) => {
