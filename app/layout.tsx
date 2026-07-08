@@ -11,6 +11,7 @@ import ChatWidget from "./components/chatbot/chat-widget";
 import { defaultMetadata, siteUrl } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
 import LenisProvider from "./providers/lenis-provider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -72,6 +73,19 @@ export default function RootLayout({
           <Analytics />
         </Suspense>
         {/* <SmoothScroll /> */}
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              fontFamily: "Raleway, sans-serif",
+              borderRadius: "1rem",
+              boxShadow: "0 8px 32px rgba(37,46,61,0.15)",
+            },
+            duration: 6000,
+          }}
+        />
         <LenisProvider>
           <FloatingNavbar />
           {children}

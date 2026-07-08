@@ -54,13 +54,16 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     finalScore:       report.finalScore ?? avgScore,
     summary:          report.summary,
     strengths:        report.strengths,
+    weaknesses:       report.weaknesses ?? [],
     improvements:     report.improvements,
     evaluationEvents: events.map((e) => ({
-      question:      e.question,
-      answerSummary: e.answerSummary,
-      score:         e.score,
-      feedback:      e.feedback,
+      question:       e.question,
+      answerSummary:  e.answerSummary,
+      score:          e.score,
+      feedback:       e.feedback,
+      improvementTip: e.improvementTip,
     })),
+    transcript: (session.transcript as Array<{ role: string; text: string }> | null) ?? [],
   });
 
   const safeName = session.application.template.jobRole.replace(/[^a-zA-Z0-9_-]/g, "_");

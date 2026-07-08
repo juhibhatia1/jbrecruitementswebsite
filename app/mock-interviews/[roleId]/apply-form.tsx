@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 type Props = { templateId: string; jobRole: string };
 
@@ -14,7 +15,6 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -22,11 +22,11 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setResult(null);
 
     if (!form.interviewPreference) {
-      setError("Please select a session preference.");
+      toast.error("Please select a session preference.", {
+        description: "Choose AI Mock Interview or Coach Session to continue.",
+      });
       return;
     }
 
@@ -41,19 +41,19 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
       const data = (await res.json()) as { message?: string; error?: string };
 
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
-      } else {
-        setResult({ success: true, message: data.message ?? "Booking confirmed!" });
-        setForm({
-          candidateName: "",
-          candidateEmail: "",
-          candidatePhone: "",
-          linkedInUrl: "",
-          interviewPreference: "",
+        toast.error("Booking Failed", {
+          description: data.error ?? "Something went wrong. Please try again.",
         });
+      } else {
+        toast.success("Booking Confirmed!", {
+          description: data.message ?? "Check your email for next steps.",
+        });
+        setResult({ success: true, message: data.message ?? "Booking confirmed!" });
       }
     } catch {
-      setError("Network error. Please check your connection and try again.");
+      toast.error("Network Error", {
+        description: "Check your connection and try again.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -80,133 +80,130 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
   const inputClass =
     "w-full rounded-xl border border-[#e0e0e0] bg-[#fafafa] px-4 py-2.5 text-sm text-[#252e3d] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/40 focus:border-[#5a58ab]";
 
-  const labelClass = "block text-xs font-semibold text-[#252e3d] mb-1.5 uppercase tracking-wide";
+  const labelClass =
+    "block text-xs font-semibold text-[#252e3d] mb-1.5 uppercase tracking-wide";
 
   return (
-    <div
-      className="rounded-2xl border border-[#e0e0e0] bg-white p-6"
-      style={{ fontFamily: "Raleway, sans-serif" }}
-    >
-      <h2
-        className="text-xl font-semibold text-[#252e3d] mb-1"
-        style={{ fontFamily: "Crimson Text, serif" }}
+    <>
+      <div
+        className="rounded-2xl border border-[#e0e0e0] bg-white p-6"
+        style={{ fontFamily: "Raleway, sans-serif" }}
       >
-        Book Mock Interview: {jobRole}
-      </h2>
-      <p className="text-xs text-gray-500 mb-5">
-        All fields marked * are required.
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className={labelClass} htmlFor="candidateName">
-            Full Name *
-          </label>
-          <input
-            id="candidateName"
-            name="candidateName"
-            type="text"
-            required
-            value={form.candidateName}
-            onChange={handleChange}
-            placeholder="Jane Smith"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label className={labelClass} htmlFor="candidateEmail">
-            Email Address *
-          </label>
-          <input
-            id="candidateEmail"
-            name="candidateEmail"
-            type="email"
-            required
-            value={form.candidateEmail}
-            onChange={handleChange}
-            placeholder="jane@example.com"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label className={labelClass} htmlFor="candidatePhone">
-            Phone Number
-          </label>
-          <input
-            id="candidatePhone"
-            name="candidatePhone"
-            type="tel"
-            value={form.candidatePhone}
-            onChange={handleChange}
-            placeholder="+1 555 000 0000"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label className={labelClass} htmlFor="linkedInUrl">
-            LinkedIn URL
-          </label>
-          <input
-            id="linkedInUrl"
-            name="linkedInUrl"
-            type="url"
-            value={form.linkedInUrl}
-            onChange={handleChange}
-            placeholder="https://linkedin.com/in/..."
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <p className={labelClass}>Session Preference *</p>
-          <div className="grid grid-cols-2 gap-3">
-            {(["AI", "MANUAL"] as const).map((pref) => (
-              <label
-                key={pref}
-                className={`flex cursor-pointer flex-col rounded-xl border-2 p-3 transition ${
-                  form.interviewPreference === pref
-                    ? "border-[#5a58ab] bg-[#f0efff]"
-                    : "border-[#e0e0e0] bg-[#fafafa] hover:border-[#5a58ab]/40"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="interviewPreference"
-                  value={pref}
-                  checked={form.interviewPreference === pref}
-                  onChange={handleChange}
-                  className="sr-only"
-                />
-                <span className="text-sm font-semibold text-[#252e3d]">
-                  {pref === "AI" ? "AI Mock Interview" : "Coach Session"}
-                </span>
-                <span className="mt-1 text-xs text-gray-500">
-                  {pref === "AI"
-                    ? "Start via voice link sent to email"
-                    : "Coach schedules a session"}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-xl bg-[#252e3d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:opacity-60 disabled:cursor-not-allowed"
+        <h2
+          className="text-xl font-semibold text-[#252e3d] mb-1"
+          style={{ fontFamily: "Crimson Text, serif" }}
         >
-          {submitting ? "Booking…" : "Book Session"}
-        </button>
-      </form>
-    </div>
+          Book Mock Interview: {jobRole}
+        </h2>
+        <p className="text-xs text-gray-500 mb-5">
+          All fields marked * are required.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={labelClass} htmlFor="candidateName">
+              Full Name *
+            </label>
+            <input
+              id="candidateName"
+              name="candidateName"
+              type="text"
+              required
+              value={form.candidateName}
+              onChange={handleChange}
+              placeholder="Jane Smith"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="candidateEmail">
+              Email Address *
+            </label>
+            <input
+              id="candidateEmail"
+              name="candidateEmail"
+              type="email"
+              required
+              value={form.candidateEmail}
+              onChange={handleChange}
+              placeholder="jane@example.com"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="candidatePhone">
+              Phone Number
+            </label>
+            <input
+              id="candidatePhone"
+              name="candidatePhone"
+              type="tel"
+              value={form.candidatePhone}
+              onChange={handleChange}
+              placeholder="+1 555 000 0000"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="linkedInUrl">
+              LinkedIn URL
+            </label>
+            <input
+              id="linkedInUrl"
+              name="linkedInUrl"
+              type="url"
+              value={form.linkedInUrl}
+              onChange={handleChange}
+              placeholder="https://linkedin.com/in/..."
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <p className={labelClass}>Session Preference *</p>
+            <div className="grid grid-cols-2 gap-3">
+              {(["AI", "MANUAL"] as const).map((pref) => (
+                <label
+                  key={pref}
+                  className={`flex cursor-pointer flex-col rounded-xl border-2 p-3 transition ${
+                    form.interviewPreference === pref
+                      ? "border-[#5a58ab] bg-[#f0efff]"
+                      : "border-[#e0e0e0] bg-[#fafafa] hover:border-[#5a58ab]/40"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="interviewPreference"
+                    value={pref}
+                    checked={form.interviewPreference === pref}
+                    onChange={handleChange}
+                    className="sr-only"
+                  />
+                  <span className="text-sm font-semibold text-[#252e3d]">
+                    {pref === "AI" ? "AI Mock Interview" : "Coach Session"}
+                  </span>
+                  <span className="mt-1 text-xs text-gray-500">
+                    {pref === "AI"
+                      ? "Start via voice link sent to email"
+                      : "Coach schedules a session"}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-xl bg-[#252e3d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {submitting ? "Booking…" : "Book Session"}
+          </button>
+        </form>
+      </div>
+    </>
   );
 }

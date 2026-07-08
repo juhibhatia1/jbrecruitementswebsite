@@ -55,13 +55,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     finalScore:       report.finalScore ?? avgScore,
     summary:          report.summary,
     strengths:        report.strengths,
+    weaknesses:       report.weaknesses ?? [],
     improvements:     report.improvements,
     evaluationEvents: events.map((e) => ({
-      question:      e.question,
-      answerSummary: e.answerSummary,
-      score:         e.score,
-      feedback:      e.feedback,
+      question:       e.question,
+      answerSummary:  e.answerSummary,
+      score:          e.score,
+      feedback:       e.feedback,
+      improvementTip: e.improvementTip,
     })),
+    resultsPageUrl: process.env.NEXT_PUBLIC_APP_URL
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/interview/results/${sessionId}`
+      : undefined,
   });
 
   if (!result.success) {

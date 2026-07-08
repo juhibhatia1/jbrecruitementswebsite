@@ -30,19 +30,17 @@ export function buildFallbackReport(
         )
       : 0;
 
+  const weakEvents = events.filter((event) => Number(event.score) < 7);
+  const strongEvents = events.filter((event) => Number(event.score) >= 7);
+
   return {
     summary:
       events.length > 0
         ? `Interview completed for ${jobRole} with ${events.length} evaluated responses.`
         : "Interview ended before enough evaluable responses were captured.",
-    strengths: events
-      .filter((event) => Number(event.score) >= 7)
-      .slice(0, 3)
-      .map((event) => event.feedback),
-    improvements: events
-      .filter((event) => Number(event.score) < 7)
-      .slice(0, 3)
-      .map((event) => event.feedback),
+    strengths: strongEvents.slice(0, 3).map((event) => event.feedback),
+    weaknesses: weakEvents.slice(0, 4).map((event) => `Needs improvement: ${event.question}`),
+    improvements: weakEvents.slice(0, 5).map((event) => event.improvementTip ?? event.feedback),
     finalScore: scoreAvg,
   };
 }

@@ -182,6 +182,12 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           this.handleFunctionCall(message);
         }
 
+        // Candidate started speaking — cancel in-flight AI response
+        if (message.type === "input_audio_buffer.speech_started") {
+          this.cancelResponse();
+          this.callbacks.onInterrupted();
+        }
+
         // Response turn complete
         if (message.type === "response.done") {
           const response = message.response as Record<string, any> | undefined;
@@ -256,6 +262,10 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     this.sendJson({ type: "response.create" });
   }
 
+  cancelResponse(): void {
+    this.sendJson({ type: "response.cancel" });
+  }
+
   close(): void {
     this.manuallyClosed = true;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -289,9 +299,9 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.92,
-              prefix_padding_ms: 400,
-              silence_duration_ms: 1800,
+              threshold: 0.5,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 700,
             },
             transcription: {
               model: "whisper-1",

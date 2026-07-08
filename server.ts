@@ -192,25 +192,30 @@ ${transcriptText}
 
 Identify every substantive question the interviewer asked and evaluate the candidate's response to each. Skip pleasantries and the self-introduction request (Section 1).
 
+PRIMARY GOAL: Help the candidate improve. Your evaluation should be heavily weighted towards actionable improvement guidance. Be specific — name the exact concept, pattern, or skill they need to work on, and how.
+
 Output valid JSON only, no markdown:
 {
   "evaluationEvents": [
     {
       "question": "<exact question asked>",
-      "answerSummary": "<1-2 sentence summary of candidate's answer>",
+      "answerSummary": "<1-2 sentence neutral summary of candidate's answer>",
       "score": <integer 1-10>,
-      "feedback": "<1-2 sentence constructive feedback>"
+      "feedback": "<1-2 sentence honest assessment of the answer quality>",
+      "improvementTip": "<For scores 1-7 only: one specific, actionable tip — e.g. 'Study hash map collision resolution: open addressing vs chaining. Practice implementing LRU cache using OrderedDict.' For scores 8-10: omit this field entirely.>"
     }
   ],
   "finalReport": {
-    "summary": "<3-4 sentence overall performance summary>",
-    "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
-    "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"],
+    "summary": "<3-4 sentence overall performance narrative. Be constructive — note what worked, what didn't, and the growth opportunity.>",
+    "strengths": ["<2-3 genuine, specific strengths the candidate clearly demonstrated — be concise>"],
+    "weaknesses": ["<3-4 specific shortcomings observed in the interview — concrete gaps, not advice. E.g. 'Confused time complexity of BFS vs DFS', 'No understanding of database indexing trade-offs'>"],
+    "improvements": ["<5-6 actionable improvement items. Each must name a specific topic/skill AND suggest how to improve it. E.g. 'System design — scalability: Study consistent hashing and horizontal vs vertical scaling. Build a mini URL shortener project.', 'Concurrency: Learn mutex vs semaphore trade-offs. Implement a thread-safe producer-consumer queue.'>"],
     "finalScore": <integer 1-10>
   }
 }
 
-SCORING: score and finalScore must be integers 1-10 only. Never decimals, never out of 100. 10=perfect, 1=completely wrong. Typical good answers: 6-8. finalScore = average of all individual scores rounded to nearest integer.`;
+SCORING: score and finalScore must be integers 1-10 only. Never decimals. 10=perfect, 1=completely wrong. Typical good answers: 6-8. finalScore = average of all individual scores rounded to nearest integer.
+WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. weaknesses MUST have 3-4 items. Improvements take priority — be thorough and specific there.`;
 
   const response = await openai.responses.create({
     model,
@@ -230,28 +235,38 @@ SCORING: score and finalScore must be integers 1-10 only. Never decimals, never 
       answerSummary: string;
       score: number;
       feedback: string;
+      improvementTip?: string;
     }>;
     finalReport: {
       summary: string;
       strengths: string[];
+      weaknesses: string[];
       improvements: string[];
       finalScore: number;
     };
   };
 
   const now = new Date().toISOString();
-  const events: InterviewEvaluationEvent[] = (parsed.evaluationEvents || []).map((e) => ({
-    at: now,
-    question: String(e.question || ""),
-    answerSummary: String(e.answerSummary || ""),
-    score: Math.min(10, Math.max(1, Math.round(Number(e.score) || 5))),
-    feedback: String(e.feedback || ""),
-  }));
+  const events: InterviewEvaluationEvent[] = (parsed.evaluationEvents || []).map((e) => {
+    const score = Math.min(10, Math.max(1, Math.round(Number(e.score) || 5)));
+    const event: InterviewEvaluationEvent = {
+      at: now,
+      question: String(e.question || ""),
+      answerSummary: String(e.answerSummary || ""),
+      score,
+      feedback: String(e.feedback || ""),
+    };
+    if (score <= 7 && e.improvementTip) {
+      event.improvementTip = String(e.improvementTip);
+    }
+    return event;
+  });
 
   const fr = parsed.finalReport || ({} as typeof parsed.finalReport);
   const finalReport: InterviewFinalReport = {
     summary: String(fr.summary || ""),
     strengths: Array.isArray(fr.strengths) ? fr.strengths.map(String) : [],
+    weaknesses: Array.isArray(fr.weaknesses) ? fr.weaknesses.map(String) : [],
     improvements: Array.isArray(fr.improvements) ? fr.improvements.map(String) : [],
     finalScore: Math.min(10, Math.max(1, Math.round(Number(fr.finalScore) || 5))),
   };
@@ -370,8 +385,12 @@ nextApp
               finalScore: finalReport.finalScore,
               summary: finalReport.summary,
               strengths: finalReport.strengths,
+              weaknesses: finalReport.weaknesses ?? [],
               improvements: finalReport.improvements,
               evaluationEvents: accumulator.events,
+              resultsPageUrl: process.env.NEXT_PUBLIC_APP_URL
+                ? `${process.env.NEXT_PUBLIC_APP_URL}/interview/results/${interviewSessionId}`
+                : undefined,
             }),
           ]);
         }
@@ -445,6 +464,9 @@ nextApp
               return;
             }
 
+            const defaultProvider = process.env.INTERVIEW_PROVIDER || "gemini-live";
+            let isResuming = false;
+
             if (application.session) {
               if (application.session.status === "COMPLETED") {
                 sendJson(clientWs, { type: "error", message: "Interview already completed." });
@@ -456,28 +478,44 @@ nextApp
                 clientWs.close(4409, "Session in progress");
                 return;
               }
-              // TERMINATED / FAILED / CONNECTING — stale, delete and allow retry
-              await prisma.interviewSession.delete({ where: { id: application.session.id } });
+              // TERMINATED / FAILED / CONNECTING
+              const previousTranscript = Array.isArray(application.session.transcript)
+                ? (application.session.transcript as InterviewTranscriptEntry[])
+                : [];
+
+              if (previousTranscript.length > 0) {
+                // Resume: restore transcript from interrupted session
+                await prisma.interviewSession.update({
+                  where: { id: application.session.id },
+                  data: { status: "CONNECTING" },
+                });
+                interviewSessionId = application.session.id;
+                accumulator.transcript = previousTranscript;
+                isResuming = true;
+              } else {
+                await prisma.interviewSession.delete({ where: { id: application.session.id } });
+              }
             }
 
-            const defaultProvider = process.env.INTERVIEW_PROVIDER || "gemini-live";
+            if (!isResuming) {
+              const session = await prisma.interviewSession.create({
+                data: {
+                  applicationId: application.id,
+                  provider: defaultProvider,
+                  status: "CONNECTING",
+                  transcript: [],
+                  evaluationEvents: [],
+                },
+              });
 
-            const session = await prisma.interviewSession.create({
-              data: {
-                applicationId: application.id,
-                provider: defaultProvider,
-                status: "CONNECTING",
-                transcript: [],
-                evaluationEvents: [],
-              },
-            });
+              await prisma.candidateApplication.update({
+                where: { id: application.id },
+                data: { status: "INTERVIEW_STARTED" },
+              });
 
-            await prisma.candidateApplication.update({
-              where: { id: application.id },
-              data: { status: "INTERVIEW_STARTED" },
-            });
+              interviewSessionId = session.id;
+            }
 
-            interviewSessionId = session.id;
             applicationId = application.id;
             candidateContext = {
               candidateName: application.candidateName,
@@ -490,7 +528,11 @@ nextApp
 
             const callbackHandlers = {
               onReady: () => {
-                sendJson(clientWs, { type: "ready", audioInputRate: provider?.audioInputRate ?? 16000 });
+                sendJson(clientWs, {
+                  type: "ready",
+                  audioInputRate: provider?.audioInputRate ?? 16000,
+                  existingTranscript: accumulator.transcript.length > 0 ? accumulator.transcript : undefined,
+                });
               },
               onStatus: (statusMessage: string) => {
                 sendJson(clientWs, { type: "status", message: statusMessage });
@@ -501,9 +543,20 @@ nextApp
               onTranscript: (entry: InterviewTranscriptEntry) => {
                 accumulator.transcript.push(entry);
                 sendJson(clientWs, { type: "transcript", data: entry });
+                if (accumulator.transcript.length % 5 === 0 && interviewSessionId) {
+                  prisma.interviewSession
+                    .update({
+                      where: { id: interviewSessionId },
+                      data: { transcript: accumulator.transcript as any },
+                    })
+                    .catch((err) => console.error("Periodic transcript save failed:", err));
+                }
               },
               onAudioChunk: (data: string, mimeType: string) => {
                 sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType });
+              },
+              onInterrupted: () => {
+                sendJson(clientWs, { type: "ai_interrupted" });
               },
               onEvaluationEvent: (event: any) => {
                 accumulator.events.push(event);
@@ -546,11 +599,33 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Listen carefully to the candidate's answers. Respond with intelligence, depth, and clarity, directly addressing what the candidate actually said rather than blindly moving to the next scripted question.
 - Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
 - Maintain a warm, encouraging, but rigorous and professional tone.
+- When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 `;
 
+            let systemInstructions = baseInstructions + dynamicGuidelines;
+            let openingPrompt = `Start the interview now by asking your first question for the ${candidateContext.role} role.`;
+
+            if (isResuming && accumulator.transcript.length > 0) {
+              const transcriptText = accumulator.transcript
+                .map((e) => `${e.role === "interviewer" ? "Interviewer" : "Candidate"}: ${e.text}`)
+                .join("\n");
+              systemInstructions += `
+
+IMPORTANT — INTERVIEW RESUMPTION CONTEXT:
+This interview session was briefly interrupted (e.g., the candidate refreshed the page) and is now continuing. The following conversation has already taken place:
+
+<previous_transcript>
+${transcriptText}
+</previous_transcript>
+
+Do NOT repeat any questions or topics already covered. Do NOT re-introduce yourself or restart the interview. Continue naturally from where the conversation left off, proceeding to the next question or topic.
+`;
+              openingPrompt = `The candidate has reconnected after a brief interruption. Continue the ${candidateContext.role} interview from where you left off — do not repeat questions already asked.`;
+            }
+
             await provider.connect({
-              systemInstructions: baseInstructions + dynamicGuidelines,
-              openingPrompt: `Start the interview now by asking your first question for the ${candidateContext.role} role.`,
+              systemInstructions,
+              openingPrompt,
               candidateName: candidateContext.candidateName,
             });
 
@@ -639,6 +714,9 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
           },
           onAudioChunk: (data: string, mimeType: string) =>
             sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType }),
+          onInterrupted: () => {
+            sendJson(clientWs, { type: "ai_interrupted" });
+          },
           onEvaluationEvent: (event: any) => {
             devAccumulator.events.push(event);
           },
@@ -709,6 +787,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Listen carefully to the candidate's answers. Respond with intelligence, depth, and clarity, directly addressing what the candidate actually said rather than blindly moving to the next scripted question.
 - Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
 - Maintain a warm, encouraging, but rigorous and professional tone.
+- When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 `;
 
           void devProvider.connect({

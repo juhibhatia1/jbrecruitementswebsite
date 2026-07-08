@@ -14,6 +14,7 @@ export interface RealtimeInterviewCallbacks {
   onEvaluationEvent: (event: InterviewEvaluationEvent) => void;
   onFinalReport: (report: InterviewFinalReport) => void;
   onReferenceCard: (card: InterviewReferenceCard) => void;
+  onInterrupted: () => void;
   onComplete: () => void;
 }
 
@@ -31,5 +32,6 @@ export interface RealtimeInterviewProvider {
   sendAudioChunk(data: string): void;
   endAudio(): void;
   endInterview(): void;
+  cancelResponse(): void;
   close(): void;
 }

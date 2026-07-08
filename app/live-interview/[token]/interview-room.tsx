@@ -10,13 +10,14 @@ type SetupStep = "mic" | "connecting" | "starting" | "done";
 
 type ServerMessage =
   | { type: "status"; message: string }
-  | { type: "ready"; audioInputRate?: number }
+  | { type: "ready"; audioInputRate?: number; existingTranscript?: InterviewTranscriptEntry[] }
   | { type: "error"; message: string }
   | { type: "transcript"; data: InterviewTranscriptEntry }
   | { type: "backend_event"; data: { at: string; question: string; score: number; feedback: string } }
   | { type: "ai_audio_chunk"; data: string; mimeType: string }
   | { type: "final_report"; data: InterviewFinalReport }
   | { type: "reference_card"; data: InterviewReferenceCard }
+  | { type: "ai_interrupted" }
   | { type: "interview_complete" };
 
 type TranscriptItem =
@@ -178,6 +179,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const playCtxRef = useRef<AudioContext | null>(null);
   const playbackCursorRef = useRef(0);
   const aiSpeakingUntilRef = useRef(0);
+  const scheduledSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const audioInputRateRef = useRef(16000);
 
   const phaseRef = useRef<Phase>("setup");
@@ -240,7 +242,7 @@ export default function InterviewRoom({ token }: { token: string }) {
       analyserRef.current = analyser;
 
       // eslint-disable-next-line @typescript-eslint/no-deprecated
-      const processor = ctx.createScriptProcessor(4096, 1, 1);
+      const processor = ctx.createScriptProcessor(2048, 1, 1);
       processorRef.current = processor;
 
       source.connect(analyser);
@@ -248,10 +250,6 @@ export default function InterviewRoom({ token }: { token: string }) {
       processor.connect(ctx.destination);
 
       processor.onaudioprocess = (e) => {
-        // Prevent echo feedback loops by not sending mic input while AI is speaking
-        if (Date.now() < aiSpeakingUntilRef.current) {
-          return;
-        }
         const input = e.inputBuffer.getChannelData(0);
         const downsampled = downsampleTo(input, ctx.sampleRate, audioInputRateRef.current);
         const pcm = floatTo16BitPcm(downsampled);
@@ -289,6 +287,10 @@ export default function InterviewRoom({ token }: { token: string }) {
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
+    scheduledSourcesRef.current.push(source);
+    source.onended = () => {
+      scheduledSourcesRef.current = scheduledSourcesRef.current.filter((s) => s !== source);
+    };
 
     const startAt = Math.max(ctx.currentTime, playbackCursorRef.current);
     source.start(startAt);
@@ -298,6 +300,15 @@ export default function InterviewRoom({ token }: { token: string }) {
     // Convert AudioContext scheduled end time back to wall-clock time (milliseconds)
     const endAtWallTime = Date.now() + Math.max(0, endAt - ctx.currentTime) * 1000;
     aiSpeakingUntilRef.current = Math.max(aiSpeakingUntilRef.current, endAtWallTime);
+  }, []);
+
+  const stopAiAudio = useCallback(() => {
+    for (const src of scheduledSourcesRef.current) {
+      try { src.stop(); } catch {}
+    }
+    scheduledSourcesRef.current = [];
+    playbackCursorRef.current = 0;
+    aiSpeakingUntilRef.current = 0;
   }, []);
 
   // ── Main setup + WS effect ─────────────────────────────────────────────────
@@ -378,6 +389,11 @@ export default function InterviewRoom({ token }: { token: string }) {
           case "ready":
             if (cancelled) return;
             audioInputRateRef.current = msg.audioInputRate ?? 16000;
+            if (msg.existingTranscript?.length) {
+              setTranscriptItems(
+                msg.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
+              );
+            }
             setSetupStep("done");
             setSetupStatus("Interview starting…");
             if (streamRef.current) {
@@ -403,6 +419,10 @@ export default function InterviewRoom({ token }: { token: string }) {
 
           case "ai_audio_chunk":
             playAiAudio(msg.data, msg.mimeType);
+            break;
+
+          case "ai_interrupted":
+            stopAiAudio();
             break;
 
           case "final_report":
@@ -613,24 +633,10 @@ export default function InterviewRoom({ token }: { token: string }) {
                 </div>
               )}
 
-              {/* Areas to improve */}
-              {finalReport.improvements.length > 0 && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-3">Areas to Improve</h3>
-                  <ul className="space-y-2">
-                    {finalReport.improvements.map((s, i) => (
-                      <li key={i} className="text-sm text-slate-700 flex gap-2.5">
-                        <span className="text-amber-500 mt-0.5 shrink-0 font-bold">△</span>
-                        {s}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               {/* Email notice */}
-              <div className="rounded-2xl border border-[#e0e0f0] bg-[#f0efff] p-4 text-center">
-                <p className="text-sm text-[#5a58ab] font-medium">Full report with detailed feedback has been emailed to you.</p>
+              <div className="rounded-2xl border border-[#e0e0f0] bg-[#f0efff] p-5 text-center">
+                <p className="text-sm font-semibold text-[#5a58ab] mb-1">Your personalised improvement plan is on its way!</p>
+                <p className="text-xs text-[#7674b8]">Detailed improvement plan, question-by-question feedback, observed weaknesses, and your full report have been sent to your email.</p>
               </div>
             </div>
           ) : (

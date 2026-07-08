@@ -335,8 +335,10 @@ interface InterviewResultsData {
   finalScore: number | null;
   summary: string;
   strengths: string[];
+  weaknesses: string[];
   improvements: string[];
-  evaluationEvents: Array<{ question: string; answerSummary: string; score: number; feedback: string }>;
+  evaluationEvents: Array<{ question: string; answerSummary: string; score: number; feedback: string; improvementTip?: string }>;
+  resultsPageUrl?: string;
 }
 
 export async function sendInterviewResultsToCandidate(data: InterviewResultsData) {
@@ -354,73 +356,63 @@ export async function sendInterviewResultsToCandidate(data: InterviewResultsData
   }
 
   const scoreLine = data.finalScore !== null ? `\nYour Score: ${data.finalScore} / 10` : "";
-  const strengthsList = data.strengths.map((s) => `  + ${s}`).join("\n");
-  const improvementsList = data.improvements.map((s) => `  △ ${s}`).join("\n");
-
-  const subject = `Your Mock Interview Report: ${data.jobRole} — JB Recruitment Solutions`;
+  const subject = `Your Mock Interview Report: ${escapeHtml(data.jobRole)} — JB Recruitment Solutions`;
 
   const textBody = `Hi ${data.candidateName},
 
-Your mock interview for ${data.jobRole} has been completed. Here is your performance report.
-${scoreLine}
+Your mock interview for ${data.jobRole} has been completed.${scoreLine}
 
 Summary:
 ${data.summary}
+${data.resultsPageUrl ? `\nView your full results (improvements, Q&A breakdown, transcript):\n${data.resultsPageUrl}` : ""}
 
-Strengths:
-${strengthsList || "See attached report."}
-
-Areas to Improve:
-${improvementsList || "See attached report."}
-
-Your full report is attached as a PDF.
+Your full performance report is also attached as a PDF.
 
 Best regards,
 Team JB Recruitment Solutions`;
 
+  const scoreColor = data.finalScore === null ? "#5a58ab"
+    : data.finalScore >= 8 ? "#16a34a"
+    : data.finalScore >= 6 ? "#d97706"
+    : "#dc2626";
+
   const scoreHtml = data.finalScore !== null
-    ? `<div style="text-align:center;margin:24px 0 0;">
-        <div style="display:inline-block;background:#5a58ab;border-radius:12px;padding:16px 32px;">
-          <div style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:4px;">SCORE</div>
-          <div style="color:white;font-size:36px;font-weight:800;line-height:1;">${data.finalScore}<span style="font-size:16px;font-weight:400;opacity:0.7"> / 10</span></div>
+    ? `<div style="text-align:center;margin:24px 0;">
+        <div style="display:inline-block;border-radius:16px;padding:20px 36px;border:2px solid ${scoreColor}20;background:${scoreColor}08;">
+          <div style="color:#718096;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">Overall Score</div>
+          <div style="font-size:48px;font-weight:800;line-height:1;color:${scoreColor};">${data.finalScore}<span style="font-size:20px;font-weight:400;color:#a0aec0;"> / 10</span></div>
         </div>
+      </div>`
+    : "";
+
+  const resultsButtonHtml = data.resultsPageUrl
+    ? `<div style="text-align:center;margin:24px 0 8px;">
+        <a href="${data.resultsPageUrl}" style="display:inline-block;background:#5a58ab;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.2px;">View Your Full Results →</a>
+        <p style="margin:10px 0 0;font-size:11px;color:#a0aec0;">Improvements · Q&amp;A breakdown · Full transcript</p>
       </div>`
     : "";
 
   const htmlBody = `
     <div style="font-family:'Raleway',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;color:#2d3748;">
-      <div style="background:#1a1f2b;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;">
-        <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="height:40px;width:auto;" />
-        <span style="color:rgba(255,255,255,0.5);font-size:11px;">Performance Report</span>
+      <div style="background:#1a1f2b;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;">
+        <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="height:36px;width:auto;" />
+        <span style="color:rgba(255,255,255,0.4);font-size:11px;">Performance Report</span>
       </div>
-      <div style="background:#5a58ab;padding:10px 28px;">
-        <span style="color:white;font-size:12px;font-weight:700;letter-spacing:0.5px;">MOCK INTERVIEW PERFORMANCE REPORT</span>
+      <div style="background:#5a58ab;padding:9px 28px;">
+        <span style="color:white;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Mock Interview Complete</span>
       </div>
       <div style="padding:28px;">
-        <p style="margin:0 0 4px;">Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
-        <p style="margin:0 0 20px;color:#4a5568;">Your mock interview for <strong>${escapeHtml(data.jobRole)}</strong> is complete. Here is your performance report.</p>
+        <p style="margin:0 0 4px;font-size:15px;">Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
+        <p style="margin:0 0 20px;color:#4a5568;font-size:14px;">Your mock interview for <strong>${escapeHtml(data.jobRole)}</strong> is complete. Here is your performance summary.</p>
         ${scoreHtml}
-        <div style="background:#f7fafc;border:1px solid #edf2f7;border-radius:8px;padding:16px;margin:20px 0;">
-          <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#718096;">Summary</p>
-          <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.6;">${escapeHtml(data.summary)}</p>
+        <div style="background:#f7fafc;border:1px solid #edf2f7;border-radius:10px;padding:16px;margin:20px 0;">
+          <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#718096;">Summary</p>
+          <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.65;">${escapeHtml(data.summary)}</p>
         </div>
-        ${data.strengths.length > 0 ? `
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0;">
-          <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#15803d;">Strengths</p>
-          <ul style="margin:0;padding-left:0;list-style:none;">
-            ${data.strengths.map((s) => `<li style="font-size:13px;color:#2d3748;padding:4px 0;"><span style="color:#16a34a;font-weight:700;margin-right:8px;">+</span>${escapeHtml(s)}</li>`).join("")}
-          </ul>
-        </div>` : ""}
-        ${data.improvements.length > 0 ? `
-        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:16px 0;">
-          <p style="margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;">Areas to Improve</p>
-          <ul style="margin:0;padding-left:0;list-style:none;">
-            ${data.improvements.map((s) => `<li style="font-size:13px;color:#2d3748;padding:4px 0;"><span style="color:#d97706;font-weight:700;margin-right:8px;">△</span>${escapeHtml(s)}</li>`).join("")}
-          </ul>
-        </div>` : ""}
-        <p style="font-size:12px;color:#718096;margin-top:24px;">Your full performance report with question-by-question evaluation is attached as a PDF. Keep it for your records and use it to guide your preparation.</p>
+        ${resultsButtonHtml}
+        <p style="font-size:12px;color:#a0aec0;margin-top:20px;text-align:center;">Your complete performance report (with full Q&amp;A and transcript) is also attached as a PDF.</p>
       </div>
-      <div style="background:#f7fafc;border-top:1px solid #edf2f7;padding:16px 28px;text-align:center;font-size:11px;color:#a0aec0;">
+      <div style="background:#f7fafc;border-top:1px solid #edf2f7;padding:14px 28px;text-align:center;font-size:11px;color:#a0aec0;">
         © ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.
       </div>
     </div>`;

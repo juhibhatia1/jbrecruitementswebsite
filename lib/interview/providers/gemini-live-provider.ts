@@ -132,6 +132,10 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
     }, 8000);
   }
 
+  cancelResponse(): void {
+    // Gemini handles barge-in natively when audio arrives mid-generation; no explicit cancel needed.
+  }
+
   close(): void {
     this.manuallyClosed = true;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {

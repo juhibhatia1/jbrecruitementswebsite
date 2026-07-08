@@ -12,11 +12,16 @@ export interface InterviewEvaluationEvent {
   /** 1–10 */
   score: number;
   feedback: string;
+  /** Actionable improvement tip — present only for scores ≤ 7 */
+  improvementTip?: string;
 }
 
 export interface InterviewFinalReport {
   summary: string;
   strengths: string[];
+  /** Observed shortcomings during the interview */
+  weaknesses: string[];
+  /** Actionable study/practice recommendations */
   improvements: string[];
   /** 1–10, average of individual scores */
   finalScore: number;
