@@ -600,6 +600,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
+- If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
 `;
 
             let systemInstructions = baseInstructions + dynamicGuidelines;
@@ -788,6 +789,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
+- If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
 `;
 
           void devProvider.connect({

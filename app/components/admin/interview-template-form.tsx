@@ -24,7 +24,6 @@ type AdvancedConfig = {
   behaviouralCompetencies: string;
   specificQuestions: string;
   evaluationCriteria: string;
-  passingThreshold: string;
   languagePreference: string;
   areasToEmphasize: string;
   areasToAvoid: string;
@@ -76,7 +75,6 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
     behaviouralCompetencies: existingTemplate?.advancedConfig?.behaviouralCompetencies ?? "",
     specificQuestions: existingTemplate?.advancedConfig?.specificQuestions ?? "",
     evaluationCriteria: existingTemplate?.advancedConfig?.evaluationCriteria ?? "",
-    passingThreshold: existingTemplate?.advancedConfig?.passingThreshold ?? "",
     languagePreference: existingTemplate?.advancedConfig?.languagePreference ?? "",
     areasToEmphasize: existingTemplate?.advancedConfig?.areasToEmphasize ?? "",
     areasToAvoid: existingTemplate?.advancedConfig?.areasToAvoid ?? "",
@@ -165,7 +163,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
       if (!isEditing) {
         const data = (await res.json()) as { template?: { id: string } };
         const newId = data.template?.id;
-        if (newId && autoGenOnSave) {
+        if (newId) {
           setAutoGenerating(true);
           try {
             await fetch(`${apiBase}/${newId}/generate`, { method: "POST" });
@@ -413,11 +411,6 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
                 placeholder: "e.g. Technical accuracy (40%), problem-solving approach (30%), communication (20%), culture fit (10%)",
               },
               {
-                name: "passingThreshold",
-                label: "Passing Threshold",
-                placeholder: "e.g. 70% — candidates scoring below this are not shortlisted",
-              },
-              {
                 name: "languagePreference",
                 label: "Language Preference",
                 placeholder: "e.g. English only, or English with Hindi allowed for explanations",
@@ -455,24 +448,26 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
       )}
 
 
-      {/* Auto-generate toggle */}
-      <label className="flex items-center gap-2.5 cursor-pointer w-fit">
-        <div
-          onClick={() => setAutoGenOnSave((p) => !p)}
-          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-            autoGenOnSave ? "bg-[#5a58ab]" : "bg-slate-200"
-          }`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
-              autoGenOnSave ? "translate-x-4" : "translate-x-0"
+      {/* Auto-generate toggle — edit page only */}
+      {isEditing && (
+        <label className="flex items-center gap-2.5 cursor-pointer w-fit">
+          <div
+            onClick={() => setAutoGenOnSave((p) => !p)}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+              autoGenOnSave ? "bg-[#5a58ab]" : "bg-slate-200"
             }`}
-          />
-        </div>
-        <span className="text-sm text-slate-600 select-none">
-          Auto-generate AI instructions on save
-        </span>
-      </label>
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                autoGenOnSave ? "translate-x-4" : "translate-x-0"
+              }`}
+            />
+          </div>
+          <span className="text-sm text-slate-600 select-none">
+            Re-generate AI instructions on save
+          </span>
+        </label>
+      )}
 
       {/* Save */}
       <div className="flex items-center gap-3">
@@ -482,7 +477,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
           disabled={saving || autoGenerating}
           className="rounded-xl bg-[#252e3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2d3645] transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {autoGenerating ? "Generating AI Instructions…" : saving ? "Saving…" : isEditing ? "Save Changes" : autoGenOnSave ? "Save & Generate" : "Create Template"}
+          {autoGenerating ? "Generating AI Instructions…" : saving ? "Saving…" : isEditing ? (autoGenOnSave ? "Save & Re-generate" : "Save Changes") : "Save & Generate"}
         </button>
 
         {isEditing && (
