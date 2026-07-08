@@ -480,7 +480,7 @@ nextApp
               }
               // TERMINATED / FAILED / CONNECTING
               const previousTranscript = Array.isArray(application.session.transcript)
-                ? (application.session.transcript as InterviewTranscriptEntry[])
+                ? (application.session.transcript as unknown as InterviewTranscriptEntry[])
                 : [];
 
               if (previousTranscript.length > 0) {

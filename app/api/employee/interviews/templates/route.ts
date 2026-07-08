@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         requiredSkills: Array.isArray(requiredSkills) ? requiredSkills.map(String) : [],
         durationMinutes: Number(durationMinutes),
         difficultyLevel: String(difficultyLevel).trim(),
-        advancedConfig: body.advancedConfig ?? undefined,
+        advancedConfig: (body.advancedConfig as any) ?? undefined,
         isActive: false,
       },
     });

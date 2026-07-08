@@ -55,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <StructuredData />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -67,6 +67,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased`}
+        suppressHydrationWarning
         >
         <GoogleAnalytics />
         <Suspense fallback={null}>

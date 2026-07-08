@@ -29,10 +29,10 @@ export default async function AdminResultDetailPage({ params }: Props) {
 
   if (!app || app.template.ownerRole !== "ADMIN") notFound();
 
-  const report  = app.session?.finalReport  as InterviewFinalReport | null;
-  const events  = (app.session?.evaluationEvents ?? []) as InterviewEvaluationEvent[];
-  const transcript = (app.session?.transcript ?? []) as InterviewTranscriptEntry[];
-  const referenceCards = (app.session?.referenceCards ?? []) as InterviewReferenceCard[];
+  const report  = app.session?.finalReport  as unknown as InterviewFinalReport | null;
+  const events  = (app.session?.evaluationEvents ?? []) as unknown as InterviewEvaluationEvent[];
+  const transcript = (app.session?.transcript ?? []) as unknown as InterviewTranscriptEntry[];
+  const referenceCards = (app.session?.referenceCards ?? []) as unknown as InterviewReferenceCard[];
   const timelineItems = buildTimeline(transcript, referenceCards);
   const avgScore = events.length > 0
     ? Math.round(events.reduce((a, e) => a + Number(e.score), 0) / events.length)

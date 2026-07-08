@@ -402,7 +402,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
               },
               {
                 name: "specificQuestions",
-                label: "Specific Questions to Include",
+                label: "Specific Questions to Include in Conversation",
                 placeholder: "e.g. Describe a time you debugged a critical production issue. How do you handle tight deadlines?",
               },
               {
@@ -412,17 +412,17 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
               },
               {
                 name: "languagePreference",
-                label: "Language Preference",
+                label: "Language Preference(s)",
                 placeholder: "e.g. English only, or English with Hindi allowed for explanations",
               },
               {
                 name: "areasToEmphasize",
-                label: "Areas to Emphasize",
+                label: "Focus Areas",
                 placeholder: "e.g. Cloud infrastructure experience, startup background, hands-on coding ability",
               },
               {
                 name: "areasToAvoid",
-                label: "Areas to Avoid",
+                label: "Topics to Avoid",
                 placeholder: "e.g. Do not ask about salary expectations, avoid overly theoretical questions",
               },
             ].map((field) => (

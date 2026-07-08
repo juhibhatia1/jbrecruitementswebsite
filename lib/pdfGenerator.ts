@@ -1,5 +1,7 @@
 import { PDFDocument, PDFImage, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
+import fs from "fs";
+import path from "path";
 
 const BRAND_COLOR = rgb(0.353, 0.345, 0.671); // #5a58ab
 const DARK_COLOR = rgb(0.145, 0.18, 0.239);   // #252e3d
@@ -50,14 +52,9 @@ export async function generateReceiptPdf(purchase: {
 
   // ── Logo (left-aligned, vertically centered in dark band) ─────────────────
   try {
-    const fs   = await import("fs");
-    const path = await import("path");
-    const _s = "sharp"; const sharp = await import(_s);
-
-    const logoAvifPath = path.join(process.cwd(), "public", "logo.avif");
-    if (fs.existsSync(logoAvifPath)) {
-      const avifBuffer = fs.readFileSync(logoAvifPath);
-      const pngBuffer  = await sharp.default(avifBuffer).png().toBuffer();
+    const logoPngPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPngPath)) {
+      const pngBuffer  = fs.readFileSync(logoPngPath);
       const logoImg    = await pdfDoc.embedPng(pngBuffer);
 
       // Target height = 52px, compute width proportionally
@@ -371,17 +368,11 @@ export async function generateReceiptPdf(purchase: {
 
   // ─── WATERMARK LOGO ─────────────────────────────────────────────────────────
   try {
-    const fs = await import("fs");
-    const path = await import("path");
-    const _s = "sharp"; const sharp = await import(_s);
-    
     const publicDir = path.join(process.cwd(), "public");
-    const logoAvifPath = path.join(publicDir, "logo.avif");
+    const logoPngPath = path.join(publicDir, "logo.png");
     
-    if (fs.existsSync(logoAvifPath)) {
-      const avifBuffer = fs.readFileSync(logoAvifPath);
-      // pdf-lib does not support AVIF directly, so we convert it to PNG buffer using sharp
-      const pngBuffer = await sharp.default(avifBuffer).png().toBuffer();
+    if (fs.existsSync(logoPngPath)) {
+      const pngBuffer = fs.readFileSync(logoPngPath);
       const embeddedImage = await pdfDoc.embedPng(pngBuffer);
       
       const logoWidth = 250;
@@ -484,12 +475,9 @@ export async function generateInterviewReportPdf(data: {
   // Embed logo once for header + watermark reuse
   let logoImg: PDFImage | null = null;
   try {
-    const fs   = await import("fs");
-    const path = await import("path");
-    const _s = "sharp"; const sharp = await import(_s);
-    const logoPath = path.join(process.cwd(), "public", "logo.avif");
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
     if (fs.existsSync(logoPath)) {
-      const buf = await sharp.default(fs.readFileSync(logoPath)).png().toBuffer();
+      const buf = fs.readFileSync(logoPath);
       logoImg   = await pdfDoc.embedPng(buf);
     }
   } catch { /* skip */ }

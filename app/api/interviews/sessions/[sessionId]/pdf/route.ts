@@ -36,8 +36,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Session not found." }, { status: 404 });
   }
 
-  const report   = session.finalReport as InterviewFinalReport | null;
-  const events   = (session.evaluationEvents ?? []) as InterviewEvaluationEvent[];
+  const report   = session.finalReport as unknown as InterviewFinalReport | null;
+  const events   = (session.evaluationEvents ?? []) as unknown as InterviewEvaluationEvent[];
   const avgScore = events.length > 0
     ? Math.round(events.reduce((a, e) => a + Number(e.score), 0) / events.length)
     : null;
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       feedback:       e.feedback,
       improvementTip: e.improvementTip,
     })),
-    transcript: (session.transcript as Array<{ role: string; text: string }> | null) ?? [],
+    transcript: (session.transcript as unknown as Array<{ role: string; text: string }> | null) ?? [],
   });
 
   const safeName = session.application.template.jobRole.replace(/[^a-zA-Z0-9_-]/g, "_");

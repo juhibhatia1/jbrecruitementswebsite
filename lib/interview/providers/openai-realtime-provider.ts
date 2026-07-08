@@ -288,30 +288,24 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   private sendSessionUpdate(): void {
     if (!this.setup) return;
 
-    // GA schema: no modalities field, nested session.audio.input/output
+    // GA schema: flat parameters direct under session
     this.sendJson({
       type: "session.update",
       session: {
         type: "realtime",
+        modalities: ["text", "audio"],
         instructions: this.setup.systemInstructions,
-        audio: {
-          input: {
-            format: { type: "audio/pcm", rate: 24000 },
-            input_audio_noise_reduction: { type: "near_field" },
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.75,
-              prefix_padding_ms: 200,
-              silence_duration_ms: 900,
-            },
-            transcription: {
-              model: "whisper-1",
-            },
-          },
-          output: {
-            format: { type: "audio/pcm", rate: 24000 },
-            voice: this.voice,
-          },
+        voice: this.voice,
+        input_audio_format: "pcm16",
+        output_audio_format: "pcm16",
+        input_audio_transcription: {
+          model: "whisper-1",
+        },
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.75,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 1200,
         },
         tools: [
           {
@@ -338,10 +332,11 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
               properties: {
                 summary: { type: "string" },
                 strengths: { type: "array", items: { type: "string" } },
+                weaknesses: { type: "array", items: { type: "string" } },
                 improvements: { type: "array", items: { type: "string" } },
                 finalScore: { type: "number" },
               },
-              required: ["summary", "strengths", "improvements", "finalScore"],
+              required: ["summary", "strengths", "weaknesses", "improvements", "finalScore"],
             },
           },
           {
@@ -390,6 +385,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
       const report: InterviewFinalReport = {
         summary: String(args.summary || ""),
         strengths: Array.isArray(args.strengths) ? args.strengths.map(String) : [],
+        weaknesses: Array.isArray(args.weaknesses) ? args.weaknesses.map(String) : [],
         improvements: Array.isArray(args.improvements)
           ? args.improvements.map(String)
           : [],

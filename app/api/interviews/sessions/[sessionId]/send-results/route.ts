@@ -36,8 +36,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Session not found." }, { status: 404 });
   }
 
-  const report = session.finalReport as InterviewFinalReport | null;
-  const events = (session.evaluationEvents ?? []) as InterviewEvaluationEvent[];
+  const report = session.finalReport as unknown as InterviewFinalReport | null;
+  const events = (session.evaluationEvents ?? []) as unknown as InterviewEvaluationEvent[];
 
   if (!report) {
     return NextResponse.json({ error: "No final report available to send." }, { status: 400 });

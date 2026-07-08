@@ -40,8 +40,8 @@ export default async function InterviewResultsPage({ params }: Props) {
     return <ErrorView message="Your results are being processed. Please check back in a few minutes." />;
   }
 
-  const events = (session.evaluationEvents ?? []) as InterviewEvaluationEvent[];
-  const transcript = (session.transcript ?? []) as InterviewTranscriptEntry[];
+  const events = (session.evaluationEvents ?? []) as unknown as InterviewEvaluationEvent[];
+  const transcript = (session.transcript ?? []) as unknown as InterviewTranscriptEntry[];
   const timelineItems = buildTimeline(transcript, []);
   const avgScore =
     events.length > 0
