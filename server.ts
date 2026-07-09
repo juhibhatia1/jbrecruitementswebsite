@@ -293,6 +293,7 @@ nextApp
       let interviewSessionId: string | null = null;
       let applicationId: string | null = null;
       let finalized = false;
+      let endInterviewRequested = false;
       let candidateContext: {
         candidateName: string;
         candidateEmail: string;
@@ -601,10 +602,12 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 - If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
+- MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
+- show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 `;
 
             let systemInstructions = baseInstructions + dynamicGuidelines;
-            let openingPrompt = `Start the interview now by asking your first question for the ${candidateContext.role} role.`;
+            let openingPrompt = `The candidate is ready. Please begin the interview for the ${candidateContext.role} role, following your instructions — greet the candidate, introduce the interview structure, then proceed.`;
 
             if (isResuming && accumulator.transcript.length > 0) {
               const transcriptText = accumulator.transcript
@@ -669,7 +672,14 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         }
 
         if (message.type === "end_interview") {
+          endInterviewRequested = true;
           provider.endInterview();
+          // Fallback: guarantee COMPLETED finalization even if Gemini never calls finalize_interview_report
+          setTimeout(() => {
+            void finalizeSession("COMPLETED").catch((err) => {
+              console.error("End-interview fallback finalization failed:", err);
+            });
+          }, 14000);
           return;
         }
       });
@@ -678,7 +688,8 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         clearTimeout(authTimeout);
         provider?.close();
         if (authenticated) {
-          void finalizeSession("TERMINATED").catch((error) => {
+          const closeStatus = endInterviewRequested ? "COMPLETED" : "TERMINATED";
+          void finalizeSession(closeStatus).catch((error) => {
             console.error("Failed to finalize disconnected session:", error);
           });
         }
@@ -790,6 +801,8 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 - If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
+- MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
+- show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 `;
 
           void devProvider.connect({

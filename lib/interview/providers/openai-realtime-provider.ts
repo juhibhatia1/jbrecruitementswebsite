@@ -45,6 +45,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   private completed = false;
   private manuallyClosed = false;
   private sessionInitialized = false;
+  private responseInFlight = false;
 
   constructor(
     callbacks: RealtimeInterviewCallbacks,
@@ -103,7 +104,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         const message = safeParseMessage(data);
         if (!message) return;
 
-        if (message.type !== "response.function_call_arguments.delta" && message.type !== "response.audio_transcript.delta" && message.type !== "response.output_audio.delta") {
+        if (message.type !== "response.function_call_arguments.delta" && message.type !== "response.audio_transcript.delta" && message.type !== "response.output_audio.delta" && message.type !== "response.output_audio_transcript.delta") {
           console.log("[OpenAI Realtime MSG]:", JSON.stringify(message).slice(0, 300));
         }
 
@@ -128,9 +129,24 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           this.callbacks.onStatus("Session configured.");
         }
 
+        if (
+          message.type === "conversation.item.input_audio_transcription.failed" ||
+          message.type === "conversation.item.audio_transcription.failed"
+        ) {
+          console.error("[OpenAI] Input transcription failed:", JSON.stringify(message).slice(0, 300));
+        }
+
         if (message.type === "error" || message.error) {
           const errMsg =
             message.error?.message || message.message || JSON.stringify(message);
+
+          // Non-fatal: cancel sent with no active response — reset state and continue
+          if (errMsg.includes("Cancellation failed") || errMsg.includes("no active response")) {
+            console.warn("[OpenAI Realtime] Non-fatal cancel error (ignored):", errMsg);
+            this.responseInFlight = false;
+            return;
+          }
+
           console.error("[OpenAI Realtime Error]:", errMsg);
 
           let userFriendlyMsg = errMsg;
@@ -167,14 +183,16 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         }
 
         // Candidate transcript from server VAD + transcription
+        // gpt-realtime-2 may fire either event name; handle both
         if (
-          message.type === "conversation.item.input_audio_transcription.completed" &&
-          message.transcript
+          (message.type === "conversation.item.input_audio_transcription.completed" ||
+           message.type === "conversation.item.audio_transcription.completed") &&
+          (message.transcript || message.text)
         ) {
-          this.callbacks.onTranscript({
-            role: "candidate",
-            text: String(message.transcript).trim(),
-          });
+          const text = String(message.transcript || message.text || "").trim();
+          if (text) {
+            this.callbacks.onTranscript({ role: "candidate", text });
+          }
         }
 
         // Tool call arguments assembled
@@ -188,8 +206,14 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           this.callbacks.onInterrupted();
         }
 
+        // Server confirmed response generation started
+        if (message.type === "response.created") {
+          this.responseInFlight = true;
+        }
+
         // Response turn complete
         if (message.type === "response.done") {
+          this.responseInFlight = false;
           const response = message.response as Record<string, any> | undefined;
           if (response?.status === "failed") {
             const failReason = response?.status_details?.error?.message || "Unknown";
@@ -253,16 +277,24 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         content: [
           {
             type: "input_text",
-            text: "Interview is over. Please evaluate my performance and finalize the interview report now.",
+            text: "The candidate has chosen to end the interview. Say exactly: 'Since you've decided to end the interview, I'll close the session now. Thank you for your time — your performance report will be generated shortly.' Then immediately call finalize_interview_report with the evaluation.",
           },
         ],
       },
     });
 
     this.sendJson({ type: "response.create" });
+
+    setTimeout(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.close();
+      }
+    }, 12000);
   }
 
   cancelResponse(): void {
+    if (!this.responseInFlight) return;
+    this.responseInFlight = false;
     this.sendJson({ type: "response.cancel" });
   }
 
@@ -288,24 +320,26 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
   private sendSessionUpdate(): void {
     if (!this.setup) return;
 
-    // GA schema: flat parameters direct under session
     this.sendJson({
       type: "session.update",
       session: {
         type: "realtime",
-        modalities: ["text", "audio"],
         instructions: this.setup.systemInstructions,
-        voice: this.voice,
-        input_audio_format: "pcm16",
-        output_audio_format: "pcm16",
-        input_audio_transcription: {
-          model: "whisper-1",
-        },
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.75,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 1200,
+        audio: {
+          input: {
+            format: { type: "audio/pcm", rate: 24000 },
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.75,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 900,
+            },
+            transcription: { model: "whisper-1" },
+          },
+          output: {
+            format: { type: "audio/pcm", rate: 24000 },
+            voice: this.voice,
+          },
         },
         tools: [
           {
@@ -397,6 +431,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         this.callbacks.onComplete();
       }
       result = { ok: true, reportStored: true };
+      needsContinuation = false;
     } else if (message.name === "show_reference_card") {
       console.log("[OpenAI] show_reference_card tool called, args:", JSON.stringify(args));
       const card: InterviewReferenceCard = {

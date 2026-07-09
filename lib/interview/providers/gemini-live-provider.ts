@@ -121,7 +121,7 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
 
     this.sendJson({
       realtimeInput: {
-        text: "The interview session has ended. Please wrap up immediately: give a brief verbal thank-you, then call finalize_interview_report with done=true.",
+        text: "The candidate has chosen to end the interview. Say exactly: 'Since you've decided to end the interview, I'll close the session now. Thank you for your time — your performance report will be generated shortly.' Then immediately call finalize_interview_report with done=true.",
       },
     });
 
@@ -129,7 +129,7 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.close();
       }
-    }, 8000);
+    }, 10000);
   }
 
   cancelResponse(): void {
@@ -305,9 +305,9 @@ export class GeminiLiveInterviewProvider implements RealtimeInterviewProvider {
         },
         realtimeInputConfig: {
           automaticActivityDetection: {
-            startOfSpeechSensitivity: "START_SENSITIVITY_LOW",
-            endOfSpeechSensitivity: "END_SENSITIVITY_LOW",
-            silenceDurationMs: 2000,
+            startOfSpeechSensitivity: "START_SENSITIVITY_HIGH",
+            endOfSpeechSensitivity: "END_SENSITIVITY_HIGH",
+            silenceDurationMs: 1200,
             prefixPaddingMs: 300,
           },
         },
