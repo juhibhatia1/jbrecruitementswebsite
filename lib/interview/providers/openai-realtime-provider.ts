@@ -330,7 +330,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.75,
+              threshold: 0.82,
               prefix_padding_ms: 200,
               silence_duration_ms: 900,
             },
