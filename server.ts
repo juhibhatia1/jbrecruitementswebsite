@@ -390,8 +390,8 @@ nextApp
               weaknesses: finalReport.weaknesses ?? [],
               improvements: finalReport.improvements,
               evaluationEvents: accumulator.events,
-              resultsPageUrl: process.env.NEXT_PUBLIC_APP_URL
-                ? `${process.env.NEXT_PUBLIC_APP_URL}/interview/results/${interviewSessionId}`
+              resultsPageUrl: (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL)
+                ? `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${interviewSessionId}`
                 : undefined,
             }),
           ]);

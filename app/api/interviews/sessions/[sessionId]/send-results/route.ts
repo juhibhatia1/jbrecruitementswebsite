@@ -64,8 +64,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       feedback:       e.feedback,
       improvementTip: e.improvementTip,
     })),
-    resultsPageUrl: process.env.NEXT_PUBLIC_APP_URL
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/interview/results/${sessionId}`
+    resultsPageUrl: (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL)
+      ? `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${sessionId}`
       : undefined,
   });
 
