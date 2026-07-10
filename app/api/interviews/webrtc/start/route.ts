@@ -72,8 +72,9 @@ export async function POST(request: NextRequest) {
       const previousEventsRaw = Array.isArray(session.evaluationEvents) ? session.evaluationEvents : [];
       const previousCardsRaw = Array.isArray(session.referenceCards) ? session.referenceCards : [];
 
+      // Hard block: interview already done — no re-entry regardless of session hint
       if (session.status === "COMPLETED") {
-        return NextResponse.json({ error: "Interview already completed." }, { status: 409 });
+        return NextResponse.json({ error: "Interview already completed. Each link is single-use." }, { status: 409 });
       }
 
       if (session.status === "ACTIVE" && !isSessionHintMatch) {

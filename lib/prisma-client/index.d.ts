@@ -87,6 +87,7 @@ export type CandidateInterviewPreference = (typeof CandidateInterviewPreference)
 export const CandidateApplicationStatus: {
   APPLIED: 'APPLIED',
   MANUAL_REVIEW_PENDING: 'MANUAL_REVIEW_PENDING',
+  SCHEDULED: 'SCHEDULED',
   AI_INVITED: 'AI_INVITED',
   INTERVIEW_STARTED: 'INTERVIEW_STARTED',
   INTERVIEW_COMPLETED: 'INTERVIEW_COMPLETED',
@@ -9517,6 +9518,7 @@ export namespace Prisma {
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
     status: $Enums.CandidateApplicationStatus | null
+    scheduledAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -9532,6 +9534,7 @@ export namespace Prisma {
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
     status: $Enums.CandidateApplicationStatus | null
+    scheduledAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -9547,6 +9550,7 @@ export namespace Prisma {
     accessTokenHash: number
     accessTokenExpiresAt: number
     status: number
+    scheduledAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -9564,6 +9568,7 @@ export namespace Prisma {
     accessTokenHash?: true
     accessTokenExpiresAt?: true
     status?: true
+    scheduledAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9579,6 +9584,7 @@ export namespace Prisma {
     accessTokenHash?: true
     accessTokenExpiresAt?: true
     status?: true
+    scheduledAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9594,6 +9600,7 @@ export namespace Prisma {
     accessTokenHash?: true
     accessTokenExpiresAt?: true
     status?: true
+    scheduledAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -9682,6 +9689,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date
     status: $Enums.CandidateApplicationStatus
+    scheduledAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: CandidateApplicationCountAggregateOutputType | null
@@ -9714,6 +9722,7 @@ export namespace Prisma {
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
     status?: boolean
+    scheduledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
@@ -9731,6 +9740,7 @@ export namespace Prisma {
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
     status?: boolean
+    scheduledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
@@ -9747,6 +9757,7 @@ export namespace Prisma {
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
     status?: boolean
+    scheduledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -9776,6 +9787,7 @@ export namespace Prisma {
       accessTokenHash: string
       accessTokenExpiresAt: Date
       status: $Enums.CandidateApplicationStatus
+      scheduledAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["candidateApplication"]>
@@ -10183,6 +10195,7 @@ export namespace Prisma {
     readonly accessTokenHash: FieldRef<"CandidateApplication", 'String'>
     readonly accessTokenExpiresAt: FieldRef<"CandidateApplication", 'DateTime'>
     readonly status: FieldRef<"CandidateApplication", 'CandidateApplicationStatus'>
+    readonly scheduledAt: FieldRef<"CandidateApplication", 'DateTime'>
     readonly createdAt: FieldRef<"CandidateApplication", 'DateTime'>
     readonly updatedAt: FieldRef<"CandidateApplication", 'DateTime'>
   }
@@ -11710,6 +11723,7 @@ export namespace Prisma {
     accessTokenHash: 'accessTokenHash',
     accessTokenExpiresAt: 'accessTokenExpiresAt',
     status: 'status',
+    scheduledAt: 'scheduledAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -12623,6 +12637,7 @@ export namespace Prisma {
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
     createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
@@ -12640,6 +12655,7 @@ export namespace Prisma {
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
+    scheduledAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     template?: InterviewTemplateOrderByWithRelationInput
@@ -12660,6 +12676,7 @@ export namespace Prisma {
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
     createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
@@ -12677,6 +12694,7 @@ export namespace Prisma {
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
+    scheduledAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CandidateApplicationCountOrderByAggregateInput
@@ -12698,6 +12716,7 @@ export namespace Prisma {
     accessTokenHash?: StringWithAggregatesFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableWithAggregatesFilter<"CandidateApplication"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
   }
@@ -13602,6 +13621,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
@@ -13619,6 +13639,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
@@ -13634,6 +13655,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
@@ -13651,6 +13673,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
@@ -13667,6 +13690,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -13681,6 +13705,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13696,6 +13721,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14542,6 +14568,7 @@ export namespace Prisma {
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
+    scheduledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -14557,6 +14584,7 @@ export namespace Prisma {
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
+    scheduledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -14572,6 +14600,7 @@ export namespace Prisma {
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
+    scheduledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15259,6 +15288,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionCreateNestedOneWithoutApplicationInput
@@ -15274,6 +15304,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
@@ -15319,6 +15350,7 @@ export namespace Prisma {
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
     createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
   }
@@ -15493,6 +15525,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
@@ -15509,6 +15542,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15539,6 +15573,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
@@ -15555,6 +15590,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15590,6 +15626,7 @@ export namespace Prisma {
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15604,6 +15641,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
@@ -15619,6 +15657,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
@@ -15634,6 +15673,7 @@ export namespace Prisma {
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

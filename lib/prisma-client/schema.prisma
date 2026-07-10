@@ -148,6 +148,7 @@ enum CandidateInterviewPreference {
 enum CandidateApplicationStatus {
   APPLIED
   MANUAL_REVIEW_PENDING
+  SCHEDULED
   AI_INVITED
   INTERVIEW_STARTED
   INTERVIEW_COMPLETED
@@ -195,6 +196,7 @@ model CandidateApplication {
   accessTokenHash      String                       @unique
   accessTokenExpiresAt DateTime
   status               CandidateApplicationStatus   @default(APPLIED)
+  scheduledAt          DateTime?
   createdAt            DateTime                     @default(now())
   updatedAt            DateTime                     @updatedAt
   template             InterviewTemplate            @relation(fields: [templateId], references: [id], onDelete: Cascade)

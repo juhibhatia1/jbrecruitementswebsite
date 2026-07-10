@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 import {
   IoSearch,
   IoClose,
@@ -56,6 +58,7 @@ export default function KnowledgeDashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<KnowledgeDoc | null>(null);
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
+  const [docToDelete, setDocToDelete] = useState<string | null>(null);
   
   // Upload Form state
   const [uploadTitle, setUploadTitle] = useState("");
@@ -119,9 +122,6 @@ export default function KnowledgeDashboard() {
 
   // Delete document
   const handleDeleteDoc = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this document? This will remove all vector search chunks instantly.")) {
-      return;
-    }
     setActionError(null);
     try {
       const res = await fetch(`/api/admin/knowledge/${id}`, {
@@ -129,12 +129,15 @@ export default function KnowledgeDashboard() {
       });
       if (res.ok) {
         setDocs((prev) => prev.filter((doc) => doc.id !== id));
+        toast.success("Document deleted successfully");
       } else {
         const errData = await res.json();
         setActionError(errData.error || "Failed to delete document.");
+        toast.error(errData.error || "Failed to delete document.");
       }
     } catch (err) {
       setActionError("Failed to delete document.");
+      toast.error("Failed to delete document.");
     }
   };
 
@@ -142,11 +145,11 @@ export default function KnowledgeDashboard() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadTitle.trim()) {
-      alert("Please specify a document title.");
+      toast.error("Please specify a document title.");
       return;
     }
     if (!uploadFile && !uploadText.trim()) {
-      alert("Please upload a file or write document text.");
+      toast.error("Please upload a file or write document text.");
       return;
     }
 
@@ -416,7 +419,7 @@ export default function KnowledgeDashboard() {
                           
                           {doc.sourceType !== "SYSTEM" && (
                             <button
-                              onClick={() => handleDeleteDoc(doc.id)}
+                              onClick={() => setDocToDelete(doc.id)}
                               className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-semibold cursor-pointer text-xs"
                               title="Delete document and chunks"
                             >
@@ -681,6 +684,21 @@ export default function KnowledgeDashboard() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={!!docToDelete}
+        onClose={() => setDocToDelete(null)}
+        onConfirm={() => {
+          if (docToDelete) {
+            handleDeleteDoc(docToDelete);
+          }
+        }}
+        title="Delete Knowledge Document?"
+        message="Are you sure you want to delete this document? This will remove all vector search chunks instantly."
+        confirmText="Delete"
+        cancelText="Cancel"
+        danger
+      />
     </div>
   );
 }

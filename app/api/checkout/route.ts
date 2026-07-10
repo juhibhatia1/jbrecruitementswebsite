@@ -51,6 +51,11 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { candidateName, candidateEmail, candidatePhone } = body;
+    // Optional interview metadata — only present when this checkout is for an AI mock interview
+    const interviewMetadata = body.interviewMetadata as {
+      templateId?: string;
+      linkedInUrl?: string;
+    } | undefined;
 
     if (!candidateName || !candidateEmail) {
       return NextResponse.json(
@@ -121,6 +126,12 @@ export async function POST(request: Request) {
         serviceCount: serviceNames.length.toString(),
         amount: totalAmount.toString(),
         displayCurrency: currency,
+        // Interview-specific metadata (only set for mock interview purchases)
+        ...(interviewMetadata?.templateId && {
+          interviewTemplateId: interviewMetadata.templateId,
+          interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+          linkedInUrl: interviewMetadata.linkedInUrl || "",
+        }),
       },
       receipt_email: candidateEmail,
     });

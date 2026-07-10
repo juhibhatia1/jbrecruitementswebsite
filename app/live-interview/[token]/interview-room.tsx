@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
+import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 
 type Phase = "setup" | "live" | "results" | "error";
 type SetupStep = "mic" | "connecting" | "starting" | "done";
@@ -108,6 +109,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -222,22 +224,33 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   const finalizeSession = useCallback(
     async (status: "COMPLETED" | "TERMINATED" | "FAILED") => {
-      if (!sessionIdRef.current) return;
+      if (!sessionIdRef.current) return null;
 
-      await fetch(`/api/interviews/webrtc/sessions/${sessionIdRef.current}/finalize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: sessionTokenRef.current,
-          transcript: transcriptRef.current,
-          events: evaluationEventsRef.current,
-          referenceCards: referenceCardsRef.current,
-          finalReport: finalReportRef.current,
-          status,
-        }),
-      }).catch((error) => {
+      try {
+        const res = await fetch(`/api/interviews/webrtc/sessions/${sessionIdRef.current}/finalize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: sessionTokenRef.current,
+            transcript: transcriptRef.current,
+            events: evaluationEventsRef.current,
+            referenceCards: referenceCardsRef.current,
+            finalReport: finalReportRef.current,
+            status,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.finalReport) {
+            finalReportRef.current = data.finalReport;
+            setFinalReport(data.finalReport);
+            return data.finalReport;
+          }
+        }
+      } catch (error) {
         console.error("Failed to finalize WebRTC session:", error);
-      });
+      }
+      return null;
     },
     [],
   );
@@ -257,6 +270,15 @@ export default function InterviewRoom({ token }: { token: string }) {
     durationTargetTimerRef.current = null;
     durationHardStopTimerRef.current = null;
   }, []);
+
+  const handleConfirmExit = useCallback(async () => {
+    clearInterviewTiming();
+    stopMic();
+    setAiSpeaking(false);
+    transportRef.current?.endInterview();
+    setPhase("results");
+    await finalizeSession("COMPLETED");
+  }, [clearInterviewTiming, stopMic, finalizeSession]);
 
   const armInterviewTiming = useCallback(() => {
     if (!interviewStartedAtRef.current || !interviewDurationMsRef.current) {
@@ -614,18 +636,18 @@ export default function InterviewRoom({ token }: { token: string }) {
   if (phase === "error") {
     return (
       <div
-        className="min-h-screen bg-[#0d1117] flex items-center justify-center px-4"
+        className="min-h-screen bg-[#F9F9FB] flex items-center justify-center px-4"
         style={{ fontFamily: "Raleway, sans-serif" }}
       >
         <div className="w-full max-w-sm text-center">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
-            <span className="text-2xl">✕</span>
+          <div className="w-16 h-16 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-5">
+            <span className="text-2xl text-red-500 font-bold">✕</span>
           </div>
-          <h2 className="text-lg font-semibold text-white mb-2">Unable to Start Interview</h2>
-          <p className="text-sm text-gray-400 mb-6 leading-relaxed">{errorMsg}</p>
+          <h2 className="text-lg font-semibold text-[#252e3d] mb-2">Unable to Start Interview</h2>
+          <p className="text-sm text-slate-500 mb-6 leading-relaxed">{errorMsg}</p>
           <Link
             href="/mock-interviews"
-            className="inline-block rounded-xl border border-[#5a58ab]/40 bg-[#5a58ab]/10 px-6 py-2.5 text-sm font-semibold text-[#a09fe0] hover:bg-[#5a58ab]/20 transition"
+            className="inline-block rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
           >
             ← Back to Sessions
           </Link>
@@ -646,28 +668,30 @@ export default function InterviewRoom({ token }: { token: string }) {
 
     return (
       <div
-        className="min-h-screen bg-[#0d1117] flex items-center justify-center px-4"
+        className="min-h-screen bg-[#F9F9FB] flex items-center justify-center px-4"
         style={{ fontFamily: "Raleway, sans-serif" }}
       >
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
           {/* Logo / brand */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-[#5a58ab] flex items-center justify-center">
                 <span className="text-white text-xs font-bold">JB</span>
               </div>
-              <span className="text-sm font-semibold text-gray-300">JB Recruitment Solutions</span>
+              <span className="text-sm font-semibold text-[#252e3d]">JB Recruitment Solutions</span>
             </div>
-            <h1 className="text-xl font-bold text-white">Preparing Your Interview</h1>
-            <p className="text-xs text-gray-500 mt-1">Please wait while we set everything up…</p>
+            <h1 className="text-xl font-bold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>Preparing Your Interview</h1>
+            <p className="text-xs text-slate-500 mt-1">Please wait while we set everything up…</p>
           </div>
 
           {/* Animated blob placeholder */}
           <div className="flex justify-center mb-8">
             <div className="relative w-24 h-24">
-              <div className="absolute inset-0 rounded-full bg-[#5a58ab]/20 animate-ping" style={{ animationDuration: "2s" }} />
-              <div className="absolute inset-2 rounded-full bg-[#5a58ab]/30 animate-pulse" />
-              <div className="absolute inset-4 rounded-full bg-[#5a58ab]/50" />
+              <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
+              <div className="absolute inset-2 rounded-full bg-[#5a58ab]/15 animate-pulse" />
+              <div className="absolute inset-4 rounded-full bg-[#5a58ab] flex items-center justify-center text-white font-bold">
+                JB
+              </div>
             </div>
           </div>
 
@@ -682,17 +706,17 @@ export default function InterviewRoom({ token }: { token: string }) {
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold transition-all ${
                       isDone
-                        ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400"
+                        ? "bg-emerald-50 border border-emerald-200 text-emerald-600"
                         : isActive
-                          ? "bg-[#5a58ab]/20 border border-[#5a58ab]/60 text-[#a09fe0]"
-                          : "bg-white/5 border border-white/10 text-gray-600"
+                          ? "bg-[#f0efff] border border-[#5a58ab]/40 text-[#5a58ab]"
+                          : "bg-slate-50 border border-slate-200 text-slate-400"
                     }`}
                   >
                     {isDone ? "✓" : i + 1}
                   </div>
                   <span
                     className={`text-sm transition-colors ${
-                      isDone ? "text-emerald-400" : isActive ? "text-gray-200" : "text-gray-600"
+                      isDone ? "text-emerald-600 font-medium" : isActive ? "text-[#252e3d] font-semibold" : "text-slate-400"
                     }`}
                   >
                     {label}
@@ -708,12 +732,12 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
 
           {/* Status text */}
-          <p className="text-center text-xs text-gray-500 min-h-[18px]">{setupStatus}</p>
+          <p className="text-center text-xs text-slate-500 min-h-[18px]">{setupStatus}</p>
 
           <button
             onClick={() => void beginInterview()}
             disabled={isStarting}
-            className="mt-6 w-full rounded-xl bg-[#5a58ab] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a49a0] disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isStarting ? "Starting…" : "Start Interview"}
           </button>
@@ -805,65 +829,53 @@ export default function InterviewRoom({ token }: { token: string }) {
   // ── Live interview ─────────────────────────────────────────────────────────
   return (
     <div
-      className="h-screen bg-[#0d1117] text-white flex flex-col overflow-hidden"
+      className="h-screen bg-[#F9F9FB] text-[#252e3d] flex flex-col overflow-hidden"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       {/* Top bar */}
-      <div className="border-b border-white/5 px-5 py-3 flex items-center justify-between shrink-0">
+      <div className="border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-[#5a58ab] flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">JB</span>
           </div>
-          <span className="text-xs font-semibold text-gray-400">AI Interview</span>
+          <span className="text-xs font-semibold text-slate-700">AI Mock Interview</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-xs text-gray-500">Live</span>
+          <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">Live</span>
         </div>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0">
-        {/* Left: blob — fixed size, never grows */}
-        <div className="flex flex-col items-center justify-center px-6 py-6 shrink-0 lg:w-80 lg:border-r lg:border-white/5 h-[260px] lg:h-auto">
+        {/* Left: blob — fixed size, bg white panel, border right */}
+        <div className="flex flex-col items-center justify-center px-6 py-6 shrink-0 lg:w-80 lg:border-r lg:border-slate-200 bg-white h-[260px] lg:h-auto shadow-sm">
           <canvas
             ref={canvasRef}
             width={220}
             height={220}
             className="rounded-full"
-            style={{ background: "radial-gradient(circle at 40% 35%, #1a1a2e 0%, #0d0d1a 100%)" }}
+            style={{ background: "radial-gradient(circle at 40% 35%, #ffffff 0%, #f0efff 100%)", border: "1px solid #e2e8f0" }}
           />
           <div className="mt-4 text-center">
-            <p className="text-sm font-semibold text-white">AI Interviewer</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
+            <p className="text-xs mt-0.5 font-medium">
               {aiSpeaking ? (
-                <span className="text-[#8b89e6]">Speaking…</span>
+                <span className="text-[#5a58ab]">Speaking…</span>
               ) : (
-                "Listening…"
+                <span className="text-slate-500">Listening…</span>
               )}
             </p>
           </div>
-          <div className="mt-3 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5a58ab] animate-pulse" />
-            <span className="text-xs text-gray-600">Your microphone is active</span>
+          <div className="mt-3 flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] text-slate-500 font-medium">Your mic is active</span>
           </div>
           <div className="mt-8">
             <button
-              onClick={() => {
-                if (
-                  confirm(
-                    "Are you sure you want to end the interview early? The AI will compile your final report based on the completed answers.",
-                  )
-                ) {
-                  clearInterviewTiming();
-                  stopMic();
-                  setAiSpeaking(false);
-                  transportRef.current?.endInterview();
-                  setPhase("results");
-                }
-              }}
-              className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition cursor-pointer"
+              onClick={() => setShowExitConfirm(true)}
+              className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-100 transition cursor-pointer"
             >
               End Interview Early
             </button>
@@ -872,11 +884,11 @@ export default function InterviewRoom({ token }: { token: string }) {
 
         {/* Right: transcript + reference cards inline — scrolls internally */}
         <div className="flex-1 flex flex-col min-h-0 p-4 lg:p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-3 shrink-0">Transcript</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 shrink-0">Transcript</p>
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
             {transcriptItems.length === 0 && (
               <div className="flex items-center justify-center h-32">
-                <p className="text-xs text-gray-600 text-center">
+                <p className="text-xs text-slate-400 text-center">
                   The conversation will appear here as the interview progresses.
                 </p>
               </div>
@@ -891,6 +903,17 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={handleConfirmExit}
+        title="End Interview Early?"
+        message="Are you sure you want to end the interview early? The AI will compile your final report based on the completed answers."
+        confirmText="End Early"
+        cancelText="Cancel"
+        danger
+      />
     </div>
   );
 }
@@ -900,30 +923,30 @@ export default function InterviewRoom({ token }: { token: string }) {
 function ReferenceCard({ card }: { card: InterviewReferenceCard }) {
   const [expanded, setExpanded] = useState(true);
   return (
-    <div className="rounded-xl border border-[#5a58ab]/30 bg-[#5a58ab]/8 overflow-hidden">
+    <div className="rounded-xl border border-[#e0dfff] bg-white overflow-hidden shadow-sm hover:shadow transition-shadow">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left"
+        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#f8f7ff] text-left"
       >
-        <span className="text-xs font-semibold text-[#a09fe0]">{card.title}</span>
-        <span className="text-[#5a58ab] text-xs">{expanded ? "▲" : "▼"}</span>
+        <span className="text-xs font-semibold text-[#5a58ab]">{card.title}</span>
+        <span className="text-[#5a58ab] text-[10px]">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
-        <div className="px-3 pb-3 border-t border-[#5a58ab]/20 max-w-none mt-2 text-xs text-gray-300
-          [&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-[#c4c2f0] [&_h1]:mt-3 [&_h1]:mb-1
-          [&_h2]:text-xs [&_h2]:font-bold [&_h2]:text-[#c4c2f0] [&_h2]:mt-2 [&_h2]:mb-1
-          [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-[#a09fe0] [&_h3]:mt-2 [&_h3]:mb-0.5
-          [&_strong]:font-semibold [&_strong]:text-gray-100
-          [&_em]:italic [&_em]:text-gray-400
-          [&_blockquote]:border-l-2 [&_blockquote]:border-[#5a58ab]/50 [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_blockquote]:italic [&_blockquote]:my-1
-          [&_hr]:border-[#5a58ab]/20 [&_hr]:my-2
-          [&_pre]:bg-[#0d1117] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[#5a58ab]/20 [&_pre]:my-1
-          [&_code]:font-mono [&_code]:text-[#a09fe0] [&_code]:text-xs [&_code]:bg-[#1a1a2e] [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5
-          [&_pre_code]:text-gray-200 [&_pre_code]:bg-transparent [&_pre_code]:p-0
+        <div className="px-3.5 pb-3.5 pt-2 border-t border-[#e0dfff] max-w-none text-xs text-slate-600 leading-relaxed
+          [&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-[#252e3d] [&_h1]:mt-3 [&_h1]:mb-1
+          [&_h2]:text-xs [&_h2]:font-bold [&_h2]:text-[#252e3d] [&_h2]:mt-2 [&_h2]:mb-1
+          [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-[#5a58ab] [&_h3]:mt-2 [&_h3]:mb-0.5
+          [&_strong]:font-semibold [&_strong]:text-[#252e3d]
+          [&_em]:italic [&_em]:text-slate-400
+          [&_blockquote]:border-l-2 [&_blockquote]:border-[#5a58ab]/40 [&_blockquote]:pl-3 [&_blockquote]:text-slate-500 [&_blockquote]:italic [&_blockquote]:my-1
+          [&_hr]:border-slate-100 [&_hr]:my-2
+          [&_pre]:bg-slate-50 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-slate-200 [&_pre]:my-1
+          [&_code]:font-mono [&_code]:text-[#5a58ab] [&_code]:text-xs [&_code]:bg-[#f8f7ff] [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5
+          [&_pre_code]:text-slate-800 [&_pre_code]:bg-transparent [&_pre_code]:p-0
           [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs [&_table]:my-1
-          [&_th]:border [&_th]:border-[#5a58ab]/30 [&_th]:bg-[#5a58ab]/15 [&_th]:px-2 [&_th]:py-1 [&_th]:text-[#a09fe0] [&_th]:font-semibold [&_th]:text-left
-          [&_td]:border [&_td]:border-[#5a58ab]/20 [&_td]:px-2 [&_td]:py-1 [&_td]:text-gray-300
-          [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-[#a09fe0] [&_a]:underline">
+          [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-[#5a58ab] [&_th]:font-semibold [&_th]:text-left
+          [&_td]:border [&_td]:border-slate-100 [&_td]:px-2 [&_td]:py-1 [&_td]:text-slate-600
+          [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-[#5a58ab] [&_a]:underline">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.content}</ReactMarkdown>
         </div>
       )}
@@ -936,17 +959,17 @@ function TranscriptBubble({ entry }: { entry: InterviewTranscriptEntry }) {
   return (
     <div className={`flex gap-2.5 ${isAI ? "" : "flex-row-reverse"}`}>
       <div
-        className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
-          isAI ? "bg-[#5a58ab]/30 text-[#a09fe0]" : "bg-white/10 text-gray-300"
+        className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold ${
+          isAI ? "bg-[#f0efff] text-[#5a58ab]" : "bg-slate-100 text-slate-500"
         }`}
       >
-        {isAI ? "AI" : "You"}
+        {isAI ? "AI" : "YOU"}
       </div>
       <div
         className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
           isAI
-            ? "bg-[#5a58ab]/15 border border-[#5a58ab]/20 text-gray-200 rounded-tl-sm"
-            : "bg-white/8 border border-white/10 text-gray-100 rounded-tr-sm"
+            ? "bg-[#f0efff] border border-[#e0dfff] text-[#252e3d] rounded-tl-sm"
+            : "bg-white border border-slate-200 text-[#252e3d] rounded-tr-sm shadow-sm"
         }`}
       >
         {entry.text}

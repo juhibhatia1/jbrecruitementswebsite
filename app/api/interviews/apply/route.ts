@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      applicationId: application.id,
       message:
         interviewPreference === "AI"
           ? "Application submitted! Check your email for the interview link."

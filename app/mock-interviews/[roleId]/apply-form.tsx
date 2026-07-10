@@ -1,10 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import Cal, { getCalApi } from "@calcom/embed-react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline } from "react-icons/io5";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
 type Props = { templateId: string; jobRole: string };
 
+// ─── Stripe inner checkout form ─────────────────────────────────────────────
+interface CheckoutFormProps {
+  totalAmount: number;
+  currency: string;
+  clientSecret: string;
+  onCancel: () => void;
+}
+
+function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: CheckoutFormProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    setErrorMessage(null);
+
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      window.location.origin;
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${appUrl}/payment/success`,
+      },
+    });
+
+    if (error) {
+      setErrorMessage(
+        error.type === "card_error" || error.type === "validation_error"
+          ? (error.message ?? "An error occurred.")
+          : "An unexpected error occurred.",
+      );
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Stripe PaymentElement */}
+      <PaymentElement />
+
+      {errorMessage && (
+        <div className="p-3.5 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm flex items-start gap-2">
+          <IoAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <div className="flex gap-3 pt-1">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={processing}
+          className="flex-1 rounded-xl border border-[#e0e0e0] px-4 py-3 text-sm font-semibold text-[#252e3d] transition hover:bg-gray-50 disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          disabled={processing || !stripe || !elements}
+          className="flex-[2] rounded-xl bg-[#5a58ab] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#4a489b] disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
+        >
+          {processing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              Processing…
+            </>
+          ) : (
+            <>
+              <IoLockClosed className="w-4 h-4" />
+              Pay {currency} {totalAmount.toLocaleString()}
+            </>
+          )}
+        </button>
+      </div>
+
+      <p className="text-center text-[10px] text-gray-400 flex items-center justify-center gap-1">
+        <IoLockClosed className="w-3 h-3" />
+        Secured by Stripe · Your card details are never stored
+      </p>
+    </form>
+  );
+}
+
+// ─── Main Apply Form ─────────────────────────────────────────────────────────
 export default function ApplyForm({ templateId, jobRole }: Props) {
   const [form, setForm] = useState({
     candidateName: "",
@@ -14,77 +117,204 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
     interviewPreference: "" as "AI" | "MANUAL" | "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Payment state — shared by both AI and MANUAL flows
+  const [currency, setCurrency] = useState<"USD" | "AED" | "INR">("USD");
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
+
+  // Derive prices directly from currency
+  const aiPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
+  const coachPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
+
+  // Detect currency using browser geo lookup exactly like services-section.tsx
+  useEffect(() => {
+    const GEO_CACHE_KEY = "jb_currency_v3";
+
+    // Clean up stale keys from older versions
+    sessionStorage.removeItem("jb_currency");
+    sessionStorage.removeItem("jb_currency_v2");
+
+    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as "USD" | "AED" | "INR" | null;
+    if (cached && ["USD", "AED", "INR"].includes(cached)) {
+      setCurrency(cached);
+      return;
+    }
+
+    const AED_COUNTRIES = new Set(["AE"]);
+    const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch("https://ipapi.co/json/", {
+      headers: { "Accept": "application/json" },
+      signal: controller.signal,
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+        return r.json();
+      })
+      .then((data: { country_code?: string; error?: boolean }) => {
+        if (data.error) throw new Error("ipapi.co returned an error response");
+        const code = (data.country_code || "").toUpperCase();
+        let detected: "USD" | "AED" | "INR" = "USD";
+        if (AED_COUNTRIES.has(code)) detected = "AED";
+        else if (INR_COUNTRIES.has(code)) detected = "INR";
+        console.log(`[geo-apply] Detected country: ${code} → currency: ${detected}`);
+        setCurrency(detected);
+        sessionStorage.setItem(GEO_CACHE_KEY, detected);
+      })
+      .catch((err) => {
+        console.warn("[geo-apply] Could not detect location, defaulting to USD:", err.message);
+      })
+      .finally(() => clearTimeout(timeout));
+  }, []);
+
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // ── Shared payment init — used by both AI and MANUAL ────────────────────
+  const handlePaymentInit = async (pref: "AI" | "MANUAL") => {
+    setSubmitting(true);
+    try {
+      const serviceName = pref === "AI" ? "AI Mock Interview" : "Coach Mock Interview";
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceNames: [serviceName],
+          candidateName: form.candidateName,
+          candidateEmail: form.candidateEmail,
+          candidatePhone: form.candidatePhone,
+          currency,
+          interviewMetadata: {
+            templateId,
+            linkedInUrl: form.linkedInUrl,
+            interviewPreference: pref,
+          },
+        }),
+      });
+      const data = (await res.json()) as { clientSecret?: string; error?: string };
+      if (!res.ok || !data.clientSecret) {
+        toast.error("Payment Setup Failed", {
+          description: data.error ?? "Could not initialise payment. Please try again.",
+        });
+        return;
+      }
+      setClientSecret(data.clientSecret);
+      setPaymentStage("checkout");
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    } catch (prevError) {
+      toast.error("Network Error", { description: "Check your connection and try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!form.interviewPreference) {
       toast.error("Please select a session preference.", {
         description: "Choose AI Mock Interview or Coach Session to continue.",
       });
       return;
     }
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/interviews/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId, ...form }),
-      });
-
-      const data = (await res.json()) as { message?: string; error?: string };
-
-      if (!res.ok) {
-        toast.error("Booking Failed", {
-          description: data.error ?? "Something went wrong. Please try again.",
-        });
-      } else {
-        toast.success("Booking Confirmed!", {
-          description: data.message ?? "Check your email for next steps.",
-        });
-        setResult({ success: true, message: data.message ?? "Booking confirmed!" });
-      }
-    } catch {
-      toast.error("Network Error", {
-        description: "Check your connection and try again.",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    await handlePaymentInit(form.interviewPreference as "AI" | "MANUAL");
   };
 
-  if (result?.success) {
+
+  // ─── Render: Stripe checkout (AI flow — after form submit) ────────────────
+  if (paymentStage === "checkout" && clientSecret) {
+    const stripeAppearance = {
+      theme: "stripe" as const,
+      variables: {
+        colorPrimary: "#5a58ab",
+        colorBackground: "#ffffff",
+        colorText: "#252e3d",
+        colorDanger: "#df1b41",
+        fontFamily: "Raleway, sans-serif",
+        spacingUnit: "4px",
+        borderRadius: "12px",
+      },
+    };
+
     return (
-      <div
-        className="rounded-2xl border border-[#e0e0e0] bg-white p-6 text-center"
-        style={{ fontFamily: "Raleway, sans-serif" }}
-      >
-        <div className="mb-3 text-3xl">✓</div>
-        <h3
-          className="text-lg font-semibold text-[#252e3d] mb-2"
-          style={{ fontFamily: "Crimson Text, serif" }}
+      <div ref={containerRef}>
+        <div
+          className="rounded-2xl border border-[#e0e0e0] bg-white p-6"
+          style={{ fontFamily: "Raleway, sans-serif" }}
         >
-          Booking Confirmed
-        </h3>
-        <p className="text-sm text-gray-600">{result.message}</p>
+          {/* Header */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[#5a58ab]">
+                <IoLockClosed className="w-4 h-4" />
+              </span>
+              <h3
+                className="text-lg font-semibold text-[#252e3d]"
+                style={{ fontFamily: "Crimson Text, serif" }}
+              >
+                Secure Checkout
+              </h3>
+            </div>
+            <p className="text-xs text-gray-500">
+              Complete payment to receive your AI mock interview link by email.
+            </p>
+          </div>
+
+          {/* Order summary */}
+          <div className="bg-[#f8f7ff] border border-[#e8e7f8] rounded-xl p-4 mb-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-[#5a58ab] uppercase tracking-wide mb-0.5">
+                  {form.interviewPreference === "AI" ? "AI Mock Interview" : "Coach Mock Interview"}
+                </p>
+                <p className="text-xs text-gray-500">{jobRole}</p>
+              </div>
+              <span className="text-lg font-bold text-[#252e3d]">
+                {currency} {(form.interviewPreference === "AI" ? aiPrice : coachPrice).toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Stripe form */}
+          <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+            <CheckoutForm
+              totalAmount={form.interviewPreference === "AI" ? aiPrice : coachPrice}
+              currency={currency}
+              clientSecret={clientSecret}
+              onCancel={() => {
+                setPaymentStage("form");
+                setClientSecret(null);
+                setTimeout(() => {
+                  containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
+            />
+          </Elements>
+        </div>
       </div>
     );
   }
 
+  // ─── Render: Main booking form ────────────────────────────────────────────
   const inputClass =
     "w-full rounded-xl border border-[#e0e0e0] bg-[#fafafa] px-4 py-2.5 text-sm text-[#252e3d] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/40 focus:border-[#5a58ab]";
-
   const labelClass =
     "block text-xs font-semibold text-[#252e3d] mb-1.5 uppercase tracking-wide";
 
+  const isAI = form.interviewPreference === "AI";
+
   return (
-    <>
+    <div ref={containerRef}>
       <div
         className="rounded-2xl border border-[#e0e0e0] bg-white p-6"
         style={{ fontFamily: "Raleway, sans-serif" }}
@@ -95,15 +325,11 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
         >
           Book Mock Interview: {jobRole}
         </h2>
-        <p className="text-xs text-gray-500 mb-5">
-          All fields marked * are required.
-        </p>
+        <p className="text-xs text-gray-500 mb-5">All fields marked * are required.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>
-            <label className={labelClass} htmlFor="candidateName">
-              Full Name *
-            </label>
+            <label className={labelClass} htmlFor="candidateName">Full Name *</label>
             <input
               id="candidateName"
               name="candidateName"
@@ -117,9 +343,7 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="candidateEmail">
-              Email Address *
-            </label>
+            <label className={labelClass} htmlFor="candidateEmail">Email Address *</label>
             <input
               id="candidateEmail"
               name="candidateEmail"
@@ -133,9 +357,7 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="candidatePhone">
-              Phone Number
-            </label>
+            <label className={labelClass} htmlFor="candidatePhone">Phone Number</label>
             <input
               id="candidatePhone"
               name="candidatePhone"
@@ -148,9 +370,7 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="linkedInUrl">
-              LinkedIn URL
-            </label>
+            <label className={labelClass} htmlFor="linkedInUrl">LinkedIn URL</label>
             <input
               id="linkedInUrl"
               name="linkedInUrl"
@@ -162,9 +382,10 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
             />
           </div>
 
+          {/* Session Preference Cards */}
           <div>
             <p className={labelClass}>Session Preference *</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(["AI", "MANUAL"] as const).map((pref) => (
                 <label
                   key={pref}
@@ -187,23 +408,181 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
                   </span>
                   <span className="mt-1 text-xs text-gray-500">
                     {pref === "AI"
-                      ? "Start via voice link sent to email"
-                      : "Coach schedules a session"}
+                      ? `Instant voice interview · ${currency} ${aiPrice.toLocaleString()}`
+                      : `Coach-led session · ${currency} ${coachPrice.toLocaleString()}`}
                   </span>
                 </label>
               ))}
             </div>
           </div>
 
+          {/* Payment notice — shown for both AI and MANUAL once selected */}
+          {form.interviewPreference !== "" && (
+            <div className="rounded-xl bg-[#f8f7ff] border border-[#e0dfff] px-4 py-3 flex items-start gap-2.5">
+              <IoLockClosed className="w-4 h-4 text-[#5a58ab] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {form.interviewPreference === "AI" ? (
+                  <>
+                    A secure Stripe payment of{" "}
+                    <strong>{currency} {aiPrice.toLocaleString()}</strong>{" "}
+                    is required. Your unique interview link will be emailed to you immediately after
+                    payment — valid for 7 days and usable only once.
+                  </>
+                ) : (
+                  <>
+                    A secure Stripe payment of{" "}
+                    <strong>{currency} {coachPrice.toLocaleString()}</strong>{" "}
+                    is required. A Cal.com scheduling link will be emailed to you immediately after
+                    payment so you can pick your preferred date and time.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-[#252e3d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-[#252e3d] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {submitting ? "Booking…" : "Book Session"}
+            {submitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                Initialising Payment…
+              </>
+            ) : (
+              <>
+                <IoLockClosed className="w-4 h-4" />
+                {form.interviewPreference === "AI"
+                  ? "Pay & Book AI Interview"
+                  : form.interviewPreference === "MANUAL"
+                  ? "Pay & Book Coach Session"
+                  : "Select a Session to Continue"}
+              </>
+            )}
           </button>
         </form>
       </div>
-    </>
+    </div>
+  );
+}
+
+// ─── Shared success card ─────────────────────────────────────────────────────
+function SuccessCard({ message }: { message: string }) {
+  return (
+    <div
+      className="rounded-2xl border border-[#e0e0e0] bg-white p-6 text-center"
+      style={{ fontFamily: "Raleway, sans-serif" }}
+    >
+      <IoCheckmarkCircle className="w-10 h-10 text-[#5a58ab] mx-auto mb-3" />
+      <h3
+        className="text-lg font-semibold text-[#252e3d] mb-2"
+        style={{ fontFamily: "Crimson Text, serif" }}
+      >
+        All Done!
+      </h3>
+      <p className="text-sm text-gray-600">{message}</p>
+    </div>
+  );
+}
+
+// ─── Full-screen Cal.com Overlay ───────────────────────────────────────────────
+interface CalOverlayProps {
+  calLink: string;
+  candidateName: string;
+  candidateEmail: string;
+  applicationId: string;
+  onSuccess: () => void;
+}
+
+function CalOverlay({
+  calLink,
+  candidateName,
+  candidateEmail,
+  applicationId,
+  onSuccess,
+}: CalOverlayProps) {
+  // Lock body scroll while overlay is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Wire up Cal.com API and listen for booking success
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cal = await getCalApi();
+        if (!mounted) return;
+        cal("ui", {
+          theme: "light",
+          styles: { branding: { brandColor: "#5a58ab" } },
+          hideEventTypeDetails: false,
+          layout: "month_view",
+        });
+        cal("on", {
+          action: "bookingSuccessful",
+          callback: () => { if (mounted) onSuccess(); },
+        });
+      } catch (err) {
+        console.error("Cal.com init error", err);
+      }
+    })();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ fontFamily: "Raleway, sans-serif" }}
+    >
+      {/* Blurred backdrop */}
+      <div className="absolute inset-0 bg-[#f5f5f8]/95 backdrop-blur-sm" />
+
+      {/* Content */}
+      <div className="relative flex flex-col h-full max-h-full">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e0e0e0] bg-white shadow-sm flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#f0efff] flex items-center justify-center">
+              <IoCalendarOutline className="w-5 h-5 text-[#5a58ab]" />
+            </div>
+            <div>
+              <h2
+                className="text-base font-semibold text-[#252e3d] leading-tight"
+                style={{ fontFamily: "Crimson Text, serif" }}
+              >
+                Select Your Interview Slot
+              </h2>
+              <p className="text-xs text-gray-400">
+                Choose a date on the left, then pick a time on the right
+              </p>
+            </div>
+          </div>
+
+          {/* JB branding pill */}
+          <div className="hidden sm:flex items-center gap-2 bg-[#f0efff] rounded-full px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#5a58ab] animate-pulse" />
+            <span className="text-xs font-semibold text-[#5a58ab]">JB Recruitment</span>
+          </div>
+        </div>
+
+        {/* Cal.com embed — fills remaining height */}
+        <div className="flex-1 overflow-hidden">
+          <Cal
+            calLink={calLink}
+            style={{ width: "100%", height: "100%" }}
+            config={{
+              name: candidateName,
+              email: candidateEmail,
+              "metadata[applicationId]": applicationId,
+            }}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

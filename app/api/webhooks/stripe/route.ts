@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { sendPurchaseEmails } from "@/lib/emailService";
+import { sendPurchaseEmails, sendInterviewInvitationEmail, sendNewApplicationAlertEmail } from "@/lib/emailService";
+import {
+  generateInterviewAccessToken,
+  hashInterviewAccessToken,
+} from "@/lib/interview/access-token";
 
 let stripe: Stripe | null = null;
 
@@ -103,6 +107,176 @@ export async function POST(request: Request) {
       });
 
       console.log(`Updated Purchase in database: ${purchase.id}. Status: COMPLETED`);
+
+      // ── If this is an AI mock interview purchase, create the application ──
+      const meta = paymentIntent.metadata;
+      if (
+        meta.interviewPreference === "AI" &&
+        meta.interviewTemplateId &&
+        meta.candidateName &&
+        meta.candidateEmail
+      ) {
+        try {
+          const template = await prisma.interviewTemplate.findUnique({
+            where: { id: meta.interviewTemplateId, isActive: true },
+          });
+
+          if (template) {
+            // Check if already created by success page details endpoint
+            const existing = await prisma.candidateApplication.findFirst({
+              where: {
+                templateId: template.id,
+                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                interviewPreference: "AI",
+              },
+            });
+            if (existing) {
+              console.log(`AI application ${existing.id} already exists (likely created by success page). Skipping creation.`);
+              return;
+            }
+
+            const TOKEN_EXPIRY_DAYS = 7;
+            const accessToken = generateInterviewAccessToken();
+            const accessTokenHash = hashInterviewAccessToken(accessToken);
+            const accessTokenExpiresAt = new Date(
+              Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+            );
+
+            const application = await prisma.candidateApplication.create({
+              data: {
+                templateId: template.id,
+                candidateName: meta.candidateName.trim(),
+                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                candidatePhone: null,
+                linkedInUrl: meta.linkedInUrl || null,
+                interviewPreference: "AI",
+                accessTokenHash,
+                accessTokenExpiresAt,
+                status: "AI_INVITED",
+              },
+            });
+
+            const appUrl =
+              process.env.NEXT_PUBLIC_APP_URL ||
+              process.env.NEXT_PUBLIC_SITE_URL ||
+              "https://jbrecruitments.com";
+            const interviewLink = `${appUrl}/interview/${accessToken}`;
+
+            // Send invitation email to candidate
+            await sendInterviewInvitationEmail({
+              candidateName: application.candidateName,
+              candidateEmail: application.candidateEmail,
+              jobRole: template.jobRole,
+              interviewPreference: "AI",
+              interviewLink,
+              interviewDescription: template.interviewDescription,
+              durationMinutes: template.durationMinutes,
+            });
+
+            // Alert the admin
+            await sendNewApplicationAlertEmail({
+              candidateName: application.candidateName,
+              candidateEmail: application.candidateEmail,
+              candidatePhone: null,
+              linkedInUrl: application.linkedInUrl,
+              jobRole: template.jobRole,
+              interviewPreference: "AI",
+              applicationId: application.id,
+            });
+
+            console.log(
+              `AI interview application ${application.id} created and link emailed to ${application.candidateEmail}`,
+            );
+          } else {
+            console.warn(
+              `AI mock interview template ${meta.interviewTemplateId} not found or inactive. Skipping application creation.`,
+            );
+          }
+        } catch (interviewErr) {
+          console.error("Failed to create AI interview application from webhook:", interviewErr);
+          // Do NOT return 500 here — purchase is already marked COMPLETED.
+          // Emit an alert but don't cause Stripe to re-deliver.
+        }
+      }
+
+      // ── If this is a MANUAL (Coach) mock interview purchase, create the application ──
+      if (
+        meta.interviewPreference === "MANUAL" &&
+        meta.interviewTemplateId &&
+        meta.candidateName &&
+        meta.candidateEmail
+      ) {
+        try {
+          const template = await prisma.interviewTemplate.findUnique({
+            where: { id: meta.interviewTemplateId, isActive: true },
+          });
+
+          if (template) {
+            // Generate a token so admin can look up the application later
+            const accessToken = generateInterviewAccessToken();
+            const accessTokenHash = hashInterviewAccessToken(accessToken);
+            const accessTokenExpiresAt = new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days for coach sessions
+            );
+
+            const application = await prisma.candidateApplication.create({
+              data: {
+                templateId: template.id,
+                candidateName: meta.candidateName.trim(),
+                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                candidatePhone: null,
+                linkedInUrl: meta.linkedInUrl || null,
+                interviewPreference: "MANUAL",
+                accessTokenHash,
+                accessTokenExpiresAt,
+                status: "MANUAL_REVIEW_PENDING",
+              },
+            });
+
+            const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
+            const appUrl =
+              process.env.NEXT_PUBLIC_APP_URL ||
+              process.env.NEXT_PUBLIC_SITE_URL ||
+              "https://jbrecruitments.com";
+            const calSchedulingLink = calLink.startsWith("http")
+              ? calLink
+              : `${appUrl.replace(/\/$/, "")}/${calLink}`;
+
+            // Send invitation email with Cal.com booking link
+            await sendInterviewInvitationEmail({
+              candidateName: application.candidateName,
+              candidateEmail: application.candidateEmail,
+              jobRole: template.jobRole,
+              interviewPreference: "MANUAL",
+              calSchedulingLink,
+              interviewDescription: template.interviewDescription,
+              durationMinutes: template.durationMinutes,
+            });
+
+            // Alert the admin
+            await sendNewApplicationAlertEmail({
+              candidateName: application.candidateName,
+              candidateEmail: application.candidateEmail,
+              candidatePhone: null,
+              linkedInUrl: application.linkedInUrl,
+              jobRole: template.jobRole,
+              interviewPreference: "MANUAL",
+              applicationId: application.id,
+            });
+
+            console.log(
+              `Coach interview application ${application.id} created and Cal link emailed to ${application.candidateEmail}`,
+            );
+          } else {
+            console.warn(
+              `Coach mock interview template ${meta.interviewTemplateId} not found or inactive. Skipping application creation.`,
+            );
+          }
+        } catch (coachErr) {
+          console.error("Failed to create Coach interview application from webhook:", coachErr);
+          // Do NOT return 500 here — purchase is already marked COMPLETED.
+        }
+      }
 
       // Record completed funnel event
       try {

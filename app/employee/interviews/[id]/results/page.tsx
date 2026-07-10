@@ -10,10 +10,14 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 const STATUS_STYLES: Record<string, string> = {
-  INTERVIEW_COMPLETED: "bg-emerald-50 text-emerald-700",
-  INTERVIEW_STARTED:   "bg-blue-50 text-blue-700",
-  TOKEN_EXPIRED:       "bg-red-50 text-red-600",
-  AI_INVITED:          "bg-[#f0efff] text-[#5a58ab]",
+  APPLIED:               "bg-gray-100 text-gray-700",
+  MANUAL_REVIEW_PENDING: "bg-amber-50 text-amber-700",
+  SCHEDULED:             "bg-sky-50 text-sky-700",
+  AI_INVITED:            "bg-[#f0efff] text-[#5a58ab]",
+  INTERVIEW_STARTED:     "bg-blue-50 text-blue-700",
+  INTERVIEW_COMPLETED:   "bg-emerald-50 text-emerald-700",
+  TOKEN_EXPIRED:         "bg-rose-50 text-rose-700",
+  CANCELLED:             "bg-red-50 text-red-700",
 };
 
 export default async function EmployeeInterviewResultsPage({ params }: Props) {
@@ -126,67 +130,85 @@ export default async function EmployeeInterviewResultsPage({ params }: Props) {
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
-                  <th className="px-5 py-3 text-left font-semibold">Candidate</th>
-                  <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Type</th>
-                  <th className="px-5 py-3 text-left font-semibold hidden sm:table-cell">Status</th>
-                  <th className="px-5 py-3 text-center font-semibold">Score</th>
-                  <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Date</th>
-                  <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {applications.map((app) => {
-                  const score = scoreOf(app);
-                  const scoreColor =
-                    score === null ? "text-slate-400"
-                    : score >= 7 ? "text-emerald-600"
-                    : score >= 5 ? "text-amber-600"
-                    : "text-red-500";
-                  return (
-                    <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <p className="font-semibold text-[#252e3d]">{app.candidateName}</p>
-                        <p className="text-xs text-slate-400">{app.candidateEmail}</p>
-                      </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${app.interviewPreference === "AI" ? "bg-[#f0efff] text-[#5a58ab]" : "bg-gray-100 text-gray-600"}`}>
-                          {app.interviewPreference === "AI" ? "AI Interview" : "Coach Session"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 hidden sm:table-cell">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[app.status] ?? "bg-slate-50 text-slate-600"}`}>
-                          {app.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`text-base font-bold ${scoreColor}`}>
-                          {score !== null ? `${score}/10` : "—"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-slate-400 hidden md:table-cell">
-                        {app.session?.completedAt
-                          ? new Date(app.session.completedAt).toLocaleDateString()
-                          : new Date(app.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <Link
-                          href={`/employee/interviews/${id}/results/${app.id}`}
-                          className="rounded-lg bg-[#252e3d] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2d3645] transition"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                    <th className="px-5 py-3 text-left font-semibold">Candidate</th>
+                    <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Type</th>
+                    <th className="px-5 py-3 text-left font-semibold hidden sm:table-cell">Interview Status</th>
+                    <th className="px-5 py-3 text-left font-semibold hidden lg:table-cell">Scheduled Date & Time</th>
+                    <th className="px-5 py-3 text-center font-semibold">Score</th>
+                    <th className="px-5 py-3 text-left font-semibold hidden md:table-cell">Date Booked</th>
+                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {applications.map((app) => {
+                    const score = scoreOf(app);
+                    const isCompleted = app.status === "INTERVIEW_COMPLETED";
+                    const scoreColor =
+                      !isCompleted ? "text-slate-400"
+                      : score === null ? "text-slate-400"
+                      : score >= 7 ? "text-emerald-600"
+                      : score >= 5 ? "text-amber-600"
+                      : "text-red-500";
+                    return (
+                      <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <p className="font-semibold text-[#252e3d]">{app.candidateName}</p>
+                          <p className="text-xs text-slate-400">{app.candidateEmail}</p>
+                        </td>
+                        <td className="px-5 py-3.5 hidden md:table-cell">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${app.interviewPreference === "AI" ? "bg-[#f0efff] text-[#5a58ab]" : "bg-gray-100 text-gray-600"}`}>
+                            {app.interviewPreference === "AI" ? "AI Interview" : "Coach Session"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 hidden sm:table-cell">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[app.status] ?? "bg-slate-50 text-slate-600"}`}>
+                            {app.status.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-slate-500 hidden lg:table-cell">
+                          {app.scheduledAt ? (
+                            <span className="font-medium text-slate-700">
+                              {new Date(app.scheduledAt).toLocaleString("en-US", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
+                            </span>
+                          ) : app.interviewPreference === "AI" ? (
+                            <span className="text-slate-400 italic">N/A (AI Interview)</span>
+                          ) : (
+                            <span className="text-amber-600 italic">Not scheduled yet</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-center">
+                          <span className={`text-base font-bold ${scoreColor}`}>
+                            {isCompleted ? (score !== null ? `${score}/10` : "Pending") : "Pending"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-slate-400 hidden md:table-cell">
+                          {new Date(app.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <Link
+                            href={`/employee/interviews/${id}/results/${app.id}`}
+                            className="rounded-lg bg-[#252e3d] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2d3645] transition"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
+

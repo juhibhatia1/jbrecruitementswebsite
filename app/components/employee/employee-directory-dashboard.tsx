@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   IoSearch,
   IoFilter,
@@ -260,9 +261,10 @@ export default function EmployeeDirectoryDashboard({
 
       const updated = await res.json();
       setPurchases((prev) => prev.map((p) => (p.id === purchaseId ? updated : p)));
+      toast.success("Delivery status updated successfully");
     } catch (err) {
       console.error(err);
-      alert("Error updating delivery status. Please try again.");
+      toast.error("Error updating delivery status. Please try again.");
     } finally {
       setUpdatingPurchaseId(null);
     }
@@ -281,9 +283,10 @@ export default function EmployeeDirectoryDashboard({
 
       const updated = await res.json();
       setPurchases((prev) => prev.map((p) => (p.id === purchaseId ? updated : p)));
+      toast.success("Notes saved successfully");
     } catch (err) {
       console.error(err);
-      alert("Error saving notes. Please try again.");
+      toast.error("Error saving notes. Please try again.");
     } finally {
       setUpdatingPurchaseId(null);
     }

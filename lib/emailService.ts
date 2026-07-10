@@ -202,6 +202,7 @@ interface InterviewInvitationData {
   jobRole: string;
   interviewPreference: "AI" | "MANUAL";
   interviewLink?: string;
+  calSchedulingLink?: string;
   interviewDescription?: string | null;
   durationMinutes: number;
 }
@@ -242,9 +243,11 @@ Best of luck!
 Team JB Recruitment Solutions`
     : `Hi ${data.candidateName},
 
-Thank you for booking your mock interview practice session for ${data.jobRole} at JB Recruitment Solutions.
+Thank you for booking your coach-led mock interview practice session for ${data.jobRole} at JB Recruitment Solutions.
 
-We have received your booking and a coach will be in touch with you shortly to schedule your practice session.
+Your payment has been received. Please use the link below to book your preferred session slot — your coach will be confirmed once you schedule:
+
+${data.calSchedulingLink ? `Book your slot: ${data.calSchedulingLink}` : "Our team will contact you shortly to schedule your session."}
 
 Best regards,
 Team JB Recruitment Solutions`;
@@ -292,10 +295,17 @@ Team JB Recruitment Solutions`;
           <img src="cid:jb-logo" alt="JB Recruitment Solutions" style="width: 100px; height: auto;" />
         </div>
         <div style="padding: 20px 0;">
-          <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Booking Confirmed</h2>
+          <h2 style="color: #5a58ab; font-size: 22px; margin-top: 0; font-weight: 600;">Payment Confirmed — Book Your Session</h2>
           <p>Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
-          <p>Thank you for booking your mock interview practice session for <strong>${escapeHtml(data.jobRole)}</strong>. We have received your booking and a coach will be in touch shortly to schedule your practice session.</p>
-          <p style="font-size: 14px; color: #718096;">If you have any questions in the meantime, feel free to reply to this email.</p>
+          <p>Thank you for booking a coach-led mock interview for <strong>${escapeHtml(data.jobRole)}</strong>. Your payment has been received successfully.</p>
+          <p>Please click below to choose your preferred date and time — the slot will be confirmed with your coach immediately after you schedule:</p>
+          ${data.calSchedulingLink ? `
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${data.calSchedulingLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Book Your Session Slot</a>
+          </div>
+          <p style="font-size: 13px; color: #718096; text-align: center;">Or copy this link: <a href="${data.calSchedulingLink}" style="color: #5a58ab;">${data.calSchedulingLink}</a></p>
+          ` : `<p style="font-size: 14px; color: #718096;">Our team will contact you shortly to schedule your session.</p>`}
+          <p style="font-size: 14px; color: #718096;">If you have any questions, feel free to reply to this email.</p>
         </div>
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
           <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
