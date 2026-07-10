@@ -244,6 +244,20 @@ export class OpenAIWebRtcInterviewTransport {
     }, 12000);
   }
 
+  sendOrchestrationMessage(text: string): void {
+    if (!text.trim() || !this.dc || this.dc.readyState !== "open" || this.completed) return;
+
+    this.sendJson({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    });
+    this.sendJson({ type: "response.create" });
+  }
+
   cancelResponse(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
     this.sendJson({ type: "response.cancel" });
@@ -319,9 +333,9 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.82,
-              prefix_padding_ms: 200,
-              silence_duration_ms: 900,
+              threshold: 0.9,
+              prefix_padding_ms: 120,
+              silence_duration_ms: 950,
             },
             transcription: { model: "whisper-1" },
           },

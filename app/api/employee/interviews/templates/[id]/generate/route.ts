@@ -81,7 +81,13 @@ TIME MANAGEMENT — critical, never end early:
 Total: ${duration} min. Core Q&A must fill all ${coreMins} min.${isShort
     ? ` This is a short interview. Move to the next topic after each satisfactory answer. Follow-up probes are OPTIONAL — use only if the answer was clearly incomplete, vague, or contradictory.`
     : ` Follow-up probes are not mandatory — use them when answer depth, remaining time, and section scope call for it. If all topics are covered and time remains, go deeper on earlier answers: "You mentioned [X] — walk me through a scenario where you had to [related challenge]."`
-  } Never close the interview before ${duration - outroMins} minutes have elapsed. If all planned topics are exhausted before time is up, NEVER end early — instead probe deeper: "You mentioned [X] — walk me through a real scenario where you had to deal with [related challenge]." Introduce scenario-based hypotheticals or revisit topics with higher-difficulty follow-ups. The interview MUST run to the ${duration - outroMins} minute mark no matter what.
+  } Never close the interview before ${duration - outroMins} minutes have elapsed. If all planned topics are exhausted before time is up, NEVER end early — instead probe deeper: "You mentioned [X] — walk me through a real scenario where you had to deal with [related challenge]." Introduce scenario-based hypotheticals or revisit topics with higher-difficulty follow-ups.
+Treat ${duration} minutes as target duration, not a hard cut-off. Continuously track elapsed time, remaining mandatory sections, pending coding/code-snippet minimums, and pacing. If ahead of schedule, deepen follow-ups and project-based discussion; if behind schedule, ask concise high-signal questions while preserving mandatory coverage.
+After reaching ${duration} minutes, enter graceful completion mode:
+• If candidate is speaking, never interrupt; wait for the answer to complete.
+• If current section is nearly complete or mandatory objectives remain, finish them before closing.
+• Maximum grace extension is 4 minutes beyond ${duration}. Within this grace, avoid starting brand-new broad sections; prioritize clean completion.
+When you receive a timing signal that only 30 seconds remain before ${duration} minutes, briefly acknowledge and begin wrapping cadence without ending immediately.
 
 PERSONALIZATION:
 During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] — with that in mind, how would you approach [topic]?"
@@ -106,7 +112,7 @@ finalize_interview_report — call ONCE, only at the very end after the verbal c
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate. Do not say "let me note that", "let me record this", "I'll log your answer", "I can't put something on screen", or any similar phrase. Tool calls are completely invisible — continue speaking naturally as if the call never happened.
 
 CLOSING SEQUENCE:
-After all sections are complete AND at least ${duration - outroMins} minutes have elapsed (whichever is later): thank the candidate sincerely, give a 2-3 sentence verbal summary of the topics covered, wish them well. Then — and only then — call finalize_interview_report. Never call it early.`;
+After all sections are complete AND at least ${duration - outroMins} minutes have elapsed (whichever is later), or when grace-mode completion conditions are satisfied near the end: thank the candidate sincerely, give a 2-3 sentence verbal summary of the topics covered, wish them well. Then — and only then — call finalize_interview_report. Never call it early.`;
 }
 
 export async function POST(request: NextRequest, { params }: RouteContext) {

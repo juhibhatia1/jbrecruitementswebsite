@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
 
@@ -130,6 +131,14 @@ export default function InterviewRoom({ token }: { token: string }) {
   const referenceCardsRef = useRef<InterviewReferenceCard[]>([]);
   const finalReportRef = useRef<InterviewFinalReport | null>(null);
   const pendingCardsRef = useRef<InterviewReferenceCard[]>([]);
+  const durationWarningTimerRef = useRef<number | null>(null);
+  const durationTargetTimerRef = useRef<number | null>(null);
+  const durationHardStopTimerRef = useRef<number | null>(null);
+  const durationWarningShownRef = useRef(false);
+  const targetSignalSentRef = useRef(false);
+  const hardStopSignalSentRef = useRef(false);
+  const interviewStartedAtRef = useRef<number | null>(null);
+  const interviewDurationMsRef = useRef(15 * 60 * 1000);
 
   const phaseRef = useRef<Phase>("setup");
   const sessionTokenKey = `jb-webrtc-session:${token}`;
@@ -233,6 +242,88 @@ export default function InterviewRoom({ token }: { token: string }) {
     [],
   );
 
+  const clearInterviewTiming = useCallback(() => {
+    const timers = [
+      durationWarningTimerRef.current,
+      durationTargetTimerRef.current,
+      durationHardStopTimerRef.current,
+    ];
+    for (const timer of timers) {
+      if (timer) {
+        window.clearTimeout(timer);
+      }
+    }
+    durationWarningTimerRef.current = null;
+    durationTargetTimerRef.current = null;
+    durationHardStopTimerRef.current = null;
+  }, []);
+
+  const armInterviewTiming = useCallback(() => {
+    if (!interviewStartedAtRef.current || !interviewDurationMsRef.current) {
+      return;
+    }
+
+    clearInterviewTiming();
+
+    const now = Date.now();
+    const targetAt = interviewStartedAtRef.current + interviewDurationMsRef.current;
+    const warningAt = targetAt - 30_000;
+    const hardStopAt = targetAt + 4 * 60_000;
+
+    const schedule = (at: number, setter: (timerId: number) => void, action: () => void) => {
+      const delay = at - now;
+      if (delay <= 0) {
+        action();
+        return;
+      }
+      const timerId = window.setTimeout(action, delay);
+      setter(timerId);
+    };
+
+    schedule(
+      warningAt,
+      (timerId) => {
+        durationWarningTimerRef.current = timerId;
+      },
+      () => {
+        if (phaseRef.current !== "live" || durationWarningShownRef.current) return;
+        durationWarningShownRef.current = true;
+        toast.info("Interview is nearing completion. About 30 seconds left in the scheduled duration.");
+        transportRef.current?.sendOrchestrationMessage(
+          "TIME_SIGNAL:30_SECONDS_REMAINING. You are 30 seconds away from the scheduled interview duration. Keep all mandatory interview requirements intact, tighten pacing, and prepare a graceful close without ending abruptly.",
+        );
+      },
+    );
+
+    schedule(
+      targetAt,
+      (timerId) => {
+        durationTargetTimerRef.current = timerId;
+      },
+      () => {
+        if (phaseRef.current !== "live" || targetSignalSentRef.current) return;
+        targetSignalSentRef.current = true;
+        transportRef.current?.sendOrchestrationMessage(
+          "TIME_SIGNAL:TARGET_REACHED. The scheduled interview duration is now reached. Do not interrupt the candidate mid-answer. Complete the current section and any remaining mandatory objectives naturally, then close professionally.",
+        );
+      },
+    );
+
+    schedule(
+      hardStopAt,
+      (timerId) => {
+        durationHardStopTimerRef.current = timerId;
+      },
+      () => {
+        if (phaseRef.current !== "live" || hardStopSignalSentRef.current) return;
+        hardStopSignalSentRef.current = true;
+        transportRef.current?.sendOrchestrationMessage(
+          "TIME_SIGNAL:HARD_STOP_REACHED. You are now at the maximum grace threshold (+4 minutes). Do not start new topics. Let the candidate finish the current answer, ask only essential final clarifications, deliver a professional closing, and call finalize_interview_report now.",
+        );
+      },
+    );
+  }, [clearInterviewTiming]);
+
   const handleTransportMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
       case "status":
@@ -260,6 +351,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         setSetupStatus("Interview starting…");
         setAiSpeaking(false);
         setPhase("live");
+        armInterviewTiming();
         break;
 
       case "transcript":
@@ -294,12 +386,13 @@ export default function InterviewRoom({ token }: { token: string }) {
         break;
 
       case "interview_complete":
+        clearInterviewTiming();
         stopMic();
         setPhase("results");
         void finalizeSession("COMPLETED");
         break;
     }
-  }, [finalizeSession, scheduleSync, stopMic]);
+  }, [armInterviewTiming, clearInterviewTiming, finalizeSession, scheduleSync, stopMic]);
 
   const beginInterview = useCallback(async () => {
     if (isStarting || phaseRef.current !== "setup") return;
@@ -310,12 +403,26 @@ export default function InterviewRoom({ token }: { token: string }) {
     cancelledRef.current = false;
 
     try {
+      const interviewAudioConstraints: MediaTrackConstraints & {
+        voiceIsolation?: boolean;
+        googNoiseSuppression?: boolean;
+        googEchoCancellation?: boolean;
+        googAutoGainControl?: boolean;
+        googHighpassFilter?: boolean;
+      } = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        voiceIsolation: true,
+        googNoiseSuppression: true,
+        googEchoCancellation: true,
+        googAutoGainControl: true,
+        googHighpassFilter: true,
+      };
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: interviewAudioConstraints,
         video: false,
       });
 
@@ -353,6 +460,8 @@ export default function InterviewRoom({ token }: { token: string }) {
         systemInstructions: string;
         clientSecret: string;
         voice: string;
+        durationMinutes: number;
+        sessionStartedAt: string;
         existingTranscript?: InterviewTranscriptEntry[];
         existingReferenceCards?: InterviewReferenceCard[];
         existingEvents?: Array<{ at: string; question: string; answerSummary: string; score: number; feedback: string; improvementTip?: string }>;
@@ -367,6 +476,18 @@ export default function InterviewRoom({ token }: { token: string }) {
       evaluationEventsRef.current = startData.existingEvents || [];
       referenceCardsRef.current = startData.existingReferenceCards || [];
       finalReportRef.current = null;
+      durationWarningShownRef.current = false;
+      targetSignalSentRef.current = false;
+      hardStopSignalSentRef.current = false;
+
+      const parsedDuration = Number(startData.durationMinutes);
+      interviewDurationMsRef.current = Number.isFinite(parsedDuration) && parsedDuration > 0
+        ? parsedDuration * 60 * 1000
+        : 15 * 60 * 1000;
+      const parsedStartedAt = Date.parse(startData.sessionStartedAt);
+      interviewStartedAtRef.current = Number.isFinite(parsedStartedAt)
+        ? parsedStartedAt
+        : Date.now();
 
       if (startData.existingTranscript?.length) {
         setTranscriptItems([
@@ -469,8 +590,9 @@ export default function InterviewRoom({ token }: { token: string }) {
     const audioElement = remoteAudioRef.current;
     return () => {
       cancelledRef.current = true;
-      transportRef.current?.close();
-      transportRef.current = null;
+    clearInterviewTiming();
+    transportRef.current?.close();
+    transportRef.current = null;
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
       }
@@ -481,7 +603,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         audioElement.srcObject = null;
       }
     };
-  }, [stopMic]);
+  }, [clearInterviewTiming, stopMic]);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -734,6 +856,7 @@ export default function InterviewRoom({ token }: { token: string }) {
                     "Are you sure you want to end the interview early? The AI will compile your final report based on the completed answers.",
                   )
                 ) {
+                  clearInterviewTiming();
                   stopMic();
                   setAiSpeaking(false);
                   transportRef.current?.endInterview();

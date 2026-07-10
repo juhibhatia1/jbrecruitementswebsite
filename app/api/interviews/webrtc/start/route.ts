@@ -11,6 +11,7 @@ function buildSessionInstructions(payload: {
   role: string;
   experienceLevel: string;
   techStack: string[];
+  durationMinutes: number;
   baseInstructions: string;
   transcript?: Array<{ role: "candidate" | "interviewer"; text: string }>;
   isResuming?: boolean;
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest) {
       role: application.template.jobRole,
       experienceLevel: application.template.experienceLevel,
       techStack: application.template.techStack,
+      durationMinutes: application.template.durationMinutes,
       baseInstructions,
       transcript: previousTranscript.length > 0 ? previousTranscript : undefined,
       isResuming,
@@ -143,6 +145,8 @@ export async function POST(request: NextRequest) {
       role: application.template.jobRole,
       experienceLevel: application.template.experienceLevel,
       techStack: application.template.techStack,
+      durationMinutes: application.template.durationMinutes,
+      sessionStartedAt: session.createdAt.toISOString(),
       voice,
       model,
       openingPrompt,
