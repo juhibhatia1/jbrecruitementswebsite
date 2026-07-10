@@ -2,19 +2,19 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import Link from "next/link";
 import remarkGfm from "remark-gfm";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
+import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
 
 type Phase = "setup" | "live" | "results" | "error";
 type SetupStep = "mic" | "connecting" | "starting" | "done";
 
 type ServerMessage =
   | { type: "status"; message: string }
-  | { type: "ready"; audioInputRate?: number; existingTranscript?: InterviewTranscriptEntry[] }
+  | { type: "ready"; existingTranscript?: InterviewTranscriptEntry[]; existingReferenceCards?: InterviewReferenceCard[] }
   | { type: "error"; message: string }
   | { type: "transcript"; data: InterviewTranscriptEntry }
-  | { type: "backend_event"; data: { at: string; question: string; score: number; feedback: string } }
-  | { type: "ai_audio_chunk"; data: string; mimeType: string }
   | { type: "final_report"; data: InterviewFinalReport }
   | { type: "reference_card"; data: InterviewReferenceCard }
   | { type: "ai_interrupted" }
@@ -23,64 +23,6 @@ type ServerMessage =
 type TranscriptItem =
   | { kind: "speech"; entry: InterviewTranscriptEntry }
   | { kind: "card"; card: InterviewReferenceCard };
-
-// ── Audio helpers ────────────────────────────────────────────────────────────
-
-function downsampleTo(input: Float32Array, fromRate: number, toRate: number): Float32Array {
-  if (fromRate === toRate) return input;
-  const ratio = fromRate / toRate;
-  const outputLength = Math.floor(input.length / ratio);
-  const output = new Float32Array(outputLength);
-  for (let i = 0; i < outputLength; i++) {
-    const start = Math.floor(i * ratio);
-    const end = Math.floor((i + 1) * ratio);
-    let sum = 0;
-    for (let j = start; j < end; j++) sum += input[j] ?? 0;
-    output[i] = sum / (end - start);
-  }
-  return output;
-}
-
-function floatTo16BitPcm(input: Float32Array): ArrayBuffer {
-  const buffer = new ArrayBuffer(input.length * 2);
-  const view = new DataView(buffer);
-  for (let i = 0; i < input.length; i++) {
-    const s = Math.max(-1, Math.min(1, input[i] ?? 0));
-    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-  }
-  return buffer;
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i] ?? 0);
-  return btoa(binary);
-}
-
-function base64ToUint8Array(b64: string): Uint8Array {
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-function parsePcmRate(mimeType: string): number {
-  const match = /rate=(\d+)/.exec(mimeType);
-  return match ? parseInt(match[1], 10) : 24000;
-}
-
-function pcmBytesToAudioBuffer(ctx: AudioContext, bytes: Uint8Array, sampleRate: number): AudioBuffer {
-  const samples = bytes.length / 2;
-  const buffer = ctx.createBuffer(1, samples, sampleRate);
-  const channelData = buffer.getChannelData(0);
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let i = 0; i < samples; i++) {
-    const int16 = view.getInt16(i * 2, true);
-    channelData[i] = int16 / (int16 < 0 ? 0x8000 : 0x7fff);
-  }
-  return buffer;
-}
 
 // ── Blob renderer ────────────────────────────────────────────────────────────
 
@@ -164,33 +106,37 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [aiSpeaking, setAiSpeaking] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const silentGainRef = useRef<GainNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-
-  const playCtxRef = useRef<AudioContext | null>(null);
-  const playbackCursorRef = useRef(0);
-  const aiSpeakingUntilRef = useRef(0);
-  const scheduledSourcesRef = useRef<AudioBufferSourceNode[]>([]);
-  const audioInputRateRef = useRef(16000);
-
-  const phaseRef = useRef<Phase>("setup");
-  phaseRef.current = phase;
+  const remotePlaybackSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const remotePlaybackGainRef = useRef<GainNode | null>(null);
+  const transportRef = useRef<OpenAIWebRtcInterviewTransport | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionTokenRef = useRef<string>(token);
+  const syncTimerRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
+  const transcriptRef = useRef<InterviewTranscriptEntry[]>([]);
+  const evaluationEventsRef = useRef<{ at: string; question: string; answerSummary: string; score: number; feedback: string; improvementTip?: string }[]>([]);
+  const referenceCardsRef = useRef<InterviewReferenceCard[]>([]);
+  const finalReportRef = useRef<InterviewFinalReport | null>(null);
   const pendingCardsRef = useRef<InterviewReferenceCard[]>([]);
 
-  const sendJson = useCallback((payload: Record<string, unknown>) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(payload));
-    }
-  }, []);
+  const phaseRef = useRef<Phase>("setup");
+  const sessionTokenKey = `jb-webrtc-session:${token}`;
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   // ── Blob animation (runs when live) ───────────────────────────────────────
   useEffect(() => {
@@ -214,9 +160,7 @@ export default function InterviewRoom({ token }: { token: string }) {
           }
           micLevel = Math.sqrt(rms / buf.length);
         }
-        const speaking = Date.now() < aiSpeakingUntilRef.current;
-        setAiSpeaking(speaking);
-        drawBlob(canvas, micLevel, speaking, Date.now() - startTime);
+        drawBlob(canvas, micLevel, aiSpeaking, Date.now() - startTime);
       }
       animFrameRef.current = requestAnimationFrame(draw);
     };
@@ -226,250 +170,318 @@ export default function InterviewRoom({ token }: { token: string }) {
       running = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [phase]);
-
-  // ── Start mic from already-acquired stream ─────────────────────────────────
-  const activateMic = useCallback(
-    async (stream: MediaStream) => {
-      const ctx = new AudioContext();
-      micCtxRef.current = ctx;
-
-      const source = ctx.createMediaStreamSource(stream);
-      sourceRef.current = source;
-
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyserRef.current = analyser;
-
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      const processor = ctx.createScriptProcessor(2048, 1, 1);
-      processorRef.current = processor;
-
-      source.connect(analyser);
-      analyser.connect(processor);
-      processor.connect(ctx.destination);
-
-      processor.onaudioprocess = (e) => {
-        const input = e.inputBuffer.getChannelData(0);
-        const downsampled = downsampleTo(input, ctx.sampleRate, audioInputRateRef.current);
-        const pcm = floatTo16BitPcm(downsampled);
-        const b64 = arrayBufferToBase64(pcm);
-        sendJson({ type: "audio_chunk", data: b64 });
-      };
-    },
-    [sendJson],
-  );
+  }, [phase, aiSpeaking]);
 
   const stopMic = useCallback(() => {
-    processorRef.current?.disconnect();
+    silentGainRef.current?.disconnect();
     analyserRef.current?.disconnect();
     sourceRef.current?.disconnect();
+    remotePlaybackSourceRef.current?.disconnect();
+    remotePlaybackGainRef.current?.disconnect();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     void micCtxRef.current?.close();
-    processorRef.current = null;
+    silentGainRef.current = null;
     analyserRef.current = null;
     sourceRef.current = null;
+    remotePlaybackSourceRef.current = null;
+    remotePlaybackGainRef.current = null;
     streamRef.current = null;
     micCtxRef.current = null;
   }, []);
 
-  // ── AI audio playback ──────────────────────────────────────────────────────
-  const playAiAudio = useCallback((b64: string, mimeType: string) => {
-    if (!playCtxRef.current) playCtxRef.current = new AudioContext();
-    const ctx = playCtxRef.current;
-    if (ctx.state === "suspended") void ctx.resume();
-
-    const bytes = base64ToUint8Array(b64);
-    const sampleRate = parsePcmRate(mimeType);
-    const buffer = pcmBytesToAudioBuffer(ctx, bytes, sampleRate);
-    const durationMs = buffer.duration * 1000;
-
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    scheduledSourcesRef.current.push(source);
-    source.onended = () => {
-      scheduledSourcesRef.current = scheduledSourcesRef.current.filter((s) => s !== source);
-    };
-
-    const startAt = Math.max(ctx.currentTime, playbackCursorRef.current);
-    source.start(startAt);
-    const endAt = startAt + buffer.duration;
-    playbackCursorRef.current = endAt;
-    
-    // Convert AudioContext scheduled end time back to wall-clock time (milliseconds)
-    const endAtWallTime = Date.now() + Math.max(0, endAt - ctx.currentTime) * 1000;
-    aiSpeakingUntilRef.current = Math.max(aiSpeakingUntilRef.current, endAtWallTime);
-  }, []);
-
-  const stopAiAudio = useCallback(() => {
-    for (const src of scheduledSourcesRef.current) {
-      try { src.stop(); } catch {}
+  const scheduleSync = useCallback(() => {
+    if (!sessionIdRef.current) return;
+    if (syncTimerRef.current) {
+      window.clearTimeout(syncTimerRef.current);
     }
-    scheduledSourcesRef.current = [];
-    playbackCursorRef.current = 0;
-    aiSpeakingUntilRef.current = 0;
+
+    syncTimerRef.current = window.setTimeout(() => {
+      void fetch(`/api/interviews/webrtc/sessions/${sessionIdRef.current}/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: sessionTokenRef.current,
+          transcript: transcriptRef.current,
+          events: evaluationEventsRef.current,
+          referenceCards: referenceCardsRef.current,
+          finalReport: finalReportRef.current,
+          status: phaseRef.current === "results" ? "COMPLETED" : "ACTIVE",
+        }),
+      }).catch(() => {});
+    }, 1000);
   }, []);
 
-  // ── Main setup + WS effect ─────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    let ws: WebSocket | null = null;
-    let lastError = "";
+  const finalizeSession = useCallback(
+    async (status: "COMPLETED" | "TERMINATED" | "FAILED") => {
+      if (!sessionIdRef.current) return;
 
-    async function setup() {
-      // Step 1: Microphone permission
-      setSetupStep("mic");
-      setSetupStatus("Requesting microphone access…");
+      await fetch(`/api/interviews/webrtc/sessions/${sessionIdRef.current}/finalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: sessionTokenRef.current,
+          transcript: transcriptRef.current,
+          events: evaluationEventsRef.current,
+          referenceCards: referenceCardsRef.current,
+          finalReport: finalReportRef.current,
+          status,
+        }),
+      }).catch((error) => {
+        console.error("Failed to finalize WebRTC session:", error);
+      });
+    },
+    [],
+  );
 
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-          video: false,
-        });
-      } catch {
-        if (!cancelled) {
-          setErrorMsg(
-            "Microphone access is required for the interview. Please allow microphone access in your browser and reload.",
-          );
+  const handleTransportMessage = useCallback((msg: ServerMessage) => {
+    switch (msg.type) {
+      case "status":
+        if (phaseRef.current !== "live") setSetupStatus(msg.message);
+        break;
+
+      case "error":
+        setErrorMsg(msg.message);
+        setAiSpeaking(false);
+        if (phaseRef.current !== "live" && phaseRef.current !== "results") {
           setPhase("error");
         }
-        return;
-      }
+        break;
 
-      if (cancelled) {
+      case "ready":
+        if (msg.existingTranscript?.length) {
+          transcriptRef.current = msg.existingTranscript;
+          referenceCardsRef.current = msg.existingReferenceCards || [];
+          setTranscriptItems([
+            ...msg.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
+            ...(msg.existingReferenceCards || []).map((card) => ({ kind: "card" as const, card })),
+          ]);
+        }
+        setSetupStep("done");
+        setSetupStatus("Interview starting…");
+        setAiSpeaking(false);
+        setPhase("live");
+        break;
+
+      case "transcript":
+        transcriptRef.current = [...transcriptRef.current, msg.data];
+        if (msg.data.role === "interviewer" && pendingCardsRef.current.length > 0) {
+          const pending = pendingCardsRef.current.splice(0);
+          setTranscriptItems((prev) => [
+            ...prev,
+            { kind: "speech", entry: msg.data },
+            ...pending.map((card) => ({ kind: "card" as const, card })),
+          ]);
+        } else {
+          setTranscriptItems((prev) => [...prev, { kind: "speech", entry: msg.data }]);
+        }
+        scheduleSync();
+        break;
+
+      case "final_report":
+        finalReportRef.current = msg.data;
+        setFinalReport(msg.data);
+        scheduleSync();
+        break;
+
+      case "reference_card":
+        referenceCardsRef.current = [...referenceCardsRef.current, msg.data];
+        pendingCardsRef.current.push(msg.data);
+        scheduleSync();
+        break;
+
+      case "ai_interrupted":
+        setAiSpeaking(false);
+        break;
+
+      case "interview_complete":
+        stopMic();
+        setPhase("results");
+        void finalizeSession("COMPLETED");
+        break;
+    }
+  }, [finalizeSession, scheduleSync, stopMic]);
+
+  const beginInterview = useCallback(async () => {
+    if (isStarting || phaseRef.current !== "setup") return;
+
+    setIsStarting(true);
+    setSetupStep("mic");
+    setSetupStatus("Requesting microphone access…");
+    cancelledRef.current = false;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
+
+      if (cancelledRef.current) {
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
       streamRef.current = stream;
 
-      // Step 2: WebSocket connection
       setSetupStep("connecting");
-      setSetupStatus("Connecting to interview server…");
+      setSetupStatus("Initializing interview session…");
 
-      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-      ws = new WebSocket(`${proto}//${window.location.host}/ws/interview`);
-      wsRef.current = ws;
+      const storedSessionId = window.localStorage.getItem(sessionTokenKey);
+      if (storedSessionId) {
+        sessionIdRef.current = storedSessionId;
+      }
 
-      ws.onopen = () => {
-        if (cancelled) return;
-        ws!.send(JSON.stringify({ type: "auth", token }));
-        setSetupStep("starting");
-        setSetupStatus("Authenticating and starting AI interviewer…");
+      const startRes = await fetch("/api/interviews/webrtc/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          sessionIdHint: sessionIdRef.current,
+        }),
+      });
+
+      if (!startRes.ok) {
+        const data = (await startRes.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || "Failed to initialize interview session.");
+      }
+
+      const startData = (await startRes.json()) as {
+        sessionId: string;
+        openingPrompt: string;
+        systemInstructions: string;
+        clientSecret: string;
+        voice: string;
+        existingTranscript?: InterviewTranscriptEntry[];
+        existingReferenceCards?: InterviewReferenceCard[];
+        existingEvents?: Array<{ at: string; question: string; answerSummary: string; score: number; feedback: string; improvementTip?: string }>;
       };
 
-      ws.onmessage = async (ev) => {
-        if (cancelled) return;
-        let msg: ServerMessage;
-        try {
-          msg = JSON.parse(ev.data as string) as ServerMessage;
-        } catch {
-          return;
-        }
+      if (cancelledRef.current) return;
 
-        switch (msg.type) {
-          case "status":
-            if (phaseRef.current !== "live") setSetupStatus(msg.message);
-            break;
+      sessionIdRef.current = startData.sessionId;
+      sessionTokenRef.current = token;
+      window.localStorage.setItem(sessionTokenKey, startData.sessionId);
+      transcriptRef.current = startData.existingTranscript || [];
+      evaluationEventsRef.current = startData.existingEvents || [];
+      referenceCardsRef.current = startData.existingReferenceCards || [];
+      finalReportRef.current = null;
 
-          case "error":
-            // During setup, errors can be transient (Gemini model fallback).
-            // Treat as status update — only go to error if WS closes without ready.
-            lastError = msg.message;
-            if (phaseRef.current !== "live") {
-              setSetupStatus(`Retrying… (${msg.message.slice(0, 60)})`);
-            }
-            break;
+      if (startData.existingTranscript?.length) {
+        setTranscriptItems([
+          ...startData.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
+          ...(startData.existingReferenceCards || []).map((card) => ({ kind: "card" as const, card })),
+        ]);
+      }
 
-          case "ready":
-            if (cancelled) return;
-            audioInputRateRef.current = msg.audioInputRate ?? 16000;
-            if (msg.existingTranscript?.length) {
-              setTranscriptItems(
-                msg.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
-              );
-            }
-            setSetupStep("done");
-            setSetupStatus("Interview starting…");
-            if (streamRef.current) {
-              await activateMic(streamRef.current);
-            }
-            setPhase("live");
-            break;
+      setSetupStep("starting");
+      setSetupStatus("Connecting to OpenAI Realtime…");
 
-          case "transcript": {
-            const entry = msg.data;
-            if (entry.role === "interviewer" && pendingCardsRef.current.length > 0) {
-              const pending = pendingCardsRef.current.splice(0);
-              setTranscriptItems((prev) => [
-                ...prev,
-                { kind: "speech", entry },
-                ...pending.map((card) => ({ kind: "card" as const, card })),
-              ]);
-            } else {
-              setTranscriptItems((prev) => [...prev, { kind: "speech", entry }]);
-            }
-            break;
+      const ctx = new AudioContext();
+      await ctx.resume().catch(() => {});
+      micCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      sourceRef.current = source;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      const silentGain = ctx.createGain();
+      silentGain.gain.value = 0;
+      silentGainRef.current = silentGain;
+      source.connect(analyser);
+      analyser.connect(silentGain);
+      silentGain.connect(ctx.destination);
+
+      const transport = new OpenAIWebRtcInterviewTransport({
+        onReady: () => {
+          handleTransportMessage({
+            type: "ready",
+            existingTranscript: startData.existingTranscript,
+            existingReferenceCards: startData.existingReferenceCards,
+          });
+        },
+        onStatus: (message) => handleTransportMessage({ type: "status", message }),
+        onError: (message) => handleTransportMessage({ type: "error", message }),
+        onTranscript: (entry) => handleTransportMessage({ type: "transcript", data: entry }),
+        onEvaluationEvent: (event) => {
+          evaluationEventsRef.current = [...evaluationEventsRef.current, event];
+          scheduleSync();
+        },
+        onFinalReport: (report) => handleTransportMessage({ type: "final_report", data: report }),
+        onReferenceCard: (card) => handleTransportMessage({ type: "reference_card", data: card }),
+        onInterrupted: () => handleTransportMessage({ type: "ai_interrupted" }),
+        onComplete: () => handleTransportMessage({ type: "interview_complete" }),
+        onAssistantSpeakingChange: (speaking) => setAiSpeaking(speaking),
+        onRemoteStream: (remoteStream) => {
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = remoteStream;
+            void remoteAudioRef.current.play().catch(() => {
+              const playbackCtx = micCtxRef.current;
+              if (!playbackCtx || remotePlaybackSourceRef.current) return;
+
+              try {
+                const remoteSource = playbackCtx.createMediaStreamSource(remoteStream);
+                const remoteGain = playbackCtx.createGain();
+                remoteGain.gain.value = 1;
+                remoteSource.connect(remoteGain);
+                remoteGain.connect(playbackCtx.destination);
+                remotePlaybackSourceRef.current = remoteSource;
+                remotePlaybackGainRef.current = remoteGain;
+              } catch (error) {
+                console.error("Failed to attach fallback remote audio playback:", error);
+              }
+            });
           }
+        },
+      });
 
-          case "ai_audio_chunk":
-            playAiAudio(msg.data, msg.mimeType);
-            break;
-
-          case "ai_interrupted":
-            stopAiAudio();
-            break;
-
-          case "final_report":
-            setFinalReport(msg.data);
-            break;
-
-          case "reference_card":
-            console.log("[Client] reference_card received:", msg.data);
-            pendingCardsRef.current.push(msg.data);
-            break;
-
-          case "interview_complete":
-            stopMic();
-            sendJson({ type: "end_interview" });
-            setPhase("results");
-            break;
-        }
-      };
-
-      ws.onerror = () => {
-        if (cancelled) return;
-        if (phaseRef.current !== "live" && phaseRef.current !== "results") {
-          setErrorMsg(lastError || "Connection error. Please check your internet and try again.");
-          setPhase("error");
-        }
-      };
-
-      ws.onclose = () => {
-        if (cancelled) return;
-        if (phaseRef.current === "setup") {
-          setErrorMsg(lastError || "Connection closed before interview could start. Please try again.");
-          setPhase("error");
-        }
-      };
+      transportRef.current = transport;
+      if (!cancelledRef.current) {
+        setPhase("live");
+      }
+      await transport.connect(
+        {
+          token,
+          sessionId: startData.sessionId,
+          clientSecret: startData.clientSecret,
+          systemInstructions: startData.systemInstructions,
+          openingPrompt: startData.openingPrompt,
+          voice: startData.voice,
+          playbackAudioContext: ctx,
+        },
+        stream,
+      );
+    } catch (error) {
+      console.error("Interview setup failed:", error);
+      if (!cancelledRef.current) {
+        setErrorMsg(error instanceof Error ? error.message : "Failed to start interview.");
+        setPhase("error");
+      }
+    } finally {
+      if (!cancelledRef.current) {
+        setIsStarting(false);
+      }
     }
+  }, [handleTransportMessage, isStarting, scheduleSync, sessionTokenKey, token]);
 
-    void setup();
-
+  useEffect(() => {
+    const audioElement = remoteAudioRef.current;
     return () => {
-      cancelled = true;
-      ws?.close();
+      cancelledRef.current = true;
+      transportRef.current?.close();
+      transportRef.current = null;
+      if (syncTimerRef.current) {
+        window.clearTimeout(syncTimerRef.current);
+      }
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       stopMic();
-      void playCtxRef.current?.close();
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.srcObject = null;
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [stopMic]);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -489,12 +501,12 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
           <h2 className="text-lg font-semibold text-white mb-2">Unable to Start Interview</h2>
           <p className="text-sm text-gray-400 mb-6 leading-relaxed">{errorMsg}</p>
-          <a
+          <Link
             href="/mock-interviews"
             className="inline-block rounded-xl border border-[#5a58ab]/40 bg-[#5a58ab]/10 px-6 py-2.5 text-sm font-semibold text-[#a09fe0] hover:bg-[#5a58ab]/20 transition"
           >
             ← Back to Sessions
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -575,6 +587,14 @@ export default function InterviewRoom({ token }: { token: string }) {
 
           {/* Status text */}
           <p className="text-center text-xs text-gray-500 min-h-[18px]">{setupStatus}</p>
+
+          <button
+            onClick={() => void beginInterview()}
+            disabled={isStarting}
+            className="mt-6 w-full rounded-xl bg-[#5a58ab] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a49a0] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isStarting ? "Starting…" : "Start Interview"}
+          </button>
         </div>
       </div>
     );
@@ -648,12 +668,12 @@ export default function InterviewRoom({ token }: { token: string }) {
           )}
 
           <div className="mt-8 text-center">
-            <a
+            <Link
               href="/mock-interviews"
               className="inline-block rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
             >
               ← Back to Sessions
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -666,6 +686,7 @@ export default function InterviewRoom({ token }: { token: string }) {
       className="h-screen bg-[#0d1117] text-white flex flex-col overflow-hidden"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
+      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       {/* Top bar */}
       <div className="border-b border-white/5 px-5 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -714,7 +735,8 @@ export default function InterviewRoom({ token }: { token: string }) {
                   )
                 ) {
                   stopMic();
-                  sendJson({ type: "end_interview" });
+                  setAiSpeaking(false);
+                  transportRef.current?.endInterview();
                   setPhase("results");
                 }
               }}
