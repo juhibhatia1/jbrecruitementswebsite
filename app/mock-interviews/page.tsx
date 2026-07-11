@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+import { IoSparkles, IoArrowForwardOutline } from "react-icons/io5";
 
 export const metadata: Metadata = {
   title: "Mock Interview Sessions | JB Recruitment Solutions",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function MockInterviewsPage() {
-  const templates = await prisma.interviewTemplate.findMany({
+  const allTemplates = await prisma.interviewTemplate.findMany({
     where: { isActive: true },
     orderBy: { createdAt: "desc" },
     select: {
@@ -23,8 +24,15 @@ export default async function MockInterviewsPage() {
       durationMinutes: true,
       difficultyLevel: true,
       interviewDescription: true,
+      advancedConfig: true,
       createdAt: true,
     },
+  });
+
+  // Filter out user-created custom JD templates
+  const templates = allTemplates.filter((t) => {
+    const config = t.advancedConfig as Record<string, any> | null;
+    return !config?.isCustomJd;
   });
 
   return (
@@ -42,6 +50,29 @@ export default async function MockInterviewsPage() {
             Browse available practice sessions and book your slot. Choose AI-powered
             or coach-led interview practice to sharpen your skills.
           </p>
+        </div>
+
+        {/* Custom JD Promo Card */}
+        <div className="mb-10 rounded-2xl border border-[#5a58ab]/20 bg-white p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_8px_30px_rgb(90,88,171,0.02)] hover:shadow-[0_8px_30px_rgb(90,88,171,0.06)] transition-all">
+          <div className="space-y-2 max-w-2xl text-left">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f0efff] px-3 py-1 text-xs font-semibold text-[#5a58ab]">
+              <IoSparkles className="w-3.5 h-3.5" />
+              New Custom Practice
+            </div>
+            <h2 className="text-xl sm:text-2xl font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
+              Targeting a specific role? Practice with your own Job Description!
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+              Paste the Job Description of the role you are applying for. Our AI will analyze the requirements and immediately build a fully customized, interactive voice mock interview matching that exact description's stack, skills, and expectations.
+            </p>
+          </div>
+          <Link
+            href="/mock-interviews/custom"
+            className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#5a58ab] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a489b] active:scale-95 shadow-md text-center cursor-pointer"
+          >
+            <span>Practice Custom JD</span>
+            <IoArrowForwardOutline className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* Role cards */}

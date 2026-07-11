@@ -11,6 +11,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline } from "react-icons/io5";
+import { useLenis } from "@/app/providers/lenis-provider";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -109,6 +110,7 @@ function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: Checkou
 
 // ─── Main Apply Form ─────────────────────────────────────────────────────────
 export default function ApplyForm({ templateId, jobRole }: Props) {
+  const { lenis } = useLenis();
   const [form, setForm] = useState({
     candidateName: "",
     candidateEmail: "",
@@ -117,6 +119,9 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
     interviewPreference: "" as "AI" | "MANUAL" | "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Payment state — shared by both AI and MANUAL flows
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR">("USD");
@@ -182,7 +187,45 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
   // ── Shared payment init — used by both AI and MANUAL ────────────────────
   const handlePaymentInit = async (pref: "AI" | "MANUAL") => {
     setSubmitting(true);
+    setResumeError(null);
+    let resumeUrl: string | null = null;
+    let resumeText: string | null = null;
+
     try {
+      // Upload resume if file is present
+      if (resumeFile) {
+        setUploadingResume(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append("resume", resumeFile);
+
+        const uploadRes = await fetch("/api/interviews/upload-resume", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const uploadData = await uploadRes.json();
+        setUploadingResume(false);
+
+        if (!uploadRes.ok) {
+          const errMsg = uploadData.error || "Failed to process resume upload.";
+          setResumeError(errMsg);
+          toast.error("Resume Upload Failed", {
+            description: errMsg,
+          });
+          setSubmitting(false);
+          return;
+        }
+
+        resumeUrl = uploadData.resumeUrl;
+        resumeText = uploadData.resumeText;
+      } else if (pref === "AI") {
+        toast.error("Resume Required", {
+          description: "Please upload your resume to personalize your AI Mock Interview.",
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const serviceName = pref === "AI" ? "AI Mock Interview" : "Coach Mock Interview";
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -197,6 +240,8 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
             templateId,
             linkedInUrl: form.linkedInUrl,
             interviewPreference: pref,
+            resumeUrl,
+            resumeText,
           },
         }),
       });
@@ -210,7 +255,18 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
       setClientSecret(data.clientSecret);
       setPaymentStage("checkout");
       setTimeout(() => {
-        containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const element = containerRef.current;
+        if (element) {
+          if (lenis) {
+            lenis.scrollTo(element, { offset: -120, duration: 1.2 });
+          } else {
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({
+              top: elementPosition - 120,
+              behavior: "smooth",
+            });
+          }
+        }
       }, 50);
     } catch (prevError) {
       toast.error("Network Error", { description: "Check your connection and try again." });
@@ -224,6 +280,12 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
     if (!form.interviewPreference) {
       toast.error("Please select a session preference.", {
         description: "Choose AI Mock Interview or Coach Session to continue.",
+      });
+      return;
+    }
+    if (form.interviewPreference === "AI" && !resumeFile) {
+      toast.error("Resume Required", {
+        description: "Please upload your resume to personalize your AI Mock Interview.",
       });
       return;
     }
@@ -295,7 +357,18 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
                 setPaymentStage("form");
                 setClientSecret(null);
                 setTimeout(() => {
-                  containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  const element = containerRef.current;
+                  if (element) {
+                    if (lenis) {
+                      lenis.scrollTo(element, { offset: -120, duration: 1.2 });
+                    } else {
+                      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+                      window.scrollTo({
+                        top: elementPosition - 120,
+                        behavior: "smooth",
+                      });
+                    }
+                  }
                 }, 50);
               }}
             />
@@ -382,6 +455,25 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
             />
           </div>
 
+          <div>
+            <label className={labelClass} htmlFor="resume">Resume (PDF, Word, or Text) {form.interviewPreference === "AI" ? "*" : ""}</label>
+            <input
+              id="resume"
+              name="resume"
+              type="file"
+              required={form.interviewPreference === "AI"}
+              accept=".pdf,.doc,.docx,.txt,.md"
+              onChange={(e) => {
+                setResumeError(null);
+                setResumeFile(e.target.files?.[0] || null);
+              }}
+              className={`${inputClass} file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#5a58ab]/10 file:text-[#5a58ab] hover:file:bg-[#5a58ab]/20`}
+            />
+            {resumeError && (
+              <p className="text-red-500 text-xs mt-1 font-semibold">{resumeError}</p>
+            )}
+          </div>
+
           {/* Session Preference Cards */}
           <div>
             <p className={labelClass}>Session Preference *</p>
@@ -448,7 +540,7 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
             {submitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                Initialising Payment…
+                {uploadingResume ? "Processing Resume…" : "Initialising Payment…"}
               </>
             ) : (
               <>

@@ -9514,6 +9514,8 @@ export namespace Prisma {
     candidateEmail: string | null
     candidatePhone: string | null
     linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
     interviewPreference: $Enums.CandidateInterviewPreference | null
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
@@ -9530,6 +9532,8 @@ export namespace Prisma {
     candidateEmail: string | null
     candidatePhone: string | null
     linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
     interviewPreference: $Enums.CandidateInterviewPreference | null
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
@@ -9546,6 +9550,8 @@ export namespace Prisma {
     candidateEmail: number
     candidatePhone: number
     linkedInUrl: number
+    resumeUrl: number
+    resumeText: number
     interviewPreference: number
     accessTokenHash: number
     accessTokenExpiresAt: number
@@ -9564,6 +9570,8 @@ export namespace Prisma {
     candidateEmail?: true
     candidatePhone?: true
     linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -9580,6 +9588,8 @@ export namespace Prisma {
     candidateEmail?: true
     candidatePhone?: true
     linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -9596,6 +9606,8 @@ export namespace Prisma {
     candidateEmail?: true
     candidatePhone?: true
     linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -9685,6 +9697,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone: string | null
     linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date
@@ -9718,6 +9732,8 @@ export namespace Prisma {
     candidateEmail?: boolean
     candidatePhone?: boolean
     linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -9736,6 +9752,8 @@ export namespace Prisma {
     candidateEmail?: boolean
     candidatePhone?: boolean
     linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -9753,6 +9771,8 @@ export namespace Prisma {
     candidateEmail?: boolean
     candidatePhone?: boolean
     linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -9783,6 +9803,8 @@ export namespace Prisma {
       candidateEmail: string
       candidatePhone: string | null
       linkedInUrl: string | null
+      resumeUrl: string | null
+      resumeText: string | null
       interviewPreference: $Enums.CandidateInterviewPreference
       accessTokenHash: string
       accessTokenExpiresAt: Date
@@ -10191,6 +10213,8 @@ export namespace Prisma {
     readonly candidateEmail: FieldRef<"CandidateApplication", 'String'>
     readonly candidatePhone: FieldRef<"CandidateApplication", 'String'>
     readonly linkedInUrl: FieldRef<"CandidateApplication", 'String'>
+    readonly resumeUrl: FieldRef<"CandidateApplication", 'String'>
+    readonly resumeText: FieldRef<"CandidateApplication", 'String'>
     readonly interviewPreference: FieldRef<"CandidateApplication", 'CandidateInterviewPreference'>
     readonly accessTokenHash: FieldRef<"CandidateApplication", 'String'>
     readonly accessTokenExpiresAt: FieldRef<"CandidateApplication", 'DateTime'>
@@ -11719,6 +11743,8 @@ export namespace Prisma {
     candidateEmail: 'candidateEmail',
     candidatePhone: 'candidatePhone',
     linkedInUrl: 'linkedInUrl',
+    resumeUrl: 'resumeUrl',
+    resumeText: 'resumeText',
     interviewPreference: 'interviewPreference',
     accessTokenHash: 'accessTokenHash',
     accessTokenExpiresAt: 'accessTokenExpiresAt',
@@ -12633,6 +12659,8 @@ export namespace Prisma {
     candidateEmail?: StringFilter<"CandidateApplication"> | string
     candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
     linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
@@ -12651,6 +12679,8 @@ export namespace Prisma {
     candidateEmail?: SortOrder
     candidatePhone?: SortOrderInput | SortOrder
     linkedInUrl?: SortOrderInput | SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
+    resumeText?: SortOrderInput | SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -12673,6 +12703,8 @@ export namespace Prisma {
     candidateEmail?: StringFilter<"CandidateApplication"> | string
     candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
     linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
@@ -12690,6 +12722,8 @@ export namespace Prisma {
     candidateEmail?: SortOrder
     candidatePhone?: SortOrderInput | SortOrder
     linkedInUrl?: SortOrderInput | SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
+    resumeText?: SortOrderInput | SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -12712,6 +12746,8 @@ export namespace Prisma {
     candidateEmail?: StringWithAggregatesFilter<"CandidateApplication"> | string
     candidatePhone?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     linkedInUrl?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringWithAggregatesFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
@@ -13617,6 +13653,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -13635,6 +13673,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -13651,6 +13691,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13669,6 +13711,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13686,6 +13730,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -13701,6 +13747,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13717,6 +13765,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14564,6 +14614,8 @@ export namespace Prisma {
     candidateEmail?: SortOrder
     candidatePhone?: SortOrder
     linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -14580,6 +14632,8 @@ export namespace Prisma {
     candidateEmail?: SortOrder
     candidatePhone?: SortOrder
     linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -14596,6 +14650,8 @@ export namespace Prisma {
     candidateEmail?: SortOrder
     candidatePhone?: SortOrder
     linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -15284,6 +15340,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15300,6 +15358,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15346,6 +15406,8 @@ export namespace Prisma {
     candidateEmail?: StringFilter<"CandidateApplication"> | string
     candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
     linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
@@ -15521,6 +15583,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15538,6 +15602,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15569,6 +15635,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15586,6 +15654,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15622,6 +15692,8 @@ export namespace Prisma {
     candidateEmail: string
     candidatePhone?: string | null
     linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15637,6 +15709,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15653,6 +15727,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15669,6 +15745,8 @@ export namespace Prisma {
     candidateEmail?: StringFieldUpdateOperationsInput | string
     candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
     linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string

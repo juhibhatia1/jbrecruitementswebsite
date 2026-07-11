@@ -35,34 +35,11 @@ export default function ChatWidget() {
   const [sessionId, setSessionId] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Session ID and load conversation if exists
+  // Initialize a fresh Session ID on every website load
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      let activeSessionId = localStorage.getItem("jb_chat_session_id");
-      if (!activeSessionId) {
-        activeSessionId = `session_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
-        localStorage.setItem("jb_chat_session_id", activeSessionId);
-      }
-      setSessionId(activeSessionId);
-
-      // Load conversation history from localStorage
-      const cached = localStorage.getItem(`jb_chat_history_${activeSessionId}`);
-      if (cached) {
-        try {
-          setMessages(JSON.parse(cached));
-        } catch (e) {
-          console.error("Failed to parse cached chat history:", e);
-        }
-      }
-    }
+    const activeSessionId = `session_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
+    setSessionId(activeSessionId);
   }, []);
-
-  // Save history to localStorage on update
-  useEffect(() => {
-    if (sessionId) {
-      localStorage.setItem(`jb_chat_history_${sessionId}`, JSON.stringify(messages));
-    }
-  }, [messages, sessionId]);
 
   // Scroll to bottom whenever messages or loading state change
   useEffect(() => {
@@ -95,13 +72,14 @@ export default function ChatWidget() {
     setInputValue("");
     setIsLoading(true);
 
-    const assistantMessageId = currentMessages.length;
+    const updatedWithPlaceholder = [
+      ...currentMessages,
+      { role: "assistant" as const, content: "", isStreaming: true }
+    ];
 
-    // Add placeholder assistant message
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant" as "assistant", content: "", isStreaming: true }
-    ]);
+    setMessages(updatedWithPlaceholder);
+    setInputValue("");
+    setIsLoading(true);
 
     try {
       // Retrieve the cached geo-detected currency from sessionStorage (defaults to USD)
@@ -121,13 +99,16 @@ export default function ChatWidget() {
 
       if (response.status === 429) {
         setMessages((prev) => {
-          const updated = [...prev];
-          updated[assistantMessageId] = {
-            role: "assistant",
-            content: "You are asking questions a bit too fast! Please wait a moment and try again.",
-            isError: true,
-          };
-          return updated;
+          const next = [...prev];
+          const idx = next.map((m) => m.role).lastIndexOf("assistant");
+          if (idx !== -1) {
+            next[idx] = {
+              role: "assistant",
+              content: "You are asking questions a bit too fast! Please wait a moment and try again.",
+              isError: true,
+            };
+          }
+          return next;
         });
         setIsLoading(false);
         return;
@@ -184,14 +165,17 @@ export default function ChatWidget() {
               }
               parsedText = currentParsedText;
               setMessages((prev) => {
-                const updated = [...prev];
-                updated[assistantMessageId] = {
-                  role: "assistant",
-                  content: parsedText || accumulatedText,
-                  suggestedQuestions: suggestedQuestions,
-                  isStreaming: !accumulatedText.includes("[Suggested Questions]:"),
-                };
-                return updated;
+                const next = [...prev];
+                const idx = next.map((m) => m.role).lastIndexOf("assistant");
+                if (idx !== -1) {
+                  next[idx] = {
+                    role: "assistant",
+                    content: parsedText || accumulatedText,
+                    suggestedQuestions: suggestedQuestions,
+                    isStreaming: !accumulatedText.includes("[Suggested Questions]:"),
+                  };
+                }
+                return next;
               });
             }
           } catch (e) {
@@ -221,24 +205,30 @@ export default function ChatWidget() {
 
       const { content: finalContent, suggestedQuestions: finalSuggestedQuestions } = parseStreamedMessage(accumulatedText);
       setMessages((prev) => {
-        const updated = [...prev];
-        updated[assistantMessageId] = {
-          role: "assistant",
-          content: finalContent || accumulatedText,
-          suggestedQuestions: finalSuggestedQuestions,
-        };
-        return updated;
+        const next = [...prev];
+        const idx = next.map((m) => m.role).lastIndexOf("assistant");
+        if (idx !== -1) {
+          next[idx] = {
+            role: "assistant",
+            content: finalContent || accumulatedText,
+            suggestedQuestions: finalSuggestedQuestions,
+          };
+        }
+        return next;
       });
     } catch (error) {
       console.error("Chat widgets error sending message:", error);
       setMessages((prev) => {
-        const updated = [...prev];
-        updated[assistantMessageId] = {
-          role: "assistant",
-          content: "Sorry, I am having trouble connecting to the server. Please check your internet connection.",
-          isError: true,
-        };
-        return updated;
+        const next = [...prev];
+        const idx = next.map((m) => m.role).lastIndexOf("assistant");
+        if (idx !== -1) {
+          next[idx] = {
+            role: "assistant",
+            content: "Sorry, I am having trouble connecting to the server. Please check your internet connection.",
+            isError: true,
+          };
+        }
+        return next;
       });
     } finally {
       setIsLoading(false);
@@ -370,11 +360,7 @@ export default function ChatWidget() {
                       {msg.role === "user" ? (
                         msg.content
                       ) : msg.content === "" && isLoading ? (
-                        <div className="flex gap-1 items-center h-5 px-1 py-3">
-                          <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-bounce delay-75" />
-                          <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-bounce delay-150" />
-                          <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-bounce delay-300" />
-                        </div>
+                        <TypingLoader />
                       ) : (
                         <div className="space-y-2">
                           <ReactMarkdown
@@ -430,7 +416,7 @@ export default function ChatWidget() {
                 {/* Suggested follow-up questions from bot reply */}
                 {msg.role === "assistant" && msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && !msg.isStreaming && (
                   <div className="pl-8 pr-2 flex flex-col items-start gap-2 pt-1.5 animate-fadeIn">
-                    {msg.suggestedQuestions.slice(0, 2).map((q, qidx) => (
+                    {msg.suggestedQuestions.slice(0, 1).map((q, qidx) => (
                       <button
                         key={qidx}
                         onClick={() => handleSuggestionClick(q)}
@@ -452,9 +438,7 @@ export default function ChatWidget() {
                     <IoSparkles className="w-3.5 h-3.5" />
                   </div>
                   <div className="rounded-2xl p-3 bg-white text-slate-400 border border-slate-100 flex gap-1 shadow-3xs items-center h-8">
-                    <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "300ms" }} />
+                    <TypingLoader />
                   </div>
                 </div>
               </div>
@@ -518,3 +502,14 @@ function parseStreamedMessage(text: string): { content: string; suggestedQuestio
     suggestedQuestions,
   };
 }
+
+function TypingLoader() {
+  return (
+    <div className="flex gap-1 items-center h-5 px-1">
+      <span className="inline-block w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "0ms" }} />
+      <span className="inline-block w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "150ms" }} />
+      <span className="inline-block w-1.5 h-1.5 bg-[#5a58ab] rounded-full animate-loader-bounce" style={{ animationDelay: "300ms" }} />
+    </div>
+  );
+}
+

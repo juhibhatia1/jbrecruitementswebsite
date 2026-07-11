@@ -545,7 +545,10 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
           {generatedInstructions && (
             <div>
               <p className={labelClass}>AI System Instructions</p>
-              <pre className="text-xs text-slate-600 leading-relaxed bg-[#f9fafc] rounded-xl p-4 whitespace-pre-wrap overflow-x-auto max-h-64 overflow-y-auto">
+              <pre
+                data-lenis-prevent
+                className="text-xs text-slate-600 leading-relaxed bg-[#f9fafc] rounded-xl p-4 whitespace-pre-wrap overflow-x-auto max-h-64 overflow-y-auto"
+              >
                 {generatedInstructions}
               </pre>
             </div>

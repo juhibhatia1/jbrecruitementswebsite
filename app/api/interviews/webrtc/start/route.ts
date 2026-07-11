@@ -15,6 +15,7 @@ function buildSessionInstructions(payload: {
   baseInstructions: string;
   transcript?: Array<{ role: "candidate" | "interviewer"; text: string }>;
   isResuming?: boolean;
+  resumeText?: string;
 }) {
   return buildWebRtcSystemInstructions(payload);
 }
@@ -74,7 +75,10 @@ export async function POST(request: NextRequest) {
 
       // Hard block: interview already done — no re-entry regardless of session hint
       if (session.status === "COMPLETED") {
-        return NextResponse.json({ error: "Interview already completed. Each link is single-use." }, { status: 409 });
+        return NextResponse.json({ 
+          error: "Interview already completed. Each link is single-use.",
+          sessionId: session.id
+        }, { status: 409 });
       }
 
       if (session.status === "ACTIVE" && !isSessionHintMatch) {
@@ -120,6 +124,7 @@ export async function POST(request: NextRequest) {
       baseInstructions,
       transcript: previousTranscript.length > 0 ? previousTranscript : undefined,
       isResuming,
+      resumeText: application.resumeText || undefined,
     });
 
     const openingPrompt = buildWebRtcOpeningPrompt({

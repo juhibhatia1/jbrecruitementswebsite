@@ -115,6 +115,61 @@ export async function POST(request: Request) {
 
     const stripeCurrency = STRIPE_CURRENCY_MAP[currency];
 
+    let applicationId: string | undefined = undefined;
+
+    // If mock interview checkout, pre-create the candidate application
+    if (interviewMetadata?.templateId) {
+      const { generateInterviewAccessToken, hashInterviewAccessToken } = await import("@/lib/interview/access-token");
+      
+      const candidateEmailLower = candidateEmail.trim().toLowerCase();
+      
+      // Look for any existing pending (APPLIED) application for the same email/template to reuse
+      let application = await prisma.candidateApplication.findFirst({
+        where: {
+          templateId: interviewMetadata.templateId,
+          candidateEmail: candidateEmailLower,
+          status: "APPLIED",
+        },
+      });
+
+      if (!application) {
+        const accessToken = generateInterviewAccessToken();
+        const accessTokenHash = hashInterviewAccessToken(accessToken);
+        const accessTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        application = await prisma.candidateApplication.create({
+          data: {
+            templateId: interviewMetadata.templateId,
+            candidateName: candidateName.trim(),
+            candidateEmail: candidateEmailLower,
+            candidatePhone: candidatePhone || null,
+            linkedInUrl: interviewMetadata.linkedInUrl || null,
+            resumeUrl: (interviewMetadata as any).resumeUrl || null,
+            resumeText: (interviewMetadata as any).resumeText || null,
+            interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+            accessTokenHash,
+            accessTokenExpiresAt,
+            status: "APPLIED",
+          },
+        });
+      } else {
+        // Update resume/details on existing draft if changed
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: {
+            candidateName: candidateName.trim(),
+            candidatePhone: candidatePhone || null,
+            linkedInUrl: interviewMetadata.linkedInUrl || null,
+            resumeUrl: (interviewMetadata as any).resumeUrl || null,
+            resumeText: (interviewMetadata as any).resumeText || null,
+            interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+          },
+        });
+      }
+      
+      applicationId = application.id;
+    }
+
     // Create Stripe PaymentIntent with server-computed total in the correct currency
     const paymentIntent = await stripeClient.paymentIntents.create({
       amount: Math.round(totalAmount * 100), // smallest unit (cents / paise / fils)
@@ -131,6 +186,7 @@ export async function POST(request: Request) {
           interviewTemplateId: interviewMetadata.templateId,
           interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
           linkedInUrl: interviewMetadata.linkedInUrl || "",
+          applicationId: applicationId || "",
         }),
       },
       receipt_email: candidateEmail,

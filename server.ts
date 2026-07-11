@@ -193,7 +193,7 @@ ${transcriptText}
 
 Identify every substantive question the interviewer asked and evaluate the candidate's response to each. Skip pleasantries and the self-introduction request (Section 1).
 
-PRIMARY GOAL: Help the candidate improve. Your evaluation should be heavily weighted towards actionable improvement guidance. Be specific — name the exact concept, pattern, or skill they need to work on, and how.
+PRIMARY GOAL: Help the candidate improve. Your evaluation should be heavily weighted towards actionable improvement guidance. Be highly specific and thorough — name the exact concepts, architectural patterns, or technical skills they need to work on, and why.
 
 Output valid JSON only, no markdown:
 {
@@ -202,21 +202,30 @@ Output valid JSON only, no markdown:
       "question": "<exact question asked>",
       "answerSummary": "<1-2 sentence neutral summary of candidate's answer>",
       "score": <integer 1-10>,
-      "feedback": "<1-2 sentence honest assessment of the answer quality>",
-      "improvementTip": "<For scores 1-7 only: one specific, actionable tip — e.g. 'Study hash map collision resolution: open addressing vs chaining. Practice implementing LRU cache using OrderedDict.' For scores 8-10: omit this field entirely.>"
+      "feedback": "<A detailed, 3-4 sentence technical assessment of the answer quality. Detail what they got right, what core parts were omitted, and evaluate their depth on the technical concepts.>",
+      "improvementTip": "<For scores 1-7 only: a detailed, 2-3 sentence tip describing how to resolve this specific conceptual gap, including recommended patterns, algorithms, or approaches. For scores 8-10: omit this field entirely.>"
     }
   ],
   "finalReport": {
-    "summary": "<3-4 sentence overall performance narrative. Be constructive — note what worked, what didn't, and the growth opportunity.>",
-    "strengths": ["<2-3 genuine, specific strengths the candidate clearly demonstrated — be concise>"],
-    "weaknesses": ["<3-4 specific shortcomings observed in the interview — concrete gaps, not advice. E.g. 'Confused time complexity of BFS vs DFS', 'No understanding of database indexing trade-offs'>"],
-    "improvements": ["<5-6 actionable improvement items. Each must name a specific topic/skill AND suggest how to improve it. E.g. 'System design — scalability: Study consistent hashing and horizontal vs vertical scaling. Build a mini URL shortener project.', 'Concurrency: Learn mutex vs semaphore trade-offs. Implement a thread-safe producer-consumer queue.'>"],
+    "summary": "<4-5 sentence professional performance narrative. Detail the areas of strong competence, significant blockers, and the overall growth path required to clear an interview at this level.>",
+    "strengths": [
+      "<A detailed, 2-3 sentence analysis of a core strength, detailing exactly how the candidate demonstrated it in their answers (referencing specific concepts or answers).>",
+      "<Another detailed strength...>"
+    ],
+    "weaknesses": [
+      "<A detailed, 2-3 sentence description of a specific conceptual or practical shortcoming, outlining exactly where they failed, what misconceptions they had, or what essential concepts were completely missed.>",
+      "<Another detailed weakness...>"
+    ],
+    "improvements": [
+      "<A comprehensive 3-4 sentence improvement item. Naming a specific topic/skill, explaining why this area needs work, and detailing a step-by-step roadmap, resources to study (e.g. documentation, books), or practical projects/code exercises to build for mastery.>",
+      "<Another detailed improvement item...>"
+    ],
     "finalScore": <integer 1-10>
   }
 }
 
 SCORING: score and finalScore must be integers 1-10 only. Never decimals. 10=perfect, 1=completely wrong. Typical good answers: 6-8. finalScore = average of all individual scores rounded to nearest integer.
-WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. weaknesses MUST have 3-4 items. Improvements take priority — be thorough and specific there.`;
+WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. weaknesses MUST have 3-4 items. All fields must be descriptive and deep to offer premium, high-value feedback.`;
 
   const response = await openai.responses.create({
     model,

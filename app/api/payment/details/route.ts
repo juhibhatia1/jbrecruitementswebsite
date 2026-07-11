@@ -41,6 +41,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ isCoach: false, isAi: false, status: paymentIntent.status });
     }
 
+    const purchaseTime = new Date(paymentIntent.created * 1000);
+
     const meta = paymentIntent.metadata;
     const interviewPreference = meta.interviewPreference || "AI";
     const isCoach = interviewPreference === "MANUAL";
@@ -63,15 +65,30 @@ export async function GET(request: Request) {
 
     // ── CASE 1: Coach Mock Interview (MANUAL) ───────────────────────────────
     if (isCoach) {
-      let application = await prisma.candidateApplication.findFirst({
-        where: {
-          templateId: template.id,
-          candidateEmail: candidateEmailLower,
-          interviewPreference: "MANUAL",
-        },
-      });
+      let application = null;
 
-      // Self-healing creation if webhook hasn't fired yet
+      // 1. Try lookup by applicationId if available
+      if (meta.applicationId) {
+        application = await prisma.candidateApplication.findUnique({
+          where: { id: meta.applicationId },
+        });
+      }
+
+      // 2. Otherwise try lookup by email and template
+      if (!application) {
+        application = await prisma.candidateApplication.findFirst({
+          where: {
+            templateId: template.id,
+            candidateEmail: candidateEmailLower,
+            interviewPreference: "MANUAL",
+            createdAt: {
+              gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+            },
+          },
+        });
+      }
+
+      // Self-healing creation or activation if webhook hasn't fired yet
       if (!application) {
         const accessToken = generateInterviewAccessToken();
         const accessTokenHash = hashInterviewAccessToken(accessToken);
@@ -117,7 +134,57 @@ export async function GET(request: Request) {
           await sendNewApplicationAlertEmail({
             candidateName: application.candidateName,
             candidateEmail: application.candidateEmail,
-            candidatePhone: null,
+            candidatePhone: application.candidatePhone,
+            linkedInUrl: application.linkedInUrl,
+            jobRole: template.jobRole,
+            interviewPreference: "MANUAL",
+            applicationId: application.id,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send coach notifications in details route:", emailErr);
+        }
+      } else if (application.status === "APPLIED") {
+        // Activate pre-created application
+        const accessToken = generateInterviewAccessToken();
+        const accessTokenHash = hashInterviewAccessToken(accessToken);
+        const accessTokenExpiresAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
+        );
+
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: {
+            status: "MANUAL_REVIEW_PENDING",
+            accessTokenHash,
+            accessTokenExpiresAt,
+          },
+        });
+
+        const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://jbrecruitments.com";
+        const calSchedulingLink = calLink.startsWith("http")
+          ? calLink
+          : `${appUrl.replace(/\/$/, "")}/${calLink}`;
+
+        // Send email notifications
+        try {
+          await sendInterviewInvitationEmail({
+            candidateName: application.candidateName,
+            candidateEmail: application.candidateEmail,
+            jobRole: template.jobRole,
+            interviewPreference: "MANUAL",
+            calSchedulingLink,
+            interviewDescription: template.interviewDescription,
+            durationMinutes: template.durationMinutes,
+          });
+
+          await sendNewApplicationAlertEmail({
+            candidateName: application.candidateName,
+            candidateEmail: application.candidateEmail,
+            candidatePhone: application.candidatePhone,
             linkedInUrl: application.linkedInUrl,
             jobRole: template.jobRole,
             interviewPreference: "MANUAL",
@@ -139,17 +206,32 @@ export async function GET(request: Request) {
 
     // ── CASE 2: AI Mock Interview (AI) ──────────────────────────────────────
     if (isAi) {
-      let application = await prisma.candidateApplication.findFirst({
-        where: {
-          templateId: template.id,
-          candidateEmail: candidateEmailLower,
-          interviewPreference: "AI",
-        },
-      });
+      let application = null;
+
+      // 1. Try lookup by applicationId if available
+      if (meta.applicationId) {
+        application = await prisma.candidateApplication.findUnique({
+          where: { id: meta.applicationId },
+        });
+      }
+
+      // 2. Otherwise try lookup by email and template
+      if (!application) {
+        application = await prisma.candidateApplication.findFirst({
+          where: {
+            templateId: template.id,
+            candidateEmail: candidateEmailLower,
+            interviewPreference: "AI",
+            createdAt: {
+              gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+            },
+          },
+        });
+      }
 
       let rawToken = "";
 
-      // Self-healing creation if webhook hasn't fired yet
+      // Self-healing creation or activation if webhook hasn't fired yet
       if (!application) {
         const accessToken = generateInterviewAccessToken();
         rawToken = accessToken;
@@ -194,7 +276,55 @@ export async function GET(request: Request) {
           await sendNewApplicationAlertEmail({
             candidateName: application.candidateName,
             candidateEmail: application.candidateEmail,
-            candidatePhone: null,
+            candidatePhone: application.candidatePhone,
+            linkedInUrl: application.linkedInUrl,
+            jobRole: template.jobRole,
+            interviewPreference: "AI",
+            applicationId: application.id,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send AI notifications in details route:", emailErr);
+        }
+      } else if (application.status === "APPLIED") {
+        const accessToken = generateInterviewAccessToken();
+        rawToken = accessToken;
+        const accessTokenHash = hashInterviewAccessToken(accessToken);
+        const TOKEN_EXPIRY_DAYS = 7;
+        const accessTokenExpiresAt = new Date(
+          Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+        );
+
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: {
+            status: "AI_INVITED",
+            accessTokenHash,
+            accessTokenExpiresAt,
+          },
+        });
+
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://jbrecruitments.com";
+        const interviewLink = `${appUrl.replace(/\/$/, "")}/interview/${accessToken}`;
+
+        // Send email notifications
+        try {
+          await sendInterviewInvitationEmail({
+            candidateName: application.candidateName,
+            candidateEmail: application.candidateEmail,
+            jobRole: template.jobRole,
+            interviewPreference: "AI",
+            interviewLink,
+            interviewDescription: template.interviewDescription,
+            durationMinutes: template.durationMinutes,
+          });
+
+          await sendNewApplicationAlertEmail({
+            candidateName: application.candidateName,
+            candidateEmail: application.candidateEmail,
+            candidatePhone: application.candidatePhone,
             linkedInUrl: application.linkedInUrl,
             jobRole: template.jobRole,
             interviewPreference: "AI",

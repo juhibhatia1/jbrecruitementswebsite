@@ -52,8 +52,9 @@ export function buildWebRtcSystemInstructions(payload: {
   baseInstructions: string;
   transcript?: InterviewTranscriptEntry[];
   isResuming?: boolean;
+  resumeText?: string;
 }): string {
-  const { role, experienceLevel, techStack, durationMinutes, baseInstructions, transcript, isResuming } = payload;
+  const { role, experienceLevel, techStack, durationMinutes, baseInstructions, transcript, isResuming, resumeText } = payload;
   const transcriptText = transcript && transcript.length > 0
     ? transcript
         .map((entry) => `${entry.role === "interviewer" ? "Interviewer" : "Candidate"}: ${entry.text}`)
@@ -74,6 +75,17 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
 `
     : "";
 
+  const resumeSection = resumeText?.trim()
+    ? `
+CANDIDATE RESUME PROFILE (IMPORTANT):
+The candidate has provided their resume. Review this resume content and use it to ask personalized questions. Seamlessly connect the template questions and skills with the candidate's actual projects, job titles, and experiences listed in their resume:
+
+<candidate_resume>
+${resumeText.trim()}
+</candidate_resume>
+`
+    : "";
+
   const dynamicGuidelines = `
 
 ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
@@ -84,7 +96,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment before asking your first technical question.
 - If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
-- Noise/unclear-audio handling: if a transcript looks like background noise, random words, or unclear speech, do NOT treat it as a valid answer. Ask for clarification once (e.g., "I may have caught background noise — could you please repeat that?") and continue only after a coherent response.
+- Noise/unclear-audio & Language constraints: only conduct this interview in English. If a transcript looks like background noise, random words, non-English words, foreign language, or unclear speech, do NOT treat it as a valid answer. Ask for clarification once in English (e.g., "I may have caught background noise — could you please repeat that in English?") and continue only after a coherent response.
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 - TIME VOLUNTARY MANAGEMENT (preserve every existing interview rule, section rule, and coding-question minimum): Treat ${durationMinutes} minutes as the target interview duration, not a hard cut-off. Pace dynamically using answer depth and remaining mandatory coverage. Never end early just because your initial section plan finished; if time remains, continue with contextual follow-ups from the candidate's projects, technologies, and earlier answers.
@@ -108,6 +120,7 @@ OPENING — follow this exact sequence, no steps skipped:
 PERSONALIZATION:
 During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics.
 Core tech stack to keep in mind: ${techStack.join(", ") || "General"}.
+${resumeSection}
 
 ENGAGEMENT RULES — react like a skilled human interviewer:
 • Strong, detailed answer: acknowledge the specific point.

@@ -74,9 +74,31 @@ function SuccessContent() {
 
   if (loading) {
     return (
-      <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-12 text-center shadow-sm">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#5a58ab] mx-auto mb-4"></div>
-        <p className="text-sm text-slate-500">Loading booking details…</p>
+      <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden animate-pulse">
+        {/* Success Icon Badge Placeholder */}
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center shadow-inner">
+            <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+          </div>
+        </div>
+
+        {/* Title Placeholder */}
+        <div className="h-7 w-48 bg-slate-200 rounded-md mx-auto mb-4"></div>
+
+        {/* Description Paragraph Placeholder */}
+        <div className="space-y-2.5 mb-8">
+          <div className="h-3 w-5/6 bg-slate-200/70 rounded-md mx-auto"></div>
+          <div className="h-3 w-11/12 bg-slate-200/70 rounded-md mx-auto"></div>
+          <div className="h-3 w-3/4 bg-slate-200/70 rounded-md mx-auto"></div>
+        </div>
+
+        {/* Action Blocks Placeholder */}
+        <div className="space-y-3 mb-2">
+          {/* Primary Action Button Placeholder */}
+          <div className="h-12 w-full bg-slate-200 rounded-xl"></div>
+          {/* Secondary Action Button Placeholder */}
+          <div className="h-10 w-full bg-slate-200/70 rounded-xl"></div>
+        </div>
       </div>
     );
   }

@@ -85,6 +85,11 @@ export default async function AdminInterviewsPage() {
                     >
                       {t.isActive ? "Active" : "Draft"}
                     </span>
+                    {(t.advancedConfig as any)?.isCustomJd && (
+                      <span className="rounded-full bg-[#5a58ab]/10 text-[#5a58ab] px-2.5 py-0.5 text-xs font-semibold">
+                        Custom JD
+                      </span>
+                    )}
                     {!t.systemInstructions && (
                       <span className="rounded-full bg-orange-50 text-orange-600 px-2.5 py-0.5 text-xs font-medium">
                         Needs Generation

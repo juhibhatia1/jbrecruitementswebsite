@@ -337,9 +337,52 @@ export default function KnowledgeDashboard() {
 
         {/* Content Box */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-3xl">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#5a58ab]"></div>
-            <p className="mt-3 text-sm text-slate-500 font-medium">Fetching database logs...</p>
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden animate-pulse">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
+                    <th className="py-4 px-6"><div className="h-3 w-28 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-20 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-16 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-24 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-20 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6 text-right"><div className="h-3 w-16 bg-slate-200 rounded-md ml-auto"></div></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index} className="border-b border-slate-100 last:border-0">
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-44 bg-slate-200 rounded-md mb-2"></div>
+                        <div className="h-2.5 w-28 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-5 w-24 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-8 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-20 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="flex items-center">
+                          <div className="h-5 w-10 bg-slate-200 rounded-full"></div>
+                          <div className="ml-2 h-3.5 w-12 bg-slate-200/60 rounded-md"></div>
+                        </div>
+                      </td>
+                      <td className="py-5 px-6 text-right">
+                        <div className="flex justify-end gap-3">
+                          <div className="h-4 w-12 bg-slate-200/60 rounded-md"></div>
+                          <div className="h-4 w-12 bg-slate-200/60 rounded-md"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : activeTab === "docs" ? (
           /* KNOWLEDGE BASE MANAGEMENT LIST */

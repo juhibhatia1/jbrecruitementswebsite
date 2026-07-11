@@ -62,6 +62,7 @@ export async function POST(request: Request) {
   if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     console.log(`PaymentIntent for ${paymentIntent.amount} succeeded. ID: ${paymentIntent.id}`);
+    const purchaseTime = new Date(paymentIntent.created * 1000);
 
     // Extract billing country
     let billingCountry = null;
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
 
       console.log(`Updated Purchase in database: ${purchase.id}. Status: COMPLETED`);
 
-      // ── If this is an AI mock interview purchase, create the application ──
+      // ── If this is an AI mock interview purchase, create/activate the application ──
       const meta = paymentIntent.metadata;
       if (
         meta.interviewPreference === "AI" &&
@@ -122,17 +123,39 @@ export async function POST(request: Request) {
           });
 
           if (template) {
-            // Check if already created by success page details endpoint
-            const existing = await prisma.candidateApplication.findFirst({
-              where: {
-                templateId: template.id,
-                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
-                interviewPreference: "AI",
-              },
-            });
-            if (existing) {
-              console.log(`AI application ${existing.id} already exists (likely created by success page). Skipping creation.`);
-              return;
+            let application = null;
+            let alreadyActivated = false;
+
+            // 1. First try lookup by applicationId if provided
+            if (meta.applicationId) {
+              application = await prisma.candidateApplication.findUnique({
+                where: { id: meta.applicationId },
+              });
+              if (application && application.status !== "APPLIED") {
+                alreadyActivated = true;
+              }
+            }
+
+            // 2. Otherwise fall back to looking up by email and template
+            if (!application) {
+              application = await prisma.candidateApplication.findFirst({
+                where: {
+                  templateId: template.id,
+                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                  interviewPreference: "AI",
+                  createdAt: {
+                    gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+                  },
+                },
+              });
+              if (application && application.status !== "APPLIED") {
+                alreadyActivated = true;
+              }
+            }
+
+            if (alreadyActivated && application) {
+              console.log(`AI application ${application.id} already exists and is active. Skipping activation.`);
+              return NextResponse.json({ received: true, alreadyExists: true }, { status: 200 });
             }
 
             const TOKEN_EXPIRY_DAYS = 7;
@@ -142,19 +165,32 @@ export async function POST(request: Request) {
               Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
             );
 
-            const application = await prisma.candidateApplication.create({
-              data: {
-                templateId: template.id,
-                candidateName: meta.candidateName.trim(),
-                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
-                candidatePhone: null,
-                linkedInUrl: meta.linkedInUrl || null,
-                interviewPreference: "AI",
-                accessTokenHash,
-                accessTokenExpiresAt,
-                status: "AI_INVITED",
-              },
-            });
+            if (application && application.status === "APPLIED") {
+              // Update the pre-created application to activate it
+              application = await prisma.candidateApplication.update({
+                where: { id: application.id },
+                data: {
+                  status: "AI_INVITED",
+                  accessTokenHash,
+                  accessTokenExpiresAt,
+                },
+              });
+            } else {
+              // Create a new application from scratch (fallback for legacy checkout)
+              application = await prisma.candidateApplication.create({
+                data: {
+                  templateId: template.id,
+                  candidateName: meta.candidateName.trim(),
+                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                  candidatePhone: null,
+                  linkedInUrl: meta.linkedInUrl || null,
+                  interviewPreference: "AI",
+                  accessTokenHash,
+                  accessTokenExpiresAt,
+                  status: "AI_INVITED",
+                },
+              });
+            }
 
             const appUrl =
               process.env.NEXT_PUBLIC_APP_URL ||
@@ -177,7 +213,7 @@ export async function POST(request: Request) {
             await sendNewApplicationAlertEmail({
               candidateName: application.candidateName,
               candidateEmail: application.candidateEmail,
-              candidatePhone: null,
+              candidatePhone: application.candidatePhone,
               linkedInUrl: application.linkedInUrl,
               jobRole: template.jobRole,
               interviewPreference: "AI",
@@ -185,7 +221,7 @@ export async function POST(request: Request) {
             });
 
             console.log(
-              `AI interview application ${application.id} created and link emailed to ${application.candidateEmail}`,
+              `AI interview application ${application.id} activated and link emailed to ${application.candidateEmail}`,
             );
           } else {
             console.warn(
@@ -193,13 +229,13 @@ export async function POST(request: Request) {
             );
           }
         } catch (interviewErr) {
-          console.error("Failed to create AI interview application from webhook:", interviewErr);
+          console.error("Failed to create/activate AI interview application from webhook:", interviewErr);
           // Do NOT return 500 here — purchase is already marked COMPLETED.
           // Emit an alert but don't cause Stripe to re-deliver.
         }
       }
 
-      // ── If this is a MANUAL (Coach) mock interview purchase, create the application ──
+      // ── If this is a MANUAL (Coach) mock interview purchase, create/activate the application ──
       if (
         meta.interviewPreference === "MANUAL" &&
         meta.interviewTemplateId &&
@@ -212,6 +248,42 @@ export async function POST(request: Request) {
           });
 
           if (template) {
+            let application = null;
+            let alreadyActivated = false;
+
+            // 1. First try lookup by applicationId
+            if (meta.applicationId) {
+              application = await prisma.candidateApplication.findUnique({
+                where: { id: meta.applicationId },
+              });
+              if (application && application.status !== "APPLIED") {
+                alreadyActivated = true;
+              }
+            }
+
+            // 2. Otherwise fall back to looking up by email and template
+            if (!application) {
+              application = await prisma.candidateApplication.findFirst({
+                where: {
+                  templateId: template.id,
+                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                  interviewPreference: "MANUAL",
+                  createdAt: {
+                    gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+                  },
+                },
+              });
+              if (application && application.status !== "APPLIED") {
+                alreadyActivated = true;
+              }
+            }
+
+            if (alreadyActivated && application) {
+              console.log(`Coach application ${application.id} already exists and is active. Skipping activation.`);
+              // Return received: true to prevent Stripe from retrying
+              return NextResponse.json({ received: true, alreadyExists: true }, { status: 200 });
+            }
+
             // Generate a token so admin can look up the application later
             const accessToken = generateInterviewAccessToken();
             const accessTokenHash = hashInterviewAccessToken(accessToken);
@@ -219,19 +291,32 @@ export async function POST(request: Request) {
               Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days for coach sessions
             );
 
-            const application = await prisma.candidateApplication.create({
-              data: {
-                templateId: template.id,
-                candidateName: meta.candidateName.trim(),
-                candidateEmail: meta.candidateEmail.trim().toLowerCase(),
-                candidatePhone: null,
-                linkedInUrl: meta.linkedInUrl || null,
-                interviewPreference: "MANUAL",
-                accessTokenHash,
-                accessTokenExpiresAt,
-                status: "MANUAL_REVIEW_PENDING",
-              },
-            });
+            if (application && application.status === "APPLIED") {
+              // Update pre-created application to activate it
+              application = await prisma.candidateApplication.update({
+                where: { id: application.id },
+                data: {
+                  status: "MANUAL_REVIEW_PENDING",
+                  accessTokenHash,
+                  accessTokenExpiresAt,
+                },
+              });
+            } else {
+              // Create a new application from scratch (fallback for legacy checkout)
+              application = await prisma.candidateApplication.create({
+                data: {
+                  templateId: template.id,
+                  candidateName: meta.candidateName.trim(),
+                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                  candidatePhone: null,
+                  linkedInUrl: meta.linkedInUrl || null,
+                  interviewPreference: "MANUAL",
+                  accessTokenHash,
+                  accessTokenExpiresAt,
+                  status: "MANUAL_REVIEW_PENDING",
+                },
+              });
+            }
 
             const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
             const appUrl =
@@ -257,7 +342,7 @@ export async function POST(request: Request) {
             await sendNewApplicationAlertEmail({
               candidateName: application.candidateName,
               candidateEmail: application.candidateEmail,
-              candidatePhone: null,
+              candidatePhone: application.candidatePhone,
               linkedInUrl: application.linkedInUrl,
               jobRole: template.jobRole,
               interviewPreference: "MANUAL",
@@ -265,7 +350,7 @@ export async function POST(request: Request) {
             });
 
             console.log(
-              `Coach interview application ${application.id} created and Cal link emailed to ${application.candidateEmail}`,
+              `Coach interview application ${application.id} activated and Cal link emailed to ${application.candidateEmail}`,
             );
           } else {
             console.warn(
@@ -273,7 +358,7 @@ export async function POST(request: Request) {
             );
           }
         } catch (coachErr) {
-          console.error("Failed to create Coach interview application from webhook:", coachErr);
+          console.error("Failed to create/activate Coach interview application from webhook:", coachErr);
           // Do NOT return 500 here — purchase is already marked COMPLETED.
         }
       }

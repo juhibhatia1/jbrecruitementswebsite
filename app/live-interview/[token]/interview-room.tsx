@@ -376,7 +376,12 @@ export default function InterviewRoom({ token }: { token: string }) {
         armInterviewTiming();
         break;
 
-      case "transcript":
+      case "transcript": {
+        const isCandidate = msg.data.role === "candidate";
+        if (isCandidate && !isEnglishText(msg.data.text)) {
+          console.warn("Ignoring non-English/noise candidate transcript input:", msg.data.text);
+          break;
+        }
         transcriptRef.current = [...transcriptRef.current, msg.data];
         if (msg.data.role === "interviewer" && pendingCardsRef.current.length > 0) {
           const pending = pendingCardsRef.current.splice(0);
@@ -390,6 +395,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         }
         scheduleSync();
         break;
+      }
 
       case "final_report":
         finalReportRef.current = msg.data;
@@ -806,10 +812,46 @@ export default function InterviewRoom({ token }: { token: string }) {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-              <div className="inline-block w-7 h-7 border-2 border-[#5a58ab] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm font-semibold text-slate-600 mb-1">Generating your report…</p>
-              <p className="text-xs text-slate-400">This may take a moment. Please stay on the page.</p>
+            <div className="space-y-5 animate-pulse">
+              {/* Score + summary card skeleton */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="space-y-2">
+                    <div className="h-5 w-44 bg-slate-200 rounded-md"></div>
+                    <div className="h-3 w-56 bg-slate-200/60 rounded-md"></div>
+                  </div>
+                  {/* Score block skeleton */}
+                  <div className="shrink-0 w-16 h-16 bg-slate-200 rounded-xl"></div>
+                </div>
+                {/* Summary text skeleton */}
+                <div className="space-y-3">
+                  <div className="h-3.5 w-full bg-slate-200/70 rounded-md"></div>
+                  <div className="h-3.5 w-11/12 bg-slate-200/70 rounded-md"></div>
+                  <div className="h-3.5 w-4/5 bg-slate-200/70 rounded-md"></div>
+                </div>
+              </div>
+
+              {/* Strengths skeleton */}
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+                <div className="h-3.5 w-20 bg-emerald-200/60 rounded-md mb-4"></div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                    <div className="h-3 w-5/6 bg-emerald-200/40 rounded-md"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                    <div className="h-3 w-3/4 bg-emerald-200/40 rounded-md"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status footer notice */}
+              <div className="rounded-2xl border border-[#e0e0f0] bg-white border border-slate-200 p-6 flex flex-col items-center justify-center text-center shadow-sm">
+                <div className="inline-block w-6 h-6 border-2 border-[#5a58ab] border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-sm font-semibold text-[#252e3d]">Generating your personalised performance report…</p>
+                <p className="text-xs text-slate-400 mt-1">AI is analyzing your session transcript and grading your responses. Please do not close this window.</p>
+              </div>
             </div>
           )}
 
@@ -976,4 +1018,24 @@ function TranscriptBubble({ entry }: { entry: InterviewTranscriptEntry }) {
       </div>
     </div>
   );
+}
+
+function isEnglishText(text: string): boolean {
+  if (!text) return true;
+  // Strip standard punctuation/spacing/emojis
+  const clean = text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove accents
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, "")
+    .trim();
+  if (!clean) return true;
+
+  // Check if it's primarily Latin/ASCII script
+  const asciiRatio = (clean.match(/[\x00-\x7F]/g) || []).length / clean.length;
+  if (asciiRatio < 0.85) return false;
+
+  // Check if it's not a block of repeating consonants or gibberish (e.g. "shshsh", "zzzzz")
+  if (/^[^aeiouy]{5,}$/i.test(clean)) return false;
+
+  return true;
 }

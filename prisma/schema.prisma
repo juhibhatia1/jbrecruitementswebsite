@@ -192,6 +192,8 @@ model CandidateApplication {
   candidateEmail      String
   candidatePhone      String?
   linkedInUrl         String?
+  resumeUrl           String?
+  resumeText          String?
   interviewPreference CandidateInterviewPreference
   accessTokenHash     String                       @unique
   accessTokenExpiresAt DateTime

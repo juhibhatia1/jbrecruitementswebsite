@@ -1,12 +1,28 @@
 import Groq from "groq-sdk";
+import OpenAI from "openai";
 import { prisma } from "../prisma";
 import { searchSimilarChunks } from "./vector-store";
 import { getSystemContextText, type Currency } from "./system-context";
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || "",
-});
+let groq: Groq | null = null;
+function getGroqClient() {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
+  if (!groq) {
+    groq = new Groq({ apiKey: key });
+  }
+  return groq;
+}
+
+let openai: OpenAI | null = null;
+function getOpenAIClient() {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  if (!openai) {
+    openai = new OpenAI({ apiKey: key });
+  }
+  return openai;
+}
 
 const DEFAULT_MODEL = "llama-3.3-70b-specdec"; // default fast and smart model on Groq
 
@@ -26,7 +42,7 @@ export interface ChatEngineResponse {
  * 1. Persists conversation to Neon DB
  * 2. Fetches relevant documents from vector store
  * 3. Builds system prompt incorporating site context & vector chunks
- * 4. Calls Groq with strict formatting instructions
+ * 4. Calls OpenAI (gpt-4o-mini) as the primary provider, falling back to Groq (Llama 3) if needed
  * 5. Returns parsed chat reply and suggested follow-ups
  */
 export async function handleChatMessage(
@@ -35,14 +51,6 @@ export async function handleChatMessage(
   meta?: { ipAddress?: string; userAgent?: string; currency?: Currency }
 ): Promise<ChatEngineResponse> {
   const modelId = process.env.GROQ_MODEL || DEFAULT_MODEL;
-
-  if (!process.env.GROQ_API_KEY) {
-    console.error("GROQ_API_KEY is not defined in environment variables.");
-    return {
-      response: "Hello! I am having trouble connecting to my brain (Groq API Key missing). Please check with the administrator.",
-      suggestedQuestions: ["How can I contact Juhi Bhatia?"]
-    };
-  }
 
   // 1. Fetch or initialize the conversation history from DB
   let dbConversation = await prisma.chatConversation.findUnique({
@@ -85,11 +93,11 @@ STRICT INSTRUCTIONS:
 4. If a user asks for open roles or how to apply for jobs, respond with a warm, positive, and encouraging tone. Explain that while we do not publish active listings directly on our website, we work closely with clients to fill premium opportunities and continuously review talent for placement. Encourage them to send their resume to contact@jbrecruitments.com so we can consider them for current and upcoming client openings. Guide them to boost their profile using our career optimization packages, and provide this exact markdown link: [Explore Career Services](/job-seekers). NEVER use negative phrasing like "we do not host jobs" or "we do not have a careers page". Always focus on review opportunities and profile optimization.
 5. Keep answers short, direct, and concise (under 3-4 sentences, or 80-100 words maximum). Avoid writing long essays or detailed paragraphs. Keep lists extremely brief.
 6. Prioritize retrieved knowledge base details: When explaining how our services work or what is included, you MUST explicitly mention the unique details, terminology, and process steps described in the retrieved knowledge base documents (RAG / ADDITIONAL RELEVANT KNOWLEDGE) (such as the "proper intake process", "keyword integration", and "impact-focused bullets" for resume writing). Avoid repeating the exact high-level bullet points from the website context if detailed RAG content is available.
-7. Always offer exactly 2 follow-up suggestions/questions that are contextually relevant, engaging, and interactive. Make each question descriptive, clear, and focused (between 8 to 12 words) so they remain highly interactive and engaging without being too long (e.g., "How does the Superstar Shout-Out boost LinkedIn visibility?" or "Can you explain how we optimize resume keywords?").
+7. Always offer exactly 1 follow-up suggestion/question that is contextually relevant, engaging, and interactive. Make the question descriptive, clear, and focused (between 8 to 12 words) so it remains highly interactive and engaging without being too long (e.g., "How does the Superstar Shout-Out boost LinkedIn visibility?").
 8. You MUST return your output in the following text format:
 [your short conversational response here]
 
-[Suggested Questions]: suggested question 1 | suggested question 2`;
+[Suggested Questions]: suggested question 1`;
 
   // 5. Build messages array for the LLM
   const messages = [
@@ -101,73 +109,102 @@ STRICT INSTRUCTIONS:
     { role: "user", content: userMessage },
   ];
 
-  try {
-    // 6. Call Groq API
-    const chatCompletion = await groq.chat.completions.create({
-      messages: messages as any,
-      model: modelId,
-      temperature: 0.5,
-    });
+  let content = "";
 
-    const content = chatCompletion.choices[0]?.message?.content || "";
-    
-    // Parse complete response using the delimiter
-    let responseText = content;
-    let suggestedQuestions: string[] = [];
-    const delimiter = "[Suggested Questions]:";
-    const parts = content.split(delimiter);
-    
-    if (parts.length > 1) {
-      responseText = parts[0].trim();
-      suggestedQuestions = parts[1]
-        .split("|")
-        .map(q => q.trim())
-        .filter(Boolean);
+  // 6. Try OpenAI first, fallback to Groq
+  const openaiClient = getOpenAIClient();
+  if (openaiClient) {
+    try {
+      console.log("[ChatEngine] Attempting chat completion with OpenAI gpt-4o-mini");
+      const chatCompletion = await openaiClient.chat.completions.create({
+        messages: messages as any,
+        model: "gpt-4o-mini",
+        temperature: 0.5,
+      });
+      content = chatCompletion.choices[0]?.message?.content || "";
+    } catch (openAiError) {
+      console.error("[ChatEngine] OpenAI primary chat completion failed. Falling back to Groq:", openAiError);
     }
-
-    if (!responseText) {
-      responseText = "I'm here to help! What questions do you have about Juhi Bhatia or our career services?";
-      suggestedQuestions = ["Who is Juhi Bhatia?", "What services do you offer?"];
-    }
-
-    // 7. Save conversation to Neon DB
-    const updatedMessages = [
-      ...history,
-      { role: "user", content: userMessage, timestamp: new Date().toISOString() },
-      {
-        role: "assistant",
-        content: responseText,
-        timestamp: new Date().toISOString(),
-        suggestedQuestions: suggestedQuestions
-      },
-    ];
-
-    await prisma.chatConversation.upsert({
-      where: { sessionId },
-      create: {
-        sessionId,
-        messages: updatedMessages as any,
-        ipAddress: meta?.ipAddress,
-        userAgent: meta?.userAgent,
-      },
-      update: {
-        messages: updatedMessages as any,
-        ipAddress: meta?.ipAddress || null,
-        userAgent: meta?.userAgent || null,
-      },
-    });
-
-    return {
-      response: responseText,
-      suggestedQuestions
-    };
-  } catch (error) {
-    console.error("Groq Chat completion error:", error);
-    return {
-      response: "I apologize, but I encountered an error while processing your request. Please try again shortly or contact Juhi directly at contact@jbrecruitments.com.",
-      suggestedQuestions: ["How can I contact Juhi Bhatia?", "What services do you offer?"]
-    };
   }
+
+  // Fallback to Groq if OpenAI was skipped or failed
+  if (!content) {
+    const groqClient = getGroqClient();
+    if (!groqClient) {
+      console.error("[ChatEngine] Both OpenAI and Groq APIs are unavailable.");
+      return {
+        response: "Hello! I am having trouble connecting to my brain. Please check back shortly.",
+        suggestedQuestions: ["Who is Juhi Bhatia?", "What services do you offer?"]
+      };
+    }
+
+    try {
+      console.log("[ChatEngine] Attempting chat completion with Groq fallback model:", modelId);
+      const chatCompletion = await groqClient.chat.completions.create({
+        messages: messages as any,
+        model: modelId,
+        temperature: 0.5,
+      });
+      content = chatCompletion.choices[0]?.message?.content || "";
+    } catch (groqError) {
+      console.error("[ChatEngine] Groq fallback chat completion failed:", groqError);
+      return {
+        response: "I apologize, but I encountered an error while processing your request. Please try again shortly.",
+        suggestedQuestions: ["Who is Juhi Bhatia?", "What services do you offer?"]
+      };
+    }
+  }
+
+  // Parse complete response using the delimiter
+  let responseText = content;
+  let suggestedQuestions: string[] = [];
+  const delimiter = "[Suggested Questions]:";
+  const parts = content.split(delimiter);
+
+  if (parts.length > 1) {
+    responseText = parts[0].trim();
+    suggestedQuestions = parts[1]
+      .split("|")
+      .map(q => q.trim())
+      .filter(Boolean);
+  }
+
+  if (!responseText) {
+    responseText = "I'm here to help! What questions do you have about Juhi Bhatia or our career services?";
+    suggestedQuestions = ["Who is Juhi Bhatia?", "What services do you offer?"];
+  }
+
+  // 7. Save conversation to Neon DB
+  const updatedMessages = [
+    ...history,
+    { role: "user", content: userMessage, timestamp: new Date().toISOString() },
+    {
+      role: "assistant",
+      content: responseText,
+      timestamp: new Date().toISOString(),
+      suggestedQuestions: suggestedQuestions
+    },
+  ];
+
+  await prisma.chatConversation.upsert({
+    where: { sessionId },
+    create: {
+      sessionId,
+      messages: updatedMessages as any,
+      ipAddress: meta?.ipAddress,
+      userAgent: meta?.userAgent,
+    },
+    update: {
+      messages: updatedMessages as any,
+      ipAddress: meta?.ipAddress || null,
+      userAgent: meta?.userAgent || null,
+    },
+  });
+
+  return {
+    response: responseText,
+    suggestedQuestions
+  };
 }
 
 /**
@@ -179,10 +216,6 @@ export async function handleChatMessageStream(
   meta?: { ipAddress?: string; userAgent?: string; currency?: Currency }
 ) {
   const modelId = process.env.GROQ_MODEL || DEFAULT_MODEL;
-
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not defined in environment variables.");
-  }
 
   // 1. Fetch or initialize the conversation history from DB
   let dbConversation = await prisma.chatConversation.findUnique({
@@ -225,11 +258,11 @@ STRICT INSTRUCTIONS:
 4. We do NOT have a careers/jobs page, active job opening list, or direct job placement on our website. If a user asks for job openings or how to apply for jobs on our website, explain clearly and politely that we do not host a jobs/careers page or list active openings on our website. Suggest they send their resume to contact@jbrecruitments.com to be considered for client opportunities, or explore our career consulting packages by providing this exact markdown link: [Explore Career Services](/job-seekers).
 5. Keep answers short, direct, and concise (under 3-4 sentences, or 80-100 words maximum). Avoid writing long essays or detailed paragraphs. Keep lists extremely brief.
 6. Prioritize retrieved knowledge base details: When explaining how our services work or what is included, you MUST explicitly mention the unique details, terminology, and process steps described in the retrieved knowledge base documents (RAG / ADDITIONAL RELEVANT KNOWLEDGE) (such as the "proper intake process", "keyword integration", and "impact-focused bullets" for resume writing). Avoid repeating the exact high-level bullet points from the website context if detailed RAG content is available.
-7. Always offer exactly 2 follow-up suggestions/questions that are contextually relevant, engaging, and interactive. Make each question descriptive, clear, and focused (between 8 to 12 words) so they remain highly interactive and engaging without being too long (e.g., "How does the Superstar Shout-Out boost LinkedIn visibility?" or "Can you explain how we optimize resume keywords?").
+7. Always offer exactly 1 follow-up suggestion/question that is contextually relevant, engaging, and interactive. Make the question descriptive, clear, and focused (between 8 to 12 words) so it remains highly interactive and engaging without being too long (e.g., "How does the Superstar Shout-Out boost LinkedIn visibility?").
 8. You MUST return your output in the following text format:
 [your short conversational response here]
 
-[Suggested Questions]: suggested question 1 | suggested question 2`;
+[Suggested Questions]: suggested question 1`;
 
   // 5. Build messages array for the LLM
   const messages = [
@@ -241,8 +274,34 @@ STRICT INSTRUCTIONS:
     { role: "user", content: userMessage },
   ];
 
-  // 6. Call Groq API in streaming mode
-  const stream = await groq.chat.completions.create({
+  // 6. Try OpenAI streaming first, fallback to Groq streaming
+  const openaiClient = getOpenAIClient();
+  if (openaiClient) {
+    try {
+      console.log("[ChatEngine] Attempting chat stream with OpenAI gpt-4o-mini");
+      const stream = await openaiClient.chat.completions.create({
+        messages: messages as any,
+        model: "gpt-4o-mini",
+        temperature: 0.5,
+        stream: true,
+      });
+      return {
+        stream,
+        history,
+      };
+    } catch (openAiError) {
+      console.error("[ChatEngine] OpenAI streaming request failed. Falling back to Groq stream:", openAiError);
+    }
+  }
+
+  // Fallback to Groq stream if OpenAI skipped or failed
+  const groqClient = getGroqClient();
+  if (!groqClient) {
+    throw new Error("Both OpenAI and Groq API keys are missing. Cannot process request.");
+  }
+
+  console.log("[ChatEngine] Attempting chat stream with Groq fallback model:", modelId);
+  const stream = await groqClient.chat.completions.create({
     messages: messages as any,
     model: modelId,
     temperature: 0.5,
