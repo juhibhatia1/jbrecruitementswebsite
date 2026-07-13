@@ -138,7 +138,7 @@ save_interview_event — call after each substantive question if you want to per
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate.
 
 CLOSING SEQUENCE:
-After all sections are complete and the interview is ready to end: thank the candidate sincerely, give a brief verbal summary of the topics covered, wish them well. Then — and only then — call finalize_interview_report.
+After all technical and behavioral sections are complete and before you end the interview: you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for the candidate's response. Evaluate the quality of the questions they ask (or their response if they have no questions) as part of their final evaluation. After answering their questions, conclude the interview by thanking them sincerely, giving a brief verbal summary of the topics covered, and wishing them well. Then — and only then — call finalize_interview_report.
 ${resumeBlock}
 ${dynamicGuidelines}`;
 }

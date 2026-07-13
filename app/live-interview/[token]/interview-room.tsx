@@ -26,77 +26,6 @@ type TranscriptItem =
   | { kind: "speech"; entry: InterviewTranscriptEntry }
   | { kind: "card"; card: InterviewReferenceCard };
 
-// ── Blob renderer ────────────────────────────────────────────────────────────
-
-function drawBlob(canvas: HTMLCanvasElement, micLevel: number, aiSpeaking: boolean, t: number) {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  const w = canvas.width;
-  const h = canvas.height;
-  const cx = w / 2;
-  const cy = h / 2;
-
-  // Breathing base pulse (always animates)
-  const breathe = (Math.sin(t / 1400) * 0.5 + 0.5) * 0.12;
-  const dynamicLevel = Math.max(micLevel * 2.8, aiSpeaking ? 0.42 : breathe);
-  const radius = 58 + dynamicLevel * 52;
-
-  ctx.clearRect(0, 0, w, h);
-
-  // Outermost ring
-  const outerAlpha = aiSpeaking ? 0.2 : 0.08 + breathe;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius + 22, 0, Math.PI * 2);
-  ctx.strokeStyle = `rgba(90,88,171,${outerAlpha})`;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Middle ring
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius + 10, 0, Math.PI * 2);
-  ctx.strokeStyle = `rgba(90,88,171,${outerAlpha * 2})`;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Glow shadow
-  ctx.save();
-  ctx.shadowColor = "#5a58ab";
-  ctx.shadowBlur = aiSpeaking ? 36 : 18 + breathe * 40;
-
-  // Main blob
-  const grad = ctx.createRadialGradient(cx - radius * 0.15, cy - radius * 0.15, 0, cx, cy, radius);
-  if (aiSpeaking) {
-    grad.addColorStop(0, "#a8a6f8");
-    grad.addColorStop(0.5, "#7b79d4");
-    grad.addColorStop(1, "#4a48a0");
-  } else {
-    grad.addColorStop(0, "#7b79d4");
-    grad.addColorStop(0.5, "#5a58ab");
-    grad.addColorStop(1, "#3d3b8a");
-  }
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.restore();
-
-  // Specular highlight
-  const highlightGrad = ctx.createRadialGradient(
-    cx - radius * 0.3,
-    cy - radius * 0.3,
-    0,
-    cx - radius * 0.3,
-    cy - radius * 0.3,
-    radius * 0.6,
-  );
-  highlightGrad.addColorStop(0, "rgba(255,255,255,0.12)");
-  highlightGrad.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = highlightGrad;
-  ctx.fill();
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -111,10 +40,8 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [isStarting, setIsStarting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
-  const animFrameRef = useRef<number | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
@@ -149,39 +76,7 @@ export default function InterviewRoom({ token }: { token: string }) {
     phaseRef.current = phase;
   }, [phase]);
 
-  // ── Blob animation (runs when live) ───────────────────────────────────────
-  useEffect(() => {
-    if (phase !== "live") return;
 
-    let running = true;
-    const startTime = Date.now();
-
-    const draw = () => {
-      if (!running) return;
-      const canvas = canvasRef.current;
-      if (canvas) {
-        let micLevel = 0;
-        if (analyserRef.current) {
-          const buf = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteTimeDomainData(buf);
-          let rms = 0;
-          for (let i = 0; i < buf.length; i++) {
-            const norm = ((buf[i] ?? 128) - 128) / 128;
-            rms += norm * norm;
-          }
-          micLevel = Math.sqrt(rms / buf.length);
-        }
-        drawBlob(canvas, micLevel, aiSpeaking, Date.now() - startTime);
-      }
-      animFrameRef.current = requestAnimationFrame(draw);
-    };
-
-    animFrameRef.current = requestAnimationFrame(draw);
-    return () => {
-      running = false;
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [phase, aiSpeaking]);
 
   const stopMic = useCallback(() => {
     silentGainRef.current?.disconnect();
@@ -624,7 +519,6 @@ export default function InterviewRoom({ token }: { token: string }) {
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
       }
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       stopMic();
       if (audioElement) {
         audioElement.pause();
@@ -891,15 +785,20 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0">
-        {/* Left: blob — fixed size, bg white panel, border right */}
+        {/* Left: JB circle logo in the center — fixed size, bg white panel, border right */}
         <div className="flex flex-col items-center justify-center px-6 py-6 shrink-0 lg:w-80 lg:border-r lg:border-slate-200 bg-white h-[260px] lg:h-auto shadow-sm">
-          <canvas
-            ref={canvasRef}
-            width={220}
-            height={220}
-            className="rounded-full"
-            style={{ background: "radial-gradient(circle at 40% 35%, #ffffff 0%, #f0efff 100%)", border: "1px solid #e2e8f0" }}
-          />
+          <div className="relative w-48 h-48 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#5a58ab]/10 via-[#7b79d4]/5 to-transparent border border-slate-100 shadow-inner">
+            {/* Pulsing rings when AI is speaking */}
+            {aiSpeaking && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
+                <div className="absolute inset-4 rounded-full bg-[#5a58ab]/20 animate-pulse" />
+              </>
+            )}
+            <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-[#7b79d4] via-[#5a58ab] to-[#3d3b8a] flex items-center justify-center text-white font-bold text-4xl shadow-lg border-2 border-white/20 transition-transform duration-300 ${aiSpeaking ? "scale-105" : "scale-100"}`}>
+              JB
+            </div>
+          </div>
           <div className="mt-4 text-center">
             <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
             <p className="text-xs mt-0.5 font-medium">

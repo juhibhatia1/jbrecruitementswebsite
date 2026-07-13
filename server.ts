@@ -287,6 +287,24 @@ WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. 
 const nextApp = next({ dev, hostname: HOSTNAME, port: PORT, webpack: dev });
 const nextHandler = nextApp.getRequestHandler();
 
+// ── Startup environment validation ───────────────────────────────────────────
+// Fail loudly at boot rather than silently misbehaving under production load.
+const REQUIRED_ENV_VARS = [
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "DATABASE_URL",
+  "OPENAI_API_KEY",
+];
+if (!dev) {
+  const missing = REQUIRED_ENV_VARS.filter((k) => !process.env[k]);
+  if (missing.length > 0) {
+    console.error(
+      `FATAL: Missing required environment variable(s): ${missing.join(", ")}. Aborting startup.`,
+    );
+    process.exit(1);
+  }
+}
+
 nextApp
   .prepare()
   .then(() => {
@@ -297,13 +315,35 @@ nextApp
     const wss = new WebSocketServer({ noServer: true });
     const wssDev = dev ? new WebSocketServer({ noServer: true }) : null;
 
-    wss.on("connection", (clientWs) => {
+    // ── Per-IP WebSocket connection tracking ─────────────────────────────────
+    // Prevents a single attacker from opening many concurrent AI interview
+    // sessions and burning $100s/hr in OpenAI Realtime API costs.
+    const connectionsByIp = new Map<string, number>();
+    const MAX_WS_CONNECTIONS_PER_IP = 2;
+
+    wss.on("connection", (clientWs, upgradeRequest) => {
+      // Extract real IP (respects Cloudflare / reverse-proxy x-forwarded-for)
+      const rawIp =
+        upgradeRequest.headers["x-forwarded-for"] ??
+        upgradeRequest.socket.remoteAddress ??
+        "unknown";
+      const clientIp = Array.isArray(rawIp)
+        ? rawIp[0].trim()
+        : String(rawIp).split(",")[0].trim();
+
+      const currentCount = connectionsByIp.get(clientIp) ?? 0;
+      if (currentCount >= MAX_WS_CONNECTIONS_PER_IP) {
+        clientWs.close(1008, "Too many concurrent connections from your IP.");
+        return;
+      }
+      connectionsByIp.set(clientIp, currentCount + 1);
       let authenticated = false;
       let provider: any = null;
       let interviewSessionId: string | null = null;
       let applicationId: string | null = null;
       let finalized = false;
       let endInterviewRequested = false;
+      let durationKillTimer: ReturnType<typeof setTimeout> | null = null;
       let candidateContext: {
         candidateName: string;
         candidateEmail: string;
@@ -311,6 +351,7 @@ nextApp
         experienceLevel: string;
         techStack: string[];
         templateInstructions: string;
+        durationMinutes: number;
       } | null = null;
 
       const accumulator: InterviewSessionAccumulator = {
@@ -535,6 +576,7 @@ nextApp
               experienceLevel: application.template.experienceLevel,
               techStack: (application.template.techStack as string[]) || [],
               templateInstructions: application.template.systemInstructions,
+              durationMinutes: application.template.durationMinutes || 30,
             };
 
             const callbackHandlers = {
@@ -613,6 +655,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 - If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
+- MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 `;
 
@@ -652,6 +695,27 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
                 },
               });
             }
+
+            // ── Session duration kill-timer ──────────────────────────────────
+            // Force-disconnect if the interview exceeds its allotted time.
+            // Prevents runaway OpenAI Realtime API costs.
+            const durationMs = ((candidateContext?.durationMinutes ?? 30) + 2) * 60 * 1000; // +2 min grace
+            durationKillTimer = setTimeout(() => {
+              console.warn(
+                `[WS] Session ${interviewSessionId} exceeded duration limit (${candidateContext?.durationMinutes}min). Closing.`,
+              );
+              sendJson(clientWs, {
+                type: "interview_timeout",
+                message: "Your interview time has ended. Your session is being saved.",
+              });
+              endInterviewRequested = true;
+              provider?.endInterview();
+              setTimeout(() => {
+                void finalizeSession("COMPLETED").catch((err) => {
+                  console.error("Duration kill-timer finalization failed:", err);
+                });
+              }, 10000);
+            }, durationMs);
           } catch (error) {
             console.error("Interview auth/setup failed:", error);
             sendJson(clientWs, { type: "error", message: "Failed to start interview." });
@@ -696,7 +760,12 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
 
       clientWs.on("close", () => {
         clearTimeout(authTimeout);
+        if (durationKillTimer) clearTimeout(durationKillTimer);
         provider?.close();
+        // Release the per-IP connection slot
+        const remaining = (connectionsByIp.get(clientIp) ?? 1) - 1;
+        if (remaining <= 0) connectionsByIp.delete(clientIp);
+        else connectionsByIp.set(clientIp, remaining);
         if (authenticated) {
           const closeStatus = endInterviewRequested ? "COMPLETED" : "TERMINATED";
           void finalizeSession(closeStatus).catch((error) => {
@@ -812,6 +881,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment (e.g., "That's a great background!", "Impressive experience!", "Nice to meet you — that's a solid foundation!") before asking your first technical question.
 - If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
+- MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 `;
 
