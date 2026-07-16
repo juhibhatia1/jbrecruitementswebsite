@@ -39,6 +39,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [clockTick, setClockTick] = useState(() => Date.now());
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +75,18 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   useEffect(() => {
     phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "live") {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      setClockTick(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
   }, [phase]);
 
 
@@ -164,6 +177,19 @@ export default function InterviewRoom({ token }: { token: string }) {
     durationWarningTimerRef.current = null;
     durationTargetTimerRef.current = null;
     durationHardStopTimerRef.current = null;
+  }, []);
+
+  const formatTimer = useCallback((totalSeconds: number) => {
+    const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+    const hours = Math.floor(safeSeconds / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+    const seconds = safeSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }, []);
 
   const handleConfirmExit = useCallback(async () => {
@@ -316,6 +342,21 @@ export default function InterviewRoom({ token }: { token: string }) {
         break;
     }
   }, [armInterviewTiming, clearInterviewTiming, finalizeSession, scheduleSync, stopMic]);
+
+  const currentTimeMs = phase === "live" ? clockTick : Date.now();
+  const elapsedSeconds =
+    phase === "live" && interviewStartedAtRef.current
+      ? Math.max(0, Math.floor((currentTimeMs - interviewStartedAtRef.current) / 1000))
+      : 0;
+  const totalDurationSeconds = Math.max(1, Math.floor(interviewDurationMsRef.current / 1000));
+  const remainingSeconds = Math.max(0, totalDurationSeconds - elapsedSeconds);
+  const progressPercent = Math.min(100, (elapsedSeconds / totalDurationSeconds) * 100);
+  const timerTone =
+    remainingSeconds <= 60
+      ? "text-red-600"
+      : remainingSeconds <= 5 * 60
+        ? "text-amber-600"
+        : "text-emerald-600";
 
   const beginInterview = useCallback(async () => {
     if (isStarting || phaseRef.current !== "setup") return;
@@ -777,11 +818,34 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
           <span className="text-xs font-semibold text-slate-700">AI Mock Interview</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">Live</span>
+        <div className="flex items-center gap-3">
+          {phase === "live" && (
+            <div className="hidden sm:flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+              <div className="text-right">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${timerTone}`}>Time Left</p>
+                <p className={`text-sm font-extrabold tabular-nums ${timerTone}`}>{formatTimer(remainingSeconds)}</p>
+              </div>
+              <div className="h-8 w-px bg-slate-200" />
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Elapsed</p>
+                <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTimer(elapsedSeconds)}</p>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">Live</span>
+          </div>
         </div>
       </div>
+      {phase === "live" && (
+        <div className="h-1.5 w-full bg-slate-100 overflow-hidden">
+          <div
+            className={`h-full transition-all duration-1000 ${remainingSeconds <= 60 ? "bg-red-500" : remainingSeconds <= 5 * 60 ? "bg-amber-500" : "bg-[#5a58ab]"}`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0">
@@ -821,12 +885,22 @@ export default function InterviewRoom({ token }: { token: string }) {
               End Interview Early
             </button>
           </div>
+          {phase === "live" && (
+            <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center shadow-sm sm:hidden">
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${timerTone}`}>Time Left</p>
+              <p className={`mt-1 text-2xl font-extrabold tabular-nums ${timerTone}`}>{formatTimer(remainingSeconds)}</p>
+              <p className="mt-1 text-[11px] text-slate-500">Elapsed {formatTimer(elapsedSeconds)}</p>
+            </div>
+          )}
         </div>
 
         {/* Right: transcript + reference cards inline — scrolls internally */}
         <div className="flex-1 flex flex-col min-h-0 p-4 lg:p-6">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 shrink-0">Transcript</p>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
+          <div
+            data-lenis-prevent
+            className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0 overscroll-contain"
+          >
             {transcriptItems.length === 0 && (
               <div className="flex items-center justify-center h-32">
                 <p className="text-xs text-slate-400 text-center">

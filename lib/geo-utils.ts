@@ -2,6 +2,12 @@ import { Currency } from "./rag/system-context";
 
 const AED_COUNTRIES = new Set(["AE"]);
 const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
+const INR_TIMEZONES = new Set([
+  "Asia/Kolkata",
+  "Asia/Calcutta",
+  "Asia/Colombo",
+  "Asia/Karachi",
+]);
 
 /**
  * Detects the correct currency (USD, AED, or INR) based on headers (x-vercel-ip-country, cf-ipcountry)
@@ -24,6 +30,12 @@ export async function detectCurrencyFromRequest(
     return "USD";
   }
 
+  // 1b. Timezone hints help on localhost / proxies where country headers are absent.
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (timeZone && INR_TIMEZONES.has(timeZone)) {
+    return "INR";
+  }
+
   // 2. Fallback to ipapi.co lookup (essential for local development npm run dev)
   try {
     const geoUrl = clientIp
@@ -40,9 +52,23 @@ export async function detectCurrencyFromRequest(
       const code = (geoData.country_code || "").toUpperCase();
       if (AED_COUNTRIES.has(code)) return "AED";
       if (INR_COUNTRIES.has(code)) return "INR";
+      const geoTimeZone = String(geoData.timezone || "");
+      if (INR_TIMEZONES.has(geoTimeZone)) return "INR";
     }
   } catch (err) {
     console.error("[geo-utils] Geo-detection fallback error:", err);
+  }
+
+  return "USD";
+}
+
+export function detectCurrencyFromBrowser(): Currency {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (INR_TIMEZONES.has(timeZone)) return "INR";
+
+  const language = (typeof navigator !== "undefined" && navigator.language ? navigator.language : "").toLowerCase();
+  if (language.startsWith("en-in") || language.startsWith("hi-in") || language.startsWith("mr-in")) {
+    return "INR";
   }
 
   return "USD";

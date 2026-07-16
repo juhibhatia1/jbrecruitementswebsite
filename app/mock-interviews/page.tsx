@@ -1,191 +1,120 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
-import { IoSparkles, IoArrowForwardOutline } from "react-icons/io5";
+import { IoArrowForwardOutline, IoSparkles } from "react-icons/io5";
 
 export const metadata: Metadata = {
   title: "Mock Interview Sessions | JB Recruitment Solutions",
   description:
-    "Browse available mock interview practice sessions and book your slot. AI-powered or coach-led sessions available.",
+    "Choose between an AI-based mock interview or an in-app human-led booking flow.",
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function MockInterviewsPage() {
-  const allTemplates = await prisma.interviewTemplate.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      jobRole: true,
-      experienceLevel: true,
-      techStack: true,
-      requiredSkills: true,
-      durationMinutes: true,
-      difficultyLevel: true,
-      interviewDescription: true,
-      advancedConfig: true,
-      createdAt: true,
-    },
-  });
-
-  // Filter out user-created custom JD templates
-  const templates = allTemplates.filter((t) => {
-    const config = t.advancedConfig as Record<string, any> | null;
-    return !config?.isCustomJd;
-  });
-
+export default function MockInterviewsPage() {
   return (
     <div
       className="min-h-screen bg-[#F9F9FB] text-[#252E3D]"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <main className="mx-auto max-w-7xl px-4 md:px-6 pt-28 sm:pt-36 md:pt-32 pb-16 md:pb-24">
-        {/* Header */}
-        <div className="mb-10 md:mb-14">
+      <main className="mx-auto max-w-6xl px-4 md:px-6 pt-28 sm:pt-36 md:pt-32 pb-16 md:pb-24">
+        <div className="mb-10 md:mb-14 max-w-3xl">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f0efff] px-3 py-1 text-xs font-semibold text-[#5a58ab] mb-4">
+            <IoSparkles className="w-3.5 h-3.5" />
+            Mock Interview Options
+          </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-4">
-            Mock Interview Sessions
+            Choose how you want to practice
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 max-w-2xl leading-relaxed">
-            Browse available practice sessions and book your slot. Choose AI-powered
-            or coach-led interview practice to sharpen your skills.
+          <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+            Pick an AI-based interview for instant practice, or book a human-led
+            session through Cal.com when you want live coaching and feedback.
           </p>
         </div>
 
-        {/* Custom JD Promo Card */}
-        <div className="mb-10 rounded-2xl border border-[#5a58ab]/20 bg-white p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_8px_30px_rgb(90,88,171,0.02)] hover:shadow-[0_8px_30px_rgb(90,88,171,0.06)] transition-all">
-          <div className="space-y-2 max-w-2xl text-left">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f0efff] px-3 py-1 text-xs font-semibold text-[#5a58ab]">
-              <IoSparkles className="w-3.5 h-3.5" />
-              New Custom Practice
-            </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
-              Targeting a specific role? Practice with your own Job Description!
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-              Paste the Job Description of the role you are applying for. Our AI will analyze the requirements and immediately build a fully customized, interactive voice mock interview matching that exact description's stack, skills, and expectations.
-            </p>
-          </div>
-          <Link
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+          <OptionCard
+            eyebrow="Option 1"
+            title="AI Based Interview"
+            description="Start a tailored AI mock interview and practice immediately with voice-based prompts and structured feedback."
+            ctaLabel="Start AI Interview"
             href="/mock-interviews/custom"
-            className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#5a58ab] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4a489b] active:scale-95 shadow-md text-center cursor-pointer"
-          >
-            <span>Practice Custom JD</span>
-            <IoArrowForwardOutline className="w-4 h-4" />
-          </Link>
+            primary
+          />
+
+          <OptionCard
+            eyebrow="Option 2"
+            title="Human Based Interview"
+            description="Use the in-app booking form and payment flow to schedule a live human-led mock interview."
+            ctaLabel="Book Human Interview"
+            href="/mock-interviews/coach"
+          />
         </div>
 
-        {/* Role cards */}
-        {templates.length === 0 ? (
-          <div className="rounded-2xl border border-[#e0e0e0] bg-white px-8 py-16 text-center">
-            <p
-              className="text-xl font-semibold text-[#252e3d] mb-2"
-              style={{ fontFamily: "Crimson Text, serif" }}
-            >
-              No sessions available right now
-            </p>
-            <p className="text-sm text-gray-500">
-              Check back soon or{" "}
-              <Link
-                href="/job-seekers"
-                className="text-[#5a58ab] underline underline-offset-2"
-              >
-                explore our career services
-              </Link>{" "}
-              to start preparing for your next interview.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {templates.map((template) => (
-              <RoleCard key={template.id} template={template} />
-            ))}
-          </div>
-        )}
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 text-sm text-slate-600">
+          No templates are shown for now. We’ll keep this page focused on the two
+          interview formats only.
+        </div>
       </main>
     </div>
   );
 }
 
-type Template = {
-  id: string;
-  jobRole: string;
-  experienceLevel: string;
-  techStack: string[];
-  requiredSkills: string[];
-  durationMinutes: number;
-  difficultyLevel: string;
-  interviewDescription: string | null;
+type OptionCardProps = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  href: string;
+  primary?: boolean;
 };
 
-function RoleCard({ template }: { template: Template }) {
-  const difficultyColor: Record<string, string> = {
-    Easy: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Medium: "bg-amber-50 text-amber-700 border-amber-200",
-    Hard: "bg-red-50 text-red-700 border-red-200",
-  };
-  const diffClass =
-    difficultyColor[template.difficultyLevel] ??
-    "bg-slate-50 text-slate-600 border-slate-200";
+function OptionCard({
+  eyebrow,
+  title,
+  description,
+  ctaLabel,
+  href,
+  primary = false,
+}: OptionCardProps) {
+  const cardClass = primary
+    ? "border-[#5a58ab]/25 bg-gradient-to-br from-[#ffffff] to-[#f7f6ff]"
+    : "border-slate-200 bg-white";
 
-  return (
-    <div className="flex flex-col rounded-2xl border border-[#e0e0e0] bg-white p-6 transition hover:shadow-md hover:border-[#5a58ab]/30">
-      {/* Title row */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <h2
-          className="text-lg font-semibold text-[#252e3d] leading-snug"
-          style={{ fontFamily: "Crimson Text, serif" }}
-        >
-          {template.jobRole}
-        </h2>
-        <span
-          className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${diffClass}`}
-        >
-          {template.difficultyLevel}
-        </span>
-      </div>
+  const ctaClass = primary
+    ? "bg-[#5a58ab] text-white hover:bg-[#4a489b]"
+    : "bg-[#252e3d] text-white hover:bg-[#2d3645]";
 
-      {/* Meta */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-4">
-        <span>{template.experienceLevel}</span>
-        <span>·</span>
-        <span>{template.durationMinutes} min session</span>
-      </div>
-
-      {/* Description */}
-      {template.interviewDescription && (
-        <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3">
-          {template.interviewDescription}
-        </p>
-      )}
-
-      {/* Tech tags */}
-      {template.techStack.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-5">
-          {template.techStack.slice(0, 5).map((t) => (
-            <span
-              key={t}
-              className="rounded-md bg-[#f0efff] text-[#5a58ab] px-2 py-0.5 text-xs font-medium"
-            >
-              {t}
-            </span>
-          ))}
-          {template.techStack.length > 5 && (
-            <span className="rounded-md bg-gray-100 text-gray-500 px-2 py-0.5 text-xs">
-              +{template.techStack.length - 5}
-            </span>
-          )}
+  const content = (
+    <div
+      className={`group flex h-full flex-col rounded-3xl border p-6 sm:p-7 shadow-[0_8px_30px_rgb(37,46,61,0.04)] transition hover:shadow-[0_16px_40px_rgb(37,46,61,0.08)] ${cardClass}`}
+    >
+      <div className="mb-5">
+        <div className="inline-flex rounded-full bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          {eyebrow}
         </div>
-      )}
+      </div>
+
+      <h2 className="text-2xl sm:text-3xl font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Crimson Text, serif" }}>
+        {title}
+      </h2>
+      <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+        {description}
+      </p>
 
       <div className="mt-auto">
-        <Link
-          href={`/mock-interviews/${template.id}`}
-          className="inline-block w-full rounded-xl bg-[#252e3d] px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#2d3645]"
+        <span
+          className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition ${ctaClass}`}
         >
-          Book Session
-        </Link>
+          {ctaLabel}
+          <IoArrowForwardOutline className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+        </span>
       </div>
     </div>
+  );
+
+  return (
+    <Link href={href} className="block h-full">
+      {content}
+    </Link>
   );
 }

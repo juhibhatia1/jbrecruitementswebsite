@@ -12,10 +12,16 @@ import {
 } from "@stripe/react-stripe-js";
 import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
+import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
-type Props = { templateId: string; jobRole: string };
+type Props = {
+  templateId: string;
+  jobRole: string;
+  defaultPreference?: "AI" | "MANUAL";
+  hidePreferenceSelection?: boolean;
+};
 
 // ─── Stripe inner checkout form ─────────────────────────────────────────────
 interface CheckoutFormProps {
@@ -109,14 +115,19 @@ function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: Checkou
 }
 
 // ─── Main Apply Form ─────────────────────────────────────────────────────────
-export default function ApplyForm({ templateId, jobRole }: Props) {
+export default function ApplyForm({
+  templateId,
+  jobRole,
+  defaultPreference = "AI",
+  hidePreferenceSelection = false,
+}: Props) {
   const { lenis } = useLenis();
   const [form, setForm] = useState({
     candidateName: "",
     candidateEmail: "",
     candidatePhone: "",
     linkedInUrl: "",
-    interviewPreference: "" as "AI" | "MANUAL" | "",
+    interviewPreference: defaultPreference as "AI" | "MANUAL" | "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -132,16 +143,28 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
   const aiPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
   const coachPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
 
-  // Detect currency using browser geo lookup exactly like services-section.tsx
+  // Detect currency using local /api/geo first, then ipapi.co
   useEffect(() => {
     const GEO_CACHE_KEY = "jb_currency_v3";
+    const browserCurrency = detectCurrencyFromBrowser();
 
     // Clean up stale keys from older versions
     sessionStorage.removeItem("jb_currency");
     sessionStorage.removeItem("jb_currency_v2");
 
     const cached = sessionStorage.getItem(GEO_CACHE_KEY) as "USD" | "AED" | "INR" | null;
-    if (cached && ["USD", "AED", "INR"].includes(cached)) {
+    if (cached && ["AED", "INR"].includes(cached)) {
+      setCurrency(cached);
+      return;
+    }
+
+    if (browserCurrency !== "USD") {
+      setCurrency(browserCurrency);
+      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      return;
+    }
+
+    if (cached === "USD") {
       setCurrency(cached);
       return;
     }
@@ -149,31 +172,49 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
     const AED_COUNTRIES = new Set(["AE"]);
     const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    fetch("https://ipapi.co/json/", {
-      headers: { "Accept": "application/json" },
-      signal: controller.signal,
-    })
+    // First try the local geo API which runs server-side and has edge header support
+    fetch("/api/geo")
       .then((r) => {
-        if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+        if (!r.ok) throw new Error("Local geo API failed");
         return r.json();
       })
-      .then((data: { country_code?: string; error?: boolean }) => {
-        if (data.error) throw new Error("ipapi.co returned an error response");
-        const code = (data.country_code || "").toUpperCase();
-        let detected: "USD" | "AED" | "INR" = "USD";
-        if (AED_COUNTRIES.has(code)) detected = "AED";
-        else if (INR_COUNTRIES.has(code)) detected = "INR";
-        console.log(`[geo-apply] Detected country: ${code} → currency: ${detected}`);
-        setCurrency(detected);
-        sessionStorage.setItem(GEO_CACHE_KEY, detected);
+      .then((data) => {
+        if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
+          setCurrency(data.currency);
+          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+        } else {
+          throw new Error("Invalid currency returned from local API");
+        }
       })
       .catch((err) => {
-        console.warn("[geo-apply] Could not detect location, defaulting to USD:", err.message);
-      })
-      .finally(() => clearTimeout(timeout));
+        console.warn("[geo-apply] Local geo API lookup failed, falling back to ipapi.co:", err);
+        // Fallback to client-side ipapi.co (might be blocked by adblockers)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        fetch("https://ipapi.co/json/", {
+          headers: { "Accept": "application/json" },
+          signal: controller.signal,
+        })
+          .then((r) => {
+            if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+            return r.json();
+          })
+          .then((data: { country_code?: string; error?: boolean }) => {
+            if (data.error) throw new Error("ipapi.co returned an error response");
+            const code = (data.country_code || "").toUpperCase();
+            let detected: "USD" | "AED" | "INR" = "USD";
+            if (AED_COUNTRIES.has(code)) detected = "AED";
+            else if (INR_COUNTRIES.has(code)) detected = "INR";
+            console.log(`[geo-apply] Detected country: ${code} → currency: ${detected}`);
+            setCurrency(detected);
+            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+          })
+          .catch((fallbackErr) => {
+            console.warn("[geo-apply] Could not detect location, defaulting to USD:", fallbackErr.message);
+          })
+          .finally(() => clearTimeout(timeout));
+      });
   }, []);
 
 
@@ -475,38 +516,40 @@ export default function ApplyForm({ templateId, jobRole }: Props) {
           </div>
 
           {/* Session Preference Cards */}
-          <div>
-            <p className={labelClass}>Session Preference *</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(["AI", "MANUAL"] as const).map((pref) => (
-                <label
-                  key={pref}
-                  className={`flex cursor-pointer flex-col rounded-xl border-2 p-3 transition ${
-                    form.interviewPreference === pref
-                      ? "border-[#5a58ab] bg-[#f0efff]"
-                      : "border-[#e0e0e0] bg-[#fafafa] hover:border-[#5a58ab]/40"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="interviewPreference"
-                    value={pref}
-                    checked={form.interviewPreference === pref}
-                    onChange={handleChange}
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-semibold text-[#252e3d]">
-                    {pref === "AI" ? "AI Mock Interview" : "Coach Session"}
-                  </span>
-                  <span className="mt-1 text-xs text-gray-500">
-                    {pref === "AI"
-                      ? `Instant voice interview · ${currency} ${aiPrice.toLocaleString()}`
-                      : `Coach-led session · ${currency} ${coachPrice.toLocaleString()}`}
-                  </span>
-                </label>
-              ))}
+          {!hidePreferenceSelection && (
+            <div>
+              <p className={labelClass}>Session Preference *</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(["AI", "MANUAL"] as const).map((pref) => (
+                  <label
+                    key={pref}
+                    className={`flex cursor-pointer flex-col rounded-xl border-2 p-3 transition ${
+                      form.interviewPreference === pref
+                        ? "border-[#5a58ab] bg-[#f0efff]"
+                        : "border-[#e0e0e0] bg-[#fafafa] hover:border-[#5a58ab]/40"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="interviewPreference"
+                      value={pref}
+                      checked={form.interviewPreference === pref}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-semibold text-[#252e3d]">
+                      {pref === "AI" ? "AI Mock Interview" : "Coach Session"}
+                    </span>
+                    <span className="mt-1 text-xs text-gray-500">
+                      {pref === "AI"
+                        ? `Instant voice interview · ${currency} ${aiPrice.toLocaleString()}`
+                        : `Coach-led session · ${currency} ${coachPrice.toLocaleString()}`}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Payment notice — shown for both AI and MANUAL once selected */}
           {form.interviewPreference !== "" && (

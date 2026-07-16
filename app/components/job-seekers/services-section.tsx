@@ -6,6 +6,7 @@ import ServiceCard from "./service-card";
 import PaymentModal from "./payment-modal";
 import { IoCart, IoSparkles, IoClose, IoArrowForward } from "react-icons/io5";
 import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
+import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
 type Currency = "USD" | "AED" | "INR";
 
@@ -143,16 +144,28 @@ export default function ServicesSection() {
 
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-detect currency from geo on mount — runs client-side so it uses the real browser IP
+  // Auto-detect currency from geo on mount using local /api/geo first, then ipapi.co
   useEffect(() => {
     const GEO_CACHE_KEY = "jb_currency_v3";
+    const browserCurrency = detectCurrencyFromBrowser();
 
     // Clean up stale keys from older versions
     sessionStorage.removeItem("jb_currency");
     sessionStorage.removeItem("jb_currency_v2");
 
     const cached = sessionStorage.getItem(GEO_CACHE_KEY) as Currency | null;
-    if (cached && ["USD", "AED", "INR"].includes(cached)) {
+    if (cached && ["AED", "INR"].includes(cached)) {
+      setCurrency(cached);
+      return;
+    }
+
+    if (browserCurrency !== "USD") {
+      setCurrency(browserCurrency);
+      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      return;
+    }
+
+    if (cached === "USD") {
       setCurrency(cached);
       return;
     }
@@ -160,33 +173,49 @@ export default function ServicesSection() {
     const AED_COUNTRIES = new Set(["AE"]);
     const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
 
-    // Use AbortController to timeout after 5s
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    // Fetch directly from ipapi.co in the browser — uses the real client IP
-    fetch("https://ipapi.co/json/", {
-      headers: { "Accept": "application/json" },
-      signal: controller.signal,
-    })
+    // First try the local geo API which runs server-side and has edge header support
+    fetch("/api/geo")
       .then((r) => {
-        if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+        if (!r.ok) throw new Error("Local geo API failed");
         return r.json();
       })
-      .then((data: { country_code?: string; error?: boolean }) => {
-        if (data.error) throw new Error("ipapi.co returned an error response");
-        const code = (data.country_code || "").toUpperCase();
-        let detected: Currency = "USD";
-        if (AED_COUNTRIES.has(code)) detected = "AED";
-        else if (INR_COUNTRIES.has(code)) detected = "INR";
-        console.log(`[geo] Detected country: ${code} → currency: ${detected}`);
-        setCurrency(detected);
-        sessionStorage.setItem(GEO_CACHE_KEY, detected);
+      .then((data) => {
+        if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
+          setCurrency(data.currency as Currency);
+          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+        } else {
+          throw new Error("Invalid currency returned from local API");
+        }
       })
       .catch((err) => {
-        console.warn("[geo] Could not detect location, defaulting to USD:", err.message);
-      })
-      .finally(() => clearTimeout(timeout));
+        console.warn("[geo] Local geo API lookup failed, falling back to ipapi.co:", err);
+        // Fallback to client-side ipapi.co (might be blocked by adblockers)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        fetch("https://ipapi.co/json/", {
+          headers: { "Accept": "application/json" },
+          signal: controller.signal,
+        })
+          .then((r) => {
+            if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
+            return r.json();
+          })
+          .then((data: { country_code?: string; error?: boolean }) => {
+            if (data.error) throw new Error("ipapi.co returned an error response");
+            const code = (data.country_code || "").toUpperCase();
+            let detected: Currency = "USD";
+            if (AED_COUNTRIES.has(code)) detected = "AED";
+            else if (INR_COUNTRIES.has(code)) detected = "INR";
+            console.log(`[geo] Detected country: ${code} → currency: ${detected}`);
+            setCurrency(detected);
+            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+          })
+          .catch((fallbackErr) => {
+            console.warn("[geo] Could not detect location, defaulting to USD:", fallbackErr.message);
+          })
+          .finally(() => clearTimeout(timeout));
+      });
   }, []);
 
   // Helpers to get the local amount for a service in the selected currency

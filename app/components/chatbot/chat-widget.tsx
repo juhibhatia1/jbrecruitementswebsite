@@ -11,6 +11,7 @@ import {
   IoArrowForwardOutline,
 } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
+import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
 interface Message {
   role: "user" | "assistant";
@@ -82,8 +83,19 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
-      // Retrieve the cached geo-detected currency from sessionStorage (defaults to USD)
-      const detectedCurrency = typeof window !== "undefined" ? sessionStorage.getItem("jb_currency_v3") || "USD" : "USD";
+      // Retrieve the cached geo-detected currency from sessionStorage, with a browser fallback.
+      const browserCurrency = detectCurrencyFromBrowser();
+      const detectedCurrency =
+        typeof window !== "undefined"
+          ? (() => {
+              const cachedCurrency = sessionStorage.getItem("jb_currency_v3");
+              if (browserCurrency !== "USD") {
+                sessionStorage.setItem("jb_currency_v3", browserCurrency);
+                return browserCurrency;
+              }
+              return cachedCurrency || "USD";
+            })()
+          : "USD";
 
       const response = await fetch("/api/chat", {
         method: "POST",

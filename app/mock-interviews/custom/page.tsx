@@ -17,6 +17,7 @@ import {
   IoChevronBackOutline,
   IoArrowForwardOutline,
 } from "react-icons/io5";
+import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -125,6 +126,9 @@ export default function CustomJdMockInterviewPage() {
 
   const [generating, setGenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
@@ -136,11 +140,22 @@ export default function CustomJdMockInterviewPage() {
   const totalAmount = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
   const displayCurrency = currency || "USD";
 
-  // Location currency detection
+  // Location currency detection using local /api/geo first, then ipapi.co
   useEffect(() => {
     const GEO_CACHE_KEY = "jb_currency_v3";
+    const browserCurrency = detectCurrencyFromBrowser();
     const cached = sessionStorage.getItem(GEO_CACHE_KEY) as "USD" | "AED" | "INR" | null;
-    if (cached && ["USD", "AED", "INR"].includes(cached)) {
+    if (cached && ["AED", "INR"].includes(cached)) {
+      setCurrency(cached);
+      return;
+    }
+    if (browserCurrency !== "USD") {
+      setCurrency(browserCurrency);
+      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      return;
+    }
+
+    if (cached === "USD") {
       setCurrency(cached);
       return;
     }
@@ -148,27 +163,45 @@ export default function CustomJdMockInterviewPage() {
     const AED_COUNTRIES = new Set(["AE"]);
     const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    // First try the local geo API which runs server-side and has edge header support
+    fetch("/api/geo")
+      .then((r) => {
+        if (!r.ok) throw new Error("Local geo API failed");
+        return r.json();
+      })
+      .then((data) => {
+        if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
+          setCurrency(data.currency);
+          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+        } else {
+          throw new Error("Invalid currency returned from local API");
+        }
+      })
+      .catch((err) => {
+        console.warn("[geo-detect] Local geo API lookup failed, falling back to ipapi.co:", err);
+        // Fallback to client-side ipapi.co (might be blocked by adblockers)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
 
-    fetch("https://ipapi.co/json/", {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: { country_code?: string; error?: boolean }) => {
-        if (data.error) throw new Error();
-        const code = (data.country_code || "").toUpperCase();
-        let detected: "USD" | "AED" | "INR" = "USD";
-        if (AED_COUNTRIES.has(code)) detected = "AED";
-        else if (INR_COUNTRIES.has(code)) detected = "INR";
-        setCurrency(detected);
-        sessionStorage.setItem(GEO_CACHE_KEY, detected);
-      })
-      .catch(() => {
-        setCurrency("USD");
-      })
-      .finally(() => clearTimeout(timeout));
+        fetch("https://ipapi.co/json/", {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        })
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then((data: { country_code?: string; error?: boolean }) => {
+            if (data.error) throw new Error();
+            const code = (data.country_code || "").toUpperCase();
+            let detected: "USD" | "AED" | "INR" = "USD";
+            if (AED_COUNTRIES.has(code)) detected = "AED";
+            else if (INR_COUNTRIES.has(code)) detected = "INR";
+            setCurrency(detected);
+            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+          })
+          .catch(() => {
+            setCurrency("USD");
+          })
+          .finally(() => clearTimeout(timeout));
+      });
   }, []);
 
   const handleChange = (
@@ -185,10 +218,46 @@ export default function CustomJdMockInterviewPage() {
       return;
     }
 
+    if (!resumeFile) {
+      toast.error("Resume Required", {
+        description: "Please upload your resume to personalize your custom mock interview.",
+      });
+      return;
+    }
+
     setGenerating(true);
+    setResumeError(null);
+    let resumeUrl = "";
+    let resumeText = "";
 
     try {
-      // 1. Generate custom template via public API endpoint
+      // 1. Upload resume to cloud storage and extract text
+      setUploadingResume(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append("resume", resumeFile);
+
+      const uploadRes = await fetch("/api/interviews/upload-resume", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const uploadData = await uploadRes.json();
+      setUploadingResume(false);
+
+      if (!uploadRes.ok) {
+        const errMsg = uploadData.error || "Failed to process resume upload.";
+        setResumeError(errMsg);
+        toast.error("Resume Upload Failed", {
+          description: errMsg,
+        });
+        setGenerating(false);
+        return;
+      }
+
+      resumeUrl = uploadData.resumeUrl;
+      resumeText = uploadData.resumeText;
+
+      // 2. Generate custom template via public API endpoint
       const genRes = await fetch("/api/interviews/custom-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -211,7 +280,7 @@ export default function CustomJdMockInterviewPage() {
 
       setGeneratedTemplateId(genData.templateId);
 
-      // 2. Initialize Stripe payment details using the generated template ID
+      // 3. Initialize Stripe payment details using the generated template ID
       setSubmitting(true);
       const payRes = await fetch("/api/checkout", {
         method: "POST",
@@ -226,6 +295,8 @@ export default function CustomJdMockInterviewPage() {
             templateId: genData.templateId,
             linkedInUrl: form.linkedInUrl,
             interviewPreference: "AI",
+            resumeUrl,
+            resumeText,
           },
         }),
       });
@@ -250,6 +321,7 @@ export default function CustomJdMockInterviewPage() {
     } finally {
       setGenerating(false);
       setSubmitting(false);
+      setUploadingResume(false);
     }
   };
 
@@ -267,20 +339,10 @@ export default function CustomJdMockInterviewPage() {
       style={{ fontFamily: "Raleway, sans-serif" }}
       ref={containerRef}
     >
-      <main className="mx-auto max-w-4xl px-4 md:px-6 pt-28 sm:pt-36 md:pt-32 pb-16 md:pb-24">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-6">
-          <a
-            href="/mock-interviews"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#5a58ab] transition"
-          >
-            <IoChevronBackOutline className="w-3.5 h-3.5" />
-            Back to Sessions
-          </a>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 md:px-6 pt-28 sm:pt-36 md:pt-24 pb-16 md:pb-24">
 
         {/* Heading */}
-        <div className="mb-8 sm:mb-10">
+        <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-4">
             Practice with your own Job Description
           </h1>
@@ -292,17 +354,20 @@ export default function CustomJdMockInterviewPage() {
         </div>
 
         {/* Loader Overlay */}
-        {(generating || submitting) && (
+        {(generating || submitting || uploadingResume) && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-xl border border-slate-100 flex flex-col items-center">
               <div className="relative mb-6">
                 <div className="animate-spin rounded-full h-14 w-14 border-4 border-[#5a58ab]/10 border-t-[#5a58ab]" />
                 <IoSparkles className="w-6 h-6 text-[#5a58ab] absolute top-4 left-4 animate-pulse" />
               </div>
-              <h3 className="text-lg font-bold text-[#252e3d] mb-2">Analyzing Job Description</h3>
+              <h3 className="text-lg font-bold text-[#252e3d] mb-2">
+                {uploadingResume ? "Analyzing Resume" : "Analyzing Job Description"}
+              </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Our AI is designing custom interview modules, extracting keywords, and assembling voice
-                instructions. This takes about 10-15 seconds...
+                {uploadingResume
+                  ? "Extracting tech stack, experience points, and preparing personalized questions..."
+                  : "Our AI is designing custom interview modules, extracting keywords, and assembling voice instructions. This takes about 10-15 seconds..."}
               </p>
             </div>
           </div>
@@ -379,6 +444,26 @@ export default function CustomJdMockInterviewPage() {
                       className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition"
                     />
                   </div>
+                </div>
+
+                {/* Resume Upload */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
+                    Upload Resume (PDF, Word, or Text) <span className="text-[#5a58ab]">*</span>
+                  </label>
+                  <input
+                    type="file"
+                    required
+                    accept=".pdf,.doc,.docx,.txt,.md"
+                    onChange={(e) => {
+                      setResumeError(null);
+                      setResumeFile(e.target.files?.[0] || null);
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-sm px-4 py-2.5 outline-none transition file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#5a58ab]/10 file:text-[#5a58ab] hover:file:bg-[#5a58ab]/20"
+                  />
+                  {resumeError && (
+                    <p className="text-red-500 text-xs mt-1 font-semibold">{resumeError}</p>
+                  )}
                 </div>
 
                 {/* Job Configuration */}

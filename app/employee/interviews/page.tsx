@@ -48,22 +48,12 @@ export default async function EmployeeInterviewsPage() {
           </div>
         </header>
 
-        {/* New template CTA */}
-        <div className="mb-6 flex justify-end">
-          <Link
-            href="/employee/interviews/new"
-            className="rounded-xl bg-[#5a58ab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4a49a0] transition"
-          >
-            + New Template
-          </Link>
-        </div>
-
         {/* Template list */}
         {templates.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
             <p className="text-base font-semibold text-slate-600 mb-1">No templates yet</p>
             <p className="text-sm text-slate-400">
-              Create your first mock interview template so candidates can book practice sessions.
+              Template creation is temporarily disabled for employee accounts.
             </p>
           </div>
         ) : (
