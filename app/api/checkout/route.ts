@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
 import { detectCurrencyFromRequest } from "@/lib/geo-utils";
+import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 
 let stripe: Stripe | null = null;
 
@@ -32,7 +33,7 @@ function getStripe() {
       throw new Error("STRIPE_SECRET_KEY is not configured on the server.");
     }
     stripe = new Stripe(key, {
-      apiVersion: "2026-05-27.dahlia",
+      apiVersion: "2026-05-27.dahlia" as any,
     });
   }
   return stripe;
@@ -51,6 +52,16 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { candidateName, candidateEmail, candidatePhone } = body;
+    // Optional interview metadata — only present when this checkout is for a mock interview
+    const interviewMetadata = body.interviewMetadata as {
+      templateId?: string;
+      linkedInUrl?: string;
+      interviewPreference?: "AI" | "MANUAL";
+      jobRole?: string;
+      yearsOfExperience?: string;
+      applicationLink?: string;
+      interviewBrief?: string;
+    } | undefined;
 
     if (!candidateName || !candidateEmail) {
       return NextResponse.json(
@@ -110,6 +121,58 @@ export async function POST(request: Request) {
 
     const stripeCurrency = STRIPE_CURRENCY_MAP[currency];
 
+    let applicationId: string | undefined = undefined;
+
+    // If mock interview checkout, pre-create the candidate application
+    if (interviewMetadata?.templateId) {
+      const { generateInterviewAccessToken, hashInterviewAccessToken } = await import("@/lib/interview/access-token");
+      
+      const candidateEmailLower = candidateEmail.trim().toLowerCase();
+      
+      // Look for any existing pending (APPLIED) application for the same email/template to reuse
+      let application = await prisma.candidateApplication.findFirst({
+        where: {
+          templateId: interviewMetadata.templateId,
+          candidateEmail: candidateEmailLower,
+          status: "APPLIED",
+        },
+        select: candidateApplicationSafeSelect,
+      });
+
+      if (!application) {
+        const accessToken = generateInterviewAccessToken();
+        const accessTokenHash = hashInterviewAccessToken(accessToken);
+        const accessTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        application = await prisma.candidateApplication.create({
+          data: {
+            templateId: interviewMetadata.templateId,
+            candidateName: candidateName.trim(),
+            candidateEmail: candidateEmailLower,
+            candidatePhone: candidatePhone || null,
+            linkedInUrl: interviewMetadata.linkedInUrl || null,
+            interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+            accessTokenHash,
+            accessTokenExpiresAt,
+            status: "APPLIED",
+          },
+        });
+      } else {
+        // Update resume/details on existing draft if changed
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: {
+            candidateName: candidateName.trim(),
+            candidatePhone: candidatePhone || null,
+            linkedInUrl: interviewMetadata.linkedInUrl || null,
+            interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+          },
+        });
+      }
+      
+      applicationId = application?.id;
+    }
+
     // Create Stripe PaymentIntent with server-computed total in the correct currency
     const paymentIntent = await stripeClient.paymentIntents.create({
       amount: Math.round(totalAmount * 100), // smallest unit (cents / paise / fils)
@@ -121,6 +184,22 @@ export async function POST(request: Request) {
         serviceCount: serviceNames.length.toString(),
         amount: totalAmount.toString(),
         displayCurrency: currency,
+        // Interview-specific metadata (only set for mock interview purchases)
+        ...(interviewMetadata?.templateId && {
+          interviewTemplateId: interviewMetadata.templateId,
+          interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+          linkedInUrl: interviewMetadata.linkedInUrl || "",
+          applicationId: applicationId || "",
+        }),
+        ...(!interviewMetadata?.templateId &&
+          interviewMetadata?.interviewPreference === "MANUAL" && {
+            interviewPreference: "MANUAL",
+            jobRole: interviewMetadata.jobRole || "",
+            yearsOfExperience: interviewMetadata.yearsOfExperience || "",
+            applicationLink: interviewMetadata.applicationLink || "",
+            interviewBrief: interviewMetadata.interviewBrief || "",
+            linkedInUrl: interviewMetadata.linkedInUrl || "",
+          }),
       },
       receipt_email: candidateEmail,
     });

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 import {
   IoSearch,
   IoClose,
@@ -56,6 +58,7 @@ export default function KnowledgeDashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<KnowledgeDoc | null>(null);
   const [activeSession, setActiveSession] = useState<ChatSession | null>(null);
+  const [docToDelete, setDocToDelete] = useState<string | null>(null);
   
   // Upload Form state
   const [uploadTitle, setUploadTitle] = useState("");
@@ -119,9 +122,6 @@ export default function KnowledgeDashboard() {
 
   // Delete document
   const handleDeleteDoc = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this document? This will remove all vector search chunks instantly.")) {
-      return;
-    }
     setActionError(null);
     try {
       const res = await fetch(`/api/admin/knowledge/${id}`, {
@@ -129,12 +129,15 @@ export default function KnowledgeDashboard() {
       });
       if (res.ok) {
         setDocs((prev) => prev.filter((doc) => doc.id !== id));
+        toast.success("Document deleted successfully");
       } else {
         const errData = await res.json();
         setActionError(errData.error || "Failed to delete document.");
+        toast.error(errData.error || "Failed to delete document.");
       }
     } catch (err) {
       setActionError("Failed to delete document.");
+      toast.error("Failed to delete document.");
     }
   };
 
@@ -142,11 +145,11 @@ export default function KnowledgeDashboard() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadTitle.trim()) {
-      alert("Please specify a document title.");
+      toast.error("Please specify a document title.");
       return;
     }
     if (!uploadFile && !uploadText.trim()) {
-      alert("Please upload a file or write document text.");
+      toast.error("Please upload a file or write document text.");
       return;
     }
 
@@ -334,9 +337,52 @@ export default function KnowledgeDashboard() {
 
         {/* Content Box */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-3xl">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#5a58ab]"></div>
-            <p className="mt-3 text-sm text-slate-500 font-medium">Fetching database logs...</p>
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden animate-pulse">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
+                    <th className="py-4 px-6"><div className="h-3 w-28 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-20 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-16 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-24 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6"><div className="h-3 w-20 bg-slate-200 rounded-md"></div></th>
+                    <th className="py-4 px-6 text-right"><div className="h-3 w-16 bg-slate-200 rounded-md ml-auto"></div></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index} className="border-b border-slate-100 last:border-0">
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-44 bg-slate-200 rounded-md mb-2"></div>
+                        <div className="h-2.5 w-28 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-5 w-24 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-8 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="h-4 w-20 bg-slate-200/60 rounded-md"></div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="flex items-center">
+                          <div className="h-5 w-10 bg-slate-200 rounded-full"></div>
+                          <div className="ml-2 h-3.5 w-12 bg-slate-200/60 rounded-md"></div>
+                        </div>
+                      </td>
+                      <td className="py-5 px-6 text-right">
+                        <div className="flex justify-end gap-3">
+                          <div className="h-4 w-12 bg-slate-200/60 rounded-md"></div>
+                          <div className="h-4 w-12 bg-slate-200/60 rounded-md"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : activeTab === "docs" ? (
           /* KNOWLEDGE BASE MANAGEMENT LIST */
@@ -416,7 +462,7 @@ export default function KnowledgeDashboard() {
                           
                           {doc.sourceType !== "SYSTEM" && (
                             <button
-                              onClick={() => handleDeleteDoc(doc.id)}
+                              onClick={() => setDocToDelete(doc.id)}
                               className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-semibold cursor-pointer text-xs"
                               title="Delete document and chunks"
                             >
@@ -681,6 +727,21 @@ export default function KnowledgeDashboard() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={!!docToDelete}
+        onClose={() => setDocToDelete(null)}
+        onConfirm={() => {
+          if (docToDelete) {
+            handleDeleteDoc(docToDelete);
+          }
+        }}
+        title="Delete Knowledge Document?"
+        message="Are you sure you want to delete this document? This will remove all vector search chunks instantly."
+        confirmText="Delete"
+        cancelText="Cancel"
+        danger
+      />
     </div>
   );
 }

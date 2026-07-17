@@ -1,5 +1,3 @@
-import "server-only";
-
 import nodemailer from "nodemailer";
 
 let cachedTransporter: nodemailer.Transporter | null = null;
@@ -16,17 +14,18 @@ export function getMailerTransporter(): nodemailer.Transporter {
     throw new Error("Missing NEXT_NODEMAILER_USER or NEXT_NODEMAILER_PASS");
   }
 
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
+
   cachedTransporter = nodemailer.createTransport({
-    host: "smtp0001.neo.space",
-    port: 465,
-    secure: true,
+    host,
+    port,
+    secure,
     pool: true,
     maxConnections: 5,
     maxMessages: 100,
-    auth: {
-      user,
-      pass,
-    },
+    auth: { user, pass },
   });
 
   return cachedTransporter;

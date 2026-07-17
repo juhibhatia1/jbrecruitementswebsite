@@ -111,7 +111,25 @@ export function isValidAdminCredentials(
   username: string,
   password: string,
 ): boolean {
-  return username === getAdminUsername() && password === getAdminPassword();
+  try {
+    // Use constant-time comparison to prevent timing side-channel attacks
+    const expectedUser = Buffer.from(getAdminUsername());
+    const providedUser = Buffer.from(username);
+    const expectedPass = Buffer.from(getAdminPassword());
+    const providedPass = Buffer.from(password);
+
+    // Both lengths must match before comparing contents
+    const userMatch =
+      expectedUser.length === providedUser.length &&
+      timingSafeEqual(expectedUser, providedUser);
+    const passMatch =
+      expectedPass.length === providedPass.length &&
+      timingSafeEqual(expectedPass, providedPass);
+
+    return userMatch && passMatch;
+  } catch {
+    return false;
+  }
 }
 
 export function isValidAdminSessionToken(token?: string | null): boolean {

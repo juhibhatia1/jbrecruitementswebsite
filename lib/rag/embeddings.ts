@@ -2,7 +2,7 @@ import { pipeline, env } from "@xenova/transformers";
 
 // Disable checking for local models in the filesystem to avoid Webpack/Next.js bundle resolution issues.
 // Transformers.js will download the model weights dynamically on first run and cache them in the system cache directory.
-env.allowLocalModels = false;
+(env as any).allowLocalModels = false;
 
 let extractorInstance: any = null;
 

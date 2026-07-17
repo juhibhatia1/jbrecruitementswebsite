@@ -1,0 +1,15 @@
+export const candidateApplicationSafeSelect = {
+  id: true,
+  templateId: true,
+  candidateName: true,
+  candidateEmail: true,
+  candidatePhone: true,
+  linkedInUrl: true,
+  interviewPreference: true,
+  accessTokenHash: true,
+  accessTokenExpiresAt: true,
+  status: true,
+  scheduledAt: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;

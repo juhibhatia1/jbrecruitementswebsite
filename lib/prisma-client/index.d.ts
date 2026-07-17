@@ -48,6 +48,83 @@ export type KnowledgeChunk = $Result.DefaultSelection<Prisma.$KnowledgeChunkPayl
  * 
  */
 export type ChatConversation = $Result.DefaultSelection<Prisma.$ChatConversationPayload>
+/**
+ * Model InterviewTemplate
+ * 
+ */
+export type InterviewTemplate = $Result.DefaultSelection<Prisma.$InterviewTemplatePayload>
+/**
+ * Model CandidateApplication
+ * 
+ */
+export type CandidateApplication = $Result.DefaultSelection<Prisma.$CandidateApplicationPayload>
+/**
+ * Model InterviewSession
+ * 
+ */
+export type InterviewSession = $Result.DefaultSelection<Prisma.$InterviewSessionPayload>
+
+/**
+ * Enums
+ */
+export namespace $Enums {
+  export const InterviewTemplateOwnerRole: {
+  ADMIN: 'ADMIN',
+  EMPLOYEE: 'EMPLOYEE'
+};
+
+export type InterviewTemplateOwnerRole = (typeof InterviewTemplateOwnerRole)[keyof typeof InterviewTemplateOwnerRole]
+
+
+export const CandidateInterviewPreference: {
+  AI: 'AI',
+  MANUAL: 'MANUAL'
+};
+
+export type CandidateInterviewPreference = (typeof CandidateInterviewPreference)[keyof typeof CandidateInterviewPreference]
+
+
+export const CandidateApplicationStatus: {
+  APPLIED: 'APPLIED',
+  MANUAL_REVIEW_PENDING: 'MANUAL_REVIEW_PENDING',
+  SCHEDULED: 'SCHEDULED',
+  AI_INVITED: 'AI_INVITED',
+  INTERVIEW_STARTED: 'INTERVIEW_STARTED',
+  INTERVIEW_COMPLETED: 'INTERVIEW_COMPLETED',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type CandidateApplicationStatus = (typeof CandidateApplicationStatus)[keyof typeof CandidateApplicationStatus]
+
+
+export const InterviewSessionStatus: {
+  CONNECTING: 'CONNECTING',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  TERMINATED: 'TERMINATED',
+  FAILED: 'FAILED'
+};
+
+export type InterviewSessionStatus = (typeof InterviewSessionStatus)[keyof typeof InterviewSessionStatus]
+
+}
+
+export type InterviewTemplateOwnerRole = $Enums.InterviewTemplateOwnerRole
+
+export const InterviewTemplateOwnerRole: typeof $Enums.InterviewTemplateOwnerRole
+
+export type CandidateInterviewPreference = $Enums.CandidateInterviewPreference
+
+export const CandidateInterviewPreference: typeof $Enums.CandidateInterviewPreference
+
+export type CandidateApplicationStatus = $Enums.CandidateApplicationStatus
+
+export const CandidateApplicationStatus: typeof $Enums.CandidateApplicationStatus
+
+export type InterviewSessionStatus = $Enums.InterviewSessionStatus
+
+export const InterviewSessionStatus: typeof $Enums.InterviewSessionStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -241,6 +318,36 @@ export class PrismaClient<
     * ```
     */
   get chatConversation(): Prisma.ChatConversationDelegate<ExtArgs>;
+
+  /**
+   * `prisma.interviewTemplate`: Exposes CRUD operations for the **InterviewTemplate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InterviewTemplates
+    * const interviewTemplates = await prisma.interviewTemplate.findMany()
+    * ```
+    */
+  get interviewTemplate(): Prisma.InterviewTemplateDelegate<ExtArgs>;
+
+  /**
+   * `prisma.candidateApplication`: Exposes CRUD operations for the **CandidateApplication** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CandidateApplications
+    * const candidateApplications = await prisma.candidateApplication.findMany()
+    * ```
+    */
+  get candidateApplication(): Prisma.CandidateApplicationDelegate<ExtArgs>;
+
+  /**
+   * `prisma.interviewSession`: Exposes CRUD operations for the **InterviewSession** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InterviewSessions
+    * const interviewSessions = await prisma.interviewSession.findMany()
+    * ```
+    */
+  get interviewSession(): Prisma.InterviewSessionDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -688,7 +795,10 @@ export namespace Prisma {
     FunnelEvent: 'FunnelEvent',
     KnowledgeDocument: 'KnowledgeDocument',
     KnowledgeChunk: 'KnowledgeChunk',
-    ChatConversation: 'ChatConversation'
+    ChatConversation: 'ChatConversation',
+    InterviewTemplate: 'InterviewTemplate',
+    CandidateApplication: 'CandidateApplication',
+    InterviewSession: 'InterviewSession'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -704,7 +814,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "contactSubmission" | "jobSeekerSubmission" | "purchase" | "funnelEvent" | "knowledgeDocument" | "knowledgeChunk" | "chatConversation"
+      modelProps: "contactSubmission" | "jobSeekerSubmission" | "purchase" | "funnelEvent" | "knowledgeDocument" | "knowledgeChunk" | "chatConversation" | "interviewTemplate" | "candidateApplication" | "interviewSession"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1182,6 +1292,216 @@ export namespace Prisma {
           }
         }
       }
+      InterviewTemplate: {
+        payload: Prisma.$InterviewTemplatePayload<ExtArgs>
+        fields: Prisma.InterviewTemplateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InterviewTemplateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InterviewTemplateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          findFirst: {
+            args: Prisma.InterviewTemplateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InterviewTemplateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          findMany: {
+            args: Prisma.InterviewTemplateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>[]
+          }
+          create: {
+            args: Prisma.InterviewTemplateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          createMany: {
+            args: Prisma.InterviewTemplateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InterviewTemplateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>[]
+          }
+          delete: {
+            args: Prisma.InterviewTemplateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          update: {
+            args: Prisma.InterviewTemplateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          deleteMany: {
+            args: Prisma.InterviewTemplateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InterviewTemplateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.InterviewTemplateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewTemplatePayload>
+          }
+          aggregate: {
+            args: Prisma.InterviewTemplateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInterviewTemplate>
+          }
+          groupBy: {
+            args: Prisma.InterviewTemplateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InterviewTemplateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InterviewTemplateCountArgs<ExtArgs>
+            result: $Utils.Optional<InterviewTemplateCountAggregateOutputType> | number
+          }
+        }
+      }
+      CandidateApplication: {
+        payload: Prisma.$CandidateApplicationPayload<ExtArgs>
+        fields: Prisma.CandidateApplicationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CandidateApplicationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CandidateApplicationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          findFirst: {
+            args: Prisma.CandidateApplicationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CandidateApplicationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          findMany: {
+            args: Prisma.CandidateApplicationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>[]
+          }
+          create: {
+            args: Prisma.CandidateApplicationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          createMany: {
+            args: Prisma.CandidateApplicationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CandidateApplicationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>[]
+          }
+          delete: {
+            args: Prisma.CandidateApplicationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          update: {
+            args: Prisma.CandidateApplicationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          deleteMany: {
+            args: Prisma.CandidateApplicationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CandidateApplicationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CandidateApplicationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CandidateApplicationPayload>
+          }
+          aggregate: {
+            args: Prisma.CandidateApplicationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCandidateApplication>
+          }
+          groupBy: {
+            args: Prisma.CandidateApplicationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CandidateApplicationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CandidateApplicationCountArgs<ExtArgs>
+            result: $Utils.Optional<CandidateApplicationCountAggregateOutputType> | number
+          }
+        }
+      }
+      InterviewSession: {
+        payload: Prisma.$InterviewSessionPayload<ExtArgs>
+        fields: Prisma.InterviewSessionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InterviewSessionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InterviewSessionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          findFirst: {
+            args: Prisma.InterviewSessionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InterviewSessionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          findMany: {
+            args: Prisma.InterviewSessionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>[]
+          }
+          create: {
+            args: Prisma.InterviewSessionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          createMany: {
+            args: Prisma.InterviewSessionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InterviewSessionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>[]
+          }
+          delete: {
+            args: Prisma.InterviewSessionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          update: {
+            args: Prisma.InterviewSessionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.InterviewSessionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InterviewSessionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.InterviewSessionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewSessionPayload>
+          }
+          aggregate: {
+            args: Prisma.InterviewSessionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInterviewSession>
+          }
+          groupBy: {
+            args: Prisma.InterviewSessionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InterviewSessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InterviewSessionCountArgs<ExtArgs>
+            result: $Utils.Optional<InterviewSessionCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1366,6 +1686,37 @@ export namespace Prisma {
    */
   export type KnowledgeDocumentCountOutputTypeCountChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: KnowledgeChunkWhereInput
+  }
+
+
+  /**
+   * Count Type InterviewTemplateCountOutputType
+   */
+
+  export type InterviewTemplateCountOutputType = {
+    applications: number
+  }
+
+  export type InterviewTemplateCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    applications?: boolean | InterviewTemplateCountOutputTypeCountApplicationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InterviewTemplateCountOutputType without action
+   */
+  export type InterviewTemplateCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplateCountOutputType
+     */
+    select?: InterviewTemplateCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InterviewTemplateCountOutputType without action
+   */
+  export type InterviewTemplateCountOutputTypeCountApplicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CandidateApplicationWhereInput
   }
 
 
@@ -8069,6 +8420,3169 @@ export namespace Prisma {
 
 
   /**
+   * Model InterviewTemplate
+   */
+
+  export type AggregateInterviewTemplate = {
+    _count: InterviewTemplateCountAggregateOutputType | null
+    _avg: InterviewTemplateAvgAggregateOutputType | null
+    _sum: InterviewTemplateSumAggregateOutputType | null
+    _min: InterviewTemplateMinAggregateOutputType | null
+    _max: InterviewTemplateMaxAggregateOutputType | null
+  }
+
+  export type InterviewTemplateAvgAggregateOutputType = {
+    durationMinutes: number | null
+  }
+
+  export type InterviewTemplateSumAggregateOutputType = {
+    durationMinutes: number | null
+  }
+
+  export type InterviewTemplateMinAggregateOutputType = {
+    id: string | null
+    ownerRole: $Enums.InterviewTemplateOwnerRole | null
+    jobRole: string | null
+    experienceLevel: string | null
+    durationMinutes: number | null
+    difficultyLevel: string | null
+    interviewDescription: string | null
+    systemInstructions: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewTemplateMaxAggregateOutputType = {
+    id: string | null
+    ownerRole: $Enums.InterviewTemplateOwnerRole | null
+    jobRole: string | null
+    experienceLevel: string | null
+    durationMinutes: number | null
+    difficultyLevel: string | null
+    interviewDescription: string | null
+    systemInstructions: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewTemplateCountAggregateOutputType = {
+    id: number
+    ownerRole: number
+    jobRole: number
+    experienceLevel: number
+    techStack: number
+    requiredSkills: number
+    durationMinutes: number
+    difficultyLevel: number
+    advancedConfig: number
+    interviewDescription: number
+    systemInstructions: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InterviewTemplateAvgAggregateInputType = {
+    durationMinutes?: true
+  }
+
+  export type InterviewTemplateSumAggregateInputType = {
+    durationMinutes?: true
+  }
+
+  export type InterviewTemplateMinAggregateInputType = {
+    id?: true
+    ownerRole?: true
+    jobRole?: true
+    experienceLevel?: true
+    durationMinutes?: true
+    difficultyLevel?: true
+    interviewDescription?: true
+    systemInstructions?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewTemplateMaxAggregateInputType = {
+    id?: true
+    ownerRole?: true
+    jobRole?: true
+    experienceLevel?: true
+    durationMinutes?: true
+    difficultyLevel?: true
+    interviewDescription?: true
+    systemInstructions?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewTemplateCountAggregateInputType = {
+    id?: true
+    ownerRole?: true
+    jobRole?: true
+    experienceLevel?: true
+    techStack?: true
+    requiredSkills?: true
+    durationMinutes?: true
+    difficultyLevel?: true
+    advancedConfig?: true
+    interviewDescription?: true
+    systemInstructions?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InterviewTemplateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewTemplate to aggregate.
+     */
+    where?: InterviewTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewTemplates to fetch.
+     */
+    orderBy?: InterviewTemplateOrderByWithRelationInput | InterviewTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InterviewTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InterviewTemplates
+    **/
+    _count?: true | InterviewTemplateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InterviewTemplateAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InterviewTemplateSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InterviewTemplateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InterviewTemplateMaxAggregateInputType
+  }
+
+  export type GetInterviewTemplateAggregateType<T extends InterviewTemplateAggregateArgs> = {
+        [P in keyof T & keyof AggregateInterviewTemplate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInterviewTemplate[P]>
+      : GetScalarType<T[P], AggregateInterviewTemplate[P]>
+  }
+
+
+
+
+  export type InterviewTemplateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InterviewTemplateWhereInput
+    orderBy?: InterviewTemplateOrderByWithAggregationInput | InterviewTemplateOrderByWithAggregationInput[]
+    by: InterviewTemplateScalarFieldEnum[] | InterviewTemplateScalarFieldEnum
+    having?: InterviewTemplateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InterviewTemplateCountAggregateInputType | true
+    _avg?: InterviewTemplateAvgAggregateInputType
+    _sum?: InterviewTemplateSumAggregateInputType
+    _min?: InterviewTemplateMinAggregateInputType
+    _max?: InterviewTemplateMaxAggregateInputType
+  }
+
+  export type InterviewTemplateGroupByOutputType = {
+    id: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack: string[]
+    requiredSkills: string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig: JsonValue | null
+    interviewDescription: string | null
+    systemInstructions: string | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: InterviewTemplateCountAggregateOutputType | null
+    _avg: InterviewTemplateAvgAggregateOutputType | null
+    _sum: InterviewTemplateSumAggregateOutputType | null
+    _min: InterviewTemplateMinAggregateOutputType | null
+    _max: InterviewTemplateMaxAggregateOutputType | null
+  }
+
+  type GetInterviewTemplateGroupByPayload<T extends InterviewTemplateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InterviewTemplateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InterviewTemplateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InterviewTemplateGroupByOutputType[P]>
+            : GetScalarType<T[P], InterviewTemplateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InterviewTemplateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerRole?: boolean
+    jobRole?: boolean
+    experienceLevel?: boolean
+    techStack?: boolean
+    requiredSkills?: boolean
+    durationMinutes?: boolean
+    difficultyLevel?: boolean
+    advancedConfig?: boolean
+    interviewDescription?: boolean
+    systemInstructions?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    applications?: boolean | InterviewTemplate$applicationsArgs<ExtArgs>
+    _count?: boolean | InterviewTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["interviewTemplate"]>
+
+  export type InterviewTemplateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerRole?: boolean
+    jobRole?: boolean
+    experienceLevel?: boolean
+    techStack?: boolean
+    requiredSkills?: boolean
+    durationMinutes?: boolean
+    difficultyLevel?: boolean
+    advancedConfig?: boolean
+    interviewDescription?: boolean
+    systemInstructions?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["interviewTemplate"]>
+
+  export type InterviewTemplateSelectScalar = {
+    id?: boolean
+    ownerRole?: boolean
+    jobRole?: boolean
+    experienceLevel?: boolean
+    techStack?: boolean
+    requiredSkills?: boolean
+    durationMinutes?: boolean
+    difficultyLevel?: boolean
+    advancedConfig?: boolean
+    interviewDescription?: boolean
+    systemInstructions?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InterviewTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    applications?: boolean | InterviewTemplate$applicationsArgs<ExtArgs>
+    _count?: boolean | InterviewTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InterviewTemplateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $InterviewTemplatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InterviewTemplate"
+    objects: {
+      applications: Prisma.$CandidateApplicationPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ownerRole: $Enums.InterviewTemplateOwnerRole
+      jobRole: string
+      experienceLevel: string
+      techStack: string[]
+      requiredSkills: string[]
+      durationMinutes: number
+      difficultyLevel: string
+      advancedConfig: Prisma.JsonValue | null
+      interviewDescription: string | null
+      systemInstructions: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["interviewTemplate"]>
+    composites: {}
+  }
+
+  type InterviewTemplateGetPayload<S extends boolean | null | undefined | InterviewTemplateDefaultArgs> = $Result.GetResult<Prisma.$InterviewTemplatePayload, S>
+
+  type InterviewTemplateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<InterviewTemplateFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: InterviewTemplateCountAggregateInputType | true
+    }
+
+  export interface InterviewTemplateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InterviewTemplate'], meta: { name: 'InterviewTemplate' } }
+    /**
+     * Find zero or one InterviewTemplate that matches the filter.
+     * @param {InterviewTemplateFindUniqueArgs} args - Arguments to find a InterviewTemplate
+     * @example
+     * // Get one InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InterviewTemplateFindUniqueArgs>(args: SelectSubset<T, InterviewTemplateFindUniqueArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one InterviewTemplate that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {InterviewTemplateFindUniqueOrThrowArgs} args - Arguments to find a InterviewTemplate
+     * @example
+     * // Get one InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InterviewTemplateFindUniqueOrThrowArgs>(args: SelectSubset<T, InterviewTemplateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first InterviewTemplate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateFindFirstArgs} args - Arguments to find a InterviewTemplate
+     * @example
+     * // Get one InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InterviewTemplateFindFirstArgs>(args?: SelectSubset<T, InterviewTemplateFindFirstArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first InterviewTemplate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateFindFirstOrThrowArgs} args - Arguments to find a InterviewTemplate
+     * @example
+     * // Get one InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InterviewTemplateFindFirstOrThrowArgs>(args?: SelectSubset<T, InterviewTemplateFindFirstOrThrowArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more InterviewTemplates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InterviewTemplates
+     * const interviewTemplates = await prisma.interviewTemplate.findMany()
+     * 
+     * // Get first 10 InterviewTemplates
+     * const interviewTemplates = await prisma.interviewTemplate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const interviewTemplateWithIdOnly = await prisma.interviewTemplate.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InterviewTemplateFindManyArgs>(args?: SelectSubset<T, InterviewTemplateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a InterviewTemplate.
+     * @param {InterviewTemplateCreateArgs} args - Arguments to create a InterviewTemplate.
+     * @example
+     * // Create one InterviewTemplate
+     * const InterviewTemplate = await prisma.interviewTemplate.create({
+     *   data: {
+     *     // ... data to create a InterviewTemplate
+     *   }
+     * })
+     * 
+     */
+    create<T extends InterviewTemplateCreateArgs>(args: SelectSubset<T, InterviewTemplateCreateArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many InterviewTemplates.
+     * @param {InterviewTemplateCreateManyArgs} args - Arguments to create many InterviewTemplates.
+     * @example
+     * // Create many InterviewTemplates
+     * const interviewTemplate = await prisma.interviewTemplate.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InterviewTemplateCreateManyArgs>(args?: SelectSubset<T, InterviewTemplateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InterviewTemplates and returns the data saved in the database.
+     * @param {InterviewTemplateCreateManyAndReturnArgs} args - Arguments to create many InterviewTemplates.
+     * @example
+     * // Create many InterviewTemplates
+     * const interviewTemplate = await prisma.interviewTemplate.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InterviewTemplates and only return the `id`
+     * const interviewTemplateWithIdOnly = await prisma.interviewTemplate.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InterviewTemplateCreateManyAndReturnArgs>(args?: SelectSubset<T, InterviewTemplateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a InterviewTemplate.
+     * @param {InterviewTemplateDeleteArgs} args - Arguments to delete one InterviewTemplate.
+     * @example
+     * // Delete one InterviewTemplate
+     * const InterviewTemplate = await prisma.interviewTemplate.delete({
+     *   where: {
+     *     // ... filter to delete one InterviewTemplate
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InterviewTemplateDeleteArgs>(args: SelectSubset<T, InterviewTemplateDeleteArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one InterviewTemplate.
+     * @param {InterviewTemplateUpdateArgs} args - Arguments to update one InterviewTemplate.
+     * @example
+     * // Update one InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InterviewTemplateUpdateArgs>(args: SelectSubset<T, InterviewTemplateUpdateArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more InterviewTemplates.
+     * @param {InterviewTemplateDeleteManyArgs} args - Arguments to filter InterviewTemplates to delete.
+     * @example
+     * // Delete a few InterviewTemplates
+     * const { count } = await prisma.interviewTemplate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InterviewTemplateDeleteManyArgs>(args?: SelectSubset<T, InterviewTemplateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InterviewTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InterviewTemplates
+     * const interviewTemplate = await prisma.interviewTemplate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InterviewTemplateUpdateManyArgs>(args: SelectSubset<T, InterviewTemplateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one InterviewTemplate.
+     * @param {InterviewTemplateUpsertArgs} args - Arguments to update or create a InterviewTemplate.
+     * @example
+     * // Update or create a InterviewTemplate
+     * const interviewTemplate = await prisma.interviewTemplate.upsert({
+     *   create: {
+     *     // ... data to create a InterviewTemplate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InterviewTemplate we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InterviewTemplateUpsertArgs>(args: SelectSubset<T, InterviewTemplateUpsertArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of InterviewTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateCountArgs} args - Arguments to filter InterviewTemplates to count.
+     * @example
+     * // Count the number of InterviewTemplates
+     * const count = await prisma.interviewTemplate.count({
+     *   where: {
+     *     // ... the filter for the InterviewTemplates we want to count
+     *   }
+     * })
+    **/
+    count<T extends InterviewTemplateCountArgs>(
+      args?: Subset<T, InterviewTemplateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InterviewTemplateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InterviewTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InterviewTemplateAggregateArgs>(args: Subset<T, InterviewTemplateAggregateArgs>): Prisma.PrismaPromise<GetInterviewTemplateAggregateType<T>>
+
+    /**
+     * Group by InterviewTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewTemplateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InterviewTemplateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InterviewTemplateGroupByArgs['orderBy'] }
+        : { orderBy?: InterviewTemplateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InterviewTemplateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInterviewTemplateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InterviewTemplate model
+   */
+  readonly fields: InterviewTemplateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InterviewTemplate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InterviewTemplateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    applications<T extends InterviewTemplate$applicationsArgs<ExtArgs> = {}>(args?: Subset<T, InterviewTemplate$applicationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InterviewTemplate model
+   */ 
+  interface InterviewTemplateFieldRefs {
+    readonly id: FieldRef<"InterviewTemplate", 'String'>
+    readonly ownerRole: FieldRef<"InterviewTemplate", 'InterviewTemplateOwnerRole'>
+    readonly jobRole: FieldRef<"InterviewTemplate", 'String'>
+    readonly experienceLevel: FieldRef<"InterviewTemplate", 'String'>
+    readonly techStack: FieldRef<"InterviewTemplate", 'String[]'>
+    readonly requiredSkills: FieldRef<"InterviewTemplate", 'String[]'>
+    readonly durationMinutes: FieldRef<"InterviewTemplate", 'Int'>
+    readonly difficultyLevel: FieldRef<"InterviewTemplate", 'String'>
+    readonly advancedConfig: FieldRef<"InterviewTemplate", 'Json'>
+    readonly interviewDescription: FieldRef<"InterviewTemplate", 'String'>
+    readonly systemInstructions: FieldRef<"InterviewTemplate", 'String'>
+    readonly isActive: FieldRef<"InterviewTemplate", 'Boolean'>
+    readonly createdAt: FieldRef<"InterviewTemplate", 'DateTime'>
+    readonly updatedAt: FieldRef<"InterviewTemplate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InterviewTemplate findUnique
+   */
+  export type InterviewTemplateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewTemplate to fetch.
+     */
+    where: InterviewTemplateWhereUniqueInput
+  }
+
+  /**
+   * InterviewTemplate findUniqueOrThrow
+   */
+  export type InterviewTemplateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewTemplate to fetch.
+     */
+    where: InterviewTemplateWhereUniqueInput
+  }
+
+  /**
+   * InterviewTemplate findFirst
+   */
+  export type InterviewTemplateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewTemplate to fetch.
+     */
+    where?: InterviewTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewTemplates to fetch.
+     */
+    orderBy?: InterviewTemplateOrderByWithRelationInput | InterviewTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewTemplates.
+     */
+    cursor?: InterviewTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewTemplates.
+     */
+    distinct?: InterviewTemplateScalarFieldEnum | InterviewTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewTemplate findFirstOrThrow
+   */
+  export type InterviewTemplateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewTemplate to fetch.
+     */
+    where?: InterviewTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewTemplates to fetch.
+     */
+    orderBy?: InterviewTemplateOrderByWithRelationInput | InterviewTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewTemplates.
+     */
+    cursor?: InterviewTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewTemplates.
+     */
+    distinct?: InterviewTemplateScalarFieldEnum | InterviewTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewTemplate findMany
+   */
+  export type InterviewTemplateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewTemplates to fetch.
+     */
+    where?: InterviewTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewTemplates to fetch.
+     */
+    orderBy?: InterviewTemplateOrderByWithRelationInput | InterviewTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InterviewTemplates.
+     */
+    cursor?: InterviewTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewTemplates.
+     */
+    skip?: number
+    distinct?: InterviewTemplateScalarFieldEnum | InterviewTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewTemplate create
+   */
+  export type InterviewTemplateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InterviewTemplate.
+     */
+    data: XOR<InterviewTemplateCreateInput, InterviewTemplateUncheckedCreateInput>
+  }
+
+  /**
+   * InterviewTemplate createMany
+   */
+  export type InterviewTemplateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InterviewTemplates.
+     */
+    data: InterviewTemplateCreateManyInput | InterviewTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InterviewTemplate createManyAndReturn
+   */
+  export type InterviewTemplateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many InterviewTemplates.
+     */
+    data: InterviewTemplateCreateManyInput | InterviewTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InterviewTemplate update
+   */
+  export type InterviewTemplateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InterviewTemplate.
+     */
+    data: XOR<InterviewTemplateUpdateInput, InterviewTemplateUncheckedUpdateInput>
+    /**
+     * Choose, which InterviewTemplate to update.
+     */
+    where: InterviewTemplateWhereUniqueInput
+  }
+
+  /**
+   * InterviewTemplate updateMany
+   */
+  export type InterviewTemplateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InterviewTemplates.
+     */
+    data: XOR<InterviewTemplateUpdateManyMutationInput, InterviewTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which InterviewTemplates to update
+     */
+    where?: InterviewTemplateWhereInput
+  }
+
+  /**
+   * InterviewTemplate upsert
+   */
+  export type InterviewTemplateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InterviewTemplate to update in case it exists.
+     */
+    where: InterviewTemplateWhereUniqueInput
+    /**
+     * In case the InterviewTemplate found by the `where` argument doesn't exist, create a new InterviewTemplate with this data.
+     */
+    create: XOR<InterviewTemplateCreateInput, InterviewTemplateUncheckedCreateInput>
+    /**
+     * In case the InterviewTemplate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InterviewTemplateUpdateInput, InterviewTemplateUncheckedUpdateInput>
+  }
+
+  /**
+   * InterviewTemplate delete
+   */
+  export type InterviewTemplateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+    /**
+     * Filter which InterviewTemplate to delete.
+     */
+    where: InterviewTemplateWhereUniqueInput
+  }
+
+  /**
+   * InterviewTemplate deleteMany
+   */
+  export type InterviewTemplateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewTemplates to delete
+     */
+    where?: InterviewTemplateWhereInput
+  }
+
+  /**
+   * InterviewTemplate.applications
+   */
+  export type InterviewTemplate$applicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    where?: CandidateApplicationWhereInput
+    orderBy?: CandidateApplicationOrderByWithRelationInput | CandidateApplicationOrderByWithRelationInput[]
+    cursor?: CandidateApplicationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CandidateApplicationScalarFieldEnum | CandidateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewTemplate without action
+   */
+  export type InterviewTemplateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewTemplate
+     */
+    select?: InterviewTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewTemplateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CandidateApplication
+   */
+
+  export type AggregateCandidateApplication = {
+    _count: CandidateApplicationCountAggregateOutputType | null
+    _min: CandidateApplicationMinAggregateOutputType | null
+    _max: CandidateApplicationMaxAggregateOutputType | null
+  }
+
+  export type CandidateApplicationMinAggregateOutputType = {
+    id: string | null
+    templateId: string | null
+    candidateName: string | null
+    candidateEmail: string | null
+    candidatePhone: string | null
+    linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference | null
+    accessTokenHash: string | null
+    accessTokenExpiresAt: Date | null
+    status: $Enums.CandidateApplicationStatus | null
+    scheduledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CandidateApplicationMaxAggregateOutputType = {
+    id: string | null
+    templateId: string | null
+    candidateName: string | null
+    candidateEmail: string | null
+    candidatePhone: string | null
+    linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference | null
+    accessTokenHash: string | null
+    accessTokenExpiresAt: Date | null
+    status: $Enums.CandidateApplicationStatus | null
+    scheduledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CandidateApplicationCountAggregateOutputType = {
+    id: number
+    templateId: number
+    candidateName: number
+    candidateEmail: number
+    candidatePhone: number
+    linkedInUrl: number
+    resumeUrl: number
+    resumeText: number
+    interviewPreference: number
+    accessTokenHash: number
+    accessTokenExpiresAt: number
+    status: number
+    scheduledAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CandidateApplicationMinAggregateInputType = {
+    id?: true
+    templateId?: true
+    candidateName?: true
+    candidateEmail?: true
+    candidatePhone?: true
+    linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
+    interviewPreference?: true
+    accessTokenHash?: true
+    accessTokenExpiresAt?: true
+    status?: true
+    scheduledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CandidateApplicationMaxAggregateInputType = {
+    id?: true
+    templateId?: true
+    candidateName?: true
+    candidateEmail?: true
+    candidatePhone?: true
+    linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
+    interviewPreference?: true
+    accessTokenHash?: true
+    accessTokenExpiresAt?: true
+    status?: true
+    scheduledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CandidateApplicationCountAggregateInputType = {
+    id?: true
+    templateId?: true
+    candidateName?: true
+    candidateEmail?: true
+    candidatePhone?: true
+    linkedInUrl?: true
+    resumeUrl?: true
+    resumeText?: true
+    interviewPreference?: true
+    accessTokenHash?: true
+    accessTokenExpiresAt?: true
+    status?: true
+    scheduledAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CandidateApplicationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CandidateApplication to aggregate.
+     */
+    where?: CandidateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CandidateApplications to fetch.
+     */
+    orderBy?: CandidateApplicationOrderByWithRelationInput | CandidateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CandidateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CandidateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CandidateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CandidateApplications
+    **/
+    _count?: true | CandidateApplicationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CandidateApplicationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CandidateApplicationMaxAggregateInputType
+  }
+
+  export type GetCandidateApplicationAggregateType<T extends CandidateApplicationAggregateArgs> = {
+        [P in keyof T & keyof AggregateCandidateApplication]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCandidateApplication[P]>
+      : GetScalarType<T[P], AggregateCandidateApplication[P]>
+  }
+
+
+
+
+  export type CandidateApplicationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CandidateApplicationWhereInput
+    orderBy?: CandidateApplicationOrderByWithAggregationInput | CandidateApplicationOrderByWithAggregationInput[]
+    by: CandidateApplicationScalarFieldEnum[] | CandidateApplicationScalarFieldEnum
+    having?: CandidateApplicationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CandidateApplicationCountAggregateInputType | true
+    _min?: CandidateApplicationMinAggregateInputType
+    _max?: CandidateApplicationMaxAggregateInputType
+  }
+
+  export type CandidateApplicationGroupByOutputType = {
+    id: string
+    templateId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone: string | null
+    linkedInUrl: string | null
+    resumeUrl: string | null
+    resumeText: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date
+    status: $Enums.CandidateApplicationStatus
+    scheduledAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: CandidateApplicationCountAggregateOutputType | null
+    _min: CandidateApplicationMinAggregateOutputType | null
+    _max: CandidateApplicationMaxAggregateOutputType | null
+  }
+
+  type GetCandidateApplicationGroupByPayload<T extends CandidateApplicationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CandidateApplicationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CandidateApplicationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CandidateApplicationGroupByOutputType[P]>
+            : GetScalarType<T[P], CandidateApplicationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CandidateApplicationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateId?: boolean
+    candidateName?: boolean
+    candidateEmail?: boolean
+    candidatePhone?: boolean
+    linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
+    interviewPreference?: boolean
+    accessTokenHash?: boolean
+    accessTokenExpiresAt?: boolean
+    status?: boolean
+    scheduledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+    session?: boolean | CandidateApplication$sessionArgs<ExtArgs>
+  }, ExtArgs["result"]["candidateApplication"]>
+
+  export type CandidateApplicationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateId?: boolean
+    candidateName?: boolean
+    candidateEmail?: boolean
+    candidatePhone?: boolean
+    linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
+    interviewPreference?: boolean
+    accessTokenHash?: boolean
+    accessTokenExpiresAt?: boolean
+    status?: boolean
+    scheduledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["candidateApplication"]>
+
+  export type CandidateApplicationSelectScalar = {
+    id?: boolean
+    templateId?: boolean
+    candidateName?: boolean
+    candidateEmail?: boolean
+    candidatePhone?: boolean
+    linkedInUrl?: boolean
+    resumeUrl?: boolean
+    resumeText?: boolean
+    interviewPreference?: boolean
+    accessTokenHash?: boolean
+    accessTokenExpiresAt?: boolean
+    status?: boolean
+    scheduledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CandidateApplicationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+    session?: boolean | CandidateApplication$sessionArgs<ExtArgs>
+  }
+  export type CandidateApplicationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+  }
+
+  export type $CandidateApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CandidateApplication"
+    objects: {
+      template: Prisma.$InterviewTemplatePayload<ExtArgs>
+      session: Prisma.$InterviewSessionPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      templateId: string
+      candidateName: string
+      candidateEmail: string
+      candidatePhone: string | null
+      linkedInUrl: string | null
+      resumeUrl: string | null
+      resumeText: string | null
+      interviewPreference: $Enums.CandidateInterviewPreference
+      accessTokenHash: string
+      accessTokenExpiresAt: Date
+      status: $Enums.CandidateApplicationStatus
+      scheduledAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["candidateApplication"]>
+    composites: {}
+  }
+
+  type CandidateApplicationGetPayload<S extends boolean | null | undefined | CandidateApplicationDefaultArgs> = $Result.GetResult<Prisma.$CandidateApplicationPayload, S>
+
+  type CandidateApplicationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CandidateApplicationFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CandidateApplicationCountAggregateInputType | true
+    }
+
+  export interface CandidateApplicationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CandidateApplication'], meta: { name: 'CandidateApplication' } }
+    /**
+     * Find zero or one CandidateApplication that matches the filter.
+     * @param {CandidateApplicationFindUniqueArgs} args - Arguments to find a CandidateApplication
+     * @example
+     * // Get one CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CandidateApplicationFindUniqueArgs>(args: SelectSubset<T, CandidateApplicationFindUniqueArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CandidateApplication that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CandidateApplicationFindUniqueOrThrowArgs} args - Arguments to find a CandidateApplication
+     * @example
+     * // Get one CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CandidateApplicationFindUniqueOrThrowArgs>(args: SelectSubset<T, CandidateApplicationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CandidateApplication that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationFindFirstArgs} args - Arguments to find a CandidateApplication
+     * @example
+     * // Get one CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CandidateApplicationFindFirstArgs>(args?: SelectSubset<T, CandidateApplicationFindFirstArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CandidateApplication that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationFindFirstOrThrowArgs} args - Arguments to find a CandidateApplication
+     * @example
+     * // Get one CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CandidateApplicationFindFirstOrThrowArgs>(args?: SelectSubset<T, CandidateApplicationFindFirstOrThrowArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CandidateApplications that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CandidateApplications
+     * const candidateApplications = await prisma.candidateApplication.findMany()
+     * 
+     * // Get first 10 CandidateApplications
+     * const candidateApplications = await prisma.candidateApplication.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const candidateApplicationWithIdOnly = await prisma.candidateApplication.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CandidateApplicationFindManyArgs>(args?: SelectSubset<T, CandidateApplicationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CandidateApplication.
+     * @param {CandidateApplicationCreateArgs} args - Arguments to create a CandidateApplication.
+     * @example
+     * // Create one CandidateApplication
+     * const CandidateApplication = await prisma.candidateApplication.create({
+     *   data: {
+     *     // ... data to create a CandidateApplication
+     *   }
+     * })
+     * 
+     */
+    create<T extends CandidateApplicationCreateArgs>(args: SelectSubset<T, CandidateApplicationCreateArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CandidateApplications.
+     * @param {CandidateApplicationCreateManyArgs} args - Arguments to create many CandidateApplications.
+     * @example
+     * // Create many CandidateApplications
+     * const candidateApplication = await prisma.candidateApplication.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CandidateApplicationCreateManyArgs>(args?: SelectSubset<T, CandidateApplicationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CandidateApplications and returns the data saved in the database.
+     * @param {CandidateApplicationCreateManyAndReturnArgs} args - Arguments to create many CandidateApplications.
+     * @example
+     * // Create many CandidateApplications
+     * const candidateApplication = await prisma.candidateApplication.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CandidateApplications and only return the `id`
+     * const candidateApplicationWithIdOnly = await prisma.candidateApplication.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CandidateApplicationCreateManyAndReturnArgs>(args?: SelectSubset<T, CandidateApplicationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CandidateApplication.
+     * @param {CandidateApplicationDeleteArgs} args - Arguments to delete one CandidateApplication.
+     * @example
+     * // Delete one CandidateApplication
+     * const CandidateApplication = await prisma.candidateApplication.delete({
+     *   where: {
+     *     // ... filter to delete one CandidateApplication
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CandidateApplicationDeleteArgs>(args: SelectSubset<T, CandidateApplicationDeleteArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CandidateApplication.
+     * @param {CandidateApplicationUpdateArgs} args - Arguments to update one CandidateApplication.
+     * @example
+     * // Update one CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CandidateApplicationUpdateArgs>(args: SelectSubset<T, CandidateApplicationUpdateArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CandidateApplications.
+     * @param {CandidateApplicationDeleteManyArgs} args - Arguments to filter CandidateApplications to delete.
+     * @example
+     * // Delete a few CandidateApplications
+     * const { count } = await prisma.candidateApplication.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CandidateApplicationDeleteManyArgs>(args?: SelectSubset<T, CandidateApplicationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CandidateApplications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CandidateApplications
+     * const candidateApplication = await prisma.candidateApplication.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CandidateApplicationUpdateManyArgs>(args: SelectSubset<T, CandidateApplicationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CandidateApplication.
+     * @param {CandidateApplicationUpsertArgs} args - Arguments to update or create a CandidateApplication.
+     * @example
+     * // Update or create a CandidateApplication
+     * const candidateApplication = await prisma.candidateApplication.upsert({
+     *   create: {
+     *     // ... data to create a CandidateApplication
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CandidateApplication we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CandidateApplicationUpsertArgs>(args: SelectSubset<T, CandidateApplicationUpsertArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CandidateApplications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationCountArgs} args - Arguments to filter CandidateApplications to count.
+     * @example
+     * // Count the number of CandidateApplications
+     * const count = await prisma.candidateApplication.count({
+     *   where: {
+     *     // ... the filter for the CandidateApplications we want to count
+     *   }
+     * })
+    **/
+    count<T extends CandidateApplicationCountArgs>(
+      args?: Subset<T, CandidateApplicationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CandidateApplicationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CandidateApplication.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CandidateApplicationAggregateArgs>(args: Subset<T, CandidateApplicationAggregateArgs>): Prisma.PrismaPromise<GetCandidateApplicationAggregateType<T>>
+
+    /**
+     * Group by CandidateApplication.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CandidateApplicationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CandidateApplicationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CandidateApplicationGroupByArgs['orderBy'] }
+        : { orderBy?: CandidateApplicationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CandidateApplicationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCandidateApplicationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CandidateApplication model
+   */
+  readonly fields: CandidateApplicationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CandidateApplication.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CandidateApplicationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    template<T extends InterviewTemplateDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InterviewTemplateDefaultArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    session<T extends CandidateApplication$sessionArgs<ExtArgs> = {}>(args?: Subset<T, CandidateApplication$sessionArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CandidateApplication model
+   */ 
+  interface CandidateApplicationFieldRefs {
+    readonly id: FieldRef<"CandidateApplication", 'String'>
+    readonly templateId: FieldRef<"CandidateApplication", 'String'>
+    readonly candidateName: FieldRef<"CandidateApplication", 'String'>
+    readonly candidateEmail: FieldRef<"CandidateApplication", 'String'>
+    readonly candidatePhone: FieldRef<"CandidateApplication", 'String'>
+    readonly linkedInUrl: FieldRef<"CandidateApplication", 'String'>
+    readonly resumeUrl: FieldRef<"CandidateApplication", 'String'>
+    readonly resumeText: FieldRef<"CandidateApplication", 'String'>
+    readonly interviewPreference: FieldRef<"CandidateApplication", 'CandidateInterviewPreference'>
+    readonly accessTokenHash: FieldRef<"CandidateApplication", 'String'>
+    readonly accessTokenExpiresAt: FieldRef<"CandidateApplication", 'DateTime'>
+    readonly status: FieldRef<"CandidateApplication", 'CandidateApplicationStatus'>
+    readonly scheduledAt: FieldRef<"CandidateApplication", 'DateTime'>
+    readonly createdAt: FieldRef<"CandidateApplication", 'DateTime'>
+    readonly updatedAt: FieldRef<"CandidateApplication", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CandidateApplication findUnique
+   */
+  export type CandidateApplicationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which CandidateApplication to fetch.
+     */
+    where: CandidateApplicationWhereUniqueInput
+  }
+
+  /**
+   * CandidateApplication findUniqueOrThrow
+   */
+  export type CandidateApplicationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which CandidateApplication to fetch.
+     */
+    where: CandidateApplicationWhereUniqueInput
+  }
+
+  /**
+   * CandidateApplication findFirst
+   */
+  export type CandidateApplicationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which CandidateApplication to fetch.
+     */
+    where?: CandidateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CandidateApplications to fetch.
+     */
+    orderBy?: CandidateApplicationOrderByWithRelationInput | CandidateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CandidateApplications.
+     */
+    cursor?: CandidateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CandidateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CandidateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CandidateApplications.
+     */
+    distinct?: CandidateApplicationScalarFieldEnum | CandidateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateApplication findFirstOrThrow
+   */
+  export type CandidateApplicationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which CandidateApplication to fetch.
+     */
+    where?: CandidateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CandidateApplications to fetch.
+     */
+    orderBy?: CandidateApplicationOrderByWithRelationInput | CandidateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CandidateApplications.
+     */
+    cursor?: CandidateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CandidateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CandidateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CandidateApplications.
+     */
+    distinct?: CandidateApplicationScalarFieldEnum | CandidateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateApplication findMany
+   */
+  export type CandidateApplicationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which CandidateApplications to fetch.
+     */
+    where?: CandidateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CandidateApplications to fetch.
+     */
+    orderBy?: CandidateApplicationOrderByWithRelationInput | CandidateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CandidateApplications.
+     */
+    cursor?: CandidateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CandidateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CandidateApplications.
+     */
+    skip?: number
+    distinct?: CandidateApplicationScalarFieldEnum | CandidateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateApplication create
+   */
+  export type CandidateApplicationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CandidateApplication.
+     */
+    data: XOR<CandidateApplicationCreateInput, CandidateApplicationUncheckedCreateInput>
+  }
+
+  /**
+   * CandidateApplication createMany
+   */
+  export type CandidateApplicationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CandidateApplications.
+     */
+    data: CandidateApplicationCreateManyInput | CandidateApplicationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CandidateApplication createManyAndReturn
+   */
+  export type CandidateApplicationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CandidateApplications.
+     */
+    data: CandidateApplicationCreateManyInput | CandidateApplicationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CandidateApplication update
+   */
+  export type CandidateApplicationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CandidateApplication.
+     */
+    data: XOR<CandidateApplicationUpdateInput, CandidateApplicationUncheckedUpdateInput>
+    /**
+     * Choose, which CandidateApplication to update.
+     */
+    where: CandidateApplicationWhereUniqueInput
+  }
+
+  /**
+   * CandidateApplication updateMany
+   */
+  export type CandidateApplicationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CandidateApplications.
+     */
+    data: XOR<CandidateApplicationUpdateManyMutationInput, CandidateApplicationUncheckedUpdateManyInput>
+    /**
+     * Filter which CandidateApplications to update
+     */
+    where?: CandidateApplicationWhereInput
+  }
+
+  /**
+   * CandidateApplication upsert
+   */
+  export type CandidateApplicationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CandidateApplication to update in case it exists.
+     */
+    where: CandidateApplicationWhereUniqueInput
+    /**
+     * In case the CandidateApplication found by the `where` argument doesn't exist, create a new CandidateApplication with this data.
+     */
+    create: XOR<CandidateApplicationCreateInput, CandidateApplicationUncheckedCreateInput>
+    /**
+     * In case the CandidateApplication was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CandidateApplicationUpdateInput, CandidateApplicationUncheckedUpdateInput>
+  }
+
+  /**
+   * CandidateApplication delete
+   */
+  export type CandidateApplicationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter which CandidateApplication to delete.
+     */
+    where: CandidateApplicationWhereUniqueInput
+  }
+
+  /**
+   * CandidateApplication deleteMany
+   */
+  export type CandidateApplicationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CandidateApplications to delete
+     */
+    where?: CandidateApplicationWhereInput
+  }
+
+  /**
+   * CandidateApplication.session
+   */
+  export type CandidateApplication$sessionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    where?: InterviewSessionWhereInput
+  }
+
+  /**
+   * CandidateApplication without action
+   */
+  export type CandidateApplicationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InterviewSession
+   */
+
+  export type AggregateInterviewSession = {
+    _count: InterviewSessionCountAggregateOutputType | null
+    _min: InterviewSessionMinAggregateOutputType | null
+    _max: InterviewSessionMaxAggregateOutputType | null
+  }
+
+  export type InterviewSessionMinAggregateOutputType = {
+    id: string | null
+    applicationId: string | null
+    provider: string | null
+    modelUsed: string | null
+    status: $Enums.InterviewSessionStatus | null
+    startedAt: Date | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewSessionMaxAggregateOutputType = {
+    id: string | null
+    applicationId: string | null
+    provider: string | null
+    modelUsed: string | null
+    status: $Enums.InterviewSessionStatus | null
+    startedAt: Date | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewSessionCountAggregateOutputType = {
+    id: number
+    applicationId: number
+    provider: number
+    modelUsed: number
+    status: number
+    transcript: number
+    evaluationEvents: number
+    finalReport: number
+    referenceCards: number
+    startedAt: number
+    completedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InterviewSessionMinAggregateInputType = {
+    id?: true
+    applicationId?: true
+    provider?: true
+    modelUsed?: true
+    status?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewSessionMaxAggregateInputType = {
+    id?: true
+    applicationId?: true
+    provider?: true
+    modelUsed?: true
+    status?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewSessionCountAggregateInputType = {
+    id?: true
+    applicationId?: true
+    provider?: true
+    modelUsed?: true
+    status?: true
+    transcript?: true
+    evaluationEvents?: true
+    finalReport?: true
+    referenceCards?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InterviewSessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewSession to aggregate.
+     */
+    where?: InterviewSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewSessions to fetch.
+     */
+    orderBy?: InterviewSessionOrderByWithRelationInput | InterviewSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InterviewSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InterviewSessions
+    **/
+    _count?: true | InterviewSessionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InterviewSessionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InterviewSessionMaxAggregateInputType
+  }
+
+  export type GetInterviewSessionAggregateType<T extends InterviewSessionAggregateArgs> = {
+        [P in keyof T & keyof AggregateInterviewSession]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInterviewSession[P]>
+      : GetScalarType<T[P], AggregateInterviewSession[P]>
+  }
+
+
+
+
+  export type InterviewSessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InterviewSessionWhereInput
+    orderBy?: InterviewSessionOrderByWithAggregationInput | InterviewSessionOrderByWithAggregationInput[]
+    by: InterviewSessionScalarFieldEnum[] | InterviewSessionScalarFieldEnum
+    having?: InterviewSessionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InterviewSessionCountAggregateInputType | true
+    _min?: InterviewSessionMinAggregateInputType
+    _max?: InterviewSessionMaxAggregateInputType
+  }
+
+  export type InterviewSessionGroupByOutputType = {
+    id: string
+    applicationId: string
+    provider: string
+    modelUsed: string | null
+    status: $Enums.InterviewSessionStatus
+    transcript: JsonValue
+    evaluationEvents: JsonValue
+    finalReport: JsonValue | null
+    referenceCards: JsonValue
+    startedAt: Date
+    completedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: InterviewSessionCountAggregateOutputType | null
+    _min: InterviewSessionMinAggregateOutputType | null
+    _max: InterviewSessionMaxAggregateOutputType | null
+  }
+
+  type GetInterviewSessionGroupByPayload<T extends InterviewSessionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InterviewSessionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InterviewSessionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InterviewSessionGroupByOutputType[P]>
+            : GetScalarType<T[P], InterviewSessionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InterviewSessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    applicationId?: boolean
+    provider?: boolean
+    modelUsed?: boolean
+    status?: boolean
+    transcript?: boolean
+    evaluationEvents?: boolean
+    finalReport?: boolean
+    referenceCards?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    application?: boolean | CandidateApplicationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["interviewSession"]>
+
+  export type InterviewSessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    applicationId?: boolean
+    provider?: boolean
+    modelUsed?: boolean
+    status?: boolean
+    transcript?: boolean
+    evaluationEvents?: boolean
+    finalReport?: boolean
+    referenceCards?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    application?: boolean | CandidateApplicationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["interviewSession"]>
+
+  export type InterviewSessionSelectScalar = {
+    id?: boolean
+    applicationId?: boolean
+    provider?: boolean
+    modelUsed?: boolean
+    status?: boolean
+    transcript?: boolean
+    evaluationEvents?: boolean
+    finalReport?: boolean
+    referenceCards?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InterviewSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    application?: boolean | CandidateApplicationDefaultArgs<ExtArgs>
+  }
+  export type InterviewSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    application?: boolean | CandidateApplicationDefaultArgs<ExtArgs>
+  }
+
+  export type $InterviewSessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InterviewSession"
+    objects: {
+      application: Prisma.$CandidateApplicationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      applicationId: string
+      provider: string
+      modelUsed: string | null
+      status: $Enums.InterviewSessionStatus
+      transcript: Prisma.JsonValue
+      evaluationEvents: Prisma.JsonValue
+      finalReport: Prisma.JsonValue | null
+      referenceCards: Prisma.JsonValue
+      startedAt: Date
+      completedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["interviewSession"]>
+    composites: {}
+  }
+
+  type InterviewSessionGetPayload<S extends boolean | null | undefined | InterviewSessionDefaultArgs> = $Result.GetResult<Prisma.$InterviewSessionPayload, S>
+
+  type InterviewSessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<InterviewSessionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: InterviewSessionCountAggregateInputType | true
+    }
+
+  export interface InterviewSessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InterviewSession'], meta: { name: 'InterviewSession' } }
+    /**
+     * Find zero or one InterviewSession that matches the filter.
+     * @param {InterviewSessionFindUniqueArgs} args - Arguments to find a InterviewSession
+     * @example
+     * // Get one InterviewSession
+     * const interviewSession = await prisma.interviewSession.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InterviewSessionFindUniqueArgs>(args: SelectSubset<T, InterviewSessionFindUniqueArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one InterviewSession that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {InterviewSessionFindUniqueOrThrowArgs} args - Arguments to find a InterviewSession
+     * @example
+     * // Get one InterviewSession
+     * const interviewSession = await prisma.interviewSession.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InterviewSessionFindUniqueOrThrowArgs>(args: SelectSubset<T, InterviewSessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first InterviewSession that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionFindFirstArgs} args - Arguments to find a InterviewSession
+     * @example
+     * // Get one InterviewSession
+     * const interviewSession = await prisma.interviewSession.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InterviewSessionFindFirstArgs>(args?: SelectSubset<T, InterviewSessionFindFirstArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first InterviewSession that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionFindFirstOrThrowArgs} args - Arguments to find a InterviewSession
+     * @example
+     * // Get one InterviewSession
+     * const interviewSession = await prisma.interviewSession.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InterviewSessionFindFirstOrThrowArgs>(args?: SelectSubset<T, InterviewSessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more InterviewSessions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InterviewSessions
+     * const interviewSessions = await prisma.interviewSession.findMany()
+     * 
+     * // Get first 10 InterviewSessions
+     * const interviewSessions = await prisma.interviewSession.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const interviewSessionWithIdOnly = await prisma.interviewSession.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InterviewSessionFindManyArgs>(args?: SelectSubset<T, InterviewSessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a InterviewSession.
+     * @param {InterviewSessionCreateArgs} args - Arguments to create a InterviewSession.
+     * @example
+     * // Create one InterviewSession
+     * const InterviewSession = await prisma.interviewSession.create({
+     *   data: {
+     *     // ... data to create a InterviewSession
+     *   }
+     * })
+     * 
+     */
+    create<T extends InterviewSessionCreateArgs>(args: SelectSubset<T, InterviewSessionCreateArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many InterviewSessions.
+     * @param {InterviewSessionCreateManyArgs} args - Arguments to create many InterviewSessions.
+     * @example
+     * // Create many InterviewSessions
+     * const interviewSession = await prisma.interviewSession.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InterviewSessionCreateManyArgs>(args?: SelectSubset<T, InterviewSessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InterviewSessions and returns the data saved in the database.
+     * @param {InterviewSessionCreateManyAndReturnArgs} args - Arguments to create many InterviewSessions.
+     * @example
+     * // Create many InterviewSessions
+     * const interviewSession = await prisma.interviewSession.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InterviewSessions and only return the `id`
+     * const interviewSessionWithIdOnly = await prisma.interviewSession.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InterviewSessionCreateManyAndReturnArgs>(args?: SelectSubset<T, InterviewSessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a InterviewSession.
+     * @param {InterviewSessionDeleteArgs} args - Arguments to delete one InterviewSession.
+     * @example
+     * // Delete one InterviewSession
+     * const InterviewSession = await prisma.interviewSession.delete({
+     *   where: {
+     *     // ... filter to delete one InterviewSession
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InterviewSessionDeleteArgs>(args: SelectSubset<T, InterviewSessionDeleteArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one InterviewSession.
+     * @param {InterviewSessionUpdateArgs} args - Arguments to update one InterviewSession.
+     * @example
+     * // Update one InterviewSession
+     * const interviewSession = await prisma.interviewSession.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InterviewSessionUpdateArgs>(args: SelectSubset<T, InterviewSessionUpdateArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more InterviewSessions.
+     * @param {InterviewSessionDeleteManyArgs} args - Arguments to filter InterviewSessions to delete.
+     * @example
+     * // Delete a few InterviewSessions
+     * const { count } = await prisma.interviewSession.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InterviewSessionDeleteManyArgs>(args?: SelectSubset<T, InterviewSessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InterviewSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InterviewSessions
+     * const interviewSession = await prisma.interviewSession.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InterviewSessionUpdateManyArgs>(args: SelectSubset<T, InterviewSessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one InterviewSession.
+     * @param {InterviewSessionUpsertArgs} args - Arguments to update or create a InterviewSession.
+     * @example
+     * // Update or create a InterviewSession
+     * const interviewSession = await prisma.interviewSession.upsert({
+     *   create: {
+     *     // ... data to create a InterviewSession
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InterviewSession we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InterviewSessionUpsertArgs>(args: SelectSubset<T, InterviewSessionUpsertArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of InterviewSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionCountArgs} args - Arguments to filter InterviewSessions to count.
+     * @example
+     * // Count the number of InterviewSessions
+     * const count = await prisma.interviewSession.count({
+     *   where: {
+     *     // ... the filter for the InterviewSessions we want to count
+     *   }
+     * })
+    **/
+    count<T extends InterviewSessionCountArgs>(
+      args?: Subset<T, InterviewSessionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InterviewSessionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InterviewSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InterviewSessionAggregateArgs>(args: Subset<T, InterviewSessionAggregateArgs>): Prisma.PrismaPromise<GetInterviewSessionAggregateType<T>>
+
+    /**
+     * Group by InterviewSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewSessionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InterviewSessionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InterviewSessionGroupByArgs['orderBy'] }
+        : { orderBy?: InterviewSessionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InterviewSessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInterviewSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InterviewSession model
+   */
+  readonly fields: InterviewSessionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InterviewSession.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InterviewSessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    application<T extends CandidateApplicationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CandidateApplicationDefaultArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InterviewSession model
+   */ 
+  interface InterviewSessionFieldRefs {
+    readonly id: FieldRef<"InterviewSession", 'String'>
+    readonly applicationId: FieldRef<"InterviewSession", 'String'>
+    readonly provider: FieldRef<"InterviewSession", 'String'>
+    readonly modelUsed: FieldRef<"InterviewSession", 'String'>
+    readonly status: FieldRef<"InterviewSession", 'InterviewSessionStatus'>
+    readonly transcript: FieldRef<"InterviewSession", 'Json'>
+    readonly evaluationEvents: FieldRef<"InterviewSession", 'Json'>
+    readonly finalReport: FieldRef<"InterviewSession", 'Json'>
+    readonly referenceCards: FieldRef<"InterviewSession", 'Json'>
+    readonly startedAt: FieldRef<"InterviewSession", 'DateTime'>
+    readonly completedAt: FieldRef<"InterviewSession", 'DateTime'>
+    readonly createdAt: FieldRef<"InterviewSession", 'DateTime'>
+    readonly updatedAt: FieldRef<"InterviewSession", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InterviewSession findUnique
+   */
+  export type InterviewSessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewSession to fetch.
+     */
+    where: InterviewSessionWhereUniqueInput
+  }
+
+  /**
+   * InterviewSession findUniqueOrThrow
+   */
+  export type InterviewSessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewSession to fetch.
+     */
+    where: InterviewSessionWhereUniqueInput
+  }
+
+  /**
+   * InterviewSession findFirst
+   */
+  export type InterviewSessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewSession to fetch.
+     */
+    where?: InterviewSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewSessions to fetch.
+     */
+    orderBy?: InterviewSessionOrderByWithRelationInput | InterviewSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewSessions.
+     */
+    cursor?: InterviewSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewSessions.
+     */
+    distinct?: InterviewSessionScalarFieldEnum | InterviewSessionScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewSession findFirstOrThrow
+   */
+  export type InterviewSessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewSession to fetch.
+     */
+    where?: InterviewSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewSessions to fetch.
+     */
+    orderBy?: InterviewSessionOrderByWithRelationInput | InterviewSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewSessions.
+     */
+    cursor?: InterviewSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewSessions.
+     */
+    distinct?: InterviewSessionScalarFieldEnum | InterviewSessionScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewSession findMany
+   */
+  export type InterviewSessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which InterviewSessions to fetch.
+     */
+    where?: InterviewSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewSessions to fetch.
+     */
+    orderBy?: InterviewSessionOrderByWithRelationInput | InterviewSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InterviewSessions.
+     */
+    cursor?: InterviewSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewSessions.
+     */
+    skip?: number
+    distinct?: InterviewSessionScalarFieldEnum | InterviewSessionScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewSession create
+   */
+  export type InterviewSessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InterviewSession.
+     */
+    data: XOR<InterviewSessionCreateInput, InterviewSessionUncheckedCreateInput>
+  }
+
+  /**
+   * InterviewSession createMany
+   */
+  export type InterviewSessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InterviewSessions.
+     */
+    data: InterviewSessionCreateManyInput | InterviewSessionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InterviewSession createManyAndReturn
+   */
+  export type InterviewSessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many InterviewSessions.
+     */
+    data: InterviewSessionCreateManyInput | InterviewSessionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InterviewSession update
+   */
+  export type InterviewSessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InterviewSession.
+     */
+    data: XOR<InterviewSessionUpdateInput, InterviewSessionUncheckedUpdateInput>
+    /**
+     * Choose, which InterviewSession to update.
+     */
+    where: InterviewSessionWhereUniqueInput
+  }
+
+  /**
+   * InterviewSession updateMany
+   */
+  export type InterviewSessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InterviewSessions.
+     */
+    data: XOR<InterviewSessionUpdateManyMutationInput, InterviewSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which InterviewSessions to update
+     */
+    where?: InterviewSessionWhereInput
+  }
+
+  /**
+   * InterviewSession upsert
+   */
+  export type InterviewSessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InterviewSession to update in case it exists.
+     */
+    where: InterviewSessionWhereUniqueInput
+    /**
+     * In case the InterviewSession found by the `where` argument doesn't exist, create a new InterviewSession with this data.
+     */
+    create: XOR<InterviewSessionCreateInput, InterviewSessionUncheckedCreateInput>
+    /**
+     * In case the InterviewSession was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InterviewSessionUpdateInput, InterviewSessionUncheckedUpdateInput>
+  }
+
+  /**
+   * InterviewSession delete
+   */
+  export type InterviewSessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+    /**
+     * Filter which InterviewSession to delete.
+     */
+    where: InterviewSessionWhereUniqueInput
+  }
+
+  /**
+   * InterviewSession deleteMany
+   */
+  export type InterviewSessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewSessions to delete
+     */
+    where?: InterviewSessionWhereInput
+  }
+
+  /**
+   * InterviewSession without action
+   */
+  export type InterviewSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewSession
+     */
+    select?: InterviewSessionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -8202,6 +11716,66 @@ export namespace Prisma {
   export type ChatConversationScalarFieldEnum = (typeof ChatConversationScalarFieldEnum)[keyof typeof ChatConversationScalarFieldEnum]
 
 
+  export const InterviewTemplateScalarFieldEnum: {
+    id: 'id',
+    ownerRole: 'ownerRole',
+    jobRole: 'jobRole',
+    experienceLevel: 'experienceLevel',
+    techStack: 'techStack',
+    requiredSkills: 'requiredSkills',
+    durationMinutes: 'durationMinutes',
+    difficultyLevel: 'difficultyLevel',
+    advancedConfig: 'advancedConfig',
+    interviewDescription: 'interviewDescription',
+    systemInstructions: 'systemInstructions',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InterviewTemplateScalarFieldEnum = (typeof InterviewTemplateScalarFieldEnum)[keyof typeof InterviewTemplateScalarFieldEnum]
+
+
+  export const CandidateApplicationScalarFieldEnum: {
+    id: 'id',
+    templateId: 'templateId',
+    candidateName: 'candidateName',
+    candidateEmail: 'candidateEmail',
+    candidatePhone: 'candidatePhone',
+    linkedInUrl: 'linkedInUrl',
+    resumeUrl: 'resumeUrl',
+    resumeText: 'resumeText',
+    interviewPreference: 'interviewPreference',
+    accessTokenHash: 'accessTokenHash',
+    accessTokenExpiresAt: 'accessTokenExpiresAt',
+    status: 'status',
+    scheduledAt: 'scheduledAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CandidateApplicationScalarFieldEnum = (typeof CandidateApplicationScalarFieldEnum)[keyof typeof CandidateApplicationScalarFieldEnum]
+
+
+  export const InterviewSessionScalarFieldEnum: {
+    id: 'id',
+    applicationId: 'applicationId',
+    provider: 'provider',
+    modelUsed: 'modelUsed',
+    status: 'status',
+    transcript: 'transcript',
+    evaluationEvents: 'evaluationEvents',
+    finalReport: 'finalReport',
+    referenceCards: 'referenceCards',
+    startedAt: 'startedAt',
+    completedAt: 'completedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InterviewSessionScalarFieldEnum = (typeof InterviewSessionScalarFieldEnum)[keyof typeof InterviewSessionScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -8215,6 +11789,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const QueryMode: {
@@ -8314,6 +11896,62 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'InterviewTemplateOwnerRole'
+   */
+  export type EnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewTemplateOwnerRole'>
+    
+
+
+  /**
+   * Reference to a field of type 'InterviewTemplateOwnerRole[]'
+   */
+  export type ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewTemplateOwnerRole[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CandidateInterviewPreference'
+   */
+  export type EnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CandidateInterviewPreference'>
+    
+
+
+  /**
+   * Reference to a field of type 'CandidateInterviewPreference[]'
+   */
+  export type ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CandidateInterviewPreference[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CandidateApplicationStatus'
+   */
+  export type EnumCandidateApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CandidateApplicationStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'CandidateApplicationStatus[]'
+   */
+  export type ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CandidateApplicationStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'InterviewSessionStatus'
+   */
+  export type EnumInterviewSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewSessionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'InterviewSessionStatus[]'
+   */
+  export type ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewSessionStatus[]'>
     
   /**
    * Deep Input Types
@@ -8907,6 +12545,311 @@ export namespace Prisma {
     userAgent?: StringNullableWithAggregatesFilter<"ChatConversation"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"ChatConversation"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ChatConversation"> | Date | string
+  }
+
+  export type InterviewTemplateWhereInput = {
+    AND?: InterviewTemplateWhereInput | InterviewTemplateWhereInput[]
+    OR?: InterviewTemplateWhereInput[]
+    NOT?: InterviewTemplateWhereInput | InterviewTemplateWhereInput[]
+    id?: StringFilter<"InterviewTemplate"> | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFilter<"InterviewTemplate"> | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFilter<"InterviewTemplate"> | string
+    experienceLevel?: StringFilter<"InterviewTemplate"> | string
+    techStack?: StringNullableListFilter<"InterviewTemplate">
+    requiredSkills?: StringNullableListFilter<"InterviewTemplate">
+    durationMinutes?: IntFilter<"InterviewTemplate"> | number
+    difficultyLevel?: StringFilter<"InterviewTemplate"> | string
+    advancedConfig?: JsonNullableFilter<"InterviewTemplate">
+    interviewDescription?: StringNullableFilter<"InterviewTemplate"> | string | null
+    systemInstructions?: StringNullableFilter<"InterviewTemplate"> | string | null
+    isActive?: BoolFilter<"InterviewTemplate"> | boolean
+    createdAt?: DateTimeFilter<"InterviewTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewTemplate"> | Date | string
+    applications?: CandidateApplicationListRelationFilter
+  }
+
+  export type InterviewTemplateOrderByWithRelationInput = {
+    id?: SortOrder
+    ownerRole?: SortOrder
+    jobRole?: SortOrder
+    experienceLevel?: SortOrder
+    techStack?: SortOrder
+    requiredSkills?: SortOrder
+    durationMinutes?: SortOrder
+    difficultyLevel?: SortOrder
+    advancedConfig?: SortOrderInput | SortOrder
+    interviewDescription?: SortOrderInput | SortOrder
+    systemInstructions?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    applications?: CandidateApplicationOrderByRelationAggregateInput
+  }
+
+  export type InterviewTemplateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InterviewTemplateWhereInput | InterviewTemplateWhereInput[]
+    OR?: InterviewTemplateWhereInput[]
+    NOT?: InterviewTemplateWhereInput | InterviewTemplateWhereInput[]
+    ownerRole?: EnumInterviewTemplateOwnerRoleFilter<"InterviewTemplate"> | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFilter<"InterviewTemplate"> | string
+    experienceLevel?: StringFilter<"InterviewTemplate"> | string
+    techStack?: StringNullableListFilter<"InterviewTemplate">
+    requiredSkills?: StringNullableListFilter<"InterviewTemplate">
+    durationMinutes?: IntFilter<"InterviewTemplate"> | number
+    difficultyLevel?: StringFilter<"InterviewTemplate"> | string
+    advancedConfig?: JsonNullableFilter<"InterviewTemplate">
+    interviewDescription?: StringNullableFilter<"InterviewTemplate"> | string | null
+    systemInstructions?: StringNullableFilter<"InterviewTemplate"> | string | null
+    isActive?: BoolFilter<"InterviewTemplate"> | boolean
+    createdAt?: DateTimeFilter<"InterviewTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewTemplate"> | Date | string
+    applications?: CandidateApplicationListRelationFilter
+  }, "id">
+
+  export type InterviewTemplateOrderByWithAggregationInput = {
+    id?: SortOrder
+    ownerRole?: SortOrder
+    jobRole?: SortOrder
+    experienceLevel?: SortOrder
+    techStack?: SortOrder
+    requiredSkills?: SortOrder
+    durationMinutes?: SortOrder
+    difficultyLevel?: SortOrder
+    advancedConfig?: SortOrderInput | SortOrder
+    interviewDescription?: SortOrderInput | SortOrder
+    systemInstructions?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InterviewTemplateCountOrderByAggregateInput
+    _avg?: InterviewTemplateAvgOrderByAggregateInput
+    _max?: InterviewTemplateMaxOrderByAggregateInput
+    _min?: InterviewTemplateMinOrderByAggregateInput
+    _sum?: InterviewTemplateSumOrderByAggregateInput
+  }
+
+  export type InterviewTemplateScalarWhereWithAggregatesInput = {
+    AND?: InterviewTemplateScalarWhereWithAggregatesInput | InterviewTemplateScalarWhereWithAggregatesInput[]
+    OR?: InterviewTemplateScalarWhereWithAggregatesInput[]
+    NOT?: InterviewTemplateScalarWhereWithAggregatesInput | InterviewTemplateScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InterviewTemplate"> | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleWithAggregatesFilter<"InterviewTemplate"> | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringWithAggregatesFilter<"InterviewTemplate"> | string
+    experienceLevel?: StringWithAggregatesFilter<"InterviewTemplate"> | string
+    techStack?: StringNullableListFilter<"InterviewTemplate">
+    requiredSkills?: StringNullableListFilter<"InterviewTemplate">
+    durationMinutes?: IntWithAggregatesFilter<"InterviewTemplate"> | number
+    difficultyLevel?: StringWithAggregatesFilter<"InterviewTemplate"> | string
+    advancedConfig?: JsonNullableWithAggregatesFilter<"InterviewTemplate">
+    interviewDescription?: StringNullableWithAggregatesFilter<"InterviewTemplate"> | string | null
+    systemInstructions?: StringNullableWithAggregatesFilter<"InterviewTemplate"> | string | null
+    isActive?: BoolWithAggregatesFilter<"InterviewTemplate"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"InterviewTemplate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InterviewTemplate"> | Date | string
+  }
+
+  export type CandidateApplicationWhereInput = {
+    AND?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
+    OR?: CandidateApplicationWhereInput[]
+    NOT?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
+    id?: StringFilter<"CandidateApplication"> | string
+    templateId?: StringFilter<"CandidateApplication"> | string
+    candidateName?: StringFilter<"CandidateApplication"> | string
+    candidateEmail?: StringFilter<"CandidateApplication"> | string
+    candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
+    linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFilter<"CandidateApplication"> | string
+    accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
+    createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
+    session?: XOR<InterviewSessionNullableRelationFilter, InterviewSessionWhereInput> | null
+  }
+
+  export type CandidateApplicationOrderByWithRelationInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    candidateName?: SortOrder
+    candidateEmail?: SortOrder
+    candidatePhone?: SortOrderInput | SortOrder
+    linkedInUrl?: SortOrderInput | SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
+    resumeText?: SortOrderInput | SortOrder
+    interviewPreference?: SortOrder
+    accessTokenHash?: SortOrder
+    accessTokenExpiresAt?: SortOrder
+    status?: SortOrder
+    scheduledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    template?: InterviewTemplateOrderByWithRelationInput
+    session?: InterviewSessionOrderByWithRelationInput
+  }
+
+  export type CandidateApplicationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    accessTokenHash?: string
+    AND?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
+    OR?: CandidateApplicationWhereInput[]
+    NOT?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
+    templateId?: StringFilter<"CandidateApplication"> | string
+    candidateName?: StringFilter<"CandidateApplication"> | string
+    candidateEmail?: StringFilter<"CandidateApplication"> | string
+    candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
+    linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
+    accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
+    createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
+    session?: XOR<InterviewSessionNullableRelationFilter, InterviewSessionWhereInput> | null
+  }, "id" | "accessTokenHash">
+
+  export type CandidateApplicationOrderByWithAggregationInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    candidateName?: SortOrder
+    candidateEmail?: SortOrder
+    candidatePhone?: SortOrderInput | SortOrder
+    linkedInUrl?: SortOrderInput | SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
+    resumeText?: SortOrderInput | SortOrder
+    interviewPreference?: SortOrder
+    accessTokenHash?: SortOrder
+    accessTokenExpiresAt?: SortOrder
+    status?: SortOrder
+    scheduledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CandidateApplicationCountOrderByAggregateInput
+    _max?: CandidateApplicationMaxOrderByAggregateInput
+    _min?: CandidateApplicationMinOrderByAggregateInput
+  }
+
+  export type CandidateApplicationScalarWhereWithAggregatesInput = {
+    AND?: CandidateApplicationScalarWhereWithAggregatesInput | CandidateApplicationScalarWhereWithAggregatesInput[]
+    OR?: CandidateApplicationScalarWhereWithAggregatesInput[]
+    NOT?: CandidateApplicationScalarWhereWithAggregatesInput | CandidateApplicationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CandidateApplication"> | string
+    templateId?: StringWithAggregatesFilter<"CandidateApplication"> | string
+    candidateName?: StringWithAggregatesFilter<"CandidateApplication"> | string
+    candidateEmail?: StringWithAggregatesFilter<"CandidateApplication"> | string
+    candidatePhone?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    linkedInUrl?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringWithAggregatesFilter<"CandidateApplication"> | string
+    accessTokenExpiresAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
+    status?: EnumCandidateApplicationStatusWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableWithAggregatesFilter<"CandidateApplication"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
+  }
+
+  export type InterviewSessionWhereInput = {
+    AND?: InterviewSessionWhereInput | InterviewSessionWhereInput[]
+    OR?: InterviewSessionWhereInput[]
+    NOT?: InterviewSessionWhereInput | InterviewSessionWhereInput[]
+    id?: StringFilter<"InterviewSession"> | string
+    applicationId?: StringFilter<"InterviewSession"> | string
+    provider?: StringFilter<"InterviewSession"> | string
+    modelUsed?: StringNullableFilter<"InterviewSession"> | string | null
+    status?: EnumInterviewSessionStatusFilter<"InterviewSession"> | $Enums.InterviewSessionStatus
+    transcript?: JsonFilter<"InterviewSession">
+    evaluationEvents?: JsonFilter<"InterviewSession">
+    finalReport?: JsonNullableFilter<"InterviewSession">
+    referenceCards?: JsonFilter<"InterviewSession">
+    startedAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    completedAt?: DateTimeNullableFilter<"InterviewSession"> | Date | string | null
+    createdAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    application?: XOR<CandidateApplicationRelationFilter, CandidateApplicationWhereInput>
+  }
+
+  export type InterviewSessionOrderByWithRelationInput = {
+    id?: SortOrder
+    applicationId?: SortOrder
+    provider?: SortOrder
+    modelUsed?: SortOrderInput | SortOrder
+    status?: SortOrder
+    transcript?: SortOrder
+    evaluationEvents?: SortOrder
+    finalReport?: SortOrderInput | SortOrder
+    referenceCards?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    application?: CandidateApplicationOrderByWithRelationInput
+  }
+
+  export type InterviewSessionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    applicationId?: string
+    AND?: InterviewSessionWhereInput | InterviewSessionWhereInput[]
+    OR?: InterviewSessionWhereInput[]
+    NOT?: InterviewSessionWhereInput | InterviewSessionWhereInput[]
+    provider?: StringFilter<"InterviewSession"> | string
+    modelUsed?: StringNullableFilter<"InterviewSession"> | string | null
+    status?: EnumInterviewSessionStatusFilter<"InterviewSession"> | $Enums.InterviewSessionStatus
+    transcript?: JsonFilter<"InterviewSession">
+    evaluationEvents?: JsonFilter<"InterviewSession">
+    finalReport?: JsonNullableFilter<"InterviewSession">
+    referenceCards?: JsonFilter<"InterviewSession">
+    startedAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    completedAt?: DateTimeNullableFilter<"InterviewSession"> | Date | string | null
+    createdAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewSession"> | Date | string
+    application?: XOR<CandidateApplicationRelationFilter, CandidateApplicationWhereInput>
+  }, "id" | "applicationId">
+
+  export type InterviewSessionOrderByWithAggregationInput = {
+    id?: SortOrder
+    applicationId?: SortOrder
+    provider?: SortOrder
+    modelUsed?: SortOrderInput | SortOrder
+    status?: SortOrder
+    transcript?: SortOrder
+    evaluationEvents?: SortOrder
+    finalReport?: SortOrderInput | SortOrder
+    referenceCards?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InterviewSessionCountOrderByAggregateInput
+    _max?: InterviewSessionMaxOrderByAggregateInput
+    _min?: InterviewSessionMinOrderByAggregateInput
+  }
+
+  export type InterviewSessionScalarWhereWithAggregatesInput = {
+    AND?: InterviewSessionScalarWhereWithAggregatesInput | InterviewSessionScalarWhereWithAggregatesInput[]
+    OR?: InterviewSessionScalarWhereWithAggregatesInput[]
+    NOT?: InterviewSessionScalarWhereWithAggregatesInput | InterviewSessionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InterviewSession"> | string
+    applicationId?: StringWithAggregatesFilter<"InterviewSession"> | string
+    provider?: StringWithAggregatesFilter<"InterviewSession"> | string
+    modelUsed?: StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
+    status?: EnumInterviewSessionStatusWithAggregatesFilter<"InterviewSession"> | $Enums.InterviewSessionStatus
+    transcript?: JsonWithAggregatesFilter<"InterviewSession">
+    evaluationEvents?: JsonWithAggregatesFilter<"InterviewSession">
+    finalReport?: JsonNullableWithAggregatesFilter<"InterviewSession">
+    referenceCards?: JsonWithAggregatesFilter<"InterviewSession">
+    startedAt?: DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
+    completedAt?: DateTimeNullableWithAggregatesFilter<"InterviewSession"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
   }
 
   export type ContactSubmissionCreateInput = {
@@ -9581,6 +13524,369 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type InterviewTemplateCreateInput = {
+    id?: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack?: InterviewTemplateCreatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateCreaterequiredSkillsInput | string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: string | null
+    systemInstructions?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    applications?: CandidateApplicationCreateNestedManyWithoutTemplateInput
+  }
+
+  export type InterviewTemplateUncheckedCreateInput = {
+    id?: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack?: InterviewTemplateCreatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateCreaterequiredSkillsInput | string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: string | null
+    systemInstructions?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    applications?: CandidateApplicationUncheckedCreateNestedManyWithoutTemplateInput
+  }
+
+  export type InterviewTemplateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    applications?: CandidateApplicationUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type InterviewTemplateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    applications?: CandidateApplicationUncheckedUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type InterviewTemplateCreateManyInput = {
+    id?: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack?: InterviewTemplateCreatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateCreaterequiredSkillsInput | string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: string | null
+    systemInstructions?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewTemplateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewTemplateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CandidateApplicationCreateInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
+    session?: InterviewSessionCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationUncheckedCreateInput = {
+    id?: string
+    templateId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
+    session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
+  }
+
+  export type CandidateApplicationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
+  }
+
+  export type CandidateApplicationCreateManyInput = {
+    id?: string
+    templateId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CandidateApplicationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CandidateApplicationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewSessionCreateInput = {
+    id?: string
+    provider: string
+    modelUsed?: string | null
+    status?: $Enums.InterviewSessionStatus
+    transcript: JsonNullValueInput | InputJsonValue
+    evaluationEvents: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    application: CandidateApplicationCreateNestedOneWithoutSessionInput
+  }
+
+  export type InterviewSessionUncheckedCreateInput = {
+    id?: string
+    applicationId: string
+    provider: string
+    modelUsed?: string | null
+    status?: $Enums.InterviewSessionStatus
+    transcript: JsonNullValueInput | InputJsonValue
+    evaluationEvents: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewSessionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    application?: CandidateApplicationUpdateOneRequiredWithoutSessionNestedInput
+  }
+
+  export type InterviewSessionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewSessionCreateManyInput = {
+    id?: string
+    applicationId: string
+    provider: string
+    modelUsed?: string | null
+    status?: $Enums.InterviewSessionStatus
+    transcript: JsonNullValueInput | InputJsonValue
+    evaluationEvents: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewSessionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewSessionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -10142,6 +14448,301 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type EnumInterviewTemplateOwnerRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewTemplateOwnerRole | EnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel> | $Enums.InterviewTemplateOwnerRole
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type CandidateApplicationListRelationFilter = {
+    every?: CandidateApplicationWhereInput
+    some?: CandidateApplicationWhereInput
+    none?: CandidateApplicationWhereInput
+  }
+
+  export type CandidateApplicationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InterviewTemplateCountOrderByAggregateInput = {
+    id?: SortOrder
+    ownerRole?: SortOrder
+    jobRole?: SortOrder
+    experienceLevel?: SortOrder
+    techStack?: SortOrder
+    requiredSkills?: SortOrder
+    durationMinutes?: SortOrder
+    difficultyLevel?: SortOrder
+    advancedConfig?: SortOrder
+    interviewDescription?: SortOrder
+    systemInstructions?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewTemplateAvgOrderByAggregateInput = {
+    durationMinutes?: SortOrder
+  }
+
+  export type InterviewTemplateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ownerRole?: SortOrder
+    jobRole?: SortOrder
+    experienceLevel?: SortOrder
+    durationMinutes?: SortOrder
+    difficultyLevel?: SortOrder
+    interviewDescription?: SortOrder
+    systemInstructions?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewTemplateMinOrderByAggregateInput = {
+    id?: SortOrder
+    ownerRole?: SortOrder
+    jobRole?: SortOrder
+    experienceLevel?: SortOrder
+    durationMinutes?: SortOrder
+    difficultyLevel?: SortOrder
+    interviewDescription?: SortOrder
+    systemInstructions?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewTemplateSumOrderByAggregateInput = {
+    durationMinutes?: SortOrder
+  }
+
+  export type EnumInterviewTemplateOwnerRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewTemplateOwnerRole | EnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewTemplateOwnerRoleWithAggregatesFilter<$PrismaModel> | $Enums.InterviewTemplateOwnerRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel>
+    _max?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type EnumCandidateInterviewPreferenceFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateInterviewPreference | EnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel> | $Enums.CandidateInterviewPreference
+  }
+
+  export type EnumCandidateApplicationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateApplicationStatus | EnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel> | $Enums.CandidateApplicationStatus
+  }
+
+  export type InterviewTemplateRelationFilter = {
+    is?: InterviewTemplateWhereInput
+    isNot?: InterviewTemplateWhereInput
+  }
+
+  export type InterviewSessionNullableRelationFilter = {
+    is?: InterviewSessionWhereInput | null
+    isNot?: InterviewSessionWhereInput | null
+  }
+
+  export type CandidateApplicationCountOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    candidateName?: SortOrder
+    candidateEmail?: SortOrder
+    candidatePhone?: SortOrder
+    linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
+    interviewPreference?: SortOrder
+    accessTokenHash?: SortOrder
+    accessTokenExpiresAt?: SortOrder
+    status?: SortOrder
+    scheduledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CandidateApplicationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    candidateName?: SortOrder
+    candidateEmail?: SortOrder
+    candidatePhone?: SortOrder
+    linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
+    interviewPreference?: SortOrder
+    accessTokenHash?: SortOrder
+    accessTokenExpiresAt?: SortOrder
+    status?: SortOrder
+    scheduledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CandidateApplicationMinOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    candidateName?: SortOrder
+    candidateEmail?: SortOrder
+    candidatePhone?: SortOrder
+    linkedInUrl?: SortOrder
+    resumeUrl?: SortOrder
+    resumeText?: SortOrder
+    interviewPreference?: SortOrder
+    accessTokenHash?: SortOrder
+    accessTokenExpiresAt?: SortOrder
+    status?: SortOrder
+    scheduledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumCandidateInterviewPreferenceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateInterviewPreference | EnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateInterviewPreferenceWithAggregatesFilter<$PrismaModel> | $Enums.CandidateInterviewPreference
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel>
+    _max?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel>
+  }
+
+  export type EnumCandidateApplicationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateApplicationStatus | EnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateApplicationStatusWithAggregatesFilter<$PrismaModel> | $Enums.CandidateApplicationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel>
+    _max?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel>
+  }
+
+  export type EnumInterviewSessionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewSessionStatus | EnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewSessionStatusFilter<$PrismaModel> | $Enums.InterviewSessionStatus
+  }
+
+  export type CandidateApplicationRelationFilter = {
+    is?: CandidateApplicationWhereInput
+    isNot?: CandidateApplicationWhereInput
+  }
+
+  export type InterviewSessionCountOrderByAggregateInput = {
+    id?: SortOrder
+    applicationId?: SortOrder
+    provider?: SortOrder
+    modelUsed?: SortOrder
+    status?: SortOrder
+    transcript?: SortOrder
+    evaluationEvents?: SortOrder
+    finalReport?: SortOrder
+    referenceCards?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewSessionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    applicationId?: SortOrder
+    provider?: SortOrder
+    modelUsed?: SortOrder
+    status?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewSessionMinOrderByAggregateInput = {
+    id?: SortOrder
+    applicationId?: SortOrder
+    provider?: SortOrder
+    modelUsed?: SortOrder
+    status?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumInterviewSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewSessionStatus | EnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.InterviewSessionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInterviewSessionStatusFilter<$PrismaModel>
+    _max?: NestedEnumInterviewSessionStatusFilter<$PrismaModel>
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -10212,6 +14813,142 @@ export namespace Prisma {
     upsert?: KnowledgeDocumentUpsertWithoutChunksInput
     connect?: KnowledgeDocumentWhereUniqueInput
     update?: XOR<XOR<KnowledgeDocumentUpdateToOneWithWhereWithoutChunksInput, KnowledgeDocumentUpdateWithoutChunksInput>, KnowledgeDocumentUncheckedUpdateWithoutChunksInput>
+  }
+
+  export type InterviewTemplateCreatetechStackInput = {
+    set: string[]
+  }
+
+  export type InterviewTemplateCreaterequiredSkillsInput = {
+    set: string[]
+  }
+
+  export type CandidateApplicationCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput> | CandidateApplicationCreateWithoutTemplateInput[] | CandidateApplicationUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutTemplateInput | CandidateApplicationCreateOrConnectWithoutTemplateInput[]
+    createMany?: CandidateApplicationCreateManyTemplateInputEnvelope
+    connect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+  }
+
+  export type CandidateApplicationUncheckedCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput> | CandidateApplicationCreateWithoutTemplateInput[] | CandidateApplicationUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutTemplateInput | CandidateApplicationCreateOrConnectWithoutTemplateInput[]
+    createMany?: CandidateApplicationCreateManyTemplateInputEnvelope
+    connect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+  }
+
+  export type EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput = {
+    set?: $Enums.InterviewTemplateOwnerRole
+  }
+
+  export type InterviewTemplateUpdatetechStackInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InterviewTemplateUpdaterequiredSkillsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type CandidateApplicationUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput> | CandidateApplicationCreateWithoutTemplateInput[] | CandidateApplicationUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutTemplateInput | CandidateApplicationCreateOrConnectWithoutTemplateInput[]
+    upsert?: CandidateApplicationUpsertWithWhereUniqueWithoutTemplateInput | CandidateApplicationUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: CandidateApplicationCreateManyTemplateInputEnvelope
+    set?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    disconnect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    delete?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    connect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    update?: CandidateApplicationUpdateWithWhereUniqueWithoutTemplateInput | CandidateApplicationUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: CandidateApplicationUpdateManyWithWhereWithoutTemplateInput | CandidateApplicationUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: CandidateApplicationScalarWhereInput | CandidateApplicationScalarWhereInput[]
+  }
+
+  export type CandidateApplicationUncheckedUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput> | CandidateApplicationCreateWithoutTemplateInput[] | CandidateApplicationUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutTemplateInput | CandidateApplicationCreateOrConnectWithoutTemplateInput[]
+    upsert?: CandidateApplicationUpsertWithWhereUniqueWithoutTemplateInput | CandidateApplicationUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: CandidateApplicationCreateManyTemplateInputEnvelope
+    set?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    disconnect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    delete?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    connect?: CandidateApplicationWhereUniqueInput | CandidateApplicationWhereUniqueInput[]
+    update?: CandidateApplicationUpdateWithWhereUniqueWithoutTemplateInput | CandidateApplicationUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: CandidateApplicationUpdateManyWithWhereWithoutTemplateInput | CandidateApplicationUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: CandidateApplicationScalarWhereInput | CandidateApplicationScalarWhereInput[]
+  }
+
+  export type InterviewTemplateCreateNestedOneWithoutApplicationsInput = {
+    create?: XOR<InterviewTemplateCreateWithoutApplicationsInput, InterviewTemplateUncheckedCreateWithoutApplicationsInput>
+    connectOrCreate?: InterviewTemplateCreateOrConnectWithoutApplicationsInput
+    connect?: InterviewTemplateWhereUniqueInput
+  }
+
+  export type InterviewSessionCreateNestedOneWithoutApplicationInput = {
+    create?: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: InterviewSessionCreateOrConnectWithoutApplicationInput
+    connect?: InterviewSessionWhereUniqueInput
+  }
+
+  export type InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput = {
+    create?: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: InterviewSessionCreateOrConnectWithoutApplicationInput
+    connect?: InterviewSessionWhereUniqueInput
+  }
+
+  export type EnumCandidateInterviewPreferenceFieldUpdateOperationsInput = {
+    set?: $Enums.CandidateInterviewPreference
+  }
+
+  export type EnumCandidateApplicationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.CandidateApplicationStatus
+  }
+
+  export type InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput = {
+    create?: XOR<InterviewTemplateCreateWithoutApplicationsInput, InterviewTemplateUncheckedCreateWithoutApplicationsInput>
+    connectOrCreate?: InterviewTemplateCreateOrConnectWithoutApplicationsInput
+    upsert?: InterviewTemplateUpsertWithoutApplicationsInput
+    connect?: InterviewTemplateWhereUniqueInput
+    update?: XOR<XOR<InterviewTemplateUpdateToOneWithWhereWithoutApplicationsInput, InterviewTemplateUpdateWithoutApplicationsInput>, InterviewTemplateUncheckedUpdateWithoutApplicationsInput>
+  }
+
+  export type InterviewSessionUpdateOneWithoutApplicationNestedInput = {
+    create?: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: InterviewSessionCreateOrConnectWithoutApplicationInput
+    upsert?: InterviewSessionUpsertWithoutApplicationInput
+    disconnect?: InterviewSessionWhereInput | boolean
+    delete?: InterviewSessionWhereInput | boolean
+    connect?: InterviewSessionWhereUniqueInput
+    update?: XOR<XOR<InterviewSessionUpdateToOneWithWhereWithoutApplicationInput, InterviewSessionUpdateWithoutApplicationInput>, InterviewSessionUncheckedUpdateWithoutApplicationInput>
+  }
+
+  export type InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput = {
+    create?: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: InterviewSessionCreateOrConnectWithoutApplicationInput
+    upsert?: InterviewSessionUpsertWithoutApplicationInput
+    disconnect?: InterviewSessionWhereInput | boolean
+    delete?: InterviewSessionWhereInput | boolean
+    connect?: InterviewSessionWhereUniqueInput
+    update?: XOR<XOR<InterviewSessionUpdateToOneWithWhereWithoutApplicationInput, InterviewSessionUpdateWithoutApplicationInput>, InterviewSessionUncheckedUpdateWithoutApplicationInput>
+  }
+
+  export type CandidateApplicationCreateNestedOneWithoutSessionInput = {
+    create?: XOR<CandidateApplicationCreateWithoutSessionInput, CandidateApplicationUncheckedCreateWithoutSessionInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutSessionInput
+    connect?: CandidateApplicationWhereUniqueInput
+  }
+
+  export type EnumInterviewSessionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.InterviewSessionStatus
+  }
+
+  export type CandidateApplicationUpdateOneRequiredWithoutSessionNestedInput = {
+    create?: XOR<CandidateApplicationCreateWithoutSessionInput, CandidateApplicationUncheckedCreateWithoutSessionInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutSessionInput
+    upsert?: CandidateApplicationUpsertWithoutSessionInput
+    connect?: CandidateApplicationWhereUniqueInput
+    update?: XOR<XOR<CandidateApplicationUpdateToOneWithWhereWithoutSessionInput, CandidateApplicationUpdateWithoutSessionInput>, CandidateApplicationUncheckedUpdateWithoutSessionInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -10426,6 +15163,96 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewTemplateOwnerRole | EnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel> | $Enums.InterviewTemplateOwnerRole
+  }
+
+  export type NestedEnumInterviewTemplateOwnerRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewTemplateOwnerRole | EnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewTemplateOwnerRole[] | ListEnumInterviewTemplateOwnerRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewTemplateOwnerRoleWithAggregatesFilter<$PrismaModel> | $Enums.InterviewTemplateOwnerRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel>
+    _max?: NestedEnumInterviewTemplateOwnerRoleFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateInterviewPreference | EnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel> | $Enums.CandidateInterviewPreference
+  }
+
+  export type NestedEnumCandidateApplicationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateApplicationStatus | EnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel> | $Enums.CandidateApplicationStatus
+  }
+
+  export type NestedEnumCandidateInterviewPreferenceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateInterviewPreference | EnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateInterviewPreference[] | ListEnumCandidateInterviewPreferenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateInterviewPreferenceWithAggregatesFilter<$PrismaModel> | $Enums.CandidateInterviewPreference
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel>
+    _max?: NestedEnumCandidateInterviewPreferenceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCandidateApplicationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CandidateApplicationStatus | EnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CandidateApplicationStatus[] | ListEnumCandidateApplicationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCandidateApplicationStatusWithAggregatesFilter<$PrismaModel> | $Enums.CandidateApplicationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel>
+    _max?: NestedEnumCandidateApplicationStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumInterviewSessionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewSessionStatus | EnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewSessionStatusFilter<$PrismaModel> | $Enums.InterviewSessionStatus
+  }
+
+  export type NestedEnumInterviewSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InterviewSessionStatus | EnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InterviewSessionStatus[] | ListEnumInterviewSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInterviewSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.InterviewSessionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInterviewSessionStatusFilter<$PrismaModel>
+    _max?: NestedEnumInterviewSessionStatusFilter<$PrismaModel>
+  }
+
   export type KnowledgeChunkUpdateWithWhereUniqueWithoutDocumentInput = {
     where: KnowledgeChunkWhereUniqueInput
     data: XOR<KnowledgeChunkUpdateWithoutDocumentInput, KnowledgeChunkUncheckedUpdateWithoutDocumentInput>
@@ -10507,6 +15334,337 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CandidateApplicationCreateWithoutTemplateInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    session?: InterviewSessionCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationUncheckedCreateWithoutTemplateInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationCreateOrConnectWithoutTemplateInput = {
+    where: CandidateApplicationWhereUniqueInput
+    create: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type CandidateApplicationCreateManyTemplateInputEnvelope = {
+    data: CandidateApplicationCreateManyTemplateInput | CandidateApplicationCreateManyTemplateInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CandidateApplicationUpsertWithWhereUniqueWithoutTemplateInput = {
+    where: CandidateApplicationWhereUniqueInput
+    update: XOR<CandidateApplicationUpdateWithoutTemplateInput, CandidateApplicationUncheckedUpdateWithoutTemplateInput>
+    create: XOR<CandidateApplicationCreateWithoutTemplateInput, CandidateApplicationUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type CandidateApplicationUpdateWithWhereUniqueWithoutTemplateInput = {
+    where: CandidateApplicationWhereUniqueInput
+    data: XOR<CandidateApplicationUpdateWithoutTemplateInput, CandidateApplicationUncheckedUpdateWithoutTemplateInput>
+  }
+
+  export type CandidateApplicationUpdateManyWithWhereWithoutTemplateInput = {
+    where: CandidateApplicationScalarWhereInput
+    data: XOR<CandidateApplicationUpdateManyMutationInput, CandidateApplicationUncheckedUpdateManyWithoutTemplateInput>
+  }
+
+  export type CandidateApplicationScalarWhereInput = {
+    AND?: CandidateApplicationScalarWhereInput | CandidateApplicationScalarWhereInput[]
+    OR?: CandidateApplicationScalarWhereInput[]
+    NOT?: CandidateApplicationScalarWhereInput | CandidateApplicationScalarWhereInput[]
+    id?: StringFilter<"CandidateApplication"> | string
+    templateId?: StringFilter<"CandidateApplication"> | string
+    candidateName?: StringFilter<"CandidateApplication"> | string
+    candidateEmail?: StringFilter<"CandidateApplication"> | string
+    candidatePhone?: StringNullableFilter<"CandidateApplication"> | string | null
+    linkedInUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeUrl?: StringNullableFilter<"CandidateApplication"> | string | null
+    resumeText?: StringNullableFilter<"CandidateApplication"> | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFilter<"CandidateApplication"> | string
+    accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
+    scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
+    createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+    updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
+  }
+
+  export type InterviewTemplateCreateWithoutApplicationsInput = {
+    id?: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack?: InterviewTemplateCreatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateCreaterequiredSkillsInput | string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: string | null
+    systemInstructions?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewTemplateUncheckedCreateWithoutApplicationsInput = {
+    id?: string
+    ownerRole: $Enums.InterviewTemplateOwnerRole
+    jobRole: string
+    experienceLevel: string
+    techStack?: InterviewTemplateCreatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateCreaterequiredSkillsInput | string[]
+    durationMinutes: number
+    difficultyLevel: string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: string | null
+    systemInstructions?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewTemplateCreateOrConnectWithoutApplicationsInput = {
+    where: InterviewTemplateWhereUniqueInput
+    create: XOR<InterviewTemplateCreateWithoutApplicationsInput, InterviewTemplateUncheckedCreateWithoutApplicationsInput>
+  }
+
+  export type InterviewSessionCreateWithoutApplicationInput = {
+    id?: string
+    provider: string
+    modelUsed?: string | null
+    status?: $Enums.InterviewSessionStatus
+    transcript: JsonNullValueInput | InputJsonValue
+    evaluationEvents: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewSessionUncheckedCreateWithoutApplicationInput = {
+    id?: string
+    provider: string
+    modelUsed?: string | null
+    status?: $Enums.InterviewSessionStatus
+    transcript: JsonNullValueInput | InputJsonValue
+    evaluationEvents: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewSessionCreateOrConnectWithoutApplicationInput = {
+    where: InterviewSessionWhereUniqueInput
+    create: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+  }
+
+  export type InterviewTemplateUpsertWithoutApplicationsInput = {
+    update: XOR<InterviewTemplateUpdateWithoutApplicationsInput, InterviewTemplateUncheckedUpdateWithoutApplicationsInput>
+    create: XOR<InterviewTemplateCreateWithoutApplicationsInput, InterviewTemplateUncheckedCreateWithoutApplicationsInput>
+    where?: InterviewTemplateWhereInput
+  }
+
+  export type InterviewTemplateUpdateToOneWithWhereWithoutApplicationsInput = {
+    where?: InterviewTemplateWhereInput
+    data: XOR<InterviewTemplateUpdateWithoutApplicationsInput, InterviewTemplateUncheckedUpdateWithoutApplicationsInput>
+  }
+
+  export type InterviewTemplateUpdateWithoutApplicationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewTemplateUncheckedUpdateWithoutApplicationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerRole?: EnumInterviewTemplateOwnerRoleFieldUpdateOperationsInput | $Enums.InterviewTemplateOwnerRole
+    jobRole?: StringFieldUpdateOperationsInput | string
+    experienceLevel?: StringFieldUpdateOperationsInput | string
+    techStack?: InterviewTemplateUpdatetechStackInput | string[]
+    requiredSkills?: InterviewTemplateUpdaterequiredSkillsInput | string[]
+    durationMinutes?: IntFieldUpdateOperationsInput | number
+    difficultyLevel?: StringFieldUpdateOperationsInput | string
+    advancedConfig?: NullableJsonNullValueInput | InputJsonValue
+    interviewDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    systemInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewSessionUpsertWithoutApplicationInput = {
+    update: XOR<InterviewSessionUpdateWithoutApplicationInput, InterviewSessionUncheckedUpdateWithoutApplicationInput>
+    create: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+    where?: InterviewSessionWhereInput
+  }
+
+  export type InterviewSessionUpdateToOneWithWhereWithoutApplicationInput = {
+    where?: InterviewSessionWhereInput
+    data: XOR<InterviewSessionUpdateWithoutApplicationInput, InterviewSessionUncheckedUpdateWithoutApplicationInput>
+  }
+
+  export type InterviewSessionUpdateWithoutApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewSessionUncheckedUpdateWithoutApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    modelUsed?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumInterviewSessionStatusFieldUpdateOperationsInput | $Enums.InterviewSessionStatus
+    transcript?: JsonNullValueInput | InputJsonValue
+    evaluationEvents?: JsonNullValueInput | InputJsonValue
+    finalReport?: NullableJsonNullValueInput | InputJsonValue
+    referenceCards?: JsonNullValueInput | InputJsonValue
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CandidateApplicationCreateWithoutSessionInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
+  }
+
+  export type CandidateApplicationUncheckedCreateWithoutSessionInput = {
+    id?: string
+    templateId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CandidateApplicationCreateOrConnectWithoutSessionInput = {
+    where: CandidateApplicationWhereUniqueInput
+    create: XOR<CandidateApplicationCreateWithoutSessionInput, CandidateApplicationUncheckedCreateWithoutSessionInput>
+  }
+
+  export type CandidateApplicationUpsertWithoutSessionInput = {
+    update: XOR<CandidateApplicationUpdateWithoutSessionInput, CandidateApplicationUncheckedUpdateWithoutSessionInput>
+    create: XOR<CandidateApplicationCreateWithoutSessionInput, CandidateApplicationUncheckedCreateWithoutSessionInput>
+    where?: CandidateApplicationWhereInput
+  }
+
+  export type CandidateApplicationUpdateToOneWithWhereWithoutSessionInput = {
+    where?: CandidateApplicationWhereInput
+    data: XOR<CandidateApplicationUpdateWithoutSessionInput, CandidateApplicationUncheckedUpdateWithoutSessionInput>
+  }
+
+  export type CandidateApplicationUpdateWithoutSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
+  }
+
+  export type CandidateApplicationUncheckedUpdateWithoutSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type KnowledgeChunkUpdateWithoutDocumentInput = {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
@@ -10528,6 +15686,76 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CandidateApplicationCreateManyTemplateInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CandidateApplicationUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
+  }
+
+  export type CandidateApplicationUncheckedUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
+  }
+
+  export type CandidateApplicationUncheckedUpdateManyWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
 
 
   /**
@@ -10537,6 +15765,10 @@ export namespace Prisma {
      * @deprecated Use KnowledgeDocumentCountOutputTypeDefaultArgs instead
      */
     export type KnowledgeDocumentCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = KnowledgeDocumentCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use InterviewTemplateCountOutputTypeDefaultArgs instead
+     */
+    export type InterviewTemplateCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InterviewTemplateCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ContactSubmissionDefaultArgs instead
      */
@@ -10565,6 +15797,18 @@ export namespace Prisma {
      * @deprecated Use ChatConversationDefaultArgs instead
      */
     export type ChatConversationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ChatConversationDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use InterviewTemplateDefaultArgs instead
+     */
+    export type InterviewTemplateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InterviewTemplateDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CandidateApplicationDefaultArgs instead
+     */
+    export type CandidateApplicationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CandidateApplicationDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use InterviewSessionDefaultArgs instead
+     */
+    export type InterviewSessionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InterviewSessionDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

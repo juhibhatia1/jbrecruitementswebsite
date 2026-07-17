@@ -11,6 +11,7 @@ import ChatWidget from "./components/chatbot/chat-widget";
 import { defaultMetadata, siteUrl } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
 import LenisProvider from "./providers/lenis-provider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <StructuredData />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -66,12 +67,26 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased`}
+        suppressHydrationWarning
         >
         <GoogleAnalytics />
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>
         {/* <SmoothScroll /> */}
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              fontFamily: "Raleway, sans-serif",
+              borderRadius: "1rem",
+              boxShadow: "0 8px 32px rgba(37,46,61,0.15)",
+            },
+            duration: 6000,
+          }}
+        />
         <LenisProvider>
           <FloatingNavbar />
           {children}

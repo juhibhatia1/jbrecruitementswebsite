@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
 import {
   IoSearch,
   IoFilter,
@@ -259,9 +261,10 @@ export default function EmployeeDirectoryDashboard({
 
       const updated = await res.json();
       setPurchases((prev) => prev.map((p) => (p.id === purchaseId ? updated : p)));
+      toast.success("Delivery status updated successfully");
     } catch (err) {
       console.error(err);
-      alert("Error updating delivery status. Please try again.");
+      toast.error("Error updating delivery status. Please try again.");
     } finally {
       setUpdatingPurchaseId(null);
     }
@@ -280,9 +283,10 @@ export default function EmployeeDirectoryDashboard({
 
       const updated = await res.json();
       setPurchases((prev) => prev.map((p) => (p.id === purchaseId ? updated : p)));
+      toast.success("Notes saved successfully");
     } catch (err) {
       console.error(err);
-      alert("Error saving notes. Please try again.");
+      toast.error("Error saving notes. Please try again.");
     } finally {
       setUpdatingPurchaseId(null);
     }
@@ -424,7 +428,19 @@ export default function EmployeeDirectoryDashboard({
               </p>
             </div>
 
-            <div className="flex items-center gap-4 self-start lg:self-center">
+            <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
+              <Link
+                href="/employee/directory"
+                className="rounded-xl bg-[#252e3d] px-4 py-2 text-sm font-semibold text-white"
+              >
+                Candidate Directory
+              </Link>
+              <Link
+                href="/employee/interviews"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Interviews
+              </Link>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}

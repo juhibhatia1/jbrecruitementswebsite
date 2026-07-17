@@ -5,7 +5,6 @@ import { extractRequestMeta } from "@/lib/request-analytics";
 import { getMailerTransporter } from "@/lib/mailer";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import { escapeHtml } from "@/lib/security";
-import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 
@@ -14,12 +13,6 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
   urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "",
 });
-
-const LOCAL_RESUME_DIRECTORY = path.join(
-  process.cwd(),
-  "storage",
-  "job-seekers-resumes",
-);
 
 function logJobSeekerEvent(
   requestId: string,
@@ -62,29 +55,6 @@ function logJobSeekerError(
   };
 
   console.error("[job-seekers]", JSON.stringify(payload));
-}
-
-function sanitizeFileName(fileName: string) {
-  const extension = path.extname(fileName);
-  const baseName = path.basename(fileName, extension);
-
-  const sanitizedBaseName = baseName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-
-  return `${sanitizedBaseName || "resume"}-${randomUUID()}${extension.toLowerCase()}`;
-}
-
-async function saveResumeLocally(fileName: string, buffer: Buffer) {
-  await mkdir(LOCAL_RESUME_DIRECTORY, { recursive: true });
-  const storedFileName = sanitizeFileName(fileName);
-  const storedFilePath = path.join(LOCAL_RESUME_DIRECTORY, storedFileName);
-
-  await writeFile(storedFilePath, buffer);
-
-  return `/api/admin/resumes?file=${storedFileName}`;
 }
 
 export async function POST(request: Request) {
@@ -190,7 +160,7 @@ export async function POST(request: Request) {
       bufferSize: buffer.length,
     });
 
-    // Upload to ImageKit, then fall back to local storage if unavailable.
+    // Upload to ImageKit (no local storage fallback)
     let fileUrl = "";
     try {
       logJobSeekerEvent(requestId, "resume.imagekit_upload_started", {
@@ -219,23 +189,10 @@ export async function POST(request: Request) {
           fileSize: file.size,
         },
       );
-
-      try {
-        fileUrl = await saveResumeLocally(file.name, buffer);
-        logJobSeekerEvent(requestId, "resume.local_save_succeeded", {
-          fileName: file.name,
-          fileUrl,
-        });
-      } catch (localUploadError) {
-        logJobSeekerError(
-          requestId,
-          "resume.local_save_failed",
-          localUploadError,
-          {
-            fileName: file.name,
-          },
-        );
-      }
+      return NextResponse.json(
+        { error: "Failed to upload resume to cloud storage. Please try again." },
+        { status: 500 },
+      );
     }
 
     // Save to database immediately (independent of email)

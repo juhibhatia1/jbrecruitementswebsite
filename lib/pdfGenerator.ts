@@ -1,5 +1,7 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFImage, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
+import fs from "fs";
+import path from "path";
 
 const BRAND_COLOR = rgb(0.353, 0.345, 0.671); // #5a58ab
 const DARK_COLOR = rgb(0.145, 0.18, 0.239);   // #252e3d
@@ -50,14 +52,9 @@ export async function generateReceiptPdf(purchase: {
 
   // ── Logo (left-aligned, vertically centered in dark band) ─────────────────
   try {
-    const fs   = await import("fs");
-    const path = await import("path");
-    const sharp = await import("sharp");
-
-    const logoAvifPath = path.join(process.cwd(), "public", "logo.avif");
-    if (fs.existsSync(logoAvifPath)) {
-      const avifBuffer = fs.readFileSync(logoAvifPath);
-      const pngBuffer  = await sharp.default(avifBuffer).png().toBuffer();
+    const logoPngPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPngPath)) {
+      const pngBuffer  = fs.readFileSync(logoPngPath);
       const logoImg    = await pdfDoc.embedPng(pngBuffer);
 
       // Target height = 52px, compute width proportionally
@@ -371,17 +368,11 @@ export async function generateReceiptPdf(purchase: {
 
   // ─── WATERMARK LOGO ─────────────────────────────────────────────────────────
   try {
-    const fs = await import("fs");
-    const path = await import("path");
-    const sharp = await import("sharp");
-    
     const publicDir = path.join(process.cwd(), "public");
-    const logoAvifPath = path.join(publicDir, "logo.avif");
+    const logoPngPath = path.join(publicDir, "logo.png");
     
-    if (fs.existsSync(logoAvifPath)) {
-      const avifBuffer = fs.readFileSync(logoAvifPath);
-      // pdf-lib does not support AVIF directly, so we convert it to PNG buffer using sharp
-      const pngBuffer = await sharp.default(avifBuffer).png().toBuffer();
+    if (fs.existsSync(logoPngPath)) {
+      const pngBuffer = fs.readFileSync(logoPngPath);
       const embeddedImage = await pdfDoc.embedPng(pngBuffer);
       
       const logoWidth = 250;
@@ -446,4 +437,289 @@ export async function generateReceiptPdf(purchase: {
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
+}
+
+export async function generateInterviewReportPdf(data: {
+  candidateName: string;
+  candidateEmail: string;
+  jobRole: string;
+  completedAt: Date | null;
+  finalScore: number | null;
+  summary: string;
+  strengths: string[];
+  weaknesses?: string[];
+  improvements: string[];
+  evaluationEvents: Array<{
+    question: string;
+    answerSummary: string;
+    score: number;
+    feedback: string;
+    improvementTip?: string;
+  }>;
+  transcript?: Array<{ role: string; text: string }>;
+}) {
+  const PAGE_W    = 595;
+  const PAGE_H    = 842;
+  const MARGIN    = 40;
+  const CONTENT_W = PAGE_W - MARGIN * 2;
+  const FOOTER_H  = 110;
+
+  const pdfDoc   = await PDFDocument.create();
+  const font     = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const HEADER_DARK = rgb(0.102, 0.122, 0.169);
+  const ORANGE      = rgb(0.98,  0.45,  0.09);
+  const RED         = rgb(0.86,  0.15,  0.15);
+
+  // Embed logo once for header + watermark reuse
+  let logoImg: PDFImage | null = null;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPath)) {
+      const buf = fs.readFileSync(logoPath);
+      logoImg   = await pdfDoc.embedPng(buf);
+    }
+  } catch { /* skip */ }
+
+  // ── Mutable page state shared by all closures ─────────────────────────────────
+  let page    = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  let cursorY = PAGE_H;
+
+  const drawPageFooter = (pg: PDFPage) => {
+    pg.drawLine({ start: { x: 50, y: 100 }, end: { x: PAGE_W - 50, y: 100 }, thickness: 1, color: LIGHT_GRAY });
+    pg.drawText("JB Recruitment Solutions — Mock Interview Performance Report",
+      { x: 50, y: 80, size: 9, font: boldFont, color: DARK_COLOR });
+    pg.drawText("This report was auto-generated following the completion of your AI mock interview session.",
+      { x: 50, y: 63, size: 7.5, font, color: GRAY_COLOR });
+    pg.drawText("juhi@jbrecruitments.com   |   jbrecruitments.com",
+      { x: 50, y: 46, size: 7.5, font, color: GRAY_COLOR });
+    pg.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: 8, color: BRAND_COLOR });
+  };
+
+  const addContinuationPage = () => {
+    drawPageFooter(page);
+    page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+    page.drawRectangle({ x: 0, y: PAGE_H - 26, width: PAGE_W, height: 26, color: BRAND_COLOR });
+    page.drawText("MOCK INTERVIEW PERFORMANCE REPORT  ·  continued",
+      { x: MARGIN, y: PAGE_H - 18, size: 8, font: boldFont, color: WHITE });
+    cursorY = PAGE_H - 42;
+  };
+
+  const ensureSpace = (needed: number) => {
+    if (cursorY - needed < FOOTER_H) addContinuationPage();
+  };
+
+  // WinAnsi (pdf-lib default) only covers U+0020–U+00FF — strip everything outside that
+  const toWinAnsi = (text: string) =>
+    text
+      .replace(/[\r\n\t\x00-\x1F\x7F]/g, " ")
+      .replace(/[^\x20-\xFF]/g, "?")
+      .replace(/ {2,}/g, " ")
+      .trim();
+
+  const wrapText = (text: string, maxW: number, size: number, f: typeof font): string[] => {
+    const clean = toWinAnsi(text);
+    const words = clean.split(" ");
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      if (!word) continue;
+      const test = line ? `${line} ${word}` : word;
+      if (f.widthOfTextAtSize(test, size) > maxW) {
+        if (line) lines.push(line);
+        line = word;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  const sectionLabel = (label: string, color: typeof DARK_COLOR) => {
+    ensureSpace(40);
+    page.drawText(label, { x: MARGIN, y: cursorY, size: 9, font: boldFont, color });
+    page.drawLine({
+      start: { x: MARGIN, y: cursorY - 4 }, end: { x: PAGE_W - MARGIN, y: cursorY - 4 },
+      thickness: 0.5, color: LIGHT_GRAY,
+    });
+    cursorY -= 20;
+  };
+
+  // ── First-page header ─────────────────────────────────────────────────────────
+  const headerBandH = 100;
+  const accentBarH  = 36;
+  const rightEdge   = PAGE_W - 40;
+
+  page.drawRectangle({ x: 0, y: PAGE_H - headerBandH, width: PAGE_W, height: headerBandH, color: HEADER_DARK });
+  page.drawRectangle({ x: 0, y: PAGE_H - headerBandH - 2, width: PAGE_W, height: 2, color: BRAND_COLOR });
+
+  if (logoImg) {
+    const targetH = 52;
+    const targetW = (logoImg.width / logoImg.height) * targetH;
+    page.drawImage(logoImg, {
+      x: 40, y: PAGE_H - headerBandH + (headerBandH - targetH) / 2,
+      width: targetW, height: targetH,
+    });
+  }
+
+  const companyName  = "JB Recruitment Solutions";
+  const companyEmail = "contact@jbrecruitments.com";
+  page.drawText(companyName,
+    { x: rightEdge - boldFont.widthOfTextAtSize(companyName, 11), y: PAGE_H - 34, size: 11, font: boldFont, color: WHITE });
+  page.drawText(companyEmail,
+    { x: rightEdge - font.widthOfTextAtSize(companyEmail, 8), y: PAGE_H - 52, size: 8, font, color: rgb(0.65, 0.70, 0.80) });
+  page.drawText("jbrecruitments.com",
+    { x: rightEdge - font.widthOfTextAtSize("jbrecruitments.com", 8), y: PAGE_H - 66, size: 8, font, color: rgb(0.65, 0.70, 0.80) });
+
+  const accentBarY = PAGE_H - headerBandH - 2 - accentBarH;
+  page.drawRectangle({ x: 0, y: accentBarY, width: PAGE_W, height: accentBarH, color: BRAND_COLOR });
+  page.drawText("MOCK INTERVIEW PERFORMANCE REPORT",
+    { x: 40, y: accentBarY + (accentBarH - 11) / 2, size: 11, font: boldFont, color: WHITE });
+  if (data.completedAt) {
+    const dateText = new Date(data.completedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    page.drawText(dateText, {
+      x: rightEdge - font.widthOfTextAtSize(dateText, 8),
+      y: accentBarY + (accentBarH - 8) / 2 + 1,
+      size: 8, font, color: rgb(0.85, 0.88, 1.0),
+    });
+  }
+
+  const cardTopY  = accentBarY - 20;
+  const cardH     = 70;
+  const cardBodyY = cardTopY - cardH;
+  page.drawRectangle({ x: 40, y: cardBodyY, width: PAGE_W - 80, height: cardH, color: rgb(0.973, 0.976, 0.984) });
+  page.drawRectangle({ x: 40, y: cardBodyY, width: 3, height: cardH, color: BRAND_COLOR });
+  page.drawText("CANDIDATE",         { x: 56, y: cardTopY - 8,  size: 7.5, font: boldFont, color: GRAY_COLOR });
+  page.drawText(toWinAnsi(data.candidateName),  { x: 56, y: cardTopY - 22, size: 12,  font: boldFont, color: DARK_COLOR });
+  page.drawText(toWinAnsi(data.candidateEmail), { x: 56, y: cardTopY - 36, size: 9,   font,           color: GRAY_COLOR });
+  page.drawText(toWinAnsi(data.jobRole),        { x: 56, y: cardTopY - 50, size: 9,   font,           color: GRAY_COLOR });
+
+  if (data.finalScore !== null) {
+    const sbX = rightEdge - 60;
+    const sbY = cardBodyY + 10;
+    page.drawRectangle({ x: sbX, y: sbY, width: 60, height: 50, color: BRAND_COLOR });
+    const scoreStr = `${data.finalScore}`;
+    page.drawText(scoreStr,
+      { x: sbX + (60 - boldFont.widthOfTextAtSize(scoreStr, 20)) / 2, y: sbY + 26, size: 20, font: boldFont, color: WHITE });
+    page.drawText("SCORE",
+      { x: sbX + (60 - boldFont.widthOfTextAtSize("SCORE", 7)) / 2, y: sbY + 12, size: 7, font: boldFont, color: rgb(0.85, 0.88, 1.0) });
+  }
+
+  // Watermark on first page only
+  if (logoImg) {
+    const logoW = 250;
+    const logoH = (logoImg.height / logoImg.width) * logoW;
+    page.drawImage(logoImg, {
+      x: (PAGE_W - logoW) / 2, y: (PAGE_H - logoH) / 2 - 20,
+      width: logoW, height: logoH, opacity: 0.04,
+    });
+  }
+
+  cursorY = cardBodyY - 24;
+
+  // ── Summary ───────────────────────────────────────────────────────────────────
+  sectionLabel("SUMMARY", DARK_COLOR);
+  for (const ln of wrapText(data.summary, CONTENT_W, 9, font)) {
+    ensureSpace(18);
+    page.drawText(ln, { x: MARGIN, y: cursorY, size: 9, font, color: DARK_COLOR });
+    cursorY -= 14;
+  }
+  cursorY -= 10;
+
+  // ── Improvements ─────────────────────────────────────────────────────────────
+  if (data.improvements.length > 0) {
+    sectionLabel("YOUR IMPROVEMENT PLAN — FOCUS ON THESE", ORANGE);
+    let idx = 1;
+    for (const s of data.improvements) {
+      for (const ln of wrapText(`${idx++}.  ${s}`, CONTENT_W - 10, 9, font)) {
+        ensureSpace(17);
+        page.drawText(ln, { x: MARGIN + 10, y: cursorY, size: 9, font, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+    }
+    cursorY -= 8;
+  }
+
+  // ── Weaknesses ────────────────────────────────────────────────────────────────
+  const weaknesses = data.weaknesses ?? [];
+  if (weaknesses.length > 0) {
+    sectionLabel("OBSERVED WEAKNESSES", RED);
+    for (const s of weaknesses) {
+      for (const ln of wrapText(`x  ${s}`, CONTENT_W - 10, 9, font)) {
+        ensureSpace(17);
+        page.drawText(ln, { x: MARGIN + 10, y: cursorY, size: 9, font, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+    }
+    cursorY -= 8;
+  }
+
+  // ── Strengths ─────────────────────────────────────────────────────────────────
+  if (data.strengths.length > 0) {
+    sectionLabel("STRENGTHS", GREEN);
+    for (const s of data.strengths) {
+      for (const ln of wrapText(`+  ${s}`, CONTENT_W - 10, 9, font)) {
+        ensureSpace(17);
+        page.drawText(ln, { x: MARGIN + 10, y: cursorY, size: 9, font, color: DARK_COLOR });
+        cursorY -= 13;
+      }
+    }
+    cursorY -= 8;
+  }
+
+  // ── Question-by-question evaluation ──────────────────────────────────────────
+  if (data.evaluationEvents.length > 0) {
+    sectionLabel("QUESTION-BY-QUESTION EVALUATION", DARK_COLOR);
+    for (const ev of data.evaluationEvents) {
+      const scoreColor = ev.score >= 8 ? GREEN : ev.score >= 6 ? rgb(0.8, 0.5, 0.1) : RED;
+      const qLines   = wrapText(`Q: ${ev.question}`,      CONTENT_W - 65, 8.5, boldFont);
+      const ansLines = wrapText(`A: ${ev.answerSummary}`, CONTENT_W,      8,   font);
+      const fbLines  = wrapText(`   ${ev.feedback}`,      CONTENT_W,      8,   font);
+      const tipLines = ev.improvementTip
+        ? wrapText(`   Tip: ${ev.improvementTip}`, CONTENT_W, 7.5, boldFont)
+        : [];
+
+      ensureSpace(28);
+      page.drawText(`Score: ${ev.score}/10`,
+        { x: PAGE_W - MARGIN - 60, y: cursorY, size: 8, font: boldFont, color: scoreColor });
+
+      for (const ln of qLines)   { ensureSpace(17); page.drawText(ln, { x: MARGIN, y: cursorY, size: 8.5, font: boldFont, color: DARK_COLOR }); cursorY -= 13; }
+      for (const ln of ansLines) { ensureSpace(16); page.drawText(ln, { x: MARGIN, y: cursorY, size: 8,   font,           color: GRAY_COLOR  }); cursorY -= 12; }
+      for (const ln of fbLines)  { ensureSpace(16); page.drawText(ln, { x: MARGIN, y: cursorY, size: 8,   font,           color: GRAY_COLOR  }); cursorY -= 12; }
+      for (const ln of tipLines) { ensureSpace(15); page.drawText(ln, { x: MARGIN, y: cursorY, size: 7.5, font: boldFont, color: rgb(0.7, 0.35, 0.05) }); cursorY -= 11; }
+
+      ensureSpace(18);
+      page.drawLine({
+        start: { x: MARGIN, y: cursorY - 4 }, end: { x: PAGE_W - MARGIN, y: cursorY - 4 },
+        thickness: 0.3, color: LIGHT_GRAY,
+      });
+      cursorY -= 14;
+    }
+    cursorY -= 6;
+  }
+
+  // ── Full interview transcript ─────────────────────────────────────────────────
+  const transcript = data.transcript ?? [];
+  if (transcript.length > 0) {
+    sectionLabel("FULL INTERVIEW TRANSCRIPT", DARK_COLOR);
+    for (const entry of transcript) {
+      const isAI      = entry.role === "model";
+      const roleLabel = isAI ? "AI Interviewer" : "Candidate";
+      const roleColor = isAI ? BRAND_COLOR : DARK_COLOR;
+      const lines     = wrapText(entry.text, CONTENT_W - 10, 8, font);
+
+      ensureSpace(24);
+      page.drawText(roleLabel, { x: MARGIN, y: cursorY, size: 7.5, font: boldFont, color: roleColor });
+      cursorY -= 12;
+      for (const ln of lines) {
+        ensureSpace(14);
+        page.drawText(ln, { x: MARGIN + 10, y: cursorY, size: 8, font, color: GRAY_COLOR });
+        cursorY -= 12;
+      }
+      cursorY -= 4;
+    }
+  }
+
+  drawPageFooter(page);
+  return Buffer.from(await pdfDoc.save());
 }
