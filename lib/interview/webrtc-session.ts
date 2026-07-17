@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import OpenAI from "openai";
 import { hashInterviewAccessToken } from "./access-token";
 import { buildFallbackReport } from "./utils";
 import type {
@@ -20,7 +21,32 @@ function toJsonValue(value: unknown): JsonValue {
 }
 
 const OPENAI_REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2";
+const OPENAI_BLUEPRINT_MODEL =
+  process.env.OPENAI_INTERVIEW_BLUEPRINT_MODEL ||
+  process.env.OPENAI_TEMPLATE_MODEL ||
+  "gpt-4o-mini";
 const DEFAULT_VOICE = process.env.OPENAI_REALTIME_VOICE || "marin";
+
+type InterviewBlueprintSection = {
+  name: string;
+  minutes: number;
+  objective: string;
+  questionBankTarget: number;
+};
+
+type InterviewBlueprintQuestion = {
+  section: string;
+  type: "NORMAL" | "MCQ" | "CODE_SNIPPET" | "GRAPHICAL";
+  question: string;
+  referenceCardTitle?: string;
+  referenceCardContent?: string;
+};
+
+export type InterviewSessionBlueprint = {
+  questionTarget: number;
+  sections: InterviewBlueprintSection[];
+  starterQuestions: InterviewBlueprintQuestion[];
+};
 
 const OPENAI_REALTIME_VOICES = [
   "alloy",
@@ -50,11 +76,22 @@ export function buildWebRtcSystemInstructions(payload: {
   techStack: string[];
   durationMinutes: number;
   baseInstructions: string;
+  sessionBlueprint?: InterviewSessionBlueprint | null;
   transcript?: InterviewTranscriptEntry[];
   isResuming?: boolean;
   resumeText?: string;
 }): string {
-  const { role, experienceLevel, techStack, durationMinutes, baseInstructions, transcript, isResuming, resumeText } = payload;
+  const {
+    role,
+    experienceLevel,
+    techStack,
+    durationMinutes,
+    baseInstructions,
+    sessionBlueprint,
+    transcript,
+    isResuming,
+    resumeText,
+  } = payload;
   const transcriptText = transcript && transcript.length > 0
     ? transcript
         .map((entry) => `${entry.role === "interviewer" ? "Interviewer" : "Candidate"}: ${entry.text}`)
@@ -86,6 +123,19 @@ ${resumeText.trim()}
 `
     : "";
 
+  const blueprintBlock = sessionBlueprint
+    ? `
+INTERVIEW SESSION BLUEPRINT (PRECOMPUTED OUTSIDE REALTIME MODEL):
+- Question target for this session: ${sessionBlueprint.questionTarget}
+- Section plan:
+${sessionBlueprint.sections.map((section, index) => `  ${index + 1}. ${section.name} (${section.minutes} min, question bank ${section.questionBankTarget}) — ${section.objective}`).join("\n")}
+- Starter question bank:
+${sessionBlueprint.starterQuestions.map((q, index) => `  ${index + 1}. [${q.section}] [${q.type}] ${q.question}`).join("\n")}
+
+Use this blueprint as your primary starting plan. Adapt naturally to candidate responses, but preserve section coverage and pacing. If starter questions exhaust before duration-complete, call generate_section_questions.
+`
+    : "";
+
   const dynamicGuidelines = `
 
 ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
@@ -99,11 +149,21 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Noise/unclear-audio & Language constraints: only conduct this interview in English. If a transcript looks like background noise, random words, non-English words, foreign language, or unclear speech, do NOT treat it as a valid answer. Ask for clarification once in English (e.g., "I may have caught background noise — could you please repeat that in English?") and continue only after a coherent response.
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
-- TIME VOLUNTARY MANAGEMENT (preserve every existing interview rule, section rule, and coding-question minimum): Treat ${durationMinutes} minutes as the target interview duration, not a hard cut-off. Pace dynamically using answer depth and remaining mandatory coverage. Never end early just because your initial section plan finished; if time remains, continue with contextual follow-ups from the candidate's projects, technologies, and earlier answers.
+- TIME VOLUNTARY MANAGEMENT (preserve every existing interview rule, section rule, and coding-question minimum): Treat ${durationMinutes} minutes as the target interview duration and continue interviewing until you receive the explicit duration-complete timing signal. Never end early just because your initial section plan finished; if time remains, continue with contextual follow-ups from the candidate's projects, technologies, and earlier answers.
+- For each section, keep the section active for its planned time budget. Do not move to the next section too early just because one or two questions were answered quickly.
+- Maintain adequate question density for the full interview duration. If pace drops or question count is too low, ask the next high-signal question promptly.
+- SECTION EXECUTION PROTOCOL: treat each section's minute allocation as mandatory pacing guidance. Before moving to next section, ensure the active section consumed its intended time window. If section objectives are exhausted early, call generate_section_questions for that same section and continue until section time target is met.
+- TRANSITION GATE: before announcing a section transition or any wrap-up language, verify all active section pacing constraints are satisfied. Never say closing phrases early and then continue interviewing afterward.
 - Keep mandatory constraints intact: if coding/code-snippet minimums, required sections, or recruiter-configured must-cover topics are still pending, prioritize and complete them before closing.
 - At or after target time: do NOT interrupt the candidate mid-answer. Let them finish naturally, then close gracefully if objectives are complete.
-- Grace window: You may extend up to 4 additional minutes only to finish an in-progress answer, complete the active section, or cover remaining mandatory objectives. Do not open brand-new broad sections during grace.
-- You may receive orchestration notes such as TIME_SIGNAL:30_SECONDS_REMAINING, TIME_SIGNAL:TARGET_REACHED, and TIME_SIGNAL:HARD_STOP_REACHED. Follow them strictly: acknowledge briefly when appropriate, tighten pacing, and conclude professionally once the current answer/essential final point is complete.
+- Grace window: You may extend up to 5 additional minutes only to finish an in-progress answer, complete the active section, or cover remaining mandatory objectives. Do not open brand-new broad sections during grace.
+- You may receive orchestration notes such as TIME_SIGNAL:30_SECONDS_REMAINING, TIME_SIGNAL:DURATION_COMPLETE, and TIME_SIGNAL:HARD_STOP_REACHED. Follow them strictly: acknowledge briefly when appropriate, tighten pacing, and conclude professionally once the current answer/essential final point is complete.
+- If a section runs out of useful questions before duration-complete, call generate_section_questions to get new runtime questions. Ask a balanced mix of NORMAL, MCQ, CODE_SNIPPET, and GRAPHICAL questions as appropriate for the role and section.
+- For MCQ, CODE_SNIPPET, and GRAPHICAL questions, use show_reference_card to present the prompt/options/snippet on screen before asking.
+- You may give short teaching feedback after acknowledging answers, but keep it concise and return quickly to the next question so pacing stays on target.
+- Never ask "Do you have any questions for me?" until duration-complete is reached and mandatory section/time/question objectives are satisfied (unless hard-stop mode is active).
+- FINAL CLOSING WINDOW RULE: Ask "Do you have any questions for me/about the role/company?" only in the final minute of the scheduled duration or after TIME_SIGNAL:DURATION_COMPLETE. Asking it earlier is not allowed.
+- On every save_interview_event call, include the active section name in sectionName so runtime pacing can be tracked correctly.
 `;
 
   return `${baseInstructions}
@@ -121,6 +181,7 @@ PERSONALIZATION:
 During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics.
 Core tech stack to keep in mind: ${techStack.join(", ") || "General"}.
 ${resumeSection}
+${blueprintBlock}
 
 ENGAGEMENT RULES — react like a skilled human interviewer:
 • Strong, detailed answer: acknowledge the specific point.
@@ -131,10 +192,11 @@ ENGAGEMENT RULES — react like a skilled human interviewer:
 • One topic per turn — NEVER ask multiple unrelated questions in the same response.
 
 TOOL RULES — absolute, no exceptions:
-Available tools: show_reference_card, finalize_interview_report, save_interview_event.
+Available tools: show_reference_card, finalize_interview_report, save_interview_event, generate_section_questions.
 show_reference_card — use whenever structured visual content genuinely helps the candidate.
 finalize_interview_report — call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
 save_interview_event — call after each substantive question if you want to persist the candidate's response.
+generate_section_questions — call when planned questions are exhausted before duration-complete. Request mixed question types and use the returned questions.
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate.
 
 CLOSING SEQUENCE:
@@ -152,6 +214,139 @@ export function buildWebRtcOpeningPrompt(payload: {
   }
 
   return `The candidate is ready. Please begin the interview for the ${payload.role} role, following your instructions — greet the candidate, introduce the interview structure, then proceed.`;
+}
+
+function computeQuestionTarget(durationMinutes: number): number {
+  if (durationMinutes >= 30) return 15;
+  if (durationMinutes >= 20) return 10;
+  if (durationMinutes >= 15) return 8;
+  if (durationMinutes >= 10) return 6;
+  return 4;
+}
+
+function computePerSectionQuestionBankTarget(sectionCount: number): number {
+  if (sectionCount <= 3) return 12;
+  if (sectionCount === 4) return 9;
+  return 7;
+}
+
+export async function createInterviewSessionBlueprint(payload: {
+  apiKey: string;
+  role: string;
+  experienceLevel: string;
+  techStack: string[];
+  requiredSkills: string[];
+  durationMinutes: number;
+  difficultyLevel: string;
+  baseInstructions: string;
+  resumeText?: string;
+}): Promise<InterviewSessionBlueprint | null> {
+  const openai = new OpenAI({ apiKey: payload.apiKey });
+  const questionTarget = computeQuestionTarget(payload.durationMinutes);
+  const prompt = `Create a runtime interview blueprint for a live technical interview.
+
+Role: ${payload.role}
+Experience level: ${payload.experienceLevel}
+Difficulty: ${payload.difficultyLevel}
+Duration: ${payload.durationMinutes} minutes
+Tech stack: ${payload.techStack.join(", ") || "General"}
+Required skills: ${payload.requiredSkills.join(", ") || "General"}
+Target substantive question count: ${questionTarget}
+Candidate resume context: ${payload.resumeText?.trim() || "Not provided"}
+
+Return valid JSON only:
+{
+  "questionTarget": ${questionTarget},
+  "sections": [
+    { "name": "Section name", "minutes": 8, "objective": "what this section should evaluate" }
+  ],
+  "starterQuestions": [
+    {
+      "section": "Section name",
+      "type": "NORMAL|MCQ|CODE_SNIPPET|GRAPHICAL",
+      "question": "question text",
+      "referenceCardTitle": "optional title for structured questions",
+      "referenceCardContent": "optional markdown content for MCQ/CODE_SNIPPET/GRAPHICAL"
+    }
+  ]
+}
+
+Rules:
+- Create 3-4 sections with realistic minute splits summing approximately to ${payload.durationMinutes}.
+- Create exactly ${questionTarget} starterQuestions distributed across sections.
+- Include a balanced type mix and at least one CODE_SNIPPET question if role/stack is coding-heavy.
+- Keep questions concise and interview-grade.
+- Align with this base instruction context:
+<base_instructions>
+${payload.baseInstructions}
+</base_instructions>`;
+
+  const response = await openai.responses.create({
+    model: OPENAI_BLUEPRINT_MODEL,
+    instructions:
+      "You generate precomputed interview blueprints for runtime. Respond with valid JSON only.",
+    input: prompt,
+    temperature: 0.4,
+  });
+
+  const rawText = response.output_text ?? "";
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return null;
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]) as {
+    questionTarget?: number;
+    sections?: Array<{ name?: string; minutes?: number; objective?: string }>;
+    starterQuestions?: Array<{
+      section?: string;
+      type?: string;
+      question?: string;
+      referenceCardTitle?: string;
+      referenceCardContent?: string;
+    }>;
+  };
+
+  const sections: InterviewBlueprintSection[] = (parsed.sections || [])
+    .map((section) => ({
+      name: String(section.name || "").trim(),
+      minutes: Math.max(1, Math.floor(Number(section.minutes || 0))),
+      objective: String(section.objective || "").trim(),
+      questionBankTarget: 0,
+    }))
+    .filter((section) => section.name && section.objective);
+
+  const starterQuestions: InterviewBlueprintQuestion[] = (parsed.starterQuestions || [])
+    .map((q) => {
+      const rawType = String(q.type || "NORMAL").toUpperCase();
+      const type: InterviewBlueprintQuestion["type"] =
+        rawType === "MCQ" || rawType === "CODE_SNIPPET" || rawType === "GRAPHICAL"
+          ? rawType
+          : "NORMAL";
+      return {
+        section: String(q.section || "").trim(),
+        type,
+        question: String(q.question || "").trim(),
+        referenceCardTitle: q.referenceCardTitle ? String(q.referenceCardTitle) : undefined,
+        referenceCardContent: q.referenceCardContent ? String(q.referenceCardContent) : undefined,
+      };
+    })
+    .filter((q) => q.section && q.question);
+
+  if (sections.length === 0 || starterQuestions.length === 0) {
+    return null;
+  }
+
+  const perSectionTarget = computePerSectionQuestionBankTarget(sections.length);
+  for (const section of sections) {
+    section.questionBankTarget = perSectionTarget;
+  }
+
+  return {
+    questionTarget: Math.max(4, Math.floor(Number(parsed.questionTarget || questionTarget))),
+    sections,
+    starterQuestions,
+  };
 }
 
 export async function createOpenAIRealtimeClientSecret(payload: {

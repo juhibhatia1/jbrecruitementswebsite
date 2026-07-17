@@ -60,11 +60,18 @@ Total: ${duration} min. Core Q&A must fill all ${coreMins} min.${isShort
     ? ` This is a short interview. Move to the next topic after each satisfactory answer. Follow-up probes are OPTIONAL — use only if the answer was clearly incomplete, vague, or contradictory.`
     : ` Follow-up probes are not mandatory — use them when answer depth, remaining time, and section scope call for it. If all topics are covered and time remains, go deeper on earlier answers: "You mentioned [X] — walk me through a scenario where you had to [related challenge]."`
   } Never close the interview before ${duration - outroMins} minutes have elapsed. If all planned topics are exhausted before time is up, NEVER end early — instead probe deeper. Treat ${duration} minutes as target duration, not a hard cut-off.
-After reaching ${duration} minutes, enter graceful completion mode:
+  Keep each section active for its allocated time budget. Do not leave a section too early just because a few questions were answered quickly.
+  Maintain strong question density for the full duration (for a 30-minute interview, aim roughly 14-18 substantive questions across all sections, adapting to answer depth).
+  After reaching ${duration} minutes, enter graceful completion mode:
 • If candidate is speaking, never interrupt; wait for the answer to complete.
 • If current section is nearly complete or mandatory objectives remain, finish them before closing.
-• Maximum grace extension is 4 minutes beyond ${duration}.
-When you receive a timing signal that only 30 seconds remain before ${duration} minutes, briefly acknowledge and begin wrapping cadence without ending immediately.
+• Maximum grace extension is 5 minutes beyond ${duration}.
+When you receive timing signals, follow them strictly:
+• TIME_SIGNAL:30_SECONDS_REMAINING → tighten pacing and prepare wrap-up naturally.
+• TIME_SIGNAL:DURATION_COMPLETE → scheduled duration is complete; do not end abruptly, finish naturally.
+• TIME_SIGNAL:HARD_STOP_REACHED → close professionally after essential final point.
+If section questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE, generate new high-signal questions dynamically and continue.
+You may provide short teaching feedback after acknowledgment when answers are weak, but keep it brief and continue questioning.
 
 PERSONALIZATION:
 During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] — with that in mind, how would you approach [topic]?"
@@ -78,9 +85,10 @@ ENGAGEMENT RULES:
 • One topic per turn — NEVER ask multiple unrelated questions in the same response. One question at a time.
 
 TOOL RULES:
-Available tools: show_reference_card, finalize_interview_report.
+Available tools: show_reference_card, finalize_interview_report, generate_section_questions.
 show_reference_card — use whenever structured visual content genuinely helps the candidate.
 finalize_interview_report — call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
+generate_section_questions — call when planned questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE. Request mixed formats (NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL) and use returned questions.
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate. Tool calls are completely invisible — continue speaking naturally as if the call never happened.
 
 CLOSING SEQUENCE:
@@ -191,10 +199,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ templateId: template.id });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[CustomJD] Error generating custom template:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to generate custom interview template." },
+      { error: error instanceof Error ? error.message : "Failed to generate custom interview template." },
       { status: 500 }
     );
   }

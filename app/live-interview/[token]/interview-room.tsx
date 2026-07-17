@@ -38,6 +38,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [micLocked, setMicLocked] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [clockTick, setClockTick] = useState(() => Date.now());
 
@@ -65,7 +66,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const durationTargetTimerRef = useRef<number | null>(null);
   const durationHardStopTimerRef = useRef<number | null>(null);
   const durationWarningShownRef = useRef(false);
-  const targetSignalSentRef = useRef(false);
+  const durationCompleteSignalSentRef = useRef(false);
   const hardStopSignalSentRef = useRef(false);
   const interviewStartedAtRef = useRef<number | null>(null);
   const interviewDurationMsRef = useRef(15 * 60 * 1000);
@@ -89,9 +90,17 @@ export default function InterviewRoom({ token }: { token: string }) {
     return () => window.clearInterval(timerId);
   }, [phase]);
 
+  const setMicCaptureEnabled = useCallback((enabled: boolean) => {
+    streamRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = enabled;
+    });
+    setMicLocked(!enabled);
+  }, []);
+
 
 
   const stopMic = useCallback(() => {
+    setMicLocked(true);
     silentGainRef.current?.disconnect();
     analyserRef.current?.disconnect();
     sourceRef.current?.disconnect();
@@ -211,7 +220,7 @@ export default function InterviewRoom({ token }: { token: string }) {
     const now = Date.now();
     const targetAt = interviewStartedAtRef.current + interviewDurationMsRef.current;
     const warningAt = targetAt - 30_000;
-    const hardStopAt = targetAt + 4 * 60_000;
+    const hardStopAt = targetAt + 5 * 60_000;
 
     const schedule = (at: number, setter: (timerId: number) => void, action: () => void) => {
       const delay = at - now;
@@ -244,10 +253,10 @@ export default function InterviewRoom({ token }: { token: string }) {
         durationTargetTimerRef.current = timerId;
       },
       () => {
-        if (phaseRef.current !== "live" || targetSignalSentRef.current) return;
-        targetSignalSentRef.current = true;
+        if (phaseRef.current !== "live" || durationCompleteSignalSentRef.current) return;
+        durationCompleteSignalSentRef.current = true;
         transportRef.current?.sendOrchestrationMessage(
-          "TIME_SIGNAL:TARGET_REACHED. The scheduled interview duration is now reached. Do not interrupt the candidate mid-answer. Complete the current section and any remaining mandatory objectives naturally, then close professionally.",
+          "TIME_SIGNAL:DURATION_COMPLETE. The scheduled interview duration is now complete. Do not end abruptly. Let the candidate finish naturally, complete essential coverage, and begin professional wrap-up cadence.",
         );
       },
     );
@@ -261,7 +270,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (phaseRef.current !== "live" || hardStopSignalSentRef.current) return;
         hardStopSignalSentRef.current = true;
         transportRef.current?.sendOrchestrationMessage(
-          "TIME_SIGNAL:HARD_STOP_REACHED. You are now at the maximum grace threshold (+4 minutes). Do not start new topics. Let the candidate finish the current answer, ask only essential final clarifications, deliver a professional closing, and call finalize_interview_report now.",
+          "TIME_SIGNAL:HARD_STOP_REACHED. You are now at the maximum grace threshold (+5 minutes). Do not start new topics. Let the candidate finish the current answer, ask only essential final clarifications, deliver a professional closing, and call finalize_interview_report now.",
         );
       },
     );
@@ -395,6 +404,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         return;
       }
       streamRef.current = stream;
+      setMicCaptureEnabled(false);
 
       setSetupStep("connecting");
       setSetupStatus("Initializing interview session…");
@@ -422,6 +432,10 @@ export default function InterviewRoom({ token }: { token: string }) {
         sessionId: string;
         openingPrompt: string;
         systemInstructions: string;
+        sessionBlueprint?: {
+          questionTarget: number;
+          sections: Array<{ name: string; minutes: number; objective: string; questionBankTarget: number }>;
+        } | null;
         clientSecret: string;
         voice: string;
         durationMinutes: number;
@@ -441,7 +455,7 @@ export default function InterviewRoom({ token }: { token: string }) {
       referenceCardsRef.current = startData.existingReferenceCards || [];
       finalReportRef.current = null;
       durationWarningShownRef.current = false;
-      targetSignalSentRef.current = false;
+      durationCompleteSignalSentRef.current = false;
       hardStopSignalSentRef.current = false;
 
       const parsedDuration = Number(startData.durationMinutes);
@@ -480,6 +494,8 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       const transport = new OpenAIWebRtcInterviewTransport({
         onReady: () => {
+          setMicCaptureEnabled(true);
+          toast.success("AI interviewer is ready. Your microphone is now active.");
           handleTransportMessage({
             type: "ready",
             existingTranscript: startData.existingTranscript,
@@ -532,7 +548,10 @@ export default function InterviewRoom({ token }: { token: string }) {
           clientSecret: startData.clientSecret,
           systemInstructions: startData.systemInstructions,
           openingPrompt: startData.openingPrompt,
+          sessionBlueprint: startData.sessionBlueprint ?? null,
           voice: startData.voice,
+          durationMinutes: startData.durationMinutes,
+          sessionStartedAt: startData.sessionStartedAt,
           playbackAudioContext: ctx,
         },
         stream,
@@ -548,7 +567,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         setIsStarting(false);
       }
     }
-  }, [handleTransportMessage, isStarting, scheduleSync, sessionTokenKey, token]);
+  }, [handleTransportMessage, isStarting, scheduleSync, sessionTokenKey, setMicCaptureEnabled, token]);
 
   useEffect(() => {
     const audioElement = remoteAudioRef.current;
@@ -874,8 +893,10 @@ export default function InterviewRoom({ token }: { token: string }) {
             </p>
           </div>
           <div className="mt-3 flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] text-slate-500 font-medium">Your mic is active</span>
+            <span className={`w-1.5 h-1.5 rounded-full ${micLocked ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
+            <span className="text-[10px] text-slate-500 font-medium">
+              {micLocked ? "Mic activates when AI intro is ready" : "Your mic is active"}
+            </span>
           </div>
           <div className="mt-8">
             <button
@@ -896,6 +917,11 @@ export default function InterviewRoom({ token }: { token: string }) {
 
         {/* Right: transcript + reference cards inline — scrolls internally */}
         <div className="flex-1 flex flex-col min-h-0 p-4 lg:p-6">
+          {micLocked && (
+            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Preparing interview structure and intro. Your microphone will turn on automatically when the AI is ready.
+            </div>
+          )}
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 shrink-0">Transcript</p>
           <div
             data-lenis-prevent

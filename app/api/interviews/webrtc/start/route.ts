@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashInterviewToken, buildWebRtcOpeningPrompt, buildWebRtcSystemInstructions, createOpenAIRealtimeClientSecret, resolveRealtimeVoice } from "@/lib/interview/webrtc-session";
+import {
+  hashInterviewToken,
+  buildWebRtcOpeningPrompt,
+  buildWebRtcSystemInstructions,
+  createOpenAIRealtimeClientSecret,
+  createInterviewSessionBlueprint,
+  resolveRealtimeVoice,
+} from "@/lib/interview/webrtc-session";
 
 type StartRequestBody = {
   token?: string;
@@ -13,6 +20,7 @@ function buildSessionInstructions(payload: {
   techStack: string[];
   durationMinutes: number;
   baseInstructions: string;
+  sessionBlueprint?: Parameters<typeof buildWebRtcSystemInstructions>[0]["sessionBlueprint"];
   transcript?: Array<{ role: "candidate" | "interviewer"; text: string }>;
   isResuming?: boolean;
   resumeText?: string;
@@ -115,13 +123,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "OPENAI_API_KEY not configured." }, { status: 500 });
+    }
+
     const baseInstructions = application.template.systemInstructions;
+    let sessionBlueprint: Awaited<ReturnType<typeof createInterviewSessionBlueprint>> = null;
+    if (!isResuming) {
+      try {
+        sessionBlueprint = await createInterviewSessionBlueprint({
+          apiKey,
+          role: application.template.jobRole,
+          experienceLevel: application.template.experienceLevel,
+          techStack: application.template.techStack,
+          requiredSkills: application.template.requiredSkills,
+          durationMinutes: application.template.durationMinutes,
+          difficultyLevel: application.template.difficultyLevel,
+          baseInstructions,
+          resumeText: application.resumeText || undefined,
+        });
+      } catch (error) {
+        console.warn("Blueprint generation failed, continuing without blueprint:", error);
+      }
+    }
+
     const systemInstructions = buildSessionInstructions({
       role: application.template.jobRole,
       experienceLevel: application.template.experienceLevel,
       techStack: application.template.techStack,
       durationMinutes: application.template.durationMinutes,
       baseInstructions,
+      sessionBlueprint,
       transcript: previousTranscript.length > 0 ? previousTranscript : undefined,
       isResuming,
       resumeText: application.resumeText || undefined,
@@ -131,11 +164,6 @@ export async function POST(request: NextRequest) {
       role: application.template.jobRole,
       isResuming,
     });
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "OPENAI_API_KEY not configured." }, { status: 500 });
-    }
 
     const safetyIdentifier = tokenHash;
     const clientSecret = await createOpenAIRealtimeClientSecret({
@@ -157,6 +185,7 @@ export async function POST(request: NextRequest) {
       model,
       openingPrompt,
       systemInstructions,
+      sessionBlueprint,
       clientSecret: clientSecret.value,
       existingTranscript: previousTranscript,
       existingEvents: previousEvents,
