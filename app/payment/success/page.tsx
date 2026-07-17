@@ -1,27 +1,59 @@
 "use client";
 
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { IoCheckmarkCircle, IoArrowBack, IoCalendarOutline, IoCheckmarkCircleOutline } from "react-icons/io5";
 import Cal, { getCalApi } from "@calcom/embed-react";
+import { IoArrowBack, IoCalendarOutline, IoCheckmarkCircle } from "react-icons/io5";
 
-interface CoachDetails {
+interface AiDetails {
   candidateName: string;
   candidateEmail: string;
-  applicationId: string;
+  interviewLink: string;
+}
+
+interface ManualDetails {
+  candidateName: string;
+  candidateEmail: string;
+  purchaseId: string;
+  jobRole: string;
+  yearsOfExperience?: string;
+  applicationLink?: string;
+  interviewBrief?: string;
+  bookingLink?: string;
+  mockInterviewStatus?: string;
+  mockInterviewDate?: string | null;
+}
+
+interface PaymentDetailsResponse {
+  isCoach?: boolean;
+  isAi?: boolean;
+  candidateName?: string;
+  candidateEmail?: string;
+  purchaseId?: string;
+  jobRole?: string;
+  yearsOfExperience?: string;
+  applicationLink?: string;
+  interviewBrief?: string;
+  bookingLink?: string;
+  mockInterviewStatus?: string;
+  mockInterviewDate?: string | null;
+  applicationId?: string;
+  interviewLink?: string;
+  status?: string;
 }
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
-
+  const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
   const [loading, setLoading] = useState(true);
-  const [coachDetails, setCoachDetails] = useState<CoachDetails | null>(null);
-  const [aiDetails, setAiDetails] = useState<{ candidateName: string; candidateEmail: string; interviewLink: string } | null>(null);
+  const [coachDetails, setCoachDetails] = useState<ManualDetails | null>(null);
+  const [aiDetails, setAiDetails] = useState<AiDetails | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
+  const [bookingUrl, setBookingUrl] = useState("");
 
-  // Fetch payment details on mount
   useEffect(() => {
     if (!paymentIntent) {
       setLoading(false);
@@ -29,18 +61,28 @@ function SuccessContent() {
     }
 
     fetch(`/api/payment/details?payment_intent=${paymentIntent}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.isCoach) {
+      .then((response) => response.json())
+      .then((data: PaymentDetailsResponse) => {
+        if (data.isCoach && data.jobRole) {
           setCoachDetails({
-            candidateName: data.candidateName,
-            candidateEmail: data.candidateEmail,
-            applicationId: data.applicationId,
+            candidateName: data.candidateName || "Candidate",
+            candidateEmail: data.candidateEmail || "",
+            purchaseId: data.purchaseId || "",
+            jobRole: data.jobRole,
+            yearsOfExperience: data.yearsOfExperience,
+            applicationLink: data.applicationLink,
+            interviewBrief: data.interviewBrief,
+            bookingLink: data.bookingLink,
+            mockInterviewStatus: data.mockInterviewStatus,
+            mockInterviewDate: data.mockInterviewDate,
           });
+          if (data.mockInterviewStatus === "SCHEDULED") {
+            setBookingComplete(true);
+          }
         } else if (data.isAi) {
           setAiDetails({
-            candidateName: data.candidateName,
-            candidateEmail: data.candidateEmail,
+            candidateName: data.candidateName || "Candidate",
+            candidateEmail: data.candidateEmail || "",
             interviewLink: data.interviewLink || "",
           });
         }
@@ -49,12 +91,19 @@ function SuccessContent() {
       .finally(() => setLoading(false));
   }, [paymentIntent]);
 
-  // Wire up Cal.com widget configuration
+  useEffect(() => {
+    if (typeof window !== "undefined" && paymentIntent) {
+      setBookingUrl(`${window.location.origin}/payment/success?payment_intent=${paymentIntent}`);
+    }
+  }, [paymentIntent]);
+
   useEffect(() => {
     if (coachDetails && !bookingComplete) {
+      let mounted = true;
       (async () => {
         try {
           const cal = await getCalApi();
+          if (!mounted) return;
           cal("ui", {
             theme: "light",
             styles: { branding: { brandColor: "#5a58ab" } },
@@ -63,66 +112,88 @@ function SuccessContent() {
           });
           cal("on", {
             action: "bookingSuccessful",
-            callback: () => setBookingComplete(true),
+            callback: () => {
+              if (mounted) {
+                setBookingComplete(true);
+              }
+            },
           });
         } catch (err) {
           console.error("Failed to initialize Cal.com widget", err);
         }
       })();
+
+      return () => {
+        mounted = false;
+      };
     }
+
+    return undefined;
   }, [coachDetails, bookingComplete]);
 
   if (loading) {
     return (
-      <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden animate-pulse">
-        {/* Success Icon Badge Placeholder */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center shadow-inner">
-            <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+      <div className="w-full max-w-7xl rounded-3xl border border-[#e6eefc] bg-white p-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8 animate-pulse">
+        <div className="flex flex-col gap-5 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-slate-200" />
+              <div className="h-3 w-32 rounded-full bg-slate-200" />
+            </div>
+            <div className="h-8 w-72 rounded-xl bg-slate-200" />
+            <div className="h-4 w-[28rem] max-w-full rounded-full bg-slate-100" />
           </div>
+          <div className="h-20 w-full max-w-sm rounded-2xl bg-slate-100" />
         </div>
 
-        {/* Title Placeholder */}
-        <div className="h-7 w-48 bg-slate-200 rounded-md mx-auto mb-4"></div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_0.75fr]">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-[#fbfbfd]">
+            <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-4">
+              <div className="h-10 w-10 rounded-xl bg-slate-200" />
+              <div className="space-y-2">
+                <div className="h-4 w-56 rounded-full bg-slate-200" />
+                <div className="h-3 w-64 rounded-full bg-slate-100" />
+              </div>
+            </div>
+            <div className="h-[860px] w-full bg-gradient-to-b from-slate-100 to-slate-200/70" />
+          </div>
 
-        {/* Description Paragraph Placeholder */}
-        <div className="space-y-2.5 mb-8">
-          <div className="h-3 w-5/6 bg-slate-200/70 rounded-md mx-auto"></div>
-          <div className="h-3 w-11/12 bg-slate-200/70 rounded-md mx-auto"></div>
-          <div className="h-3 w-3/4 bg-slate-200/70 rounded-md mx-auto"></div>
-        </div>
-
-        {/* Action Blocks Placeholder */}
-        <div className="space-y-3 mb-2">
-          {/* Primary Action Button Placeholder */}
-          <div className="h-12 w-full bg-slate-200 rounded-xl"></div>
-          {/* Secondary Action Button Placeholder */}
-          <div className="h-10 w-full bg-slate-200/70 rounded-xl"></div>
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5">
+              <div className="h-5 w-40 rounded-full bg-slate-200" />
+              <div className="mt-4 space-y-3">
+                <div className="h-4 w-full rounded-full bg-slate-100" />
+                <div className="h-4 w-5/6 rounded-full bg-slate-100" />
+                <div className="h-4 w-4/6 rounded-full bg-slate-100" />
+                <div className="h-4 w-3/5 rounded-full bg-slate-100" />
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-[#fbfbfd] p-5">
+              <div className="h-4 w-56 rounded-full bg-slate-200" />
+              <div className="mt-3 h-12 w-full rounded-xl border border-slate-200 bg-white" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── Render: AI Mock Interview Success Card ──────────────────────────────
   if (aiDetails) {
     return (
-      <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden">
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-500 shadow-inner">
+      <div className="max-w-md w-full mx-4 overflow-hidden rounded-3xl border border-[#e6eefc] bg-white p-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8">
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500 shadow-inner">
             <IoCheckmarkCircle className="w-12 h-12" />
           </div>
         </div>
-        <h1
-          className="text-2xl sm:text-3xl font-bold text-[#252e3d] mb-3 leading-tight"
-          style={{ fontFamily: "Crimson Text, serif" }}
-        >
+        <h1 className="mb-3 text-2xl font-bold leading-tight text-[#252e3d] sm:text-3xl" style={{ fontFamily: "Crimson Text, serif" }}>
           Payment Verified!
         </h1>
-        <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+        <p className="mb-6 text-sm leading-relaxed text-gray-600">
           Hi <strong>{aiDetails.candidateName}</strong>, your AI Mock Interview is now ready. We have also sent the access details and PDF receipt to <strong>{aiDetails.candidateEmail}</strong>.
         </p>
 
-        <div className="space-y-3 mb-6">
+        <div className="mb-6 space-y-3">
           {aiDetails.interviewLink ? (
             <Link
               href={aiDetails.interviewLink}
@@ -131,11 +202,11 @@ function SuccessContent() {
               Start AI Interview Now
             </Link>
           ) : (
-            <div className="bg-[#f8fafc] border border-gray-100 rounded-xl p-4 text-xs text-slate-500 leading-normal">
+            <div className="rounded-xl border border-gray-100 bg-[#f8fafc] p-4 text-xs leading-normal text-slate-500">
               Please check your inbox (including spam) for your single-use interview link to start your session.
             </div>
           )}
-          
+
           <Link
             href="/job-seekers"
             className="w-full flex items-center justify-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 px-4 rounded-xl font-semibold transition-all duration-300 text-sm cursor-pointer"
@@ -147,127 +218,194 @@ function SuccessContent() {
     );
   }
 
-  // ── Render: Coach Session Booking Calendar ───────────────────────────────
   if (coachDetails) {
-    const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
-
-    if (!bookingComplete) {
-      return (
-        <div className="max-w-4xl w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] relative overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-gray-100 pb-5 mb-6">
-            <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-green-500 shrink-0 shadow-inner">
-              <IoCheckmarkCircle className="w-8 h-8" />
-            </div>
-            <div className="text-center sm:text-left">
-              <h1
-                className="text-xl sm:text-2xl font-bold text-[#252e3d]"
-                style={{ fontFamily: "Crimson Text, serif" }}
-              >
-                Payment Verified! Schedule Your Session
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Hi {coachDetails.candidateName}, please pick a date on the left, then select a time slot on the right.
-              </p>
-            </div>
-          </div>
-
-          {/* Cal.com embed */}
-          <div className="w-full rounded-2xl border border-slate-100 overflow-hidden" style={{ height: "600px" }}>
-            <Cal
-              calLink={calLink}
-              style={{ width: "100%", height: "100%", overflow: "scroll" }}
-              config={{
-                name: coachDetails.candidateName,
-                email: coachDetails.candidateEmail,
-                "metadata[applicationId]": coachDetails.applicationId,
-              }}
-            />
-          </div>
-        </div>
-      );
-    }
+    const scheduledDate = coachDetails.mockInterviewDate ? new Date(coachDetails.mockInterviewDate) : null;
+    const calSchedulingLink = calLink;
 
     return (
-      <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden">
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-500 shadow-inner">
-            <IoCheckmarkCircle className="w-12 h-12" />
+      <div className="w-full max-w-7xl space-y-6 rounded-3xl border border-[#e6eefc] bg-white p-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8">
+        <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="mb-1 flex items-center gap-2">
+              <IoCheckmarkCircle className="w-6 h-6 text-green-500" />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Payment Verified</p>
+            </div>
+            <h1 className="text-2xl font-bold text-[#252e3d] sm:text-3xl" style={{ fontFamily: "Crimson Text, serif" }}>
+              Book your human interview slot
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Hi {coachDetails.candidateName}, choose a date and time in the calendar below. It shows later dates too.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+            <div className="font-semibold text-[#252e3d]">{coachDetails.jobRole}</div>
+            <div className="text-slate-500">Years of experience: {coachDetails.yearsOfExperience || "Not provided"}</div>
           </div>
         </div>
-        <h1
-          className="text-2xl sm:text-3xl font-bold text-[#252e3d] mb-3 leading-tight"
-          style={{ fontFamily: "Crimson Text, serif" }}
-        >
-          Session Scheduled!
-        </h1>
-        <p className="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
-          Your coach-led mock interview practice session has been confirmed. A calendar invitation and Google Meet details have been sent to <strong>{coachDetails.candidateEmail}</strong>.
-        </p>
-        <Link
-          href="/job-seekers"
-          className="group w-full flex items-center justify-center gap-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base"
-        >
-          <IoArrowBack className="w-5 h-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
-          Back to Career Guidance
-        </Link>
+
+        {bookingComplete ? (
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-green-200 bg-green-50 p-6">
+              <div className="flex items-center gap-2 text-green-700 font-semibold">
+                <IoCheckmarkCircle className="w-5 h-5" />
+                Slot booked successfully
+              </div>
+              <p className="mt-3 text-sm text-green-900">
+                Your session has been scheduled. We’ve sent the confirmation email to <strong>{coachDetails.candidateEmail}</strong>.
+              </p>
+              {scheduledDate && (
+                <div className="mt-5 rounded-2xl border border-green-200 bg-white p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Scheduled time</p>
+                  <p className="mt-2 text-sm font-semibold text-[#252e3d]">{scheduledDate.toLocaleString()}</p>
+                </div>
+              )}
+            </div>
+
+            <DetailsPanel coachDetails={coachDetails} bookingUrl={bookingUrl || calSchedulingLink} />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-[#fbfbfd]">
+              <div className="flex items-center gap-2 border-b border-slate-100 bg-white px-5 py-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0efff]">
+                  <IoCalendarOutline className="h-5 w-5 text-[#5a58ab]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
+                    Select your preferred date & time
+                  </h2>
+                  <p className="text-xs text-slate-500">Use the calendar widget to see later dates and time slots.</p>
+                </div>
+              </div>
+
+              <div className="w-full" style={{ height: "700px" }}>
+                <Cal
+                  calLink={calSchedulingLink}
+                  style={{ width: "100%", height: "100%" }}
+                  config={{
+                    name: coachDetails.candidateName,
+                    email: coachDetails.candidateEmail,
+                    "metadata[purchaseId]": coachDetails.purchaseId,
+                    "metadata[jobRole]": coachDetails.jobRole,
+                    "metadata[yearsOfExperience]": coachDetails.yearsOfExperience || "",
+                    "metadata[applicationLink]": coachDetails.applicationLink || "",
+                    "metadata[interviewBrief]": coachDetails.interviewBrief || "",
+                  }}
+                />
+              </div>
+            </div>
+            <DetailsPanel coachDetails={coachDetails} bookingUrl={bookingUrl || calSchedulingLink} />
+          </div>
+        )}
+
+        <div className="mt-6 border-t border-gray-100 pt-5 text-xs text-gray-400">
+          Have questions? Reply to your confirmation email or contact us at juhi@jbrecruitments.com.
+        </div>
       </div>
     );
   }
 
-
-  // ── Render: Default Payment Success Card ─────────────────────────────────
   return (
-    <div className="max-w-md w-full mx-4 bg-white rounded-3xl border border-[#e6eefc] p-6 sm:p-8 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center relative overflow-hidden">
-      {/* Decorative background blur */}
-      <div
-        className="absolute inset-0 -z-10 blur-2xl bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
-        aria-hidden="true"
-      />
+    <div className="max-w-md w-full mx-4 overflow-hidden rounded-3xl border border-[#e6eefc] bg-white p-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl" aria-hidden="true" />
 
-      <div className="flex justify-center mb-6 animate-bounce">
-        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-500 shadow-inner">
+      <div className="mb-6 flex justify-center animate-bounce">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500 shadow-inner">
           <IoCheckmarkCircle className="w-12 h-12" />
         </div>
       </div>
 
-      <h1
-        className="text-2xl sm:text-3xl font-bold text-[#252e3d] mb-3 leading-tight"
-        style={{ fontFamily: "Crimson Text, serif" }}
-      >
+      <h1 className="mb-3 text-2xl font-bold leading-tight text-[#252e3d] sm:text-3xl" style={{ fontFamily: "Crimson Text, serif" }}>
         Payment Successful!
       </h1>
-      <p className="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
-        Thank you for your purchase. Your payment has been verified. We've sent
-        a PDF receipt and details to your email. Our team will contact you
-        shortly to coordinate the next steps.
+      <p className="mb-6 text-sm leading-relaxed text-gray-600 sm:text-base">
+        Thank you for your purchase. Your payment has been verified. We've sent a receipt and next-step email to your inbox.
       </p>
 
       {paymentIntent && (
-        <div className="bg-[#f8fafc] border border-gray-100 rounded-xl p-3 mb-6 text-left">
-          <span className="text-[10px] uppercase font-semibold text-gray-400 block mb-1 tracking-wider">
+        <div className="mb-6 rounded-xl border border-gray-100 bg-[#f8fafc] p-3 text-left">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
             Transaction Reference:
           </span>
-          <code className="text-xs font-mono break-all text-gray-700">
-            {paymentIntent}
-          </code>
+          <code className="break-all font-mono text-xs text-gray-700">{paymentIntent}</code>
         </div>
       )}
 
-      <div className="space-y-3 mb-8">
+      <div className="mb-8 space-y-3">
         <Link
           href="/job-seekers"
-          className="group w-full flex items-center justify-center gap-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg text-sm sm:text-base"
+          className="group w-full flex items-center justify-center gap-2 rounded-xl bg-[#5a58ab] px-4 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#4a489b] hover:shadow-lg sm:text-base"
         >
-          <IoArrowBack className="w-5 h-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
+          <IoArrowBack className="h-5 w-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
           Back to Career Guidance Page
         </Link>
       </div>
 
       <div className="border-t border-gray-100 pt-5 text-xs text-gray-400">
-        Have questions? Reply to your confirmation email or contact us at
-        juhi@jbrecruitments.com.
+        Have questions? Reply to your confirmation email or contact us at juhi@jbrecruitments.com.
       </div>
+    </div>
+  );
+}
+
+function DetailsPanel({
+  coachDetails,
+  bookingUrl,
+}: {
+  coachDetails: ManualDetails;
+  bookingUrl: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <h3 className="text-base font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
+          Interview brief
+        </h3>
+        <dl className="mt-4 space-y-3 text-sm">
+          <Row label="Role" value={coachDetails.jobRole} />
+          <Row label="Experience" value={coachDetails.yearsOfExperience || "Not provided"} />
+          {coachDetails.applicationLink && (
+            <Row
+              label="Application link"
+              value={
+                <a
+                  href={coachDetails.applicationLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={coachDetails.applicationLink}
+                  className="block truncate text-[#5a58ab] hover:underline"
+                >
+                  {coachDetails.applicationLink}
+                </a>
+              }
+            />
+          )}
+          {coachDetails.interviewBrief && <Row label="Brief" value={coachDetails.interviewBrief} />}
+        </dl>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-[#fbfbfd] p-5 text-sm text-slate-600">
+        You can also save this booking link and return later if needed:
+        <a
+          href={bookingUrl}
+          target="_blank"
+          rel="noreferrer"
+          title={bookingUrl}
+          className="mt-2 block truncate rounded-xl border border-slate-200 bg-white p-3 text-xs text-[#5a58ab] transition hover:bg-slate-50"
+        >
+          {bookingUrl}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</span>
+      <span className="min-w-0 max-w-[65%] truncate text-right text-sm font-medium text-slate-700">{value}</span>
     </div>
   );
 }
@@ -275,13 +413,13 @@ function SuccessContent() {
 export default function PaymentSuccessPage() {
   return (
     <div
-      className="min-h-screen bg-[#F9F9FB] text-[#252E3D] flex items-center justify-center pt-24 pb-16"
+      className="min-h-screen bg-[#F9F9FB] text-[#252E3D] flex items-center justify-center px-4 pt-24 pb-16"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <Suspense
         fallback={
-          <div className="text-[#252e3d] text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5a58ab] mx-auto mb-4"></div>
+          <div className="text-center text-[#252e3d]">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-[#5a58ab]" />
             <p>Loading payment details...</p>
           </div>
         }

@@ -49,11 +49,6 @@ export default function MockInterviewsPage() {
             href="/mock-interviews/coach"
           />
         </div>
-
-        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 text-sm text-slate-600">
-          No templates are shown for now. We’ll keep this page focused on the two
-          interview formats only.
-        </div>
       </main>
     </div>
   );

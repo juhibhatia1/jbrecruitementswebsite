@@ -6,6 +6,7 @@ import {
   generateInterviewAccessToken,
   hashInterviewAccessToken,
 } from "@/lib/interview/access-token";
+import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 
 let stripe: Stripe | null = null;
 
@@ -130,6 +131,7 @@ export async function POST(request: Request) {
             if (meta.applicationId) {
               application = await prisma.candidateApplication.findUnique({
                 where: { id: meta.applicationId },
+                select: candidateApplicationSafeSelect,
               });
               if (application && application.status !== "APPLIED") {
                 alreadyActivated = true;
@@ -147,6 +149,7 @@ export async function POST(request: Request) {
                     gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
                   },
                 },
+                select: candidateApplicationSafeSelect,
               });
               if (application && application.status !== "APPLIED") {
                 alreadyActivated = true;
@@ -235,130 +238,51 @@ export async function POST(request: Request) {
         }
       }
 
-      // ── If this is a MANUAL (Coach) mock interview purchase, create/activate the application ──
+      // ── If this is a MANUAL mock interview purchase with custom role details, email the booking flow ──
       if (
         meta.interviewPreference === "MANUAL" &&
-        meta.interviewTemplateId &&
         meta.candidateName &&
-        meta.candidateEmail
+        meta.candidateEmail &&
+        meta.jobRole &&
+        !meta.interviewTemplateId
       ) {
         try {
-          const template = await prisma.interviewTemplate.findUnique({
-            where: { id: meta.interviewTemplateId, isActive: true },
+          await prisma.purchase.update({
+            where: { id: purchase.id },
+            data: {
+              mockInterviewStatus: "PENDING_SCHEDULE",
+              completionNotes: JSON.stringify({
+                jobRole: meta.jobRole,
+                yearsOfExperience: meta.yearsOfExperience || "",
+                applicationLink: meta.applicationLink || "",
+                interviewBrief: meta.interviewBrief || "",
+              }),
+            },
           });
 
-          if (template) {
-            let application = null;
-            let alreadyActivated = false;
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            "https://jbrecruitments.com";
+          const bookingLink = `${appUrl.replace(/\/$/, "")}/payment/success?payment_intent=${paymentIntent.id}`;
 
-            // 1. First try lookup by applicationId
-            if (meta.applicationId) {
-              application = await prisma.candidateApplication.findUnique({
-                where: { id: meta.applicationId },
-              });
-              if (application && application.status !== "APPLIED") {
-                alreadyActivated = true;
-              }
-            }
+          await sendInterviewInvitationEmail({
+            candidateName: meta.candidateName.trim(),
+            candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+            jobRole: meta.jobRole,
+            interviewPreference: "MANUAL",
+            bookingLink,
+            yearsOfExperience: meta.yearsOfExperience || undefined,
+            applicationLink: meta.applicationLink || undefined,
+            interviewBrief: meta.interviewBrief || undefined,
+            durationMinutes: 45,
+          });
 
-            // 2. Otherwise fall back to looking up by email and template
-            if (!application) {
-              application = await prisma.candidateApplication.findFirst({
-                where: {
-                  templateId: template.id,
-                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
-                  interviewPreference: "MANUAL",
-                  createdAt: {
-                    gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
-                  },
-                },
-              });
-              if (application && application.status !== "APPLIED") {
-                alreadyActivated = true;
-              }
-            }
-
-            if (alreadyActivated && application) {
-              console.log(`Coach application ${application.id} already exists and is active. Skipping activation.`);
-              // Return received: true to prevent Stripe from retrying
-              return NextResponse.json({ received: true, alreadyExists: true }, { status: 200 });
-            }
-
-            // Generate a token so admin can look up the application later
-            const accessToken = generateInterviewAccessToken();
-            const accessTokenHash = hashInterviewAccessToken(accessToken);
-            const accessTokenExpiresAt = new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days for coach sessions
-            );
-
-            if (application && application.status === "APPLIED") {
-              // Update pre-created application to activate it
-              application = await prisma.candidateApplication.update({
-                where: { id: application.id },
-                data: {
-                  status: "MANUAL_REVIEW_PENDING",
-                  accessTokenHash,
-                  accessTokenExpiresAt,
-                },
-              });
-            } else {
-              // Create a new application from scratch (fallback for legacy checkout)
-              application = await prisma.candidateApplication.create({
-                data: {
-                  templateId: template.id,
-                  candidateName: meta.candidateName.trim(),
-                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
-                  candidatePhone: null,
-                  linkedInUrl: meta.linkedInUrl || null,
-                  interviewPreference: "MANUAL",
-                  accessTokenHash,
-                  accessTokenExpiresAt,
-                  status: "MANUAL_REVIEW_PENDING",
-                },
-              });
-            }
-
-            const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
-            const appUrl =
-              process.env.NEXT_PUBLIC_APP_URL ||
-              process.env.NEXT_PUBLIC_SITE_URL ||
-              "https://jbrecruitments.com";
-            const calSchedulingLink = calLink.startsWith("http")
-              ? calLink
-              : `${appUrl.replace(/\/$/, "")}/${calLink}`;
-
-            // Send invitation email with Cal.com booking link
-            await sendInterviewInvitationEmail({
-              candidateName: application.candidateName,
-              candidateEmail: application.candidateEmail,
-              jobRole: template.jobRole,
-              interviewPreference: "MANUAL",
-              calSchedulingLink,
-              interviewDescription: template.interviewDescription,
-              durationMinutes: template.durationMinutes,
-            });
-
-            // Alert the admin
-            await sendNewApplicationAlertEmail({
-              candidateName: application.candidateName,
-              candidateEmail: application.candidateEmail,
-              candidatePhone: application.candidatePhone,
-              linkedInUrl: application.linkedInUrl,
-              jobRole: template.jobRole,
-              interviewPreference: "MANUAL",
-              applicationId: application.id,
-            });
-
-            console.log(
-              `Coach interview application ${application.id} activated and Cal link emailed to ${application.candidateEmail}`,
-            );
-          } else {
-            console.warn(
-              `Coach mock interview template ${meta.interviewTemplateId} not found or inactive. Skipping application creation.`,
-            );
-          }
+          console.log(
+            `Human interview booking email sent to ${meta.candidateEmail} for ${meta.jobRole}`,
+          );
         } catch (coachErr) {
-          console.error("Failed to create/activate Coach interview application from webhook:", coachErr);
+          console.error("Failed to send Human interview booking email from webhook:", coachErr);
           // Do NOT return 500 here — purchase is already marked COMPLETED.
         }
       }

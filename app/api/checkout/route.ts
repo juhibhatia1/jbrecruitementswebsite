@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
 import { detectCurrencyFromRequest } from "@/lib/geo-utils";
+import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 
 let stripe: Stripe | null = null;
 
@@ -51,10 +52,15 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { candidateName, candidateEmail, candidatePhone } = body;
-    // Optional interview metadata — only present when this checkout is for an AI mock interview
+    // Optional interview metadata — only present when this checkout is for a mock interview
     const interviewMetadata = body.interviewMetadata as {
       templateId?: string;
       linkedInUrl?: string;
+      interviewPreference?: "AI" | "MANUAL";
+      jobRole?: string;
+      yearsOfExperience?: string;
+      applicationLink?: string;
+      interviewBrief?: string;
     } | undefined;
 
     if (!candidateName || !candidateEmail) {
@@ -130,6 +136,7 @@ export async function POST(request: Request) {
           candidateEmail: candidateEmailLower,
           status: "APPLIED",
         },
+        select: candidateApplicationSafeSelect,
       });
 
       if (!application) {
@@ -144,8 +151,6 @@ export async function POST(request: Request) {
             candidateEmail: candidateEmailLower,
             candidatePhone: candidatePhone || null,
             linkedInUrl: interviewMetadata.linkedInUrl || null,
-            resumeUrl: (interviewMetadata as any).resumeUrl || null,
-            resumeText: (interviewMetadata as any).resumeText || null,
             interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
             accessTokenHash,
             accessTokenExpiresAt,
@@ -160,14 +165,12 @@ export async function POST(request: Request) {
             candidateName: candidateName.trim(),
             candidatePhone: candidatePhone || null,
             linkedInUrl: interviewMetadata.linkedInUrl || null,
-            resumeUrl: (interviewMetadata as any).resumeUrl || null,
-            resumeText: (interviewMetadata as any).resumeText || null,
             interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
           },
         });
       }
       
-      applicationId = application.id;
+      applicationId = application?.id;
     }
 
     // Create Stripe PaymentIntent with server-computed total in the correct currency
@@ -188,6 +191,15 @@ export async function POST(request: Request) {
           linkedInUrl: interviewMetadata.linkedInUrl || "",
           applicationId: applicationId || "",
         }),
+        ...(!interviewMetadata?.templateId &&
+          interviewMetadata?.interviewPreference === "MANUAL" && {
+            interviewPreference: "MANUAL",
+            jobRole: interviewMetadata.jobRole || "",
+            yearsOfExperience: interviewMetadata.yearsOfExperience || "",
+            applicationLink: interviewMetadata.applicationLink || "",
+            interviewBrief: interviewMetadata.interviewBrief || "",
+            linkedInUrl: interviewMetadata.linkedInUrl || "",
+          }),
       },
       receipt_email: candidateEmail,
     });

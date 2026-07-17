@@ -9,6 +9,7 @@ import {
   sendInterviewInvitationEmail,
   sendNewApplicationAlertEmail,
 } from "@/lib/emailService";
+import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 
 let stripe: Stripe | null = null;
 
@@ -42,14 +43,39 @@ export async function GET(request: Request) {
     }
 
     const purchaseTime = new Date(paymentIntent.created * 1000);
+    const purchase = await prisma.purchase.findUnique({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
 
     const meta = paymentIntent.metadata;
     const interviewPreference = meta.interviewPreference || "AI";
     const isCoach = interviewPreference === "MANUAL";
     const isAi = interviewPreference === "AI";
 
-    if (!meta.interviewTemplateId || !meta.candidateEmail) {
+    if (!meta.candidateEmail) {
       return NextResponse.json({ isCoach: false, isAi: false });
+    }
+
+    if (isCoach && meta.jobRole && !meta.interviewTemplateId) {
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        "https://jbrecruitments.com";
+
+      return NextResponse.json({
+        isCoach: true,
+        isAi: false,
+        candidateName: purchase?.candidateName || meta.candidateName || "Candidate",
+        candidateEmail: purchase?.candidateEmail || meta.candidateEmail,
+        purchaseId: purchase?.id || "",
+        jobRole: meta.jobRole,
+        yearsOfExperience: meta.yearsOfExperience || "",
+        applicationLink: meta.applicationLink || "",
+        interviewBrief: meta.interviewBrief || "",
+        mockInterviewStatus: purchase?.mockInterviewStatus || "PENDING_SCHEDULE",
+        mockInterviewDate: purchase?.mockInterviewDate ? purchase.mockInterviewDate.toISOString() : null,
+        bookingLink: `${appUrl.replace(/\/$/, "")}/payment/success?payment_intent=${paymentIntentId}`,
+      });
     }
 
     // Lookup template
@@ -71,6 +97,7 @@ export async function GET(request: Request) {
       if (meta.applicationId) {
         application = await prisma.candidateApplication.findUnique({
           where: { id: meta.applicationId },
+          select: candidateApplicationSafeSelect,
         });
       }
 
@@ -85,6 +112,7 @@ export async function GET(request: Request) {
               gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
             },
           },
+          select: candidateApplicationSafeSelect,
         });
       }
 
@@ -201,6 +229,7 @@ export async function GET(request: Request) {
         candidateName: application.candidateName,
         candidateEmail: application.candidateEmail,
         applicationId: application.id,
+        purchaseId: purchase?.id || "",
       });
     }
 
@@ -212,6 +241,7 @@ export async function GET(request: Request) {
       if (meta.applicationId) {
         application = await prisma.candidateApplication.findUnique({
           where: { id: meta.applicationId },
+          select: candidateApplicationSafeSelect,
         });
       }
 
@@ -226,6 +256,7 @@ export async function GET(request: Request) {
               gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
             },
           },
+          select: candidateApplicationSafeSelect,
         });
       }
 
@@ -350,6 +381,7 @@ export async function GET(request: Request) {
         candidateEmail: application.candidateEmail,
         applicationId: application.id,
         interviewLink: startUrl,
+        purchaseId: purchase?.id || "",
       });
     }
 

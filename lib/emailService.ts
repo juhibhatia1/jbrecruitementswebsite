@@ -203,7 +203,11 @@ interface InterviewInvitationData {
   interviewPreference: "AI" | "MANUAL";
   interviewLink?: string;
   calSchedulingLink?: string;
+  bookingLink?: string;
   interviewDescription?: string | null;
+  interviewBrief?: string | null;
+  yearsOfExperience?: string | number;
+  applicationLink?: string | null;
   durationMinutes: number;
 }
 
@@ -245,9 +249,14 @@ Team JB Recruitment Solutions`
 
 Thank you for booking your coach-led mock interview practice session for ${data.jobRole} at JB Recruitment Solutions.
 
-Your payment has been received. Please use the link below to book your preferred session slot — your coach will be confirmed once you schedule:
+Your payment has been received. Please use the link below to book your preferred session slot:
 
-${data.calSchedulingLink ? `Book your slot: ${data.calSchedulingLink}` : "Our team will contact you shortly to schedule your session."}
+${data.bookingLink || data.calSchedulingLink ? `Book your slot: ${data.bookingLink || data.calSchedulingLink}` : "Our team will contact you shortly to schedule your session."}
+
+Role focus: ${data.jobRole}
+Years of experience: ${data.yearsOfExperience || "Not provided"}
+${data.applicationLink ? `Application link: ${data.applicationLink}` : ""}
+${data.interviewBrief ? `\nInterview brief:\n${data.interviewBrief}` : ""}
 
 Best regards,
 Team JB Recruitment Solutions`;
@@ -299,12 +308,18 @@ Team JB Recruitment Solutions`;
           <p>Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
           <p>Thank you for booking a coach-led mock interview for <strong>${escapeHtml(data.jobRole)}</strong>. Your payment has been received successfully.</p>
           <p>Please click below to choose your preferred date and time — the slot will be confirmed with your coach immediately after you schedule:</p>
-          ${data.calSchedulingLink ? `
+          ${(data.bookingLink || data.calSchedulingLink) ? `
           <div style="text-align: center; margin: 28px 0;">
-            <a href="${data.calSchedulingLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Book Your Session Slot</a>
+            <a href="${data.bookingLink || data.calSchedulingLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Book Your Session Slot</a>
           </div>
-          <p style="font-size: 13px; color: #718096; text-align: center;">Or copy this link: <a href="${data.calSchedulingLink}" style="color: #5a58ab;">${data.calSchedulingLink}</a></p>
+          <p style="font-size: 13px; color: #718096; text-align: center;">Or copy this link: <a href="${data.bookingLink || data.calSchedulingLink}" style="color: #5a58ab;">${data.bookingLink || data.calSchedulingLink}</a></p>
           ` : `<p style="font-size: 14px; color: #718096;">Our team will contact you shortly to schedule your session.</p>`}
+          <div style="background-color: #f7fafc; border: 1px solid #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0 0 8px; font-size: 14px; color: #4a5568;"><strong>Role:</strong> ${escapeHtml(data.jobRole)}</p>
+            <p style="margin: 0 0 8px; font-size: 14px; color: #4a5568;"><strong>Years of experience:</strong> ${escapeHtml(String(data.yearsOfExperience || "Not provided"))}</p>
+            ${data.applicationLink ? `<p style="margin: 0 0 8px; font-size: 14px; color: #4a5568;"><strong>Application link:</strong> <a href="${escapeHtml(data.applicationLink)}" style="color: #5a58ab;">${escapeHtml(data.applicationLink)}</a></p>` : ""}
+            ${data.interviewBrief ? `<p style="margin: 0; font-size: 14px; color: #4a5568;"><strong>Brief:</strong> ${escapeHtml(data.interviewBrief)}</p>` : ""}
+          </div>
           <p style="font-size: 14px; color: #718096;">If you have any questions, feel free to reply to this email.</p>
         </div>
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
@@ -333,6 +348,60 @@ Team JB Recruitment Solutions`;
     return { success: true };
   } catch (err) {
     console.error("Error sending interview invitation email:", err);
+    return { success: false, error: err };
+  }
+}
+
+interface HumanInterviewScheduleData {
+  candidateName: string;
+  candidateEmail: string;
+  jobRole: string;
+  scheduledAt: Date;
+  timeZone?: string;
+  yearsOfExperience?: string | number;
+  applicationLink?: string | null;
+  interviewBrief?: string | null;
+  purchaseId: string;
+}
+
+export async function sendHumanInterviewScheduleConfirmationEmail(data: HumanInterviewScheduleData) {
+  const user = process.env.NEXT_NODEMAILER_USER;
+  if (!user) {
+    return { success: false, error: "Mailer credentials missing" };
+  }
+
+  const transporter = getMailerTransporter();
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: data.timeZone || "Asia/Kolkata",
+  }).format(data.scheduledAt);
+
+  try {
+    await transporter.sendMail({
+      from: `"JB Recruitment Solutions" <${user}>`,
+      to: data.candidateEmail,
+      subject: `Your Human Interview Slot is Confirmed — ${escapeHtml(data.jobRole)}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #5a58ab; margin-top: 0;">Human Interview Slot Confirmed</h2>
+          <p>Hi <strong>${escapeHtml(data.candidateName)}</strong>,</p>
+          <p>Your human-led interview for <strong>${escapeHtml(data.jobRole)}</strong> has been scheduled.</p>
+          <div style="background:#f7fafc;border:1px solid #edf2f7;padding:16px;border-radius:10px;margin:18px 0;">
+            <p style="margin:0 0 8px;"><strong>Date & time:</strong> ${escapeHtml(formattedDate)}</p>
+            <p style="margin:0 0 8px;"><strong>Role:</strong> ${escapeHtml(data.jobRole)}</p>
+            <p style="margin:0 0 8px;"><strong>Years of experience:</strong> ${escapeHtml(String(data.yearsOfExperience || "Not provided"))}</p>
+            ${data.applicationLink ? `<p style="margin:0 0 8px;"><strong>Application link:</strong> <a href="${escapeHtml(data.applicationLink)}">${escapeHtml(data.applicationLink)}</a></p>` : ""}
+            ${data.interviewBrief ? `<p style="margin:0;"><strong>Brief:</strong> ${escapeHtml(data.interviewBrief)}</p>` : ""}
+          </div>
+          <p style="margin:0;color:#718096;font-size:13px;">Reference ID: ${escapeHtml(data.purchaseId)}</p>
+        </div>
+      `,
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("Error sending human interview schedule confirmation email:", err);
     return { success: false, error: err };
   }
 }
