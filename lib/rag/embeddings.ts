@@ -1,45 +1,85 @@
-import { pipeline, env } from "@xenova/transformers";
+import OpenAI from "openai";
 
-// Disable checking for local models in the filesystem to avoid Webpack/Next.js bundle resolution issues.
-// Transformers.js will download the model weights dynamically on first run and cache them in the system cache directory.
-(env as any).allowLocalModels = false;
+const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
+const EMBEDDING_DIMENSIONS = 384;
 
-let extractorInstance: any = null;
+let openaiClient: OpenAI | null = null;
 
-async function getExtractor() {
-  if (!extractorInstance) {
-    try {
-      extractorInstance = await pipeline(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2"
-      );
-    } catch (error) {
-      console.error("Failed to load Xenova embedding pipeline:", error);
-      throw error;
-    }
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
   }
-  return extractorInstance;
+
+  return openaiClient;
+}
+
+function createFallbackEmbedding(text: string): number[] {
+  const vector = new Array(EMBEDDING_DIMENSIONS).fill(0);
+  const tokens = text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+
+  if (tokens.length === 0) {
+    return vector;
+  }
+
+  for (const token of tokens) {
+    let hash = 2166136261;
+    for (let index = 0; index < token.length; index++) {
+      hash ^= token.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    const bucket = Math.abs(hash) % EMBEDDING_DIMENSIONS;
+    vector[bucket] += 1;
+  }
+
+  const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+  return magnitude > 0 ? vector.map((value) => value / magnitude) : vector;
 }
 
 /**
  * Generates a 384-dimensional vector embedding for the given text.
- * Uses the popular and lightweight all-MiniLM-L6-v2 model.
+ * Uses OpenAI's `text-embedding-3-small` by default and keeps the current pgvector schema unchanged.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const extractor = await getExtractor();
-  // We clean up the text slightly (e.g. replace newlines with spaces) as is standard practice for embeddings
   const cleanText = text.replace(/\s+/g, " ").trim();
-  
+
   if (!cleanText) {
-    return new Array(384).fill(0);
+    return new Array(EMBEDDING_DIMENSIONS).fill(0);
   }
 
-  const output = await extractor(cleanText, {
-    pooling: "mean",
-    normalize: true,
-  });
+  const client = getOpenAIClient();
+  if (!client) {
+    return createFallbackEmbedding(cleanText);
+  }
 
-  return Array.from(output.data);
+  try {
+    const response = await client.embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: cleanText,
+      dimensions: EMBEDDING_DIMENSIONS,
+    });
+
+    const embedding = response.data[0]?.embedding ?? [];
+    if (!embedding.length) {
+      return createFallbackEmbedding(cleanText);
+    }
+
+    if (embedding.length === EMBEDDING_DIMENSIONS) {
+      return embedding;
+    }
+
+    if (embedding.length > EMBEDDING_DIMENSIONS) {
+      return embedding.slice(0, EMBEDDING_DIMENSIONS);
+    }
+
+    return [...embedding, ...new Array(EMBEDDING_DIMENSIONS - embedding.length).fill(0)];
+  } catch (error) {
+    console.error("OpenAI embedding generation failed, using lexical fallback:", error);
+    return createFallbackEmbedding(cleanText);
+  }
 }
 
 /**

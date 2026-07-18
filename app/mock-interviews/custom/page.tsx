@@ -9,17 +9,24 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import {
   IoAlertCircle,
   IoLockClosed,
   IoBriefcaseOutline,
   IoSparkles,
   IoChevronBackOutline,
+  IoChevronDownOutline,
   IoArrowForwardOutline,
+  IoCloseOutline,
 } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
+);
 
 // ─── Stripe inner checkout form ─────────────────────────────────────────────
 interface CheckoutFormProps {
@@ -29,7 +36,103 @@ interface CheckoutFormProps {
   onCancel: () => void;
 }
 
-function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: CheckoutFormProps) {
+type DropdownOption = {
+  value: string;
+  label: string;
+};
+
+function PremiumDropdown({
+  label,
+  value,
+  options,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: DropdownOption[];
+  placeholder: string;
+  onChange: (nextValue: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const selected = options.find((option) => option.value === value) ?? null;
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="group flex w-full h-11.5 items-center justify-between gap-4 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-4 py-0.5 text-left transition duration-200 hover:border-[#5a58ab]/40 focus:outline-none"
+      >
+        <span
+          className={`block text-sm ${selected ? "text-[#252e3d]" : "text-slate-400"}`}
+        >
+          {selected?.label || placeholder}
+        </span>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#5a58ab] transition group-hover:scale-105">
+          <IoChevronDownOutline
+            className={`transition duration-200 ${open ? "rotate-180" : ""} w-3 h-3`}
+          />
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute z-30 mt-0 w-full overflow-hidden rounded-2xl border border-[#d9def0] bg-white shadow-[0_24px_50px_rgba(37,46,61,0.14)]">
+          <div className="max-h-64 overflow-y-auto p-2">
+            {options.map((option) => {
+              const active = option.value === value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`mb-2 flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition duration-200 last:mb-0 ${
+                    active
+                      ? "border-[#5a58ab]/30 bg-[#f4f3ff] shadow-[0_10px_20px_rgba(90,88,171,0.08)]"
+                      : "border-slate-200 bg-slate-50/70 hover:border-[#5a58ab]/20 hover:bg-[#faf9ff]"
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm">{option.label}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CheckoutForm({
+  totalAmount,
+  currency,
+  clientSecret,
+  onCancel,
+}: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,7 +161,7 @@ function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: Checkou
       setErrorMessage(
         error.type === "card_error" || error.type === "validation_error"
           ? (error.message ?? "An error occurred.")
-          : "An unexpected error occurred."
+          : "An unexpected error occurred.",
       );
       setProcessing(false);
     }
@@ -119,8 +222,8 @@ export default function CustomJdMockInterviewPage() {
     candidatePhone: "",
     linkedInUrl: "",
     jobRole: "",
-    experienceLevel: "Mid-level",
-    difficultyLevel: "Medium",
+    experienceLevel: "",
+    difficultyLevel: "",
     jobDescription: "",
   });
 
@@ -129,10 +232,14 @@ export default function CustomJdMockInterviewPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploadingResume, setUploadingResume] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
-  const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(null);
+  const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
+    null,
+  );
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -144,7 +251,11 @@ export default function CustomJdMockInterviewPage() {
   useEffect(() => {
     const GEO_CACHE_KEY = "jb_currency_v3";
     const browserCurrency = detectCurrencyFromBrowser();
-    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as "USD" | "AED" | "INR" | null;
+    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as
+      | "USD"
+      | "AED"
+      | "INR"
+      | null;
     if (cached && ["AED", "INR"].includes(cached)) {
       setCurrency(cached);
       return;
@@ -178,7 +289,10 @@ export default function CustomJdMockInterviewPage() {
         }
       })
       .catch((err) => {
-        console.warn("[geo-detect] Local geo API lookup failed, falling back to ipapi.co:", err);
+        console.warn(
+          "[geo-detect] Local geo API lookup failed, falling back to ipapi.co:",
+          err,
+        );
         // Fallback to client-side ipapi.co (might be blocked by adblockers)
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
@@ -205,22 +319,77 @@ export default function CustomJdMockInterviewPage() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  useEffect(() => {
+    if (!resumeFile) {
+      setResumePreviewUrl(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(resumeFile);
+    setResumePreviewUrl(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [resumeFile]);
+
+  const experienceOptions: DropdownOption[] = [
+    {
+      value: "Junior",
+      label: "Junior (0-2 years)",
+    },
+    {
+      value: "Mid-level",
+      label: "Mid-level (2-5 years)",
+    },
+    {
+      value: "Senior",
+      label: "Senior (5+ years)",
+    },
+  ];
+
+  const difficultyOptions: DropdownOption[] = [
+    {
+      value: "Easy",
+      label: "Easy (Conversational)",
+    },
+    {
+      value: "Medium",
+      label: "Medium (Standard)",
+    },
+    {
+      value: "Hard",
+      label: "Hard (Deep dive)",
+    },
+  ];
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.candidateName.trim() || !form.candidateEmail.trim() || !form.jobRole.trim() || !form.jobDescription.trim()) {
-      toast.error("Validation Error", { description: "Please fill out all required fields." });
+    if (
+      !form.candidateName.trim() ||
+      !form.candidateEmail.trim() ||
+      !form.jobRole.trim() ||
+      !form.experienceLevel.trim() ||
+      !form.difficultyLevel.trim() ||
+      !form.jobDescription.trim()
+    ) {
+      toast.error("Validation Error", {
+        description:
+          "Please fill out your role, experience level, difficulty level, and job description before continuing.",
+      });
       return;
     }
 
     if (!resumeFile) {
       toast.error("Resume Required", {
-        description: "Please upload your resume to personalize your custom mock interview.",
+        description:
+          "Please upload your resume to personalize your custom mock interview.",
       });
       return;
     }
@@ -266,13 +435,15 @@ export default function CustomJdMockInterviewPage() {
           experienceLevel: form.experienceLevel,
           difficultyLevel: form.difficultyLevel,
           jobDescription: form.jobDescription,
+          resumeText,
         }),
       });
 
       const genData = await genRes.json();
       if (!genRes.ok || !genData.templateId) {
         toast.error("Interview Generation Failed", {
-          description: genData.error || "Could not design custom interview template.",
+          description:
+            genData.error || "Could not design custom interview template.",
         });
         setGenerating(false);
         return;
@@ -314,10 +485,15 @@ export default function CustomJdMockInterviewPage() {
       setClientSecret(payData.clientSecret);
       setPaymentStage("checkout");
       setTimeout(() => {
-        containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        containerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }, 50);
     } catch (err) {
-      toast.error("Connection Error", { description: "Check your internet connection and try again." });
+      toast.error("Connection Error", {
+        description: "Check your internet connection and try again.",
+      });
     } finally {
       setGenerating(false);
       setSubmitting(false);
@@ -329,7 +505,10 @@ export default function CustomJdMockInterviewPage() {
     setPaymentStage("form");
     setClientSecret(null);
     setTimeout(() => {
-      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      containerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 50);
   };
 
@@ -340,16 +519,16 @@ export default function CustomJdMockInterviewPage() {
       ref={containerRef}
     >
       <main className="mx-auto max-w-4xl px-4 md:px-6 pt-28 sm:pt-36 md:pt-24 pb-16 md:pb-24">
-
         {/* Heading */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1] text-[#252e3d] mb-4">
             Practice with your own Job Description
           </h1>
           <p className="text-sm sm:text-base text-gray-600 max-w-3xl leading-relaxed">
-            Enter your target job details and paste the Job Description. Our AI will analyze the JD
-            and build a completely customized, interactive voice mock interview matching the skills,
-            responsibilities, and tech stack of that specific role.
+            Enter your target job details and paste the Job Description. Our AI
+            will analyze the JD and build a completely customized, interactive
+            voice mock interview matching the skills, responsibilities, and tech
+            stack of that specific role.
           </p>
         </div>
 
@@ -362,7 +541,9 @@ export default function CustomJdMockInterviewPage() {
                 <IoSparkles className="w-6 h-6 text-[#5a58ab] absolute top-4 left-4 animate-pulse" />
               </div>
               <h3 className="text-lg font-bold text-[#252e3d] mb-2">
-                {uploadingResume ? "Analyzing Resume" : "Analyzing Job Description"}
+                {uploadingResume
+                  ? "Analyzing Resume"
+                  : "Analyzing Job Description"}
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 {uploadingResume
@@ -374,7 +555,7 @@ export default function CustomJdMockInterviewPage() {
         )}
 
         {/* Dynamic Form vs Checkout Layout */}
-        <div className="bg-white border border-slate-150 rounded-2xl shadow-3xs overflow-hidden transition-all duration-300">
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-3xs overflow-hidden transition-all duration-300">
           <div className="p-6 sm:p-8 md:p-10">
             {paymentStage === "form" ? (
               <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -449,7 +630,8 @@ export default function CustomJdMockInterviewPage() {
                 {/* Resume Upload */}
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
-                    Upload Resume (PDF, Word, or Text) <span className="text-[#5a58ab]">*</span>
+                    Upload Resume (PDF, Word, or Text){" "}
+                    <span className="text-[#5a58ab]">*</span>
                   </label>
                   <input
                     type="file"
@@ -461,8 +643,25 @@ export default function CustomJdMockInterviewPage() {
                     }}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-sm px-4 py-2.5 outline-none transition file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#5a58ab]/10 file:text-[#5a58ab] hover:file:bg-[#5a58ab]/20"
                   />
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setResumePreviewOpen(true)}
+                      disabled={!resumeFile}
+                      className="rounded-xl border border-[#5a58ab]/20 bg-[#f4f3ff] px-4 py-2 text-xs font-semibold text-[#5a58ab] transition hover:bg-[#ebe9ff] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Preview Resume
+                    </button>
+                    {resumeFile && (
+                      <p className="text-xs text-slate-500">
+                        {resumeFile.name}
+                      </p>
+                    )}
+                  </div>
                   {resumeError && (
-                    <p className="text-red-500 text-xs mt-1 font-semibold">{resumeError}</p>
+                    <p className="text-red-500 text-xs mt-1 font-semibold">
+                      {resumeError}
+                    </p>
                   )}
                 </div>
 
@@ -470,7 +669,8 @@ export default function CustomJdMockInterviewPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-100 pt-6">
                   <div className="sm:col-span-1">
                     <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
-                      Job Title / Target Role <span className="text-[#5a58ab]">*</span>
+                      Job Title / Target Role{" "}
+                      <span className="text-[#5a58ab]">*</span>
                     </label>
                     <input
                       type="text"
@@ -483,34 +683,32 @@ export default function CustomJdMockInterviewPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
-                      Experience Level
-                    </label>
-                    <select
-                      name="experienceLevel"
+                    <PremiumDropdown
+                      label="Experience Level"
                       value={form.experienceLevel}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3.5 outline-none transition"
-                    >
-                      <option value="Junior">Junior (0-2 years)</option>
-                      <option value="Mid-level">Mid-level (2-5 years)</option>
-                      <option value="Senior">Senior (5+ years)</option>
-                    </select>
+                      options={experienceOptions}
+                      placeholder="Select experience level"
+                      onChange={(nextValue) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          experienceLevel: nextValue,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
-                      Difficulty Level
-                    </label>
-                    <select
-                      name="difficultyLevel"
+                    <PremiumDropdown
+                      label="Difficulty Level"
                       value={form.difficultyLevel}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3.5 outline-none transition"
-                    >
-                      <option value="Easy">Easy (Conversational)</option>
-                      <option value="Medium">Medium (Standard recruiter)</option>
-                      <option value="Hard">Hard (Deep dive & code issues)</option>
-                    </select>
+                      options={difficultyOptions}
+                      placeholder="Select difficulty level"
+                      onChange={(nextValue) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          difficultyLevel: nextValue,
+                        }))
+                      }
+                    />
                   </div>
                 </div>
 
@@ -560,11 +758,14 @@ export default function CustomJdMockInterviewPage() {
                         Secure Payment
                       </h2>
                       <p className="text-xs text-slate-400 mt-1">
-                        Tailored AI Mock Interview for: <strong>{form.jobRole}</strong>
+                        Tailored AI Mock Interview for:{" "}
+                        <strong>{form.jobRole}</strong>
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Amount</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                        Amount
+                      </p>
                       <p className="text-xl font-bold text-[#5a58ab]">
                         {displayCurrency} {totalAmount.toLocaleString()}
                       </p>
@@ -601,7 +802,187 @@ export default function CustomJdMockInterviewPage() {
             )}
           </div>
         </div>
+
+        {resumePreviewOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm">
+            <div className="relative flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                    Resume Preview
+                  </p>
+                  <h3 className="text-lg font-semibold text-[#252e3d]">
+                    {resumeFile?.name || "Uploaded resume"}
+                  </h3>
+                </div>
+
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (resumePreviewUrl) {
+                        window.open(
+                          resumePreviewUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      }
+                    }}
+                    disabled={!resumePreviewUrl}
+                    className="rounded-full border border-[#5a58ab]/20 bg-[#f4f3ff] px-4 py-2 text-xs font-semibold text-[#5a58ab] transition hover:bg-[#ebe9ff] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Open in new tab
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResumePreviewOpen(false)}
+                    className="ml-3 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#252e3d]"
+                    aria-label="Close resume preview"
+                  >
+                    <IoCloseOutline className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 bg-slate-50 min-h-0">
+                {resumeFile?.type === "application/pdf" ? (
+                  <ResumePdfPreview file={resumeFile} />
+                ) : (
+                  <div className="flex h-full items-center justify-center p-8 text-center">
+                    <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <p className="text-base font-semibold text-[#252e3d]">
+                        Preview available for PDF files only
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        Please upload a PDF resume to preview it in the popup.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+    </div>
+  );
+}
+
+function ResumePdfPreview({ file }: { file: File }) {
+  const [pageImages, setPageImages] = useState<string[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadingTask: ReturnType<typeof pdfjs.getDocument> | null = null;
+
+    const loadAndRender = async () => {
+      setStatus("loading");
+      setPageImages([]);
+      setErrorMessage(null);
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        if (cancelled) return;
+
+        loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+        const pdfDocument = await loadingTask.promise;
+        if (cancelled || !pdfDocument) return;
+
+        const images: string[] = [];
+
+        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+          if (cancelled) return;
+
+          const page = await pdfDocument.getPage(pageNumber);
+          const viewport = page.getViewport({ scale: 1.5 });
+
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const context = canvas.getContext("2d");
+          if (!context) continue;
+
+          await page.render({
+            canvasContext: context,
+            canvas,
+            viewport,
+          }).promise;
+
+          if (cancelled) return;
+          images.push(canvas.toDataURL("image/png"));
+        }
+
+        if (!cancelled) {
+          setPageImages(images);
+          setStatus("ready");
+        }
+      } catch (error) {
+        console.error("Failed to load PDF preview:", error);
+        if (!cancelled) {
+          setErrorMessage(
+            "This PDF could not be rendered. It may be corrupted, password-protected, or in an unsupported format.",
+          );
+          setStatus("error");
+        }
+      }
+    };
+
+    void loadAndRender();
+
+    return () => {
+      cancelled = true;
+      loadingTask?.destroy();
+    };
+  }, [file]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-center">
+        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-base font-semibold text-[#252e3d]">
+            Preview is loading
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            If the file is large, give us a moment to render it.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-center">
+        <div className="max-w-md rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+          <p className="text-base font-semibold text-[#252e3d]">
+            Couldn&apos;t preview this file
+          </p>
+          <p className="mt-2 text-sm text-slate-500">{errorMessage}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto bg-slate-50 p-4">
+      <div className="mx-auto max-w-3xl space-y-4">
+        {pageImages.map((src, index) => (
+          <div
+            key={index}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          >
+            <div className="border-b border-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              Page {index + 1}
+            </div>
+            <div className="bg-white p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Page ${index + 1}`} className="w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

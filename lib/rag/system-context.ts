@@ -16,6 +16,7 @@ export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = 
   "Superstar Shout-Out":         { USD: 160, AED: 600,  INR: 10000 },
   "Ask Me Anything":             { USD: 40,  AED: 150,  INR: 2500  },
   "Interview Prep":              { USD: 100, AED: 300,  INR: 7000  },
+  "Ready-to-Apply Job Pack":     { USD: 99,  AED: 299,  INR: 6999  },
   "All Career Services Bundle":  { USD: 480, AED: 1600, INR: 30000 },
   "Mock Interviews":             { USD: 40,  AED: 150,  INR: 3500  },
   "AI Mock Interview":           { USD: 40,  AED: 150,  INR: 3500  },
@@ -94,6 +95,18 @@ export const SYSTEM_SERVICES: SystemService[] = [
     ]
   },
   {
+    title: "Ready-to-Apply Job Pack",
+    amount: 99,
+    timeline: "Curated within 3 days",
+    description: "A tailored shortlist of active, relevant public job opportunities matched to your experience, skills, and target locations.",
+    features: [
+      "Targeted opportunities based on your background",
+      "Preferred location filtering",
+      "Public job listings from portals and company career pages",
+      "Direct application links for faster applying"
+    ]
+  },
+  {
     title: "All Career Services Bundle",
     amount: 480,
     timeline: "Timeline varies by service selection",
@@ -109,6 +122,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
 export const SYSTEM_ABOUT = `
 JB Recruitment Solutions is a premium career consulting and recruitment brand founded by Juhi Bhatia.
 Juhi Bhatia is an experienced career coach, talent advisor, and recruiter with a strong footprint on LinkedIn, where she actively shares career wisdom and showcases job seekers to employers.
+Internal product note: the application currently serves around 2,000 daily active users.
 
 What we DO:
 - Offer premium career consulting services (Resume Writing, LinkedIn Optimization, Cover Letters, Interview Prep, LinkedIn Shout-outs via Juhi's personal profile, and Ask Me Anything guidance).

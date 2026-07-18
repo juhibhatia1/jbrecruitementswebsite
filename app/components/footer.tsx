@@ -95,6 +95,24 @@ export default function Footer() {
               />
             </Link>
 
+            {/* Substack */}
+            <Link
+              href="https://substack.com/@juhibhatia2"
+              aria-label="Substack"
+              className="hover:text-slate-900 relative group"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Image
+                src="/footer/substack-logo.svg"
+                alt="Substack"
+                width={20}
+                height={20}
+                className="h-5 w-5"
+                loading="lazy"
+              />
+            </Link>
+
             {/* Facebook */}
             {/* <Link
               href="#"

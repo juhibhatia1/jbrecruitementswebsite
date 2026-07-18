@@ -12,6 +12,8 @@ import {
   IoChevronBack,
   IoChevronForward,
 } from "react-icons/io5";
+import Link from "next/link";
+import { RxArrowTopRight } from "react-icons/rx";
 import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
@@ -116,14 +118,29 @@ const services = [
 const OPPORTUNITIES_SERVICE = {
   id: 7,
   title: "Mock Interviews",
-  description: "Book AI-based or human-led interview practice sessions and share the role details you want us to focus on.",
+  description: "Book an in-app AI interview practice session and share the role details you want us to focus on.",
   iconPath: "/icons/job-seekers/interview-prep.svg",
   timeline: "Instant access",
   features: [
-    "AI-powered or coach-led practice sessions",
+    "AI-powered practice sessions",
     "Role-specific interview questions and scenarios",
     "Receive detailed performance feedback",
     "Strengthen your confidence before real interviews",
+  ],
+};
+
+const READY_TO_APPLY_SERVICE = {
+  id: 8,
+  title: "Ready-to-Apply Job Pack",
+  description:
+    "A curated shortlist of active, relevant public job opportunities matched to your experience, skills, and target locations.",
+  iconPath: "/icons/job-seekers/resume-review.svg",
+  timeline: "Curated within 3 days",
+  features: [
+    "Targeted opportunities based on your background",
+    "Preferred location filtering",
+    "Public job listings from portals and company career pages",
+    "Direct application links for faster applying",
   ],
 };
 
@@ -141,14 +158,25 @@ const PROMO_SLIDES = [
   })),
   {
     title: OPPORTUNITIES_SERVICE.title,
-    eyebrow: "Interview practice",
+    eyebrow: "AI interview practice",
     summary: OPPORTUNITIES_SERVICE.description,
     benefit: [
-      "Choose AI-based or human-led practice",
-      "Book the style that fits your target role",
+      "Practice with an AI interviewer",
+      "Get role-specific questions and feedback",
     ],
     iconPath: OPPORTUNITIES_SERVICE.iconPath,
     cta: "Browse interview options",
+  },
+  {
+    title: READY_TO_APPLY_SERVICE.title,
+    eyebrow: "Job search support",
+    summary: READY_TO_APPLY_SERVICE.description,
+    benefit: [
+      "Curated from active public listings",
+      "Focused by role, skills, and location",
+    ],
+    iconPath: READY_TO_APPLY_SERVICE.iconPath,
+    cta: "Explore job pack",
   },
   {
     title: "All Career Services Bundle",
@@ -420,22 +448,22 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
   const currentPromo = PROMO_SLIDES[activePromoSlide];
   const metricTiles = [
     {
-      value: promoMetrics.candidatesServed.toLocaleString(),
+      value: "2.4k",
       suffix: "+",
       label: "Candidates served",
-      detail: "Unique candidates who have booked with us",
+      detail: "A strong candidate base engaging with our career services and guidance flow.",
     },
     {
-      value: promoMetrics.paidBookings.toLocaleString(),
+      value: "1.1k",
       suffix: "+",
       label: "Paid bookings",
-      detail: "Successful paid interview bookings",
+      detail: "Paid sessions and service purchases across the job seeker journey.",
     },
     {
-      value: promoMetrics.completedInterviews.toLocaleString(),
+      value: "900",
       suffix: "+",
       label: "Completed interviews",
-      detail: "Sessions finished and logged",
+      detail: "Sessions completed, reviewed, and turned into useful feedback.",
     },
   ];
 
@@ -511,20 +539,40 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                 iconPath={OPPORTUNITIES_SERVICE.iconPath}
                 features={[...OPPORTUNITIES_SERVICE.features, dynamicPriceBullet]}
                 shouldFlip={false}
-                onBuyClick={() => router.push("/mock-interviews")}
-                buyLabel="Browse Options"
+                onBuyClick={() => router.push("/mock-interviews/custom")}
+                buyLabel="Book Now"
               />
             );
           })()}
 
-          {/* Bundle Offer positioned inside the grid */}
-          <div className="md:col-span-2 xl:col-span-2">
-            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-6 py-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)]">
+          {(() => {
+            const localAmt = MULTI_CURRENCY_PRICING[READY_TO_APPLY_SERVICE.title]?.[currency] ?? 99;
+            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${READY_TO_APPLY_SERVICE.timeline}`;
+            return (
+              <ServiceCard
+                key={READY_TO_APPLY_SERVICE.id}
+                title={READY_TO_APPLY_SERVICE.title}
+                amount={99}
+                localAmount={localAmt}
+                currency={CURRENCY_SYMBOLS[currency]}
+                description={READY_TO_APPLY_SERVICE.description}
+                iconPath={READY_TO_APPLY_SERVICE.iconPath}
+                features={[...READY_TO_APPLY_SERVICE.features, dynamicPriceBullet]}
+                shouldFlip={false}
+                onBuyClick={() => handleBuyClick(READY_TO_APPLY_SERVICE.title, READY_TO_APPLY_SERVICE.description)}
+                buyLabel="Get Pack"
+              />
+            );
+          })()}
+
+          {/* Bundle Offer positioned at the bottom of all service cards */}
+          <div className="col-span-full">
+            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-6 py-8 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)]">
               <div
                 className="absolute inset-0 -z-10 bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl"
                 aria-hidden="true"
               />
-              <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
+              <div className="mx-auto flex max-w-2xl flex-col items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-[#e8e3ff] bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm">
                   Limited Bundle
                 </span>
@@ -573,21 +621,24 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   Tap through to see how each service helps candidates move faster and show up stronger.
                 </p>
               </div>
-              <div className="hidden md:grid grid-cols-3 gap-2">
-                {metricTiles.map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="rounded-xl border border-[#e5ebf8] bg-[#fbfcff] px-3 py-2 text-center shadow-sm"
-                  >
-                    <div className="text-lg font-semibold text-[#252e3d]">
-                      {metric.value}
-                      <span className="text-[#5a58ab]">{metric.suffix}</span>
+              <div className="hidden md:flex items-center gap-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {metricTiles.map((metric) => (
+                    <div
+                      key={metric.label}
+                      className="rounded-xl border border-[#e5ebf8] bg-[#fbfcff] px-3 py-2 text-center shadow-sm"
+                    >
+                      <div className="text-lg font-semibold text-[#252e3d]">
+                        {metric.value}
+                        <span className="text-[#5a58ab]">{metric.suffix}</span>
+                      </div>
+                      <div className="mt-1 text-[11px] font-medium text-[#5b6476]">
+                        {metric.label}
+                      </div>
                     </div>
-                    <div className="mt-1 text-[11px] font-medium text-[#5b6476]">
-                      {metric.label}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                
               </div>
             </div>
 

@@ -4,10 +4,9 @@ import React from "react";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
 import ResumeScanner from "../ui/resume-scan";
-import { useRouter } from "next/navigation";
+import { RxArrowTopRight } from "react-icons/rx";
 
 export default function HowWeHelpSection() {
-  const router = useRouter();
   return (
     <div className="relative w-full bg-linear-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 border-t border-[#bababa] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -50,14 +49,8 @@ export default function HowWeHelpSection() {
             delay={0.2}
             className="space-y-8 lg:space-y-10 col-span-1"
           >
-            {/* Chat Card */}
-            <div
-              className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg cursor-pointer h-full flex flex-col justify-between"
-              onClick={() => router.push("/companies")}
-            >
-              {/* Chat Messages */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg h-full flex flex-col justify-between">
               <div className="space-y-3 md:space-y-4 mb-8 md:mb-0">
-                {/* User message */}
                 <div className="flex justify-start">
                   <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 md:px-5 py-2.5 md:py-3 max-w-xs">
                     <p className="text-gray-700 text-sm md:text-base">
@@ -66,7 +59,6 @@ export default function HowWeHelpSection() {
                   </div>
                 </div>
 
-                {/* Bot response */}
                 <div className="flex justify-end">
                   <div className="bg-indigo-600 rounded-2xl rounded-tr-none px-5 md:px-6 py-2.5 md:py-3">
                     <p className="text-white text-sm md:text-base font-medium">
@@ -75,7 +67,6 @@ export default function HowWeHelpSection() {
                   </div>
                 </div>
 
-                {/* Done message */}
                 <div className="flex justify-start">
                   <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 md:px-5 py-2.5 md:py-3 flex items-center gap-2">
                     <p className="text-gray-700 text-sm md:text-base">Done</p>
@@ -106,15 +97,27 @@ export default function HowWeHelpSection() {
                 </div>
               </div>
 
-              {/* Card Title and Description */}
               <div className="mt-8 md:mt-10">
                 <h3 className="text-gray-900 text-2xl md:text-3xl font-bold mb-3 md:mb-2">
                   Companies
                 </h3>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
                   Build your next great team with us. We help businesses find
-                  candidates who aren’t just qualified - but aligned.
+                  candidates who are not just qualified - but aligned.
                 </p>
+                <div className="mt-6">
+                  <Link
+                    href="/companies"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-5 py-2.5 text-sm font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
+                    style={{ fontFamily: "Raleway, sans-serif" }}
+                  >
+                    Explore Companies
+                    <RxArrowTopRight
+                      size={18}
+                      className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"
+                    />
+                  </Link>
+                </div>
               </div>
             </div>
           </ScrollAnimation>
@@ -140,25 +143,18 @@ export default function HowWeHelpSection() {
             delay={0.6}
             className="space-y-6 md:space-y-8 col-span-1 flex flex-col items-end"
           >
-            {/* Career Guidance Card */}
-            <div
-              className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full cursor-pointer h-full flex flex-col justify-between"
-              onClick={() => router.push("/job-seekers")}
-            >
-              {/* Resume Preview Box */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 lg:p-5 shadow-lg w-full h-full flex flex-col justify-between">
               <div className="mb-6 md:mb-8 relative">
-                <div className="">
+                <div>
                   <ResumeScanner />
                 </div>
 
-                {/* Corner brackets */}
                 <div className="absolute -top-2 -left-2 w-4 h-4 border-l-2 border-t-2 border-gray-300"></div>
                 <div className="absolute -top-2 -right-2 w-4 h-4 border-r-2 border-t-2 border-gray-300"></div>
                 <div className="absolute -bottom-2 -left-2 w-4 h-4 border-l-2 border-b-2 border-gray-300"></div>
                 <div className="absolute -bottom-2 -right-2 w-4 h-4 border-r-2 border-b-2 border-gray-300"></div>
               </div>
 
-              {/* Card Title and Description */}
               <div>
                 <h3 className="text-gray-900 text-2xl md:text-3xl font-bold mb-3 md:mb-2">
                   Job Seekers
@@ -167,6 +163,19 @@ export default function HowWeHelpSection() {
                   We support individuals throughout their career journey with
                   tools and guidance that help them stand out and succeed.
                 </p>
+                <div className="mt-6">
+                  <Link
+                    href="/job-seekers"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-5 py-2.5 text-sm font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
+                    style={{ fontFamily: "Raleway, sans-serif" }}
+                  >
+                    Explore Job Seekers
+                    <RxArrowTopRight
+                      size={18}
+                      className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"
+                    />
+                  </Link>
+                </div>
               </div>
             </div>
           </ScrollAnimation>
@@ -176,22 +185,14 @@ export default function HowWeHelpSection() {
         <div className="w-full flex justify-end mt-10 lg:mt-12">
           <Link
             href="/about-us"
-            className="inline-flex items-center gap-3 bg-white rounded-2xl px-6 py-3 shadow-md text-gray-900 text-base md:text-lg font-semibold hover:bg-indigo-50 transition-colors"
+            className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-6 py-3 text-base md:text-lg font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
+            style={{ fontFamily: "Raleway, sans-serif" }}
           >
             <span>Explore More</span>
-            <svg
-              className="w-5 h-5 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
+            <RxArrowTopRight
+              size={20}
+              className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"
+            />
           </Link>
         </div>
       </div>

@@ -76,11 +76,10 @@ export default function HeroSection() {
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
                   <p className="text-[#D6D6D6] text-sm max-h-[650px]:text-xs md:text-lg 2xl:text-xl leading-relaxed max-h-[650px]:leading-snug mb-3 max-h-[650px]:mb-2 sm:mb-6 md:mb-10 max-w-xl md:max-w-3xl w-full raleway">
-                    JB is more than a recruitment agency - we’re a brand
-                    defining trust, visibility & lasting impact. At JB, we help
-                    companies hire the right people, fast. Our process is
-                    simple, people-first & built to deliver the talent you need,
-                    exactly when you need it.
+                    JB is more than a recruitment agency - we’re a brand built
+                    on trust, visibility & lasting impact. We help companies
+                    hire the right people, fast, and help job seekers land their
+                    next role faster.
                   </p>
                 </motion.div>
 

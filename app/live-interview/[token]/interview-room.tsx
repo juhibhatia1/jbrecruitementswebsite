@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
+import { IoMic, IoMicOff } from "react-icons/io5";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
 import ConfirmationModal from "@/app/components/ui/confirmation-modal";
@@ -96,6 +97,11 @@ export default function InterviewRoom({ token }: { token: string }) {
     });
     setMicLocked(!enabled);
   }, []);
+
+  const toggleMicCapture = useCallback(() => {
+    if (!streamRef.current) return;
+    setMicCaptureEnabled(micLocked);
+  }, [micLocked, setMicCaptureEnabled]);
 
 
 
@@ -899,6 +905,19 @@ export default function InterviewRoom({ token }: { token: string }) {
             </span>
           </div>
           <div className="mt-8">
+            <button
+              onClick={toggleMicCapture}
+              disabled={phase !== "live" || !streamRef.current}
+              className={`mb-3 flex w-full items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-xs font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                micLocked
+                  ? "border-slate-300 bg-white text-[#252e3d] hover:bg-slate-50"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              }`}
+              aria-pressed={!micLocked}
+            >
+              {micLocked ? <IoMicOff className="w-4 h-4" /> : <IoMic className="w-4 h-4" />}
+              {micLocked ? "Turn Mic On" : "Mute Mic"}
+            </button>
             <button
               onClick={() => setShowExitConfirm(true)}
               className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-100 transition cursor-pointer"

@@ -2,6 +2,21 @@ import { MetadataRoute } from "next";
 import { siteUrl } from "./lib/metadata";
 
 export default function robots(): MetadataRoute.Robots {
+  const aiBots = [
+    "GPTBot",
+    "ChatGPT-User",
+    "OAI-SearchBot",
+    "ClaudeBot",
+    "Claude-SearchBot",
+    "PerplexityBot",
+    "Google-Extended",
+    "CCBot",
+    "Meta-ExternalAgent",
+    "Meta-ExternalFetcher",
+    "bytespider",
+    "Bingbot",
+  ];
+
   return {
     rules: [
       {
@@ -9,16 +24,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: ["/api/", "/admin/"],
       },
-      {
-        userAgent: "Googlebot",
+      ...aiBots.map((userAgent) => ({
+        userAgent,
         allow: "/",
         disallow: ["/api/", "/admin/"],
-      },
-      {
-        userAgent: "Bingbot",
-        allow: "/",
-        disallow: ["/api/", "/admin/"],
-      },
+      })),
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
   };

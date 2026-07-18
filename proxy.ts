@@ -8,19 +8,16 @@ import type { NextRequest } from "next/server";
  * individual route can accidentally skip the auth check.
  *
  * Full JWT HMAC-SHA256 verification still happens inside each API route handler;
- * this middleware only checks for cookie presence + valid 3-part JWT shape so
- * it remains edge-compatible (no Node.js crypto needed here).
+ * this proxy only checks for cookie presence + valid 3-part JWT shape so it
+ * remains edge-compatible (no Node.js crypto needed here).
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── Guard all admin paths ──────────────────────────────────────────────────
+  // Guard all admin paths
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     // Always allow the login page and login API through unauthenticated
-    if (
-      pathname === "/admin/login" ||
-      pathname === "/api/admin/auth/login"
-    ) {
+    if (pathname === "/admin" || pathname === "/api/admin/auth/login") {
       return NextResponse.next();
     }
 
@@ -34,7 +31,7 @@ export function middleware(request: NextRequest) {
           { status: 401 },
         );
       }
-      const loginUrl = new URL("/admin/login", request.url);
+      const loginUrl = new URL("/admin", request.url);
       return NextResponse.redirect(loginUrl);
     }
   }

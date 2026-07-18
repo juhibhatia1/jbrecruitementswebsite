@@ -703,7 +703,7 @@ export default function KnowledgeDashboard() {
                         : "bg-slate-50 text-slate-700 border-slate-200/60"
                     }`}>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider mb-1 opacity-60">
-                        {isUser ? "Visitor" : "Llama-3 (Groq)"} â€¢ {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isUser ? "Visitor" : "OpenAI Assistant"} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       <p className="text-sm whitespace-pre-wrap leading-relaxed leading-normal">{msg.content}</p>
                       
@@ -745,3 +745,4 @@ export default function KnowledgeDashboard() {
     </div>
   );
 }
+

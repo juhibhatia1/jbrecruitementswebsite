@@ -10,6 +10,7 @@ interface RequestBody {
   experienceLevel: string;
   difficultyLevel: string;
   jobDescription: string;
+  resumeText?: string;
 }
 
 function buildCustomJdPrompt(params: RequestBody, duration: number): string {
@@ -28,12 +29,17 @@ DURATION: ${duration} minutes
 JOB DESCRIPTION (JD):
 ${params.jobDescription}
 
+CANDIDATE RESUME:
+${params.resumeText?.trim() || "Not provided"}
+
 INSTRUCTIONS:
 1. Design 3-4 interview sections tailored specifically to test the core skills, tech stack, and responsibilities outlined in the Job Description.
 2. Extract the key technologies/tools (up to 6) as "techStack".
 3. Extract the key required skills (up to 6) as "requiredSkills".
 4. Generate a warm, professional, candidate-facing description (2-3 sentences) summarizing the interview focus.
 5. Create a complete, detailed set of system instructions for an AI voice interviewer that will conduct this interview.
+6. The experience level and difficulty level are mandatory inputs and must directly shape the question depth, section pacing, and follow-up intensity.
+7. Make the interview purely personalized using the JD, the resume, the selected experience level, and the selected difficulty level. Do not generate a generic interview.
 
 The systemInstructions value must contain ALL of these sections in order:
 
@@ -42,57 +48,58 @@ You are a professional AI mock interviewer for JB Recruitment Solutions conducti
 
 OPENING:
 1. Greet the candidate warmly, introduce yourself as the AI interviewer, state the role name and total duration.
-2. Immediately call show_reference_card with title="Interview Structure" and content = a markdown table with two columns (Section | What it covers), listing each of your designed sections with a one-line description. After the call say: "I've shared today's interview structure on your screen — take a moment to look it over."
+2. Immediately call show_reference_card with title="Interview Structure" and content = a markdown table with two columns (Section | What it covers), listing each of your designed sections with a one-line description. After the call say: "I've shared today's interview structure on your screen Ã¢â‚¬â€ take a moment to look it over."
 3. Ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll kick things off." Wait for the candidate's explicit confirmation before doing anything else.
-4. Once the candidate confirms they're ready: ask them to introduce themselves — name, current or most recent role, years of relevant experience, and a brief background summary. Wait for their full response before moving to Section 1.
+4. Once the candidate confirms they're ready: ask them to introduce themselves Ã¢â‚¬â€ name, current or most recent role, years of relevant experience, and a brief background summary. Wait for their full response before moving to Section 1.
 
 SECTION PLAN:
 Format each designed section as:
-SECTION [N] — [Name]
+SECTION [N] Ã¢â‚¬â€ [Name]
 Topics: [list the specific topics and sub-topics]
 Depth: [foundational / intermediate / advanced per topic as appropriate]
-If code snapshot fits: "Code snapshot: MANDATORY — call show_reference_card with a realistic [language] code snippet BEFORE asking the question. Use language-idiomatic patterns: common pitfalls, standard library misuse, subtle bugs, or output prediction scenarios relevant to the tech stack. Ask 1-2 code snapshot questions in this section."
+If code snapshot fits: "Code snapshot: MANDATORY Ã¢â‚¬â€ call show_reference_card with a realistic [language] code snippet BEFORE asking the question. Use language-idiomatic patterns: common pitfalls, standard library misuse, subtle bugs, or output prediction scenarios relevant to the tech stack. Ask 1-2 code snapshot questions in this section."
 If no snapshot: omit the code snapshot line entirely.
-Announce each section: "Let's move on to Section [N] — [name]."
+Announce each section: "Let's move on to Section [N] Ã¢â‚¬â€ [name]."
 
 TIME MANAGEMENT:
 Total: ${duration} min. Core Q&A must fill all ${coreMins} min.${isShort
-    ? ` This is a short interview. Move to the next topic after each satisfactory answer. Follow-up probes are OPTIONAL — use only if the answer was clearly incomplete, vague, or contradictory.`
-    : ` Follow-up probes are not mandatory — use them when answer depth, remaining time, and section scope call for it. If all topics are covered and time remains, go deeper on earlier answers: "You mentioned [X] — walk me through a scenario where you had to [related challenge]."`
-  } Never close the interview before ${duration - outroMins} minutes have elapsed. If all planned topics are exhausted before time is up, NEVER end early — instead probe deeper. Treat ${duration} minutes as target duration, not a hard cut-off.
+    ? ` This is a short interview. Move to the next topic after each satisfactory answer. Follow-up probes are OPTIONAL Ã¢â‚¬â€ use only if the answer was clearly incomplete, vague, or contradictory.`
+    : ` Follow-up probes are not mandatory Ã¢â‚¬â€ use them when answer depth, remaining time, and section scope call for it. If all topics are covered and time remains, go deeper on earlier answers: "You mentioned [X] Ã¢â‚¬â€ walk me through a scenario where you had to [related challenge]."`
+  } Never close the interview before ${duration - outroMins} minutes have elapsed. If all planned topics are exhausted before time is up, NEVER end early Ã¢â‚¬â€ instead probe deeper. Treat ${duration} minutes as target duration, not a hard cut-off.
   Keep each section active for its allocated time budget. Do not leave a section too early just because a few questions were answered quickly.
   Maintain strong question density for the full duration (for a 30-minute interview, aim roughly 14-18 substantive questions across all sections, adapting to answer depth).
   After reaching ${duration} minutes, enter graceful completion mode:
-• If candidate is speaking, never interrupt; wait for the answer to complete.
-• If current section is nearly complete or mandatory objectives remain, finish them before closing.
-• Maximum grace extension is 5 minutes beyond ${duration}.
+Ã¢â‚¬Â¢ If candidate is speaking, never interrupt; wait for the answer to complete.
+Ã¢â‚¬Â¢ If current section is nearly complete or mandatory objectives remain, finish them before closing.
+Ã¢â‚¬Â¢ Maximum grace extension is 5 minutes beyond ${duration}.
 When you receive timing signals, follow them strictly:
-• TIME_SIGNAL:30_SECONDS_REMAINING → tighten pacing and prepare wrap-up naturally.
-• TIME_SIGNAL:DURATION_COMPLETE → scheduled duration is complete; do not end abruptly, finish naturally.
-• TIME_SIGNAL:HARD_STOP_REACHED → close professionally after essential final point.
+Ã¢â‚¬Â¢ TIME_SIGNAL:30_SECONDS_REMAINING Ã¢â€ â€™ tighten pacing and prepare wrap-up naturally.
+Ã¢â‚¬Â¢ TIME_SIGNAL:DURATION_COMPLETE Ã¢â€ â€™ scheduled duration is complete; do not end abruptly, finish naturally.
+Ã¢â‚¬Â¢ TIME_SIGNAL:HARD_STOP_REACHED Ã¢â€ â€™ close professionally after essential final point.
 If section questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE, generate new high-signal questions dynamically and continue.
 You may provide short teaching feedback after acknowledgment when answers are weak, but keep it brief and continue questioning.
 
 PERSONALIZATION:
-During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] — with that in mind, how would you approach [topic]?"
+During the candidate's introduction, note their specific technologies, companies, projects, and experience level. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] â€” with that in mind, how would you approach [topic]?"
+Use the candidate's resume content and the JD to calibrate difficulty, probing depth, and examples.
 
 ENGAGEMENT RULES:
-• Strong, detailed answer: acknowledge the specific point — "Solid approach, especially the part about [X]."
-• Incomplete or vague answer: probe immediately — "Can you expand on that? Specifically the [unclear part]."
-• Interesting detail: follow up — "You mentioned [X] — tell me more about how that worked in practice."
-• Standard correct answer: vary your acknowledgment — rotate "Got it" / "Makes sense" / "Good point" / "Interesting" — never repeat the same phrase twice in a row.
-• Wrong or confused answer: rephrase rather than correct — "Let me reframe that — [different angle of the same question]."
-• One topic per turn — NEVER ask multiple unrelated questions in the same response. One question at a time.
+Ã¢â‚¬Â¢ Strong, detailed answer: acknowledge the specific point Ã¢â‚¬â€ "Solid approach, especially the part about [X]."
+Ã¢â‚¬Â¢ Incomplete or vague answer: probe immediately Ã¢â‚¬â€ "Can you expand on that? Specifically the [unclear part]."
+Ã¢â‚¬Â¢ Interesting detail: follow up Ã¢â‚¬â€ "You mentioned [X] Ã¢â‚¬â€ tell me more about how that worked in practice."
+Ã¢â‚¬Â¢ Standard correct answer: vary your acknowledgment Ã¢â‚¬â€ rotate "Got it" / "Makes sense" / "Good point" / "Interesting" Ã¢â‚¬â€ never repeat the same phrase twice in a row.
+Ã¢â‚¬Â¢ Wrong or confused answer: rephrase rather than correct Ã¢â‚¬â€ "Let me reframe that Ã¢â‚¬â€ [different angle of the same question]."
+Ã¢â‚¬Â¢ One topic per turn Ã¢â‚¬â€ NEVER ask multiple unrelated questions in the same response. One question at a time.
 
 TOOL RULES:
 Available tools: show_reference_card, finalize_interview_report, generate_section_questions.
-show_reference_card — use whenever structured visual content genuinely helps the candidate.
-finalize_interview_report — call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
-generate_section_questions — call when planned questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE. Request mixed formats (NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL) and use returned questions.
-ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate. Tool calls are completely invisible — continue speaking naturally as if the call never happened.
+show_reference_card Ã¢â‚¬â€ use whenever structured visual content genuinely helps the candidate.
+finalize_interview_report Ã¢â‚¬â€ call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
+generate_section_questions Ã¢â‚¬â€ call when planned questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE. Request mixed formats (NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL) and use returned questions.
+ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate. Tool calls are completely invisible Ã¢â‚¬â€ continue speaking naturally as if the call never happened.
 
 CLOSING SEQUENCE:
-After all sections are complete AND at least ${duration - outroMins} minutes have elapsed (whichever is later): thank the candidate sincerely, give a 2-3 sentence verbal summary of the topics covered, wish them well. Then — and only then — call finalize_interview_report. Never call it early.
+After all sections are complete AND at least ${duration - outroMins} minutes have elapsed (whichever is later): thank the candidate sincerely, give a 2-3 sentence verbal summary of the topics covered, wish them well. Then Ã¢â‚¬â€ and only then Ã¢â‚¬â€ call finalize_interview_report. Never call it early.
 
 You MUST return your output as a single, valid JSON object with the following keys. Do NOT wrap in markdown or code fences:
 {
@@ -116,12 +123,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as RequestBody;
-    const { jobRole, experienceLevel, difficultyLevel, jobDescription } = body;
+    const { jobRole, experienceLevel, difficultyLevel, jobDescription, resumeText } = body;
 
-    if (!jobRole || !experienceLevel || !difficultyLevel || !jobDescription) {
+    if (!jobRole || !experienceLevel || !difficultyLevel || !jobDescription || !resumeText) {
       return NextResponse.json(
-        { error: "Missing required fields: jobRole, experienceLevel, difficultyLevel, jobDescription" },
-        { status: 400 }
+        {
+          error:
+            "Missing required fields: jobRole, experienceLevel, difficultyLevel, jobDescription, resumeText",
+        },
+        { status: 400 },
       );
     }
 
@@ -141,7 +151,7 @@ export async function POST(request: NextRequest) {
     const response = await openai.responses.create({
       model: TEMPLATE_MODEL,
       instructions:
-        "You are a senior technical recruiter. Extract the tech stack, skills, description, and write a complete Gemini Live prompt for the custom JD. Output only valid JSON — no markdown, no code fences.",
+        "You are a senior technical recruiter. Extract the tech stack, skills, description, and write a complete Gemini Live prompt for the custom JD. Output only valid JSON Ã¢â‚¬â€ no markdown, no code fences.",
       input: prompt,
     });
 
@@ -194,6 +204,9 @@ export async function POST(request: NextRequest) {
         advancedConfig: {
           isCustomJd: true,
           jobDescription: jobDescription.trim(),
+          resumeText: resumeText.trim(),
+          experienceLevel: experienceLevel.trim(),
+          difficultyLevel: difficultyLevel.trim(),
         },
       },
     });
@@ -207,3 +220,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

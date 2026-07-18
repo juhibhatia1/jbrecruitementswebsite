@@ -1,13 +1,11 @@
 export default function StructuredData() {
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "RecruitmentBrand",
+    "@type": "Organization",
     "@id": "https://jbrecruitments.com/#organization",
     name: "JB Recruitments",
     alternateName: "JB Solutions",
     url: "https://jbrecruitments.com",
-    // Uncomment after saving logo.png to public folder:
-    // logo: 'https://jbrecruitments.com/logo.png',
     image: "https://jbrecruitments.com/logo.avif",
     description: "A recruitment brand by Juhi Bhatia",
     slogan: "Connecting Talent with Opportunity",
@@ -25,30 +23,52 @@ export default function StructuredData() {
       "Executive Search",
       "Recruitment Services",
       "Workforce Solutions",
-      "Staffing Services",
       "Career Consulting",
     ],
     areaServed: {
       "@type": "Country",
-      name: "United States", // Update if Global or specific region
-    },
-    address: {
-      "@type": "PostalAddress",
-      addressCountry: "US", // Placeholder, update if real address is known or remove if fully remote
+      name: "Global",
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+1-555-123-4567",
       contactType: "customer service",
       email: "contact@jbrecruitments.com",
       availableLanguage: "English",
     },
     sameAs: [
       "https://www.linkedin.com/in/juhiibhatia/",
-      "https://www.facebook.com",
-      "https://twitter.com",
       "https://www.instagram.com/juhibhatia_globalrecruiter/",
     ],
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "JB Recruitment Services",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Resume Review & Rewriting",
+            url: "https://jbrecruitments.com/job-seekers",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "LinkedIn Optimization",
+            url: "https://jbrecruitments.com/job-seekers",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Mock Interviews",
+            url: "https://jbrecruitments.com/mock-interviews",
+          },
+        },
+      ],
+    },
   };
 
   const websiteSchema = {
@@ -60,34 +80,30 @@ export default function StructuredData() {
     publisher: {
       "@id": "https://jbrecruitments.com/#organization",
     },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://jbrecruitments.com/search?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
   };
 
-  const breadcrumbSchema = {
+  const servicePageSchema = {
     "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
+    "@type": "ItemList",
+    name: "JB Recruitment Solutions Core Services",
     itemListElement: [
       {
         "@type": "ListItem",
         position: 1,
-        name: "Home",
-        item: "https://jbrecruitments.com",
+        name: "Job Seekers",
+        item: "https://jbrecruitments.com/job-seekers",
       },
       {
         "@type": "ListItem",
         position: 2,
-        name: "Contact",
-        item: "https://jbrecruitments.com/contact-us",
+        name: "Companies",
+        item: "https://jbrecruitments.com/companies",
       },
       {
         "@type": "ListItem",
         position: 3,
-        name: "Job Seekers",
-        item: "https://jbrecruitments.com/job-seekers",
+        name: "Mock Interviews",
+        item: "https://jbrecruitments.com/mock-interviews",
       },
     ],
   };
@@ -104,6 +120,12 @@ export default function StructuredData() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(websiteSchema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(servicePageSchema),
         }}
       />
     </>

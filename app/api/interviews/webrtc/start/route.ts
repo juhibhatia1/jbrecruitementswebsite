@@ -17,6 +17,7 @@ type StartRequestBody = {
 function buildSessionInstructions(payload: {
   role: string;
   experienceLevel: string;
+  difficultyLevel?: string;
   techStack: string[];
   durationMinutes: number;
   baseInstructions: string;
@@ -24,6 +25,7 @@ function buildSessionInstructions(payload: {
   transcript?: Array<{ role: "candidate" | "interviewer"; text: string }>;
   isResuming?: boolean;
   resumeText?: string;
+  jobDescription?: string;
 }) {
   return buildWebRtcSystemInstructions(payload);
 }
@@ -142,6 +144,9 @@ export async function POST(request: NextRequest) {
           difficultyLevel: application.template.difficultyLevel,
           baseInstructions,
           resumeText: application.resumeText || undefined,
+          jobDescription:
+            ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
+            undefined,
         });
       } catch (error) {
         console.warn("Blueprint generation failed, continuing without blueprint:", error);
@@ -151,6 +156,7 @@ export async function POST(request: NextRequest) {
     const systemInstructions = buildSessionInstructions({
       role: application.template.jobRole,
       experienceLevel: application.template.experienceLevel,
+      difficultyLevel: application.template.difficultyLevel,
       techStack: application.template.techStack,
       durationMinutes: application.template.durationMinutes,
       baseInstructions,
@@ -158,6 +164,9 @@ export async function POST(request: NextRequest) {
       transcript: previousTranscript.length > 0 ? previousTranscript : undefined,
       isResuming,
       resumeText: application.resumeText || undefined,
+      jobDescription:
+        ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
+        undefined,
     });
 
     const openingPrompt = buildWebRtcOpeningPrompt({

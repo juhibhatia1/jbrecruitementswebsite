@@ -88,6 +88,60 @@ export async function searchSimilarChunks(
     });
   } catch (error) {
     console.error("Vector similarity search error:", error);
-    return [];
+    return searchSimilarChunksLexical(query, topK);
   }
+}
+
+async function searchSimilarChunksLexical(query: string, topK: number): Promise<SearchResult[]> {
+  const terms = Array.from(
+    new Set((query.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((term) => term.length > 2))
+  ).slice(0, 8);
+
+  const candidateRows = await prisma.$queryRawUnsafe<
+    Array<{ content: string; documentTitle: string }>
+  >(
+    terms.length > 0
+      ? `SELECT
+           c."content",
+           d."title" as "documentTitle"
+         FROM "KnowledgeChunk" c
+         JOIN "KnowledgeDocument" d ON c."documentId" = d."id"
+         WHERE d."isActive" = true
+           AND (
+             ${terms
+               .map(
+                 (_, index) =>
+                   `LOWER(c."content") LIKE $${index + 1} OR LOWER(d."title") LIKE $${index + 1}`,
+               )
+               .join(" OR ")}
+           )
+         LIMIT 50`
+      : `SELECT
+           c."content",
+           d."title" as "documentTitle"
+         FROM "KnowledgeChunk" c
+         JOIN "KnowledgeDocument" d ON c."documentId" = d."id"
+         WHERE d."isActive" = true
+         ORDER BY c."createdAt" DESC
+         LIMIT 50`,
+    ...(terms.length > 0 ? terms.map((term) => `%${term}%`) : [])
+  );
+
+  const scoredRows = candidateRows
+    .map((row) => {
+      const haystack = `${row.documentTitle} ${row.content}`.toLowerCase();
+      const score = terms.length
+        ? terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0) / terms.length
+        : 0.1;
+
+      return {
+        content: row.content,
+        documentTitle: row.documentTitle || "Untitled Document",
+        score,
+      };
+    })
+    .sort((left, right) => right.score - left.score || right.content.length - left.content.length)
+    .slice(0, topK);
+
+  return scoredRows;
 }

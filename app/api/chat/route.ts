@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         : await detectCurrencyFromRequest(request, ip);
 
     // Call streaming helper
-    const { stream: groqStream, history } = await handleChatMessageStream(sessionId, message, {
+    const { stream: openAIStream, history } = await handleChatMessageStream(sessionId, message, {
       ipAddress: ip,
       userAgent,
       currency,
@@ -55,13 +55,13 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     let accumulatedContent = "";
 
-    const responseStream = new ReadableStream({
+    const sseStream = new ReadableStream({
       start(controller) {
         // Run as non-blocking async IIFE in background to stream chunks immediately
         (async () => {
           try {
-            for await (const chunk of groqStream) {
-              const text = chunk.choices[0]?.delta?.content || "";
+            for await (const chunk of openAIStream as any) {
+              const text = chunk.type === "response.output_text.delta" ? chunk.delta || "" : "";
               if (text) {
                 accumulatedContent += text;
                 // Format as Server-Sent Event
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return new Response(responseStream, {
+    return new Response(sseStream, {
       headers: {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
