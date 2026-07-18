@@ -1,10 +1,39 @@
 import JobSeekersForm from "../components/job-seekers/job-seekers-form";
 import ServicesSection from "../components/job-seekers/services-section";
 import { jobSeekersMetadata } from "../lib/metadata";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = jobSeekersMetadata;
+export const dynamic = "force-dynamic";
 
-export default function JobSeekersPage() {
+export default async function JobSeekersPage() {
+  const [candidateCount, paidBookingCount, completedInterviewCount] = await Promise.all([
+    prisma.purchase.findMany({
+      select: {
+        candidateEmail: true,
+      },
+      where: {
+        serviceName: { contains: "Mock Interview" },
+      },
+    }).then((purchases) => new Set(purchases.map((purchase) => purchase.candidateEmail.toLowerCase())).size),
+    prisma.purchase.count({
+      where: {
+        serviceName: { contains: "Mock Interview" },
+        status: "COMPLETED",
+      },
+    }),
+    prisma.candidateApplication.count({
+      where: {
+        interviewPreference: { in: ["AI", "MANUAL"] },
+        OR: [
+          { status: "INTERVIEW_COMPLETED" },
+          { session: { status: "COMPLETED" } },
+          { session: { completedAt: { not: null } } },
+        ],
+      },
+    }),
+  ]);
+
   return (
     <div
       className="min-h-screen bg-[#F9F9FB] text-[#252E3D]"
@@ -138,7 +167,13 @@ export default function JobSeekersPage() {
             </div>
           </div>
         </div>
-        <ServicesSection />
+        <ServicesSection
+          promoMetrics={{
+            candidatesServed: candidateCount,
+            paidBookings: paidBookingCount,
+            completedInterviews: completedInterviewCount,
+          }}
+        />
       </main>
     </div>
   );
