@@ -13,7 +13,7 @@ function getOpenAIClient() {
   return openai;
 }
 
-const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-5.6-terra";
+const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -136,7 +136,6 @@ export async function handleChatMessage(
       model: DEFAULT_MODEL,
       instructions: systemPrompt,
       input,
-      temperature: 0.5,
       store: true,
     });
 
@@ -207,7 +206,6 @@ export async function handleChatMessageStream(
     model: DEFAULT_MODEL,
     instructions: systemPrompt,
     input,
-    temperature: 0.5,
     store: true,
   });
 
