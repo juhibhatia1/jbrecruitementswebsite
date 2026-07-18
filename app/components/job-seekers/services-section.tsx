@@ -1,10 +1,17 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ServiceCard from "./service-card";
 import PaymentModal from "./payment-modal";
-import { IoCart, IoSparkles, IoClose, IoArrowForward } from "react-icons/io5";
+import {
+  IoCart,
+  IoSparkles,
+  IoClose,
+  IoArrowForward,
+  IoChevronBack,
+  IoChevronForward,
+} from "react-icons/io5";
 import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
@@ -95,7 +102,7 @@ const services = [
     id: 6,
     title: "Interview Prep",
     description:
-      "Direct, practical support to help you crack your interviews with confidence.",
+      "Direct, practical support to help you prepare for interviews with confidence while our full mock-template library is being built.",
     iconPath: "/icons/job-seekers/interview-prep.svg",
     timeline: "Delivered via email",
     features: [
@@ -109,7 +116,7 @@ const services = [
 const OPPORTUNITIES_SERVICE = {
   id: 7,
   title: "Mock Interviews",
-  description: "Browse available mock interview practice sessions and book your slot to sharpen your interview skills.",
+  description: "Book AI-based or human-led interview practice sessions and share the role details you want us to focus on.",
   iconPath: "/icons/job-seekers/interview-prep.svg",
   timeline: "Instant access",
   features: [
@@ -123,13 +130,54 @@ const OPPORTUNITIES_SERVICE = {
 // All individual service names (excludes bundle)
 const ALL_SERVICE_TITLES = services.map((s) => s.title);
 
-export default function ServicesSection() {
+const PROMO_SLIDES = [
+  ...services.map((service) => ({
+    title: service.title,
+    eyebrow: "Featured service",
+    summary: service.description,
+    benefit: service.features.slice(0, 2),
+    iconPath: service.iconPath,
+    cta: "Explore this service",
+  })),
+  {
+    title: OPPORTUNITIES_SERVICE.title,
+    eyebrow: "Interview practice",
+    summary: OPPORTUNITIES_SERVICE.description,
+    benefit: [
+      "Choose AI-based or human-led practice",
+      "Book the style that fits your target role",
+    ],
+    iconPath: OPPORTUNITIES_SERVICE.iconPath,
+    cta: "Browse interview options",
+  },
+  {
+    title: "All Career Services Bundle",
+    eyebrow: "Best value",
+    summary:
+      "Get the full support stack in one place: resumes, LinkedIn, outreach, guidance, and interviews.",
+    benefit: [
+      "Lower total cost than buying separately",
+      "Ideal when you want end-to-end support",
+    ],
+    iconPath: "/icons/job-seekers/resume-review.svg",
+    cta: "Get bundle offer",
+  },
+];
+
+type PromoMetrics = {
+  candidatesServed: number;
+  paidBookings: number;
+  completedInterviews: number;
+};
+
+export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoMetrics }) {
   const router = useRouter();
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
+  const [activePromoSlide, setActivePromoSlide] = useState(0);
 
-  // ── Currency state ────────────────────────────────────────────────────────
+  //  Currency state 
   const [currency, setCurrency] = useState<Currency>("USD");
 
   // Multi-select cart state
@@ -207,7 +255,7 @@ export default function ServicesSection() {
             let detected: Currency = "USD";
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
-            console.log(`[geo] Detected country: ${code} → currency: ${detected}`);
+            console.log(`[geo] Detected country: ${code} â†’ currency: ${detected}`);
             setCurrency(detected);
             sessionStorage.setItem(GEO_CACHE_KEY, detected);
           })
@@ -354,6 +402,43 @@ export default function ServicesSection() {
     }).catch((e) => console.error("Telemetry failed:", e));
   }, []);
 
+  useEffect(() => {
+    if (PROMO_SLIDES.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setActivePromoSlide((current) => (current + 1) % PROMO_SLIDES.length);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const goToPromoSlide = (nextIndex: number) => {
+    const boundedIndex = (nextIndex + PROMO_SLIDES.length) % PROMO_SLIDES.length;
+    setActivePromoSlide(boundedIndex);
+  };
+
+  const currentPromo = PROMO_SLIDES[activePromoSlide];
+  const metricTiles = [
+    {
+      value: promoMetrics.candidatesServed.toLocaleString(),
+      suffix: "+",
+      label: "Candidates served",
+      detail: "Unique candidates who have booked with us",
+    },
+    {
+      value: promoMetrics.paidBookings.toLocaleString(),
+      suffix: "+",
+      label: "Paid bookings",
+      detail: "Successful paid interview bookings",
+    },
+    {
+      value: promoMetrics.completedInterviews.toLocaleString(),
+      suffix: "+",
+      label: "Completed interviews",
+      detail: "Sessions finished and logged",
+    },
+  ];
+
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
@@ -375,7 +460,7 @@ export default function ServicesSection() {
           </h2>
         </div>
 
-        {/* ── Info message ─────────────────────────────────────────────────── */}
+        {/*  Info message  */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-2 md:-mt-6">
           <p className="text-sm text-gray-400">
             Select multiple services and pay in one go, or click{" "}
@@ -384,7 +469,7 @@ export default function ServicesSection() {
         </div>
 
         {/* Grid Layout */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {services.map((s, index) => {
             const localAmt = getLocalAmount(s.title);
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`;
@@ -411,7 +496,7 @@ export default function ServicesSection() {
             );
           })}
 
-          {/* Opportunities card — navigates to /opportunities */}
+          {/* Opportunities card  navigates to /opportunities */}
           {(() => {
             const localAmt = MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ?? 40;
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`;
@@ -427,53 +512,203 @@ export default function ServicesSection() {
                 features={[...OPPORTUNITIES_SERVICE.features, dynamicPriceBullet]}
                 shouldFlip={false}
                 onBuyClick={() => router.push("/mock-interviews")}
-                buyLabel="Browse Sessions"
+                buyLabel="Browse Options"
               />
             );
           })()}
-        </div>
 
-        {/* Bundle Offer Below Cards */}
-        <div className="mt-12 flex justify-center">
-          <div className="relative isolate inline-flex flex-col items-center gap-3 rounded-3xl border border-[#e6eefc] px-6 sm:px-8 py-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] text-center max-w-lg">
-            <div
-              className="absolute inset-0 -z-10 blur-2xl bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20"
-              aria-hidden="true"
-            ></div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm border border-[#e8e3ff]">
-              Limited Bundle
-            </span>
-            <h2 className="text-lg sm:text-2xl font-bold text-[#252e3d] leading-tight">
-              All services bundled together at a special price of{" "}
-              {CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()}.
-            </h2>
-            <span className="text-sm sm:text-md text-[#4b5563]">
-              Save{" "}
-              <span className="font-semibold text-[#5a58ab]">
-                {CURRENCY_SYMBOLS[currency]} {(INDIVIDUAL_TOTAL - BUNDLE_PRICE).toLocaleString()}
-              </span>{" "}
-              vs buying all separately.
-            </span>
-            <button
-              onClick={() =>
-                handleBuyClick(
-                  "All Career Services Bundle",
-                  "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
-                )
-              }
-              className="mt-2 bg-[#5a58ab] hover:bg-[#4a489b] text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md active:scale-[0.98]"
-            >
-              Get Bundle Offer
-            </button>
+          {/* Bundle Offer positioned inside the grid */}
+          <div className="md:col-span-2 xl:col-span-2">
+            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-6 py-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)]">
+              <div
+                className="absolute inset-0 -z-10 bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl"
+                aria-hidden="true"
+              />
+              <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#e8e3ff] bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm">
+                  Limited Bundle
+                </span>
+                <h2 className="text-lg font-bold leading-tight text-[#252e3d] sm:text-2xl">
+                  All services bundled together at a special price of{" "}
+                  {CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()}.
+                </h2>
+                <p className="text-sm leading-relaxed text-[#4b5563]">
+                  Perfect for candidates who want a complete career support package in one go — from documents and positioning to visibility and interview readiness.
+                </p>
+                <span className="text-sm text-[#4b5563]">
+                  Save{" "}
+                  <span className="font-semibold text-[#5a58ab]">
+                    {CURRENCY_SYMBOLS[currency]} {(INDIVIDUAL_TOTAL - BUNDLE_PRICE).toLocaleString()}
+                  </span>{" "}
+                  vs buying all separately.
+                </span>
+                <button
+                  onClick={() =>
+                    handleBuyClick(
+                      "All Career Services Bundle",
+                      "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
+                    )
+                  }
+                  className="mt-2 rounded-xl bg-[#5a58ab] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#4a489b] hover:shadow-md active:scale-[0.98] cursor-pointer"
+                >
+                  Get Bundle Offer
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Sticky Cart Bar ─────────────────────────────────────────────────── */}
+        {/* Service spotlight carousel */}
+        <div className="mt-10 md:mt-14">
+          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-5 py-6 shadow-[0_16px_50px_rgba(37,55,77,0.08)] md:px-8 md:py-8">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
+                  Service spotlight
+                </span>
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#252e3d]">
+                  Everything we offer, in a quick carousel
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
+                  Tap through to see how each service helps candidates move faster and show up stronger.
+                </p>
+              </div>
+              <div className="hidden md:grid grid-cols-3 gap-2">
+                {metricTiles.map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="rounded-xl border border-[#e5ebf8] bg-[#fbfcff] px-3 py-2 text-center shadow-sm"
+                  >
+                    <div className="text-lg font-semibold text-[#252e3d]">
+                      {metric.value}
+                      <span className="text-[#5a58ab]">{metric.suffix}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] font-medium text-[#5b6476]">
+                      {metric.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-stretch">
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-5 md:p-7">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="inline-flex items-center rounded-full bg-[#eae8ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5a58ab]">
+                    {currentPromo.eyebrow}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => goToPromoSlide(activePromoSlide - 1)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8def1] bg-white text-[#5a58ab] transition hover:bg-[#f4f6ff]"
+                      aria-label="Previous service"
+                    >
+                      <IoChevronBack className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => goToPromoSlide(activePromoSlide + 1)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8def1] bg-white text-[#5a58ab] transition hover:bg-[#f4f6ff]"
+                      aria-label="Next service"
+                    >
+                      <IoChevronForward className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-center">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                    <img
+                      src={currentPromo.iconPath}
+                      alt={currentPromo.title}
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h4 className="text-2xl font-semibold tracking-tight text-[#252e3d]">
+                      {currentPromo.title}
+                    </h4>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
+                      {currentPromo.summary}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {currentPromo.benefit.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[#e5ebf8] bg-white px-3 py-1 text-xs font-medium text-[#4b5563]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#8a93a8]">
+                    {currentPromo.cta}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {PROMO_SLIDES.map((slide, index) => (
+                      <button
+                        key={`${slide.title}-${index}`}
+                        type="button"
+                        onClick={() => setActivePromoSlide(index)}
+                        className={`h-2.5 rounded-full transition-all duration-300 ${
+                          index === activePromoSlide
+                            ? "w-8 bg-[#5a58ab]"
+                            : "w-2.5 bg-[#d6ddf0] hover:bg-[#bac6e3]"
+                        }`}
+                        aria-label={`Go to ${slide.title}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid min-w-[180px] grid-cols-2 gap-3 lg:grid-cols-1">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
+                    Best for
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#252e3d]">
+                    Candidates who want one simple way to improve their profile, applications, and interview readiness.
+                  </p>
+                  <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
+                    Best if you want to move from browsing to applying, booking, and preparing without juggling multiple tools.
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[#6f7b91]">
+                    It’s especially useful if you want a guided path from service selection to a stronger interview outcome.
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
+                    Fast value
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#252e3d]">
+                    One section. One quick scan. Clear reasons to choose the service that fits you best.
+                  </p>
+                  <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
+                    You can compare services, understand the value, and act immediately with less friction.
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[#6f7b91]">
+                    The layout is designed to give quick confidence without overwhelming the user with long explanations.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+      {/*  Sticky Cart Bar  */} 
       {cartServices.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-2 animate-slideUp">
           <div className="mx-auto max-w-2xl bg-[#252e3d] rounded-2xl shadow-[0_-4px_32px_rgba(37,46,61,0.25)] px-5 py-4">
-            {/* Bundle banner — shown when all 6 are selected */}
+            {/* Bundle banner  shown when all 6 are selected */}
             {showBundleBanner && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-[#5a58ab]/20 border border-[#5a58ab]/30 rounded-xl p-3">
                 <div className="flex items-start gap-3 min-w-0">
@@ -518,7 +753,7 @@ export default function ServicesSection() {
                       className="text-white/40 hover:text-white cursor-pointer transition-colors ml-1 text-sm font-bold leading-none"
                       title={`Remove ${s.title}`}
                     >
-                      ×
+                      Ã—
                     </button>
                   </span>
                 ))}

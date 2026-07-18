@@ -368,7 +368,7 @@ export function EmployeeInterviewsDashboard({
           <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-[#f4f6fb] shadow-2xl" role="dialog" aria-modal="true" aria-label="Selected interview details">
             <button
               onClick={() => setIsInterviewModalOpen(false)}
-              className="absolute right-5 top-5 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-md transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 hover:cursor-pointer"
+              className="absolute right-5 top-5 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-md transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 cursor-pointer"
               title="Close Popup"
             >
               <PiXCircleDuotone className="h-6 w-6" />
