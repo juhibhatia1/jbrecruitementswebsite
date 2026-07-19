@@ -170,6 +170,14 @@ export default async function JobSeekersPage() {
             </ScrollAnimation>
           </div>
 
+          <ServicesSection
+            promoMetrics={{
+              candidatesServed: candidateCount,
+              paidBookings: paidBookingCount,
+              completedInterviews: completedInterviewCount,
+            }}
+            />
+
           <ScrollAnimation variant="fadeUp" delay={0.12} className="mt-12 md:mt-16">
             <section>
             <div className="overflow-hidden rounded-[2rem] border border-[#e5ebf8] bg-linear-to-br from-white via-[#fbfaff] to-[#f6f3ff] px-5 py-8 shadow-[0_16px_50px_rgba(37,55,77,0.08)] md:px-8 md:py-10">
@@ -357,14 +365,6 @@ export default async function JobSeekersPage() {
             </div>
             </section>
           </ScrollAnimation>
-
-            <ServicesSection
-            promoMetrics={{
-              candidatesServed: candidateCount,
-              paidBookings: paidBookingCount,
-              completedInterviews: completedInterviewCount,
-            }}
-            />
         </div>
       </main>
     </div>
