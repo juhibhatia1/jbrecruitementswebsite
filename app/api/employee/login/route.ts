@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import {
   EMPLOYEE_SESSION_COOKIE,
+  getEmployeeAuthConfigError,
   generateEmployeeSessionToken,
   isValidEmployeeCredentials,
 } from "@/lib/employee-auth";
 
 export async function POST(request: Request) {
   try {
+    const configError = getEmployeeAuthConfigError();
+    if (configError) {
+      return NextResponse.json({ error: configError }, { status: 503 });
+    }
+
     const { username, password } = await request.json();
 
     if (!isValidEmployeeCredentials(username, password)) {

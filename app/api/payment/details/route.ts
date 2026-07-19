@@ -58,7 +58,6 @@ export async function GET(request: Request) {
 
     if (isCoach && meta.jobRole && !meta.interviewTemplateId) {
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_SITE_URL ||
         "https://jbrecruitments.com";
 
@@ -140,7 +139,6 @@ export async function GET(request: Request) {
 
         const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
           "https://jbrecruitments.com";
         const calSchedulingLink = calLink.startsWith("http")
@@ -190,7 +188,6 @@ export async function GET(request: Request) {
 
         const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
           "https://jbrecruitments.com";
         const calSchedulingLink = calLink.startsWith("http")
@@ -287,7 +284,6 @@ export async function GET(request: Request) {
         });
 
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
           "https://jbrecruitments.com";
         const interviewLink = `${appUrl.replace(/\/$/, "")}/interview/${accessToken}`;
@@ -335,7 +331,6 @@ export async function GET(request: Request) {
         });
 
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
           "https://jbrecruitments.com";
         const interviewLink = `${appUrl.replace(/\/$/, "")}/interview/${accessToken}`;
@@ -367,7 +362,6 @@ export async function GET(request: Request) {
       }
 
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_SITE_URL ||
         "https://jbrecruitments.com";
       const startUrl = rawToken 

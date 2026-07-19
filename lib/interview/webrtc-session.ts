@@ -536,8 +536,8 @@ export async function finalizeWebRtcInterviewSession(payload: {
         weaknesses: finalReport.weaknesses ?? [],
         improvements: finalReport.improvements,
         evaluationEvents: payload.events,
-        resultsPageUrl: (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL)
-          ? `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${payload.sessionId}`
+        resultsPageUrl: process.env.NEXT_PUBLIC_SITE_URL
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${payload.sessionId}`
           : undefined,
       }),
     ]);

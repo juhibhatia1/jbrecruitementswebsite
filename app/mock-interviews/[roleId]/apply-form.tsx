@@ -45,7 +45,6 @@ function CheckoutForm({ totalAmount, currency, clientSecret, onCancel }: Checkou
     setErrorMessage(null);
 
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXT_PUBLIC_SITE_URL ||
       window.location.origin;
 
@@ -140,7 +139,7 @@ export default function ApplyForm({
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
 
   // Derive prices directly from currency
-  const aiPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
+  const aiPrice = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
   const coachPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
 
   // Detect currency using local /api/geo first, then ipapi.co

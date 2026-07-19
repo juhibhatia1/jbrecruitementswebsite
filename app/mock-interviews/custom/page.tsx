@@ -146,7 +146,6 @@ function CheckoutForm({
     setErrorMessage(null);
 
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXT_PUBLIC_SITE_URL ||
       window.location.origin;
 
@@ -244,7 +243,7 @@ export default function CustomJdMockInterviewPage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Price calculations
-  const totalAmount = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
+  const totalAmount = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
   const displayCurrency = currency || "USD";
 
   // Location currency detection using local /api/geo first, then ipapi.co
@@ -643,21 +642,6 @@ export default function CustomJdMockInterviewPage() {
                     }}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-sm px-4 py-2.5 outline-none transition file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#5a58ab]/10 file:text-[#5a58ab] hover:file:bg-[#5a58ab]/20"
                   />
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setResumePreviewOpen(true)}
-                      disabled={!resumeFile}
-                      className="rounded-xl border border-[#5a58ab]/20 bg-[#f4f3ff] px-4 py-2 text-xs font-semibold text-[#5a58ab] transition hover:bg-[#ebe9ff] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Preview Resume
-                    </button>
-                    {resumeFile && (
-                      <p className="text-xs text-slate-500">
-                        {resumeFile.name}
-                      </p>
-                    )}
-                  </div>
                   {resumeError && (
                     <p className="text-red-500 text-xs mt-1 font-semibold">
                       {resumeError}

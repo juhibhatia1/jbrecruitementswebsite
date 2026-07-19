@@ -14,8 +14,8 @@ export function getMailerTransporter(): nodemailer.Transporter {
     throw new Error("Missing NEXT_NODEMAILER_USER or NEXT_NODEMAILER_PASS");
   }
 
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = Number(process.env.SMTP_PORT || 587);
+  const host = process.env.SMTP_HOST || "smtp0001.neo.space";
+  const port = Number(process.env.SMTP_PORT || 465);
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
   cachedTransporter = nodemailer.createTransport({

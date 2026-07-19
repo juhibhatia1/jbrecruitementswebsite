@@ -111,7 +111,7 @@ export default function HowWeHelpSection() {
                     className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-5 py-2.5 text-sm font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
                     style={{ fontFamily: "Raleway, sans-serif" }}
                   >
-                    Explore Companies
+                    Learn More
                     <RxArrowTopRight
                       size={18}
                       className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"
@@ -169,7 +169,7 @@ export default function HowWeHelpSection() {
                     className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-5 py-2.5 text-sm font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
                     style={{ fontFamily: "Raleway, sans-serif" }}
                   >
-                    Explore Job Seekers
+                    Explore Services
                     <RxArrowTopRight
                       size={18}
                       className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"

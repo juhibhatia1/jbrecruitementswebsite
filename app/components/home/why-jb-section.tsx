@@ -6,6 +6,7 @@ import { BsCheckCircleFill } from "react-icons/bs";
 import React from "react";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
+import TopCompaniesMarquee from "../job-seekers/top-companies-marquee";
 
 export default function WhyJBSection() {
   const features = [
@@ -92,8 +93,17 @@ export default function WhyJBSection() {
               </div>
             </div>
           </ScrollAnimation>
+          </div>
+
+          <div className="mt-10 rounded-[2rem] border border-[#e5ebf8] bg-[#fbfcff] px-5 py-6 shadow-sm md:px-8">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
+                Trusted by candidates at top companies
+              </p>
+            </div>
+            <TopCompaniesMarquee compact className="mt-5" />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
   );
 }

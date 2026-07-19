@@ -1,6 +1,7 @@
 import { PrismaClient } from "./prisma-client";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
+let candidateApplicationSchemaRepairPromise: Promise<void> | null = null;
 
 function createPrismaClient() {
   return new PrismaClient({
@@ -25,6 +26,31 @@ function buildDatabaseUrl(): string {
   return base;
 }
 
+async function ensureCandidateApplicationSchema(client: PrismaClient): Promise<void> {
+  if (!candidateApplicationSchemaRepairPromise) {
+    candidateApplicationSchemaRepairPromise = (async () => {
+      await client.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TYPE "CandidateApplicationStatus" ADD VALUE IF NOT EXISTS 'SCHEDULED';
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+      `);
+
+      await client.$executeRawUnsafe(`
+        ALTER TABLE "CandidateApplication"
+          ADD COLUMN IF NOT EXISTS "resumeUrl" TEXT,
+          ADD COLUMN IF NOT EXISTS "resumeText" TEXT,
+          ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3);
+      `);
+    })().catch((error) => {
+      candidateApplicationSchemaRepairPromise = null;
+      throw error;
+    });
+  }
+
+  await candidateApplicationSchemaRepairPromise;
+}
+
 function withRetryMiddleware(client: PrismaClient): PrismaClient {
   // Retry once on connection errors (Neon compute waking from idle sleep).
   client.$use(async (params, next) => {
@@ -37,6 +63,15 @@ function withRetryMiddleware(client: PrismaClient): PrismaClient {
         msg.includes("Connection refused") ||
         msg.includes("ECONNRESET") ||
         msg.includes("ETIMEDOUT");
+      const isCandidateApplicationSchemaErr =
+        msg.includes("CandidateApplication.resumeUrl") ||
+        msg.includes("CandidateApplication.scheduledAt") ||
+        (msg.includes("CandidateApplication") && msg.includes("does not exist"));
+
+      if (isCandidateApplicationSchemaErr) {
+        await ensureCandidateApplicationSchema(client);
+        return next(params);
+      }
 
       if (!isConnErr) throw err;
 

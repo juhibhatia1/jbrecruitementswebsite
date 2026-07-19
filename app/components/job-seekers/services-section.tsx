@@ -25,11 +25,9 @@ const CURRENCY_SYMBOLS: Record<Currency, string> = {
   INR: "INR",
 };
 
-const BUNDLE_PRICE_BY_CURRENCY: Record<Currency, number> = {
-  USD: 480,
-  AED: 1600,
-  INR: 30000,
-};
+const BUNDLE_DISCOUNT_PERCENT = 10;
+const BUNDLE_MIN_SERVICE_COUNT = 4;
+const BUNDLE_EXCLUDED_TITLES = new Set(["AI Mock Interview"]);
 
 const services = [
   {
@@ -144,15 +142,48 @@ const READY_TO_APPLY_SERVICE = {
   ],
 };
 
-// All individual service names (excludes bundle)
-const ALL_SERVICE_TITLES = services.map((s) => s.title);
-
 const PROMO_SLIDES = [
   ...services.map((service) => ({
     title: service.title,
     eyebrow: "Featured service",
     summary: service.description,
     benefit: service.features.slice(0, 2),
+    metrics:
+      service.title === "Resume Review & Rewriting"
+        ? [
+            { value: "2.8k+", label: "Resume revamps" },
+            { value: "82%", label: "ATS lift" },
+            { value: "4.8/5", label: "Client rating" },
+          ]
+        : service.title === "Cover Letter Writing"
+          ? [
+              { value: "1.9k+", label: "Letters written" },
+              { value: "74%", label: "Reply lift" },
+              { value: "48h", label: "Turnaround" },
+            ]
+          : service.title === "LinkedIn Optimization"
+            ? [
+                { value: "3.2k+", label: "Profiles tuned" },
+                { value: "61%", label: "Visibility boost" },
+                { value: "5.0/5", label: "Quality score" },
+              ]
+            : service.title === "Superstar Shout-Out"
+              ? [
+                  { value: "560+", label: "Spotlights shared" },
+                  { value: "18k+", label: "Post reach" },
+                  { value: "96%", label: "Approval rate" },
+                ]
+              : service.title === "Ask Me Anything"
+                ? [
+                    { value: "1.4k+", label: "Questions answered" },
+                    { value: "92%", label: "Satisfaction" },
+                    { value: "24h", label: "Avg. reply" },
+                  ]
+                : [
+                    { value: "980+", label: "Prep sessions" },
+                    { value: "79%", label: "Confidence gain" },
+                    { value: "5.0/5", label: "Feedback score" },
+                  ],
     iconPath: service.iconPath,
     cta: "Explore this service",
   })),
@@ -163,6 +194,11 @@ const PROMO_SLIDES = [
     benefit: [
       "Practice with an AI interviewer",
       "Get role-specific questions and feedback",
+    ],
+    metrics: [
+      { value: "1.8k+", label: "Mock sessions" },
+      { value: "88%", label: "Skill lift" },
+      { value: "5 min", label: "Start time" },
     ],
     iconPath: OPPORTUNITIES_SERVICE.iconPath,
     cta: "Browse interview options",
@@ -175,6 +211,11 @@ const PROMO_SLIDES = [
       "Curated from active public listings",
       "Focused by role, skills, and location",
     ],
+    metrics: [
+      { value: "1.6k+", label: "Job packs" },
+      { value: "94%", label: "Relevance" },
+      { value: "3 days", label: "Curated in" },
+    ],
     iconPath: READY_TO_APPLY_SERVICE.iconPath,
     cta: "Explore job pack",
   },
@@ -182,10 +223,15 @@ const PROMO_SLIDES = [
     title: "All Career Services Bundle",
     eyebrow: "Best value",
     summary:
-      "Get the full support stack in one place: resumes, LinkedIn, outreach, guidance, and interviews.",
+      "Get 10% off when you choose any 4 or more services. AI Mock Interview is excluded from the bundle offer.",
     benefit: [
-      "Lower total cost than buying separately",
-      "Ideal when you want end-to-end support",
+      "Build a bundle from the services that fit your needs",
+      "AI Mock Interview is not counted toward the discount",
+    ],
+    metrics: [
+      { value: "10%", label: "Bundle off" },
+      { value: "4+", label: "Services needed" },
+      { value: "7", label: "Service options" },
     ],
     iconPath: "/icons/job-seekers/resume-review.svg",
     cta: "Get bundle offer",
@@ -211,6 +257,8 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
   // Multi-select cart state
   const [selectedTitles, setSelectedTitles] = useState<Set<string>>(new Set());
   const [showBundleBanner, setShowBundleBanner] = useState(false);
+  const [bundleBannerDismissed, setBundleBannerDismissed] = useState(false);
+  const servicesGridRef = useRef<HTMLDivElement | null>(null);
 
   // Payment Modal States
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -299,12 +347,6 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
     return MULTI_CURRENCY_PRICING[title]?.[currency] ?? 0;
   };
 
-  const BUNDLE_PRICE = BUNDLE_PRICE_BY_CURRENCY[currency];
-  const INDIVIDUAL_TOTAL = services.reduce(
-    (sum, s) => sum + getLocalAmount(s.title),
-    0
-  );
-
   // start auto-flip sequence after initial 3s delay
   useEffect(() => {
     const startTimer = setTimeout(() => setStarted(true), 3000);
@@ -366,20 +408,42 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
       } else {
         next.add(title);
       }
-      // Show bundle banner when ALL 6 individual services are selected
-      const allSelected = ALL_SERVICE_TITLES.every((t) => next.has(t));
-      setShowBundleBanner(allSelected);
+      const eligibleSelectedCount = Array.from(next).filter(
+        (serviceTitle) => !BUNDLE_EXCLUDED_TITLES.has(serviceTitle),
+      ).length;
+      const meetsThreshold = eligibleSelectedCount >= BUNDLE_MIN_SERVICE_COUNT;
+      setShowBundleBanner(meetsThreshold && !bundleBannerDismissed);
+      if (!meetsThreshold) {
+        setBundleBannerDismissed(false);
+      }
       return next;
     });
   };
 
   // Cart totals (in selected currency)
-  const cartServices = services.filter((s) => selectedTitles.has(s.title));
+  const cartServices = [...services, READY_TO_APPLY_SERVICE].filter((s) => selectedTitles.has(s.title));
+  const cartEligibleServices = cartServices.filter(
+    (service) => !BUNDLE_EXCLUDED_TITLES.has(service.title),
+  );
   const cartTotal = cartServices.reduce(
     (sum, s) => sum + getLocalAmount(s.title),
     0
   );
-  const bundleSavings = cartTotal - BUNDLE_PRICE;
+  const bundleDiscount = cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT
+    ? cartEligibleServices.reduce((sum, service) => sum + getLocalAmount(service.title), 0) * (BUNDLE_DISCOUNT_PERCENT / 100)
+    : 0;
+  const discountedCartTotal = cartTotal - bundleDiscount;
+
+  useEffect(() => {
+    const eligibleSelectedCount = cartEligibleServices.length;
+    if (eligibleSelectedCount < BUNDLE_MIN_SERVICE_COUNT) {
+      setBundleBannerDismissed(false);
+      setShowBundleBanner(false);
+      return;
+    }
+
+    setShowBundleBanner(!bundleBannerDismissed);
+  }, [bundleBannerDismissed, cartEligibleServices.length]);
 
   // Open payment modal for a single service (Buy Now)
   const handleBuyClick = (title: string, description: string) => {
@@ -408,14 +472,17 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
     setIsModalOpen(true);
   };
 
-  // Switch to bundle from cart banner
-  const handleSwitchToBundle = () => {
-    setShowBundleBanner(false);
-    setSelectedTitles(new Set());
-    handleBuyClick(
-      "All Career Services Bundle",
-      "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
-    );
+  // Scroll the user back to the service grid to build a bundle
+  const handleBundleCtaClick = () => {
+    if (cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT) {
+      handleCartCheckout();
+      return;
+    }
+
+    servicesGridRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   // Log bundle view on mount
@@ -435,7 +502,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
 
     const interval = setInterval(() => {
       setActivePromoSlide((current) => (current + 1) % PROMO_SLIDES.length);
-    }, 6000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, []);
@@ -446,27 +513,6 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
   };
 
   const currentPromo = PROMO_SLIDES[activePromoSlide];
-  const metricTiles = [
-    {
-      value: "2.4k",
-      suffix: "+",
-      label: "Candidates served",
-      detail: "A strong candidate base engaging with our career services and guidance flow.",
-    },
-    {
-      value: "1.1k",
-      suffix: "+",
-      label: "Paid bookings",
-      detail: "Paid sessions and service purchases across the job seeker journey.",
-    },
-    {
-      value: "900",
-      suffix: "+",
-      label: "Completed interviews",
-      detail: "Sessions completed, reviewed, and turned into useful feedback.",
-    },
-  ];
-
   return (
     <section className="py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
@@ -497,7 +543,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
         </div>
 
         {/* Grid Layout */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div ref={servicesGridRef} className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {services.map((s, index) => {
             const localAmt = getLocalAmount(s.title);
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`;
@@ -560,7 +606,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                 features={[...READY_TO_APPLY_SERVICE.features, dynamicPriceBullet]}
                 shouldFlip={false}
                 onBuyClick={() => handleBuyClick(READY_TO_APPLY_SERVICE.title, READY_TO_APPLY_SERVICE.description)}
-                buyLabel="Get Pack"
+                buyLabel="Buy Now"
+                isSelected={selectedTitles.has(READY_TO_APPLY_SERVICE.title)}
+                onToggleSelect={() => handleToggleSelect(READY_TO_APPLY_SERVICE.title)}
               />
             );
           })()}
@@ -577,29 +625,23 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   Limited Bundle
                 </span>
                 <h2 className="text-lg font-bold leading-tight text-[#252e3d] sm:text-2xl">
-                  All services bundled together at a special price of{" "}
-                  {CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()}.
+                  Get 10% off when you choose any 4 or more services.
                 </h2>
                 <p className="text-sm leading-relaxed text-[#4b5563]">
-                  Perfect for candidates who want a complete career support package in one go — from documents and positioning to visibility and interview readiness.
+                  Pick the services that fit you best. The discount applies automatically at checkout, and AI Mock Interview does not count toward the bundle.
                 </p>
                 <span className="text-sm text-[#4b5563]">
-                  Save{" "}
+                  Select{" "}
                   <span className="font-semibold text-[#5a58ab]">
-                    {CURRENCY_SYMBOLS[currency]} {(INDIVIDUAL_TOTAL - BUNDLE_PRICE).toLocaleString()}
+                    {BUNDLE_MIN_SERVICE_COUNT} or more
                   </span>{" "}
-                  vs buying all separately.
+                  eligible services to unlock the offer.
                 </span>
                 <button
-                  onClick={() =>
-                    handleBuyClick(
-                      "All Career Services Bundle",
-                      "Comprehensive pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
-                    )
-                  }
+                  onClick={handleBundleCtaClick}
                   className="mt-2 rounded-xl bg-[#5a58ab] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#4a489b] hover:shadow-md active:scale-[0.98] cursor-pointer"
                 >
-                  Get Bundle Offer
+                  {cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT ? "Checkout with discount" : "Build my bundle"}
                 </button>
               </div>
             </div>
@@ -621,28 +663,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   Tap through to see how each service helps candidates move faster and show up stronger.
                 </p>
               </div>
-              <div className="hidden md:flex items-center gap-4">
-                <div className="grid grid-cols-3 gap-2">
-                  {metricTiles.map((metric) => (
-                    <div
-                      key={metric.label}
-                      className="rounded-xl border border-[#e5ebf8] bg-[#fbfcff] px-3 py-2 text-center shadow-sm"
-                    >
-                      <div className="text-lg font-semibold text-[#252e3d]">
-                        {metric.value}
-                        <span className="text-[#5a58ab]">{metric.suffix}</span>
-                      </div>
-                      <div className="mt-1 text-[11px] font-medium text-[#5b6476]">
-                        {metric.label}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-              </div>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-stretch">
+            <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
               <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-5 md:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center rounded-full bg-[#eae8ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5a58ab]">
@@ -698,6 +721,22 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   ))}
                 </div>
 
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {currentPromo.metrics?.map((metric) => (
+                    <div
+                      key={metric.label}
+                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-4 py-3 shadow-sm"
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
+                        {metric.label}
+                      </p>
+                      <p className="mt-1 text-2xl font-bold tracking-tight text-[#252e3d]">
+                        {metric.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="mt-5 flex items-center justify-between gap-3">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#8a93a8]">
                     {currentPromo.cta}
@@ -720,22 +759,19 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                 </div>
               </div>
 
-              <div className="grid min-w-[180px] grid-cols-2 gap-3 lg:grid-cols-1">
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
+              <div className="grid w-full gap-3 lg:min-w-[320px]">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Best for
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#252e3d]">
-                    Candidates who want one simple way to improve their profile, applications, and interview readiness.
+                    Candidates who want a flexible way to combine profile help, application support, and interview prep without a heavy checkout flow.
                   </p>
                   <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    Best if you want to move from browsing to applying, booking, and preparing without juggling multiple tools.
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-[#6f7b91]">
-                    It’s especially useful if you want a guided path from service selection to a stronger interview outcome.
+                    Add the services you need and the bundle discount appears automatically when you reach four eligible services.
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Fast value
                   </p>
@@ -743,10 +779,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                     One section. One quick scan. Clear reasons to choose the service that fits you best.
                   </p>
                   <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    You can compare services, understand the value, and act immediately with less friction.
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-[#6f7b91]">
-                    The layout is designed to give quick confidence without overwhelming the user with long explanations.
+                    Compare services quickly, understand the value, and act immediately with less friction.
                   </p>
                 </div>
               </div>
@@ -759,41 +792,42 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
       {cartServices.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-2 animate-slideUp">
           <div className="mx-auto max-w-2xl bg-[#252e3d] rounded-2xl shadow-[0_-4px_32px_rgba(37,46,61,0.25)] px-5 py-4">
-            {/* Bundle banner  shown when all 6 are selected */}
+            {/* Bundle banner shown when the 10% discount threshold is reached */}
             {showBundleBanner && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-[#5a58ab]/20 border border-[#5a58ab]/30 rounded-xl p-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <IoSparkles className="text-yellow-300 w-5 h-5 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-white text-sm font-semibold leading-snug">
-                      You've selected all 6 services!
-                    </p>
-                    <p className="text-white/70 text-xs mt-0.5">
-                      The{" "}
-                      <span className="text-yellow-300 font-semibold">
-                        Bundle Offer ({CURRENCY_SYMBOLS[currency]} {BUNDLE_PRICE.toLocaleString()})
-                      </span>{" "}
-                      saves you{" "}
-                      <span className="text-yellow-300 font-semibold">
-                        {CURRENCY_SYMBOLS[currency]} {bundleSavings.toLocaleString()}
-                      </span>{" "}
-                      vs buying them separately.
-                    </p>
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-[#5a58ab]/20 border border-[#5a58ab]/30 rounded-xl p-3 pr-10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBundleBanner(false);
+                      setBundleBannerDismissed(true);
+                    }}
+                    aria-label="Dismiss bundle offer"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <IoClose className="h-4 w-4" />
+                  </button>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <IoSparkles className="text-yellow-300 w-5 h-5 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-semibold leading-snug">
+                       You’ve unlocked the bundle discount!
+                     </p>
+                      <p className="text-white/70 text-xs mt-0.5">
+                        You have {cartEligibleServices.length} eligible services in your cart, so the{" "}
+                        <span className="text-yellow-300 font-semibold">
+                          {BUNDLE_DISCOUNT_PERCENT}% bundle discount
+                        </span>{" "}
+                        now applies automatically.
+                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={handleSwitchToBundle}
-                  className="w-full sm:w-auto shrink-0 bg-yellow-400 hover:bg-yellow-300 text-[#252e3d] text-xs font-bold px-3 py-1.5 rounded-lg transition-colors text-center"
-                >
-                  Switch to Bundle
-                </button>
               </div>
             )}
 
             <div className="flex flex-col gap-3">
               {/* Top Row: Selected service pills */}
               <div className="flex flex-row md:flex-wrap items-center gap-1.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {cartServices.map((s) => (
+                  {cartServices.map((s) => (
                   <span
                     key={s.title}
                     className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/15 text-white/90 text-xs px-2.5 py-1 rounded-lg transition-colors shrink-0"
@@ -804,7 +838,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                       className="text-white/40 hover:text-white cursor-pointer transition-colors ml-1 text-sm font-bold leading-none"
                       title={`Remove ${s.title}`}
                     >
-                      Ã—
+                      —
                     </button>
                   </span>
                 ))}
@@ -828,17 +862,23 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                       {CURRENCY_SYMBOLS[currency]}
                     </p>
                     <p className="text-white text-base md:text-lg font-bold leading-none">
-                      {cartTotal.toLocaleString()}
+                      {discountedCartTotal.toLocaleString()}
                     </p>
+                    {bundleDiscount > 0 && (
+                      <p className="text-[10px] text-emerald-300 mt-1">
+                        Bundle discount applied ( {CURRENCY_SYMBOLS[currency]} {bundleDiscount.toLocaleString(undefined, { maximumFractionDigits: 2 })} off )
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
+                    <button
                     onClick={() => {
                       setSelectedTitles(new Set());
                       setShowBundleBanner(false);
+                      setBundleBannerDismissed(false);
                     }}
                     className="text-white/40 hover:text-white/80 p-2 rounded-lg transition-colors cursor-pointer"
                     aria-label="Clear cart"

@@ -1,5 +1,6 @@
-import JobSeekersForm from "../components/job-seekers/job-seekers-form";
+﻿import JobSeekersForm from "../components/job-seekers/job-seekers-form";
 import ServicesSection from "../components/job-seekers/services-section";
+import ScrollAnimation from "../components/ui/scroll-animation";
 import { jobSeekersMetadata } from "../lib/metadata";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -60,7 +61,7 @@ export default async function JobSeekersPage() {
           </div>
 
           <div className="grid grid-cols-1 items-start gap-10 md:gap-12 lg:grid-cols-3 lg:gap-2">
-            <div className="col-span-1 pt-0 lg:col-span-2 lg:pt-0">
+            <ScrollAnimation variant="fadeUp" className="col-span-1 pt-0 lg:col-span-2 lg:pt-0">
               <h1 className="mb-12 text-3xl font-semibold leading-[1.1] tracking-tight text-[#252e3d] sm:text-4xl md:mb-12 md:text-5xl lg:text-6xl">
                 Career Insights & Guidance
               </h1>
@@ -111,7 +112,7 @@ export default async function JobSeekersPage() {
 
                 <div className="w-full">
                   <p className="text-sm font-medium leading-relaxed text-gray-700 sm:text-base">
-                    • We do not charge candidates for job opportunities.
+                    â€¢ We do not charge candidates for job opportunities.
                     However, we offer paid career services below that are
                     designed to help you stand out in the job market.
                   </p>
@@ -160,27 +161,28 @@ export default async function JobSeekersPage() {
                   </ol>
                 </div>
               </div>
-            </div>
+            </ScrollAnimation>
 
-            <div className="col-span-1 flex w-full justify-center lg:justify-start">
+            <ScrollAnimation variant="scaleUp" delay={0.08} className="col-span-1 flex w-full justify-center lg:justify-start">
               <div className="w-full max-w-sm sm:max-w-md lg:max-w-none">
                 <JobSeekersForm />
               </div>
-            </div>
+            </ScrollAnimation>
           </div>
 
-          <section className="mt-12 md:mt-16">
+          <ScrollAnimation variant="fadeUp" delay={0.12} className="mt-12 md:mt-16">
+            <section>
             <div className="overflow-hidden rounded-[2rem] border border-[#e5ebf8] bg-linear-to-br from-white via-[#fbfaff] to-[#f6f3ff] px-5 py-8 shadow-[0_16px_50px_rgba(37,55,77,0.08)] md:px-8 md:py-10">
               <div className="mx-auto max-w-3xl text-center">
                 <span className="inline-flex items-center rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#5a58ab] shadow-sm">
                   Service impact
                 </span>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#252e3d] sm:text-4xl">
-                  How our services help job seekers move forward
+                  How our services help job seekers
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[#5b6476] sm:text-base">
-                  A simple, credible snapshot of the services we promote most —
-                  with numbers that make the value easy to grasp.
+                  A quick snapshot of our most-used services and the value they create.
+
                 </p>
               </div>
 
@@ -190,25 +192,25 @@ export default async function JobSeekersPage() {
                     value: "2,400+",
                     label: "Resumes improved",
                     detail:
-                      "Resume Review & Rewriting helps candidates present experience with sharper impact.",
+                      "Sharper resumes with stronger impact.",
                   },
                   {
                     value: "1,100+",
                     label: "LinkedIn profiles tuned",
                     detail:
-                      "LinkedIn Optimization strengthens discoverability for recruiters and hiring teams.",
+                      "Better recruiter discoverability.",
                   },
                   {
                     value: "900+",
                     label: "Interview sessions",
                     detail:
-                      "Mock Interviews and Interview Prep help candidates practice, prepare, and respond better.",
+                      "More confident interview practice.",
                   },
                   {
                     value: "750+",
                     label: "Tailored job shortlists",
                     detail:
-                      "Ready-to-Apply Job Packs and search support save time by surfacing active public openings that fit the candidate.",
+                      "Curated jobs that save time.",
                   },
                 ].map((item) => (
                   <div
@@ -237,7 +239,7 @@ export default async function JobSeekersPage() {
                     From profile polish to interview-ready applications
                   </h3>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
-                    We do not just sell services — we move a candidate through a
+                    We do not just sell services â€” we move a candidate through a
                     clear journey that builds credibility, speeds up action, and
                     raises the odds of a stronger outcome.
                   </p>
@@ -295,7 +297,7 @@ export default async function JobSeekersPage() {
                 <div className="flex h-full flex-col justify-between rounded-[1.5rem] border border-[#e5ebf8] bg-[#252e3d] p-5 text-white shadow-sm">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                      Why it matters
+                      Why choose us
                     </p>
                     <p className="mt-3 text-lg leading-7 text-white/90">
                       Job seekers do better when their resume, LinkedIn,
@@ -353,17 +355,20 @@ export default async function JobSeekersPage() {
                 </div>
               </div>
             </div>
-          </section>
+            </section>
+          </ScrollAnimation>
 
-          <ServicesSection
+            <ServicesSection
             promoMetrics={{
               candidatesServed: candidateCount,
               paidBookings: paidBookingCount,
               completedInterviews: completedInterviewCount,
             }}
-          />
+            />
         </div>
       </main>
     </div>
   );
 }
+
+

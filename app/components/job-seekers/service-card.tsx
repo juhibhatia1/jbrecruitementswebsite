@@ -6,9 +6,9 @@ import { IoCheckmark } from "react-icons/io5";
 
 type ServiceCardProps = {
   title: string;
-  amount: number;      // base USD amount (kept for legacy use)
+  amount: number; // base USD amount (kept for legacy use)
   localAmount: number; // amount in selected currency
-  currency: string;    // e.g. "USD", "AED", "INR"
+  currency: string; // e.g. "USD", "AED", "INR"
   description?: string;
   iconPath: string;
   features?: string[];
@@ -116,9 +116,10 @@ export default function ServiceCard({
           }}
           aria-label={isSelected ? `Deselect ${title}` : `Select ${title}`}
           className={`absolute top-3 right-3 z-30 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 shadow-sm
-            ${isSelected
-              ? "bg-[#5a58ab] border-[#5a58ab]"
-              : "bg-white border-gray-300 hover:border-[#5a58ab]"
+            ${
+              isSelected
+                ? "bg-[#5a58ab] border-[#5a58ab]"
+                : "bg-white border-gray-300 hover:border-[#5a58ab]"
             }`}
         >
           {isSelected && <IoCheckmark className="text-white w-3.5 h-3.5" />}
@@ -136,10 +137,10 @@ export default function ServiceCard({
         <div
           className={`absolute inset-0 w-full h-full bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 border border-gray-100 group-hover:border-[#5a58ab]/30 antialiased
             ${isSelected ? "bg-[#faf9ff]" : ""}`}
-          style={{ 
+          style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
-            transform: "translate3d(0,0,0)"
+            transform: "translate3d(0,0,0)",
           }}
         >
           <div className="mb-3 transition-all duration-500 group-hover:scale-110 group-hover:rotate-2">
@@ -219,12 +220,22 @@ export default function ServiceCard({
                   onToggleSelect();
                 }}
                 className={`flex-1 text-[11px] sm:text-xs md:text-sm font-semibold py-2 px-1.5 rounded-xl transition-all duration-300 shadow-sm active:scale-[0.98] cursor-pointer border whitespace-nowrap overflow-hidden text-ellipsis
-                  ${isSelected
-                    ? "bg-[#f0effd] text-[#5a58ab] border-[#5a58ab]/30 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                    : "bg-white text-[#5a58ab] border-[#5a58ab]/30 hover:bg-[#5a58ab]/5"
+                  ${
+                    isSelected
+                      ? "bg-[#f0effd] text-[#5a58ab] border-[#5a58ab]/30 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      : "bg-white text-[#5a58ab] border-[#5a58ab]/30 hover:bg-[#5a58ab]/5"
                   }`}
               >
-                {isSelected ? "✓ Added" : "+ Add to cart"}
+                {isSelected ? (
+                  "✓ Added"
+                ) : (
+                  <>
+                    <span className="text-lg sm:text-base md:text-lg align-middle">
+                      +
+                    </span>{" "}
+                    <span className="align-middle">Add to cart</span>
+                  </>
+                )}
               </button>
             )}
 
@@ -236,7 +247,10 @@ export default function ServiceCard({
                   fetch("/api/analytics/funnel", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
+                    body: JSON.stringify({
+                      serviceName: title,
+                      eventType: "CLICK_BUY",
+                    }),
                   }).catch((e) => console.error("Telemetry failed:", e));
                   onBuyClick();
                 }}

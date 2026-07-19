@@ -4,6 +4,8 @@ export const ADMIN_SESSION_COOKIE = "jb_admin_session";
 
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "admin123";
+const PRODUCTION_ADMIN_LOGIN_ERROR =
+  "Admin login is not configured for production. Set ADMIN_USERNAME and ADMIN_PASSWORD in your environment.";
 
 // Generate or retrieve the signing key
 const systemJwtSecret =
@@ -17,17 +19,29 @@ export function getAdminUsername(): string {
   return process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME;
 }
 
-export function getAdminPassword(): string {
+export function getAdminPassword(): string | null {
   const password = process.env.ADMIN_PASSWORD;
   if (
     process.env.NODE_ENV === "production" &&
     (!password || password === DEFAULT_ADMIN_PASSWORD)
   ) {
-    throw new Error(
-      "CRITICAL SECURITY ERROR: Unsecure default admin password cannot be used in production.",
-    );
+    return null;
   }
   return password || DEFAULT_ADMIN_PASSWORD;
+}
+
+export function getAdminAuthConfigError(): string | null {
+  if (process.env.NODE_ENV !== "production") {
+    return null;
+  }
+
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!username || !password || password === DEFAULT_ADMIN_PASSWORD) {
+    return PRODUCTION_ADMIN_LOGIN_ERROR;
+  }
+
+  return null;
 }
 
 function base64UrlEncode(str: string): string {
@@ -111,11 +125,16 @@ export function isValidAdminCredentials(
   username: string,
   password: string,
 ): boolean {
+  const expectedPassword = getAdminPassword();
+  if (!expectedPassword) {
+    return false;
+  }
+
   try {
     // Use constant-time comparison to prevent timing side-channel attacks
     const expectedUser = Buffer.from(getAdminUsername());
     const providedUser = Buffer.from(username);
-    const expectedPass = Buffer.from(getAdminPassword());
+    const expectedPass = Buffer.from(expectedPassword);
     const providedPass = Buffer.from(password);
 
     // Both lengths must match before comparing contents

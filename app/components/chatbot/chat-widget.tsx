@@ -280,7 +280,7 @@ export default function ChatWidget() {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end" style={{ fontFamily: "Raleway, sans-serif" }}>
+    <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end" style={{ fontFamily: "Raleway, sans-serif" }}>
       {/* ── CHAT PANEL ──────────────────────────────────────────────────────── */}
       {isOpen && (
         <div className="mb-4 flex h-[500px] w-[350px] sm:w-[390px] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_rgba(37,55,77,0.15)] animate-slideUp">

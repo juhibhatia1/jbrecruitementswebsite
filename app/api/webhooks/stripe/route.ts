@@ -196,7 +196,6 @@ export async function POST(request: Request) {
             }
 
             const appUrl =
-              process.env.NEXT_PUBLIC_APP_URL ||
               process.env.NEXT_PUBLIC_SITE_URL ||
               "https://jbrecruitments.com";
             const interviewLink = `${appUrl}/interview/${accessToken}`;
@@ -261,7 +260,6 @@ export async function POST(request: Request) {
           });
 
           const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL ||
             process.env.NEXT_PUBLIC_SITE_URL ||
             "https://jbrecruitments.com";
           const bookingLink = `${appUrl.replace(/\/$/, "")}/payment/success?payment_intent=${paymentIntent.id}`;

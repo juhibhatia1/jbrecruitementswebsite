@@ -10,23 +10,23 @@ export interface SystemService {
 
 /** Per-currency pricing for all services */
 export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = {
-  "Resume Review & Rewriting":   { USD: 80,  AED: 300,  INR: 6000  },
-  "Cover Letter Writing":        { USD: 50,  AED: 200,  INR: 3000  },
-  "LinkedIn Optimization":       { USD: 80,  AED: 300,  INR: 6000  },
-  "Superstar Shout-Out":         { USD: 160, AED: 600,  INR: 10000 },
-  "Ask Me Anything":             { USD: 40,  AED: 150,  INR: 2500  },
-  "Interview Prep":              { USD: 100, AED: 300,  INR: 7000  },
+  "Resume Review & Rewriting":   { USD: 79,  AED: 299,  INR: 5999  },
+  "Cover Letter Writing":        { USD: 49,  AED: 199,  INR: 2999  },
+  "LinkedIn Optimization":       { USD: 79,  AED: 299,  INR: 5999  },
+  "Superstar Shout-Out":         { USD: 159, AED: 599,  INR: 9999  },
+  "Ask Me Anything":             { USD: 39,  AED: 149,  INR: 2549  },
+  "Interview Prep":              { USD: 99,  AED: 299,  INR: 6999  },
   "Ready-to-Apply Job Pack":     { USD: 99,  AED: 299,  INR: 6999  },
   "All Career Services Bundle":  { USD: 480, AED: 1600, INR: 30000 },
   "Mock Interviews":             { USD: 40,  AED: 150,  INR: 3500  },
-  "AI Mock Interview":           { USD: 40,  AED: 150,  INR: 3500  },
+  "AI Mock Interview":           { USD: 39,  AED: 99,   INR: 499   },
   "Coach Mock Interview":        { USD: 40,  AED: 150,  INR: 3500  },
 };
 
 export const SYSTEM_SERVICES: SystemService[] = [
   {
     title: "Resume Review & Rewriting",
-    amount: 80,
+    amount: 79,
     timeline: "5 days",
     description: "ATS-optimised resumes aligned with your target roles and recruiter search systems.",
     features: [
@@ -38,7 +38,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Cover Letter Writing",
-    amount: 50,
+    amount: 49,
     timeline: "5 days",
     description: "A master cover letter that communicates impact, motivation, and adaptability.",
     features: [
@@ -50,7 +50,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "LinkedIn Optimization",
-    amount: 80,
+    amount: 79,
     timeline: "5 days",
     description: "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
     features: [
@@ -61,7 +61,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Superstar Shout-Out",
-    amount: 160,
+    amount: 159,
     timeline: "5 days",
     description: "Targeted LinkedIn announcement to decision-makers, published via Juhi Bhatia's personal LinkedIn profile.",
     features: [
@@ -73,7 +73,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Ask Me Anything",
-    amount: 40,
+    amount: 39,
     timeline: "48 hours",
     description: "Direct, practical guidance over email for real-world career challenges and decisions.",
     features: [
@@ -85,7 +85,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Interview Prep",
-    amount: 100,
+    amount: 99,
     timeline: "Delivered via email",
     description: "Direct, practical support to help you crack your interviews with confidence.",
     features: [
@@ -106,17 +106,6 @@ export const SYSTEM_SERVICES: SystemService[] = [
       "Direct application links for faster applying"
     ]
   },
-  {
-    title: "All Career Services Bundle",
-    amount: 480,
-    timeline: "Timeline varies by service selection",
-    description: "Comprehensive bundle pack including Resume rewrite, Cover letter rewrite, LinkedIn Optimization, Superstar Shout-out, Ask Me Anything session, and Interview Prep.",
-    features: [
-      "Includes all 6 individual services",
-      "Special discounted price of USD 480",
-      "Saves you USD 130 vs buying them separately"
-    ]
-  }
 ];
 
 export const SYSTEM_ABOUT = `
@@ -159,7 +148,7 @@ A:
 - Interview Prep answers: Varies, but delivered via email before your interview.
 
 Q: Can I get a discount?
-A: Yes! The "All Career Services Bundle" packages all six individual services for USD 480, saving you USD 130 compared to purchasing them separately.
+A: Yes! You can get 10% off when you choose any 4 or more services. The AI Mock Interview is excluded from the bundle offer, but all other services can count toward it.
 `;
 
 /**
@@ -190,16 +179,7 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   });
   
   text += "=== FAQS AND RECRUITMENT SERVICES INFO ===\n";
-  // Replace references of USD 480 and USD 130 savings based on the selected currency
-  let faqText = SYSTEM_FAQ;
-  if (currency === "INR") {
-    faqText = faqText.replace(/USD 480/g, "INR 30,000");
-    faqText = faqText.replace(/USD 130/g, "INR 4,500");
-  } else if (currency === "AED") {
-    faqText = faqText.replace(/USD 480/g, "AED 1,600");
-    faqText = faqText.replace(/USD 130/g, "AED 250");
-  }
-  text += faqText.trim() + "\n";
+  text += SYSTEM_FAQ.trim() + "\n";
 
   text += `\n=== CURRENCY INFORMATION ===\n`;
   text += `The user is visiting from a region where pricing is strictly set to ${currency}. `;

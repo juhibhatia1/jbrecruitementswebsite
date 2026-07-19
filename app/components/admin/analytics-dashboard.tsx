@@ -970,13 +970,13 @@ export default function AnalyticsDashboard({
   // 4. Service Specific Statistics
   const serviceStats = useMemo(() => {
     const serviceConfig: Record<string, { price: number }> = {
-      "Resume Review & Rewriting": { price: 80 },
-      "Cover Letter Writing": { price: 50 },
-      "LinkedIn Optimization": { price: 80 },
-      "Superstar Shout-Out": { price: 160 },
-      "Ask Me Anything": { price: 40 },
-      "Interview Prep": { price: 100 },
-      "All Career Services Bundle": { price: 480 },
+      "Resume Review & Rewriting": { price: 79 },
+      "Cover Letter Writing": { price: 49 },
+      "LinkedIn Optimization": { price: 79 },
+      "Superstar Shout-Out": { price: 159 },
+      "Ask Me Anything": { price: 39 },
+      "Interview Prep": { price: 99 },
+      "Ready-to-Apply Job Pack": { price: 99 },
     };
 
     const stats: Record<
@@ -1056,7 +1056,7 @@ export default function AnalyticsDashboard({
           if (ctr < 10) {
             recommendation = `Low click-through rate (${ctr.toFixed(1)}%). Consider revising the features list or adding a "Top Value" tag to make this service card more eye-catching.`;
           } else if (checkoutRate < 20) {
-            recommendation = `High drop-off at checkout (${checkoutRate.toFixed(1)}% complete). The price of $${s.price} might represent friction. Consider introducing a temporary 10-15% discount or adding checkout assurance badges.`;
+            recommendation = `High drop-off at checkout (${checkoutRate.toFixed(1)}% complete). The current price point (${s.price}) might represent friction. Consider introducing a temporary 10-15% discount or adding checkout assurance badges.`;
           } else {
             recommendation = `Overall conversion rate is low (${convRate.toFixed(1)}%). Suggest displaying a snippet of a sample deliverable, or adding candidate testimonials for this service.`;
           }

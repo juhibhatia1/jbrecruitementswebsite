@@ -4,6 +4,8 @@ export const EMPLOYEE_SESSION_COOKIE = "jb_employee_session";
 
 const DEFAULT_EMPLOYEE_USERNAME = "employee";
 const DEFAULT_EMPLOYEE_PASSWORD = "employee123";
+const PRODUCTION_EMPLOYEE_LOGIN_ERROR =
+  "Employee login is not configured for production. Set EMPLOYEE_USERNAME and EMPLOYEE_PASSWORD in your environment.";
 
 const systemJwtSecret =
   process.env.JWT_SECRET ||
@@ -16,17 +18,29 @@ export function getEmployeeUsername(): string {
   return process.env.EMPLOYEE_USERNAME || DEFAULT_EMPLOYEE_USERNAME;
 }
 
-export function getEmployeePassword(): string {
+export function getEmployeePassword(): string | null {
   const password = process.env.EMPLOYEE_PASSWORD;
   if (
     process.env.NODE_ENV === "production" &&
     (!password || password === DEFAULT_EMPLOYEE_PASSWORD)
   ) {
-    throw new Error(
-      "CRITICAL SECURITY ERROR: Unsecure default employee password cannot be used in production.",
-    );
+    return null;
   }
   return password || DEFAULT_EMPLOYEE_PASSWORD;
+}
+
+export function getEmployeeAuthConfigError(): string | null {
+  if (process.env.NODE_ENV !== "production") {
+    return null;
+  }
+
+  const username = process.env.EMPLOYEE_USERNAME;
+  const password = process.env.EMPLOYEE_PASSWORD;
+  if (!username || !password || password === DEFAULT_EMPLOYEE_PASSWORD) {
+    return PRODUCTION_EMPLOYEE_LOGIN_ERROR;
+  }
+
+  return null;
 }
 
 function base64UrlEncode(str: string): string {
@@ -110,7 +124,12 @@ export function isValidEmployeeCredentials(
   username: string,
   password: string,
 ): boolean {
-  return username === getEmployeeUsername() && password === getEmployeePassword();
+  const expectedPassword = getEmployeePassword();
+  if (!expectedPassword) {
+    return false;
+  }
+
+  return username === getEmployeeUsername() && password === expectedPassword;
 }
 
 export function isValidEmployeeSessionToken(token?: string | null): boolean {

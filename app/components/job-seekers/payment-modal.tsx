@@ -12,6 +12,7 @@ import { IoClose, IoAlertCircle } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
+const BUNDLE_DISCOUNT_PERCENT = 10;
 
 interface ServiceItem {
   title: string;
@@ -37,7 +38,10 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const [error, setError] = useState<string | null>(null);
   const { lenis } = useLenis();
 
-  const totalAmount = services.reduce((sum, s) => sum + s.amount, 0);
+  const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
+  const subtotalAmount = services.reduce((sum, s) => sum + s.amount, 0);
+  const bundleDiscount = bundleEligibleCount >= 4 ? Math.round(subtotalAmount * 0.1) : 0;
+  const totalAmount = subtotalAmount - bundleDiscount;
   const isMulti = services.length > 1;
   const displayTitle =
     services.length === 1
@@ -228,18 +232,27 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                 </p>
 
                 {/* Line items for multi-service */}
-                {isMulti && (
-                  <div className="space-y-2 mb-3 pb-3 border-b border-gray-100">
-                    {services.map((s) => (
-                      <div key={s.title} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 truncate mr-4">{s.title}</span>
-                        <span className="text-sm font-semibold text-[#252e3d] shrink-0">
-                          {currency} {s.amount.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  {isMulti && (
+                    <div className="space-y-2 mb-3 pb-3 border-b border-gray-100">
+                      {services.map((s) => (
+                        <div key={s.title} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 truncate mr-4">{s.title}</span>
+                          <span className="text-sm font-semibold text-[#252e3d] shrink-0">
+                            {currency} {s.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+
+                      {bundleDiscount > 0 && (
+                        <div className="flex justify-between items-center pt-1">
+                          <span className="text-sm text-emerald-700">Bundle discount ({BUNDLE_DISCOUNT_PERCENT}%)</span>
+                          <span className="text-sm font-semibold text-emerald-700 shrink-0">
+                            - {currency} {bundleDiscount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                 <div className="flex items-center justify-between">
                   <div>
@@ -247,7 +260,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                       {isMulti ? "Total Amount:" : "Amount:"}
                     </span>
                     <span className="text-xl sm:text-2xl font-bold text-[#252e3d] whitespace-nowrap">
-                      {currency} {totalAmount.toLocaleString()}
+                      {currency} {totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
                   <button

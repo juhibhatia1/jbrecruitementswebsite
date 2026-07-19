@@ -17,14 +17,19 @@ const STRIPE_CURRENCY_MAP: Record<Currency, string> = {
 
 // Fallback USD-only pricing (legacy safety net)
 const SERVICE_PRICING_USD: Record<string, number> = {
-  "Resume Review & Rewriting": 80,
-  "Cover Letter Writing": 50,
-  "LinkedIn Optimization": 80,
-  "Superstar Shout-Out": 160,
-  "Ask Me Anything": 40,
-  "Interview Prep": 100,
+  "Resume Review & Rewriting": 79,
+  "Cover Letter Writing": 49,
+  "LinkedIn Optimization": 79,
+  "Superstar Shout-Out": 159,
+  "Ask Me Anything": 39,
+  "Interview Prep": 99,
+  "Ready-to-Apply Job Pack": 99,
   "All Career Services Bundle": 480,
 };
+
+const BUNDLE_DISCOUNT_PERCENT = 0.1;
+const BUNDLE_MIN_SERVICE_COUNT = 4;
+const BUNDLE_EXCLUDED_SERVICE_NAMES = new Set(["AI Mock Interview"]);
 
 function getStripe() {
   if (!stripe) {
@@ -90,6 +95,8 @@ export async function POST(request: Request) {
 
     // Validate every service name and sum prices in the selected currency
     let totalAmount = 0;
+    let bundleEligibleSubtotal = 0;
+    let bundleEligibleCount = 0;
     for (const name of serviceNames) {
       const pricingRow = MULTI_CURRENCY_PRICING[name];
       const price = pricingRow
@@ -103,7 +110,18 @@ export async function POST(request: Request) {
         );
       }
       totalAmount += price;
+
+      if (!BUNDLE_EXCLUDED_SERVICE_NAMES.has(name)) {
+        bundleEligibleSubtotal += price;
+        bundleEligibleCount += 1;
+      }
     }
+
+    const bundleDiscount =
+      bundleEligibleCount >= BUNDLE_MIN_SERVICE_COUNT
+        ? Math.round(bundleEligibleSubtotal * BUNDLE_DISCOUNT_PERCENT)
+        : 0;
+    totalAmount = Math.max(0, totalAmount - bundleDiscount);
 
     // For DB storage, join multiple names with " + "
     const combinedServiceName = serviceNames.join(" + ");
@@ -183,6 +201,8 @@ export async function POST(request: Request) {
         serviceName: combinedServiceName,
         serviceCount: serviceNames.length.toString(),
         amount: totalAmount.toString(),
+        bundleDiscount: bundleDiscount.toString(),
+        bundleEligibleServiceCount: bundleEligibleCount.toString(),
         displayCurrency: currency,
         // Interview-specific metadata (only set for mock interview purchases)
         ...(interviewMetadata?.templateId && {
