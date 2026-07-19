@@ -30,6 +30,10 @@ export interface InterviewFinalReport {
 export interface InterviewReferenceCard {
   id: string;
   title: string;
+  /** Exact question shown with the card, if the card is a structured question */
+  question?: string;
+  /** Structured options for MCQ-style cards */
+  options?: string[];
   /** Markdown content */
   content: string;
   /** Index into transcript[] at which this card was shown — used to reconstruct positional timeline */

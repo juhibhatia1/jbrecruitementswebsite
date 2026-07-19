@@ -8,6 +8,7 @@ import {
   createInterviewSessionBlueprint,
   resolveRealtimeVoice,
 } from "@/lib/interview/webrtc-session";
+import type { InterviewReferenceCard } from "@/lib/interview/types";
 
 type StartRequestBody = {
   token?: string;
@@ -23,6 +24,7 @@ function buildSessionInstructions(payload: {
   baseInstructions: string;
   sessionBlueprint?: Parameters<typeof buildWebRtcSystemInstructions>[0]["sessionBlueprint"];
   transcript?: Array<{ role: "candidate" | "interviewer"; text: string }>;
+  referenceCards?: InterviewReferenceCard[];
   isResuming?: boolean;
   resumeText?: string;
   jobDescription?: string;
@@ -153,6 +155,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const normalizedReferenceCards: InterviewReferenceCard[] = previousReferenceCards
+      .map((card, index) => ({
+        id: typeof card.id === "string" && card.id.trim() ? card.id : `card-${index + 1}`,
+        title: typeof card.title === "string" ? card.title : "",
+        question: typeof card.question === "string" && card.question.trim() ? card.question : undefined,
+        options: Array.isArray(card.options)
+          ? card.options.map((option) => String(option)).filter((option) => option.trim().length > 0)
+          : undefined,
+        content: typeof card.content === "string" ? card.content : "",
+        afterTranscriptIndex: typeof card.afterTranscriptIndex === "number" ? card.afterTranscriptIndex : undefined,
+      }))
+      .filter((card) => card.title.length > 0 && card.content.length > 0);
+
     const systemInstructions = buildSessionInstructions({
       role: application.template.jobRole,
       experienceLevel: application.template.experienceLevel,
@@ -162,6 +177,7 @@ export async function POST(request: NextRequest) {
       baseInstructions,
       sessionBlueprint,
       transcript: previousTranscript.length > 0 ? previousTranscript : undefined,
+      referenceCards: normalizedReferenceCards.length > 0 ? normalizedReferenceCards : undefined,
       isResuming,
       resumeText: application.resumeText || undefined,
       jobDescription:

@@ -112,7 +112,7 @@ export default async function JobSeekersPage() {
 
                 <div className="w-full">
                   <p className="text-sm font-medium leading-relaxed text-gray-700 sm:text-base">
-                    â€¢ We do not charge candidates for job opportunities.
+                    • We do not charge candidates for job opportunities.
                     However, we offer paid career services below that are
                     designed to help you stand out in the job market.
                   </p>

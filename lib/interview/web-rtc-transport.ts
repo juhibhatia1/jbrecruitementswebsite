@@ -140,14 +140,34 @@ export class OpenAIWebRtcInterviewTransport {
   private sectionAccumulatedMs = new Map<string, number>();
   private sectionLastEnteredAtMs = new Map<string, number>();
   private currentSectionName: string | null = null;
+  private transcriptItemCount = 0;
   private lastGuardInterventionAtMs = 0;
   private playbackCtx: AudioContext | null = null;
   private playbackCtxOwned = false;
   private playbackCursor = 0;
   private scheduledSources: AudioBufferSourceNode[] = [];
 
+  // Bug 3 fix: response-in-flight tracking to prevent concurrent response.create
+  private responseInFlight = false;
+  private pendingResponseCreate = false;
+
+  // Bug 3 fix: stall watchdog - detects when AI stops responding
+  private lastEventAtMs = 0;
+  private stallWatchdogTimer: ReturnType<typeof setInterval> | null = null;
+  private stallRecoveryAttempts = 0;
+  private static readonly STALL_THRESHOLD_MS = 15_000; // 15 seconds without any event = stall
+  private static readonly MAX_STALL_RECOVERIES = 3;
+
+  // Bug 4 fix: absolute kill timer after hard stop
+  private killTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly KILL_AFTER_HARD_STOP_MS = 90_000; // 90 seconds after hard stop
+
   constructor(callbacks: WebRtcCallbacks) {
     this.callbacks = callbacks;
+  }
+
+  isReady(): boolean {
+    return this.dc !== null && this.dc.readyState === "open" && this.openingPromptSent;
   }
 
   async connect(payload: ConnectPayload, localStream: MediaStream): Promise<void> {
@@ -166,6 +186,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.sectionAccumulatedMs = new Map();
     this.sectionLastEnteredAtMs = new Map();
     this.currentSectionName = null;
+    this.transcriptItemCount = 0;
     const parsedStart = Date.parse(payload.sessionStartedAt);
     this.sessionStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
     this.playbackCtx = payload.playbackAudioContext ?? null;
@@ -193,12 +214,32 @@ export class OpenAIWebRtcInterviewTransport {
       this.callbacks.onStatus("OpenAI WebRTC data channel opened.");
       this.sendSessionUpdate(payload.systemInstructions);
       this.sendOpeningPrompt(payload.openingPrompt);
+      this.startStallWatchdog();
       this.callbacks.onReady();
+    };
+
+    this.dc.onclose = () => {
+      if (!this.manuallyClosed && !this.completed) {
+        console.warn("[WebRTC] Data channel closed unexpectedly");
+        this.callbacks.onError("Connection to AI interviewer lost. The session will be finalized.");
+        this.forceComplete();
+      }
+    };
+
+    this.dc.onerror = (event) => {
+      console.error("[WebRTC] Data channel error:", event);
+      if (!this.manuallyClosed && !this.completed) {
+        this.callbacks.onError("Connection error with AI interviewer.");
+      }
     };
 
     this.dc.onmessage = (event) => {
       const message = safeParseMessage(String(event.data));
       if (!message) return;
+
+      // Bug 3 fix: track last event time for stall detection
+      this.lastEventAtMs = Date.now();
+      this.stallRecoveryAttempts = 0;
 
       if (message.type === "session.created" || message.type === "session.updated") {
         this.callbacks.onStatus("OpenAI Realtime session ready.");
@@ -209,11 +250,17 @@ export class OpenAIWebRtcInterviewTransport {
           readString(message.error?.message) ||
           readString(message.message) ||
           JSON.stringify(message);
-        this.callbacks.onError(errMsg);
+        // Don't treat "Cancellation failed" as fatal — it just means no active response
+        if (!errMsg.toLowerCase().includes("cancellation")) {
+          this.callbacks.onError(errMsg);
+        } else {
+          console.info("[WebRTC] Non-fatal cancellation error:", errMsg);
+        }
       }
 
       if (message.type === "response.output_audio_transcript.done" && message.transcript) {
         const interviewerText = String(message.transcript).trim();
+        this.transcriptItemCount += 1;
         this.callbacks.onTranscript({
           role: "interviewer",
           text: interviewerText,
@@ -228,9 +275,10 @@ export class OpenAIWebRtcInterviewTransport {
       ) {
         const text = String(message.transcript || message.text || "").trim();
         if (text) {
+          this.transcriptItemCount += 1;
           this.callbacks.onTranscript({ role: "candidate", text });
           if (!this.completed) {
-            this.sendJson({ type: "response.create" });
+            this.safeResponseCreate();
           }
         }
       }
@@ -247,6 +295,7 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.created") {
+        this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
@@ -258,6 +307,19 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.done") {
+        this.responseInFlight = false;
+        this.assistantSpeaking = false;
+        this.callbacks.onAssistantSpeakingChange?.(false);
+        // Bug 3 fix: if a response.create was queued while response was in flight, send it now
+        if (this.pendingResponseCreate) {
+          this.pendingResponseCreate = false;
+          this.safeResponseCreate();
+        }
+      }
+
+      // Bug 3 fix: handle response.cancelled (response was interrupted)
+      if (message.type === "response.cancelled") {
+        this.responseInFlight = false;
         this.assistantSpeaking = false;
         this.callbacks.onAssistantSpeakingChange?.(false);
       }
@@ -309,12 +371,10 @@ export class OpenAIWebRtcInterviewTransport {
         ],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
 
     setTimeout(() => {
-      if (this.pc && this.pc.connectionState !== "closed") {
-        this.pc.close();
-      }
+      this.forceComplete();
     }, 12000);
   }
 
@@ -325,6 +385,8 @@ export class OpenAIWebRtcInterviewTransport {
     }
     if (text.includes("TIME_SIGNAL:HARD_STOP_REACHED")) {
       this.hardStopSignaled = true;
+      // Bug 4 fix: arm absolute kill timer after hard stop
+      this.armKillTimer();
     }
 
     this.sendJson({
@@ -335,17 +397,23 @@ export class OpenAIWebRtcInterviewTransport {
         content: [{ type: "input_text", text }],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
   }
 
   cancelResponse(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
     this.sendJson({ type: "response.cancel" });
+    // Mark response as no longer in flight — the model may send response.cancelled or response.done
+    this.responseInFlight = false;
+    this.assistantSpeaking = false;
+    this.stopPlayback();
   }
 
   close(): void {
     this.manuallyClosed = true;
     this.completed = true;
+    this.stopStallWatchdog();
+    this.clearKillTimer();
     this.stopPlayback();
     try {
       this.dc?.close();
@@ -355,6 +423,119 @@ export class OpenAIWebRtcInterviewTransport {
     } catch {}
     this.dc = null;
     this.pc = null;
+  }
+
+  // Bug 3 fix: safe response.create that respects in-flight status
+  private safeResponseCreate(): void {
+    if (this.completed || !this.dc || this.dc.readyState !== "open") return;
+    if (this.responseInFlight) {
+      // Queue the request — it will be sent when current response completes
+      this.pendingResponseCreate = true;
+      return;
+    }
+    this.sendJson({ type: "response.create" });
+  }
+
+  // Bug 3 fix: stall watchdog — detects when AI stops responding
+  private startStallWatchdog(): void {
+    this.lastEventAtMs = Date.now();
+    this.stallRecoveryAttempts = 0;
+    this.stallWatchdogTimer = setInterval(() => {
+      if (this.completed || this.manuallyClosed) {
+        this.stopStallWatchdog();
+        return;
+      }
+      const silenceMs = Date.now() - this.lastEventAtMs;
+      if (silenceMs >= OpenAIWebRtcInterviewTransport.STALL_THRESHOLD_MS) {
+        this.handleStallDetected();
+      }
+    }, 5_000); // check every 5 seconds
+  }
+
+  private stopStallWatchdog(): void {
+    if (this.stallWatchdogTimer) {
+      clearInterval(this.stallWatchdogTimer);
+      this.stallWatchdogTimer = null;
+    }
+  }
+
+  private handleStallDetected(): void {
+    if (this.completed || this.manuallyClosed) return;
+
+    this.stallRecoveryAttempts += 1;
+    console.warn(`[WebRTC] Stall detected (attempt ${this.stallRecoveryAttempts}/${OpenAIWebRtcInterviewTransport.MAX_STALL_RECOVERIES})`);
+
+    if (this.stallRecoveryAttempts > OpenAIWebRtcInterviewTransport.MAX_STALL_RECOVERIES) {
+      // Exceeded max recovery attempts — force complete
+      console.error("[WebRTC] Max stall recoveries exceeded, force-completing session");
+      this.callbacks.onError("AI interviewer became unresponsive. Ending session.");
+      this.forceComplete();
+      return;
+    }
+
+    // Recovery: reset response tracking and send a nudge
+    this.responseInFlight = false;
+    this.pendingResponseCreate = false;
+    this.assistantSpeaking = false;
+    this.callbacks.onAssistantSpeakingChange?.(false);
+
+    if (this.dc && this.dc.readyState === "open") {
+      // Send a recovery prompt to the model
+      this.sendJson({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{
+            type: "input_text",
+            text: "SYSTEM_RECOVERY: The connection experienced a brief interruption. Please continue the interview from where you left off. If you were in the middle of asking a question, repeat it. If waiting for a response, acknowledge the pause and move on to the next question.",
+          }],
+        },
+      });
+      this.sendJson({ type: "response.create" });
+      // Reset the timer so we don't immediately re-trigger
+      this.lastEventAtMs = Date.now();
+    } else {
+      // Data channel is not open — force complete
+      this.callbacks.onError("Connection to AI interviewer lost.");
+      this.forceComplete();
+    }
+  }
+
+  // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
+  private armKillTimer(): void {
+    if (this.killTimer) return; // already armed
+    this.killTimer = setTimeout(() => {
+      if (!this.completed && !this.manuallyClosed) {
+        console.warn("[WebRTC] Kill timer fired — force-completing session after hard stop");
+        this.forceComplete();
+      }
+    }, OpenAIWebRtcInterviewTransport.KILL_AFTER_HARD_STOP_MS);
+  }
+
+  private clearKillTimer(): void {
+    if (this.killTimer) {
+      clearTimeout(this.killTimer);
+      this.killTimer = null;
+    }
+  }
+
+  // Force complete the interview — used by kill timer and stall recovery
+  private forceComplete(): void {
+    if (this.completed) return;
+    this.completed = true;
+    this.stopStallWatchdog();
+    this.clearKillTimer();
+    this.stopPlayback();
+    this.callbacks.onComplete();
+    try {
+      this.dc?.close();
+    } catch {}
+    try {
+      if (this.pc && this.pc.connectionState !== "closed") {
+        this.pc.close();
+      }
+    } catch {}
   }
 
   private playAudioDelta(b64: string): void {
@@ -465,6 +646,12 @@ export class OpenAIWebRtcInterviewTransport {
               type: "object",
               properties: {
                 title: { type: "string", description: "Card title" },
+                question: { type: "string", description: "Exact question to show on the card when the card is a structured question." },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Answer options for MCQ-style cards.",
+                },
                 content: { type: "string", description: "Markdown content to display" },
               },
               required: ["title", "content"],
@@ -535,7 +722,7 @@ export class OpenAIWebRtcInterviewTransport {
         content: [{ type: "input_text", text: openingPrompt }],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
   }
 
   private async handleFunctionCall(message: OpenAIEventRecord): Promise<void> {
@@ -663,10 +850,18 @@ export class OpenAIWebRtcInterviewTransport {
         }
       }
     } else if (readString(message.name) === "show_reference_card") {
+      const question = readString(args.question).trim();
+      const options = Array.isArray(args.options)
+        ? args.options.map((item) => String(item).trim()).filter((item) => item.length > 0)
+        : [];
+      const content = readString(args.content).trim();
       const card: InterviewReferenceCard = {
         id: `card-${Date.now()}`,
         title: readString(args.title),
-        content: readString(args.content),
+        question: question || undefined,
+        options: options.length > 0 ? options : undefined,
+        content: content || this.buildReferenceCardContent(question, options, content),
+        afterTranscriptIndex: this.transcriptItemCount,
       };
       this.callbacks.onReferenceCard(card);
       result = { ok: true };
@@ -700,44 +895,73 @@ export class OpenAIWebRtcInterviewTransport {
     });
 
     if (needsContinuation) {
-      this.sendJson({ type: "response.create" });
+      this.safeResponseCreate();
     }
   }
 
   private async generateFollowupQuestions(args: Record<string, unknown>) {
-    const response = await fetch("/api/interviews/webrtc/questions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token: this.token,
-        sessionId: this.sessionId,
-        sectionName: readString(args.sectionName),
-        topic: readString(args.topic),
-        difficulty: readString(args.difficulty),
-        count: Number(args.count ?? 3),
-        questionTypes: Array.isArray(args.questionTypes)
-          ? args.questionTypes.map((item) => String(item))
-          : ["NORMAL"],
-        candidateContext: readString(args.candidateContext),
-        elapsedMinutes: Number(args.elapsedMinutes ?? 0),
-        remainingMinutes: Number(args.remainingMinutes ?? 0),
-      }),
-    });
+    // Bug 3 fix: add timeout to prevent indefinite hang
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10 second timeout
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      return {
-        questions: [],
-        error: `Failed to generate follow-up questions (${response.status})${body ? `: ${body}` : ""}`,
+    try {
+      const response = await fetch("/api/interviews/webrtc/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          token: this.token,
+          sessionId: this.sessionId,
+          sectionName: readString(args.sectionName),
+          topic: readString(args.topic),
+          difficulty: readString(args.difficulty),
+          count: Number(args.count ?? 3),
+          questionTypes: Array.isArray(args.questionTypes)
+            ? args.questionTypes.map((item) => String(item))
+            : ["NORMAL"],
+          candidateContext: readString(args.candidateContext),
+          elapsedMinutes: Number(args.elapsedMinutes ?? 0),
+          remainingMinutes: Number(args.remainingMinutes ?? 0),
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        return {
+          questions: [],
+          error: `Failed to generate follow-up questions (${response.status})${body ? `: ${body}` : ""}`,
+        };
+      }
+
+      const data = (await response.json()) as {
+        questions?: Array<Record<string, unknown>>;
       };
+      return {
+        questions: Array.isArray(data.questions) ? data.questions : [],
+      };
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return { questions: [], error: "Question generation timed out. Continue with your own questions." };
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private buildReferenceCardContent(question: string, options: string[], content: string) {
+    if (content) {
+      return content;
     }
 
-    const data = (await response.json()) as {
-      questions?: Array<Record<string, unknown>>;
-    };
-    return {
-      questions: Array.isArray(data.questions) ? data.questions : [],
-    };
+    const lines: string[] = [];
+    if (question) {
+      lines.push(`**Question:** ${question}`);
+    }
+    if (options.length > 0) {
+      lines.push("", "**Options:**", ...options.map((option, index) => `${String.fromCharCode(65 + index)}. ${option}`));
+    }
+    return lines.join("\n");
   }
 
   private trackSectionProgress(sectionName: string) {

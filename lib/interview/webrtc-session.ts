@@ -79,6 +79,7 @@ export function buildWebRtcSystemInstructions(payload: {
   baseInstructions: string;
   sessionBlueprint?: InterviewSessionBlueprint | null;
   transcript?: InterviewTranscriptEntry[];
+  referenceCards?: InterviewReferenceCard[];
   isResuming?: boolean;
   resumeText?: string;
   jobDescription?: string;
@@ -91,6 +92,7 @@ export function buildWebRtcSystemInstructions(payload: {
     baseInstructions,
     sessionBlueprint,
     transcript,
+    referenceCards,
     isResuming,
     resumeText,
     difficultyLevel,
@@ -100,6 +102,23 @@ export function buildWebRtcSystemInstructions(payload: {
     ? transcript
         .map((entry) => `${entry.role === "interviewer" ? "Interviewer" : "Candidate"}: ${entry.text}`)
         .join("\n")
+    : "";
+  const referenceCardsText = referenceCards && referenceCards.length > 0
+    ? `
+
+<previous_reference_cards>
+${referenceCards
+  .map((card) => {
+    const optionsText = card.options && card.options.length > 0
+      ? `\nOptions: ${card.options.map((option, index) => `${String.fromCharCode(65 + index)}. ${option}`).join(" | ")}`
+      : "";
+    const questionText = card.question ? `\nQuestion: ${card.question}` : "";
+    return `[${card.title}]${questionText}${optionsText}\n${card.content}`;
+  })
+  .join("\n\n")}
+</previous_reference_cards>
+Do NOT lose track of any question or options that were shown visually. When you refer back to a reference card, reuse its exact question text and options if present.
+`
     : "";
 
   const resumeBlock = isResuming && transcriptText
@@ -113,6 +132,8 @@ ${transcriptText}
 </previous_transcript>
 
 Do NOT repeat any questions or topics already covered. Do NOT re-introduce yourself or restart the interview. Continue naturally from where the conversation left off.
+
+${referenceCardsText}
 `
     : "";
 
@@ -164,6 +185,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - You may receive orchestration notes such as TIME_SIGNAL:30_SECONDS_REMAINING, TIME_SIGNAL:DURATION_COMPLETE, and TIME_SIGNAL:HARD_STOP_REACHED. Follow them strictly: acknowledge briefly when appropriate, tighten pacing, and conclude professionally once the current answer/essential final point is complete.
 - If a section runs out of useful questions before duration-complete, call generate_section_questions to get new runtime questions. Ask a balanced mix of NORMAL, MCQ, CODE_SNIPPET, and GRAPHICAL questions as appropriate for the role and section.
 - For MCQ, CODE_SNIPPET, and GRAPHICAL questions, use show_reference_card to present the prompt/options/snippet on screen before asking.
+- When showing an MCQ, include the exact question text in both the verbal question and the show_reference_card payload, and pass the answer choices in the tool call's options field so the card renders in a structured way.
 - You may give short teaching feedback after acknowledging answers, but keep it concise and return quickly to the next question so pacing stays on target.
 - Never ask "Do you have any questions for me?" until duration-complete is reached and mandatory section/time/question objectives are satisfied (unless hard-stop mode is active).
 - FINAL CLOSING WINDOW RULE: Ask "Do you have any questions for me/about the role/company?" only in the final minute of the scheduled duration or after TIME_SIGNAL:DURATION_COMPLETE. Asking it earlier is not allowed.

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { IoMic, IoMicOff } from "react-icons/io5";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
 import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
+import { buildTimeline } from "@/app/components/interviews/timeline-utils";
 import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 
 type Phase = "setup" | "live" | "results" | "error";
@@ -42,6 +43,11 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [micLocked, setMicLocked] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [clockTick, setClockTick] = useState(() => Date.now());
+  const [hasStream, setHasStream] = useState(false);
+  const [timingState, setTimingState] = useState({
+    startedAt: 0,
+    durationMs: 15 * 60 * 1000,
+  });
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
@@ -107,6 +113,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   const stopMic = useCallback(() => {
     setMicLocked(true);
+    setHasStream(false);
     silentGainRef.current?.disconnect();
     analyserRef.current?.disconnect();
     sourceRef.current?.disconnect();
@@ -280,7 +287,28 @@ export default function InterviewRoom({ token }: { token: string }) {
         );
       },
     );
-  }, [clearInterviewTiming]);
+
+    // Bug 4 fix: absolute client-side kill — force finalize 2 minutes after hard stop
+    const absoluteKillAt = hardStopAt + 2 * 60_000;
+    schedule(
+      absoluteKillAt,
+      (timerId) => {
+        // Reuse hardStopTimerRef slot since hard stop already fired
+        durationHardStopTimerRef.current = timerId;
+      },
+      () => {
+        if (phaseRef.current !== "live") return;
+        console.warn("[InterviewRoom] Absolute kill timer fired — forcing session end");
+        toast.info("Interview time limit reached. Finalizing your session...");
+        clearInterviewTiming();
+        stopMic();
+        setAiSpeaking(false);
+        transportRef.current?.close();
+        setPhase("results");
+        void finalizeSession("COMPLETED");
+      },
+    );
+  }, [clearInterviewTiming, finalizeSession, stopMic]);
 
   const handleTransportMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
@@ -291,7 +319,10 @@ export default function InterviewRoom({ token }: { token: string }) {
       case "error":
         setErrorMsg(msg.message);
         setAiSpeaking(false);
-        if (phaseRef.current !== "live" && phaseRef.current !== "results") {
+        if (phaseRef.current === "live") {
+          // Bug 3 fix: Surface errors during live phase as a toast, not a phase change
+          toast.error(msg.message);
+        } else if (phaseRef.current !== "results") {
           setPhase("error");
         }
         break;
@@ -300,10 +331,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (msg.existingTranscript?.length) {
           transcriptRef.current = msg.existingTranscript;
           referenceCardsRef.current = msg.existingReferenceCards || [];
-          setTranscriptItems([
-            ...msg.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
-            ...(msg.existingReferenceCards || []).map((card) => ({ kind: "card" as const, card })),
-          ]);
+          setTranscriptItems(buildTimeline(msg.existingTranscript, msg.existingReferenceCards || []));
         }
         setSetupStep("done");
         setSetupStatus("Interview starting…");
@@ -321,6 +349,9 @@ export default function InterviewRoom({ token }: { token: string }) {
         transcriptRef.current = [...transcriptRef.current, msg.data];
         if (msg.data.role === "interviewer" && pendingCardsRef.current.length > 0) {
           const pending = pendingCardsRef.current.splice(0);
+          for (const card of pending) {
+            card.afterTranscriptIndex = transcriptRef.current.length;
+          }
           setTranscriptItems((prev) => [
             ...prev,
             { kind: "speech", entry: msg.data },
@@ -339,11 +370,15 @@ export default function InterviewRoom({ token }: { token: string }) {
         scheduleSync();
         break;
 
-      case "reference_card":
-        referenceCardsRef.current = [...referenceCardsRef.current, msg.data];
-        pendingCardsRef.current.push(msg.data);
+      case "reference_card": {
+        const card = msg.data.afterTranscriptIndex === undefined
+          ? { ...msg.data, afterTranscriptIndex: transcriptRef.current.length }
+          : msg.data;
+        referenceCardsRef.current = [...referenceCardsRef.current, card];
+        pendingCardsRef.current.push(card);
         scheduleSync();
         break;
+      }
 
       case "ai_interrupted":
         setAiSpeaking(false);
@@ -358,12 +393,12 @@ export default function InterviewRoom({ token }: { token: string }) {
     }
   }, [armInterviewTiming, clearInterviewTiming, finalizeSession, scheduleSync, stopMic]);
 
-  const currentTimeMs = phase === "live" ? clockTick : Date.now();
+  const currentTimeMs = clockTick;
   const elapsedSeconds =
-    phase === "live" && interviewStartedAtRef.current
-      ? Math.max(0, Math.floor((currentTimeMs - interviewStartedAtRef.current) / 1000))
+    phase === "live" && timingState.startedAt
+      ? Math.max(0, Math.floor((currentTimeMs - timingState.startedAt) / 1000))
       : 0;
-  const totalDurationSeconds = Math.max(1, Math.floor(interviewDurationMsRef.current / 1000));
+  const totalDurationSeconds = Math.max(1, Math.floor(timingState.durationMs / 1000));
   const remainingSeconds = Math.max(0, totalDurationSeconds - elapsedSeconds);
   const progressPercent = Math.min(100, (elapsedSeconds / totalDurationSeconds) * 100);
   const timerTone =
@@ -465,19 +500,22 @@ export default function InterviewRoom({ token }: { token: string }) {
       hardStopSignalSentRef.current = false;
 
       const parsedDuration = Number(startData.durationMinutes);
-      interviewDurationMsRef.current = Number.isFinite(parsedDuration) && parsedDuration > 0
+      const resolvedDurationMs = Number.isFinite(parsedDuration) && parsedDuration > 0
         ? parsedDuration * 60 * 1000
         : 15 * 60 * 1000;
+      interviewDurationMsRef.current = resolvedDurationMs;
       const parsedStartedAt = Date.parse(startData.sessionStartedAt);
-      interviewStartedAtRef.current = Number.isFinite(parsedStartedAt)
+      const resolvedStartedAt = Number.isFinite(parsedStartedAt)
         ? parsedStartedAt
         : Date.now();
+      interviewStartedAtRef.current = resolvedStartedAt;
+      setTimingState({
+        startedAt: resolvedStartedAt,
+        durationMs: resolvedDurationMs,
+      });
 
       if (startData.existingTranscript?.length) {
-        setTranscriptItems([
-          ...startData.existingTranscript.map((entry) => ({ kind: "speech" as const, entry })),
-          ...(startData.existingReferenceCards || []).map((card) => ({ kind: "card" as const, card })),
-        ]);
+        setTranscriptItems(buildTimeline(startData.existingTranscript, startData.existingReferenceCards || []));
       }
 
       setSetupStep("starting");
@@ -500,6 +538,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       const transport = new OpenAIWebRtcInterviewTransport({
         onReady: () => {
+          setHasStream(true);
           setMicCaptureEnabled(true);
           toast.success("AI interviewer is ready. Your microphone is now active.");
           handleTransportMessage({
@@ -547,21 +586,33 @@ export default function InterviewRoom({ token }: { token: string }) {
       if (!cancelledRef.current) {
         setPhase("live");
       }
-      await transport.connect(
-        {
-          token,
-          sessionId: startData.sessionId,
-          clientSecret: startData.clientSecret,
-          systemInstructions: startData.systemInstructions,
-          openingPrompt: startData.openingPrompt,
-          sessionBlueprint: startData.sessionBlueprint ?? null,
-          voice: startData.voice,
-          durationMinutes: startData.durationMinutes,
-          sessionStartedAt: startData.sessionStartedAt,
-          playbackAudioContext: ctx,
-        },
-        stream,
-      );
+
+      // Bug 3 fix: add setup timeout — if connect hangs for 30s, fail gracefully
+      const connectTimeout = setTimeout(() => {
+        if (phaseRef.current === "live" && !transport.isReady()) {
+          throw new Error("Connection to AI interviewer timed out. Please try again.");
+        }
+      }, 30_000);
+
+      try {
+        await transport.connect(
+          {
+            token,
+            sessionId: startData.sessionId,
+            clientSecret: startData.clientSecret,
+            systemInstructions: startData.systemInstructions,
+            openingPrompt: startData.openingPrompt,
+            sessionBlueprint: startData.sessionBlueprint ?? null,
+            voice: startData.voice,
+            durationMinutes: startData.durationMinutes,
+            sessionStartedAt: startData.sessionStartedAt,
+            playbackAudioContext: ctx,
+          },
+          stream,
+        );
+      } finally {
+        clearTimeout(connectTimeout);
+      }
     } catch (error) {
       console.error("Interview setup failed:", error);
       if (!cancelledRef.current) {
@@ -907,7 +958,7 @@ export default function InterviewRoom({ token }: { token: string }) {
           <div className="mt-8">
             <button
               onClick={toggleMicCapture}
-              disabled={phase !== "live" || !streamRef.current}
+              disabled={phase !== "live" || !hasStream}
               className={`mb-3 flex w-full items-center justify-center gap-2 rounded-xl border px-5 py-2.5 text-xs font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
                 micLocked
                   ? "border-slate-300 bg-white text-[#252e3d] hover:bg-slate-50"
@@ -977,6 +1028,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
 function ReferenceCard({ card }: { card: InterviewReferenceCard }) {
   const [expanded, setExpanded] = useState(true);
+  const hasStructuredQuestion = Boolean(card.question || (card.options && card.options.length > 0));
   return (
     <div className="rounded-xl border border-[#e0dfff] bg-white overflow-hidden shadow-sm hover:shadow transition-shadow">
       <button
@@ -1002,6 +1054,21 @@ function ReferenceCard({ card }: { card: InterviewReferenceCard }) {
           [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-[#5a58ab] [&_th]:font-semibold [&_th]:text-left
           [&_td]:border [&_td]:border-slate-100 [&_td]:px-2 [&_td]:py-1 [&_td]:text-slate-600
           [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-[#5a58ab] [&_a]:underline">
+          {hasStructuredQuestion && (
+            <div className="mb-3 rounded-lg border border-[#e0dfff] bg-[#faf9ff] px-3 py-2">
+              {card.question && <p className="font-semibold text-[#252e3d]">Question: {card.question}</p>}
+              {card.options && card.options.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {card.options.map((option, index) => (
+                    <div key={`${card.id}-option-${index}`} className="rounded-md bg-white px-2 py-1 border border-slate-100 text-slate-600">
+                      <span className="font-semibold text-[#5a58ab]">{String.fromCharCode(65 + index)}.</span>{" "}
+                      {option}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.content}</ReactMarkdown>
         </div>
       )}
