@@ -153,7 +153,7 @@ export class OpenAIWebRtcInterviewTransport {
 
   // Interruption debounce: track when AI started speaking to avoid premature cancellation
   private assistantSpeakingStartedAtMs = 0;
-  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 2000; // Let AI speak at least 2s before allowing interruption
+  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 2000; // 2s: filters all noise, only sustained speech interrupts
 
   // Bug 3 fix: stall watchdog - detects when AI stops responding
   private lastEventAtMs = 0;
@@ -281,9 +281,9 @@ export class OpenAIWebRtcInterviewTransport {
         if (text) {
           this.transcriptItemCount += 1;
           this.callbacks.onTranscript({ role: "candidate", text });
-          if (!this.completed) {
-            this.safeResponseCreate();
-          }
+          // NOTE: Do NOT send response.create here. With server_vad, OpenAI automatically
+          // generates a response after detecting end of speech. Sending a manual response.create
+          // causes duplicate responses (AI repeats questions, says "let me think", etc.)
         }
       }
 
@@ -327,10 +327,15 @@ export class OpenAIWebRtcInterviewTransport {
         }
       }
 
-      // Bug 3 fix: handle response.cancelled (response was interrupted)
+      // Handle response.cancelled (response was interrupted)
       if (message.type === "response.cancelled") {
         this.responseInFlight = false;
         this.assistantSpeaking = false;
+        // Clear stale pending request: a pacing guard may have set this while a response
+        // was in flight; after cancellation response.done never fires, so without this
+        // clear the pending request would leak into the next response's done handler
+        // and fire a spurious extra AI turn.
+        this.pendingResponseCreate = false;
         this.callbacks.onAssistantSpeakingChange?.(false);
       }
     };
@@ -437,6 +442,21 @@ export class OpenAIWebRtcInterviewTransport {
     } catch {}
     this.dc = null;
     this.pc = null;
+  }
+
+  // Injects a context message silently — no response.create triggered.
+  // Used by pacing guards so the model sees guidance on next natural turn
+  // without generating a spurious extra AI response.
+  private sendSilentContextMessage(text: string): void {
+    if (!text.trim() || !this.dc || this.dc.readyState !== "open" || this.completed) return;
+    this.sendJson({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    });
   }
 
   // Bug 3 fix: safe response.create that respects in-flight status
@@ -608,9 +628,9 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.92,
+              threshold: 0.96,
               prefix_padding_ms: 200,
-              silence_duration_ms: 800,
+              silence_duration_ms: 1400,
             },
             transcription: { model: "whisper-1" },
           },
@@ -1039,7 +1059,9 @@ export class OpenAIWebRtcInterviewTransport {
       const guidance = this.getSectionPacingGuidance(this.currentSectionName);
       if (guidance && guidance.remainingMinutes > 0.4 && !this.hardStopSignaled) {
         this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
+        // Silent injection — no response.create. Model sees this on the next natural turn.
+        // Avoids the chain: pacing guard → pendingResponseCreate → extra AI monologue.
+        this.sendSilentContextMessage(
           `PACING_GUARD: Do not transition sections yet. Stay in section "${this.currentSectionName}" and continue asking high-signal questions until its allotted time is met. Use generate_section_questions for this section if needed.`,
         );
         return;
@@ -1055,13 +1077,13 @@ export class OpenAIWebRtcInterviewTransport {
         this.hardStopSignaled;
       if (!closingWindowReached) {
         this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
-          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Retract this and continue with the next technical question immediately. Do not repeat this closing question.",
+        // Silent injection — same reason as above.
+        this.sendSilentContextMessage(
+          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Continue with the next technical question. Do not repeat the closing question.",
         );
         return;
       }
       // If closing window IS reached, do NOT block — let the AI proceed to finalize
-      // The one-way gate rule in system instructions ensures it won't go back to technical questions
     }
   }
 
