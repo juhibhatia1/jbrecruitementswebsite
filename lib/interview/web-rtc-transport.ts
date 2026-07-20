@@ -672,10 +672,12 @@ ${systemInstructions}`;
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              // 700ms silence before committing candidate turn.
-              // API default (500ms) is too short — natural speaking pauses fragment
-              // one answer into multiple commits causing premature AI responses.
-              // 700ms allows natural breathing/thinking pauses without feeling sluggish.
+              // threshold 0.7: API default (0.5) captured too much ambient noise
+              // as speech ("And you might be like, oh yeah" artifacts). 0.7 filters
+              // casual background sound while still catching clear speech.
+              threshold: 0.7,
+              // 700ms silence: API default (500ms) fragmented natural speaking pauses
+              // into multiple commits → AI jumped in mid-answer.
               silence_duration_ms: 700,
             },
             transcription: { model: "whisper-1" },
@@ -721,7 +723,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "show_reference_card",
-            description: "MUST USE for every MCQ, code snippet, or visual question. Display structured content on the candidate's screen BEFORE asking the question verbally. Use for: interview structure (opening), MCQ options, code snippets to analyze, comparison tables, diagrams. Call this tool BEFORE speaking the question so the candidate can see and read the content.",
+            description: "MUST USE for every MCQ, code snippet, or visual question. Display structured content on the candidate's screen. REQUIRED SEQUENCE: (1) Call this tool to show the content. (2) IMMEDIATELY after, verbally tell the candidate what to do — e.g. 'Take a look at the code snippet on your screen. What will this program print, and why?' or 'Review the options on screen and pick the correct one.' (3) Then WAIT for the candidate to answer — do NOT answer the question yourself. Never call this tool and stay silent.",
             parameters: {
               type: "object",
               properties: {
@@ -860,6 +862,12 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
+      // Do NOT trigger a new response after save_interview_event.
+      // The model already verbally asked the next question before calling this function
+      // (per tool description instruction). safeResponseCreate would force a new AI turn
+      // before the candidate answers, causing the AI to answer its own question.
+      // server_vad auto-triggers the next response when the candidate speaks.
+      needsContinuation = false;
     } else if (readString(message.name) === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
@@ -1101,18 +1109,12 @@ ${systemInstructions}`;
       return;
     }
 
-    if (isSectionTransitionCue(interviewerText) && this.currentSectionName) {
-      const guidance = this.getSectionPacingGuidance(this.currentSectionName);
-      if (guidance && guidance.remainingMinutes > 0.4 && !this.hardStopSignaled) {
-        this.lastGuardInterventionAtMs = now;
-        // Silent injection — no response.create. Model sees this on the next natural turn.
-        // Avoids the chain: pacing guard → pendingResponseCreate → extra AI monologue.
-        this.sendSilentContextMessage(
-          `PACING_GUARD: Do not transition sections yet. Stay in section "${this.currentSectionName}" and continue asking high-signal questions until its allotted time is met. Use generate_section_questions for this section if needed.`,
-        );
-        return;
-      }
-    }
+    // NOTE: Section transition guard removed.
+    // The save_interview_event return value already carries sectionPacing.instruction
+    // which tells the model to stay in the current section. Having a SECOND guard that
+    // fires AFTER the AI has already verbally said "Let's move to Section 2" caused
+    // jarring mid-interview reverts — the AI would go back and re-ask Section 1 questions
+    // after the candidate had already answered a Section 2 question.
 
     if (isClosingCue(interviewerText)) {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
