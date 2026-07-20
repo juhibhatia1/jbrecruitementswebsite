@@ -598,9 +598,9 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.7,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 1200,
+              threshold: 0.85,
+              prefix_padding_ms: 250,
+              silence_duration_ms: 1000,
             },
             transcription: { model: "whisper-1" },
           },
