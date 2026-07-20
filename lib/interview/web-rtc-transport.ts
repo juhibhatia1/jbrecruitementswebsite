@@ -632,16 +632,33 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.sessionUpdateSent || !this.dc || this.dc.readyState !== "open") return;
     this.sessionUpdateSent = true;
 
-    // Prepend turn-completion behavioral rules. The job-specific systemInstructions
-    // doesn't know about "I'm done" / "done" / "finished" being candidate cues,
-    // so the model interprets them as exit requests ("Since you're done, we'll pause here").
-    const SESSION_BEHAVIORAL_RULES = `SYSTEM BEHAVIORAL RULES — override job-specific instructions on conflict:
-1. TURN-COMPLETION CUES: When the candidate says "I'm done", "done", "finished", "that's all", "okay", "alright", "I'm finished with that", "next question", or similar — treat this as a signal they completed their answer. Continue the interview with the next planned question immediately. Do NOT pause, do NOT say "since you're done we'll pause here", do NOT treat these as requests to end the session. The session ends ONLY when finalize_interview_report is called.
-2. META-COMMENTARY: If the candidate says "why are you pausing", "give me a response", "reply please", "are you stuck" — they are asking you to speak. Acknowledge briefly ("Sorry about that") and continue with the next question.
-3. BRIEF UTTERANCES: Short phrases like "bye", "thank you", "ok", "yes" between answers are acknowledgments or noise, not answers to interview questions. Do not score or evaluate them. Continue to the next question naturally.
-4. CONTINUITY: Never announce that you are "pausing" or "waiting". Keep the interview flowing at all times.
+    // Prepend hard behavioral rules that job-specific instructions don't cover.
+    // These run at the START so the model sees them before the role-specific prompt.
+    const SESSION_BEHAVIORAL_RULES = `=== MANDATORY SESSION RULES (highest priority — override everything below) ===
 
----
+RULE 1 — TURN-COMPLETION PHRASES ARE NOT COMMANDS:
+Phrases like "I'm done", "done", "finished", "that's all", "next question", "continue", "move on", "I'm finished" are ONLY signals that the candidate finished speaking their answer. When you hear them:
+- DO NOT acknowledge them verbally ("Got it, you're done" etc.)
+- DO NOT pause or wait
+- DO NOT treat them as requests to end the interview
+- Just continue DIRECTLY to your next interview question
+
+RULE 2 — EXIT REQUESTS → REDIRECT TO BUTTON:
+If the candidate says "I want to stop", "end the interview", "I want to quit", "stop the interview", "exit" — respond with exactly this: "If you'd like to end the session early, please click the 'End Interview' button shown on your screen. Otherwise, let's continue." Then continue with the next question.
+
+RULE 3 — NO "LET ME THINK" FILLER:
+After a candidate answers, do NOT say phrases like "let me think about how to build on that", "let me formulate my next question", "give me a moment". Acknowledge the answer in one sentence and ask the next question in the SAME breath. No dead air.
+
+RULE 4 — IGNORE META-COMMENTARY:
+If the candidate says "why are you pausing", "reply please", "are you stuck", "give me a response" — say "Apologies, let's continue." and immediately ask the next question.
+
+RULE 5 — SHORT UTTERANCES ARE NOISE:
+"bye", "thank you", "ok", "yes", "hello", "hey" appearing between full answers = noise. Do not evaluate or score them. Continue to the next question.
+
+RULE 6 — NEVER ANNOUNCE PAUSES:
+Never say "I'll pause here", "let's pause", "we'll pick up later", "since you're done we'll pause". The interview runs continuously until finalize_interview_report is called.
+
+=== END MANDATORY RULES ===
 
 ${systemInstructions}`;
 
@@ -672,7 +689,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "save_interview_event",
-            description: "Store per-question interview result for backend persistence.",
+            description: "Store per-question interview result for backend persistence. IMPORTANT: Always ask your NEXT question to the candidate BEFORE calling this function. Call this function AFTER you have already verbally asked the follow-up question, not before. This keeps the conversation flowing without an audible pause.",
             parameters: {
               type: "object",
               properties: {
