@@ -151,15 +151,15 @@ export class OpenAIWebRtcInterviewTransport {
   private responseInFlight = false;
   private pendingResponseCreate = false;
 
-  // Interruption debounce: track when AI started speaking to avoid premature cancellation
+  // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
-  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 2000; // 2s: filters all noise, only sustained speech interrupts
+  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 500;
 
-  // Bug 3 fix: stall watchdog - detects when AI stops responding
+  // Stall watchdog - detects truly stuck AI (not candidate thinking pauses)
   private lastEventAtMs = 0;
   private stallWatchdogTimer: ReturnType<typeof setInterval> | null = null;
   private stallRecoveryAttempts = 0;
-  private static readonly STALL_THRESHOLD_MS = 15_000; // 15 seconds without any event = stall
+  private static readonly STALL_THRESHOLD_MS = 45_000; // 45s — candidates can think for 30+ seconds
   private static readonly MAX_STALL_RECOVERIES = 3;
 
   // Bug 4 fix: absolute kill timer after hard stop
@@ -295,21 +295,10 @@ export class OpenAIWebRtcInterviewTransport {
         if (this.assistantSpeaking) {
           const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
           if (speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS) {
-            if (this.responseInFlight) {
-              // Genuine interruption — cancel the active response
-              this.cancelResponse();
-            } else {
-              // Response done but audio still playing (tail audio).
-              // Capture is echo of the playing audio — stop playback and discard the buffer
-              // so the model doesn't see its own voice as candidate input.
-              this.stopPlayback();
-              this.sendJson({ type: "input_audio_buffer.clear" });
-            }
-          } else {
-            // AI has been speaking < 2s — almost certainly echo or ambient noise.
-            // Discard whatever was captured in the buffer; do NOT cancel the response.
-            this.sendJson({ type: "input_audio_buffer.clear" });
+            // AI has been speaking long enough that this is a genuine interruption
+            this.cancelResponse();
           }
+          // else: within debounce window — brief noise, ignore
         }
         this.callbacks.onInterrupted();
       }
@@ -653,9 +642,8 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.96,
-              prefix_padding_ms: 200,
-              silence_duration_ms: 1400,
+              // Use API defaults for threshold/silence/padding — tuning these
+              // has consistently caused more problems than it solved.
             },
             transcription: { model: "whisper-1" },
           },
