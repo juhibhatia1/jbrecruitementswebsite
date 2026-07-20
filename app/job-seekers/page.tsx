@@ -11,34 +11,42 @@ export const metadata = jobSeekersMetadata;
 export const dynamic = "force-dynamic";
 
 export default async function JobSeekersPage() {
-  const [candidateCount, paidBookingCount, completedInterviewCount] = await Promise.all([
-    prisma.purchase
-      .findMany({
-        select: {
-          candidateEmail: true,
-        },
+  const [candidateCount, paidBookingCount, completedInterviewCount] =
+    await Promise.all([
+      prisma.purchase
+        .findMany({
+          select: {
+            candidateEmail: true,
+          },
+          where: {
+            serviceName: { contains: "Mock Interview" },
+          },
+        })
+        .then(
+          (purchases) =>
+            new Set(
+              purchases.map((purchase) =>
+                purchase.candidateEmail.toLowerCase(),
+              ),
+            ).size,
+        ),
+      prisma.purchase.count({
         where: {
           serviceName: { contains: "Mock Interview" },
+          status: "COMPLETED",
         },
-      })
-      .then((purchases) => new Set(purchases.map((purchase) => purchase.candidateEmail.toLowerCase())).size),
-    prisma.purchase.count({
-      where: {
-        serviceName: { contains: "Mock Interview" },
-        status: "COMPLETED",
-      },
-    }),
-    prisma.candidateApplication.count({
-      where: {
-        interviewPreference: { in: ["AI", "MANUAL"] },
-        OR: [
-          { status: "INTERVIEW_COMPLETED" },
-          { session: { status: "COMPLETED" } },
-          { session: { completedAt: { not: null } } },
-        ],
-      },
-    }),
-  ]);
+      }),
+      prisma.candidateApplication.count({
+        where: {
+          interviewPreference: { in: ["AI", "MANUAL"] },
+          OR: [
+            { status: "INTERVIEW_COMPLETED" },
+            { session: { status: "COMPLETED" } },
+            { session: { completedAt: { not: null } } },
+          ],
+        },
+      }),
+    ]);
 
   return (
     <div
@@ -61,7 +69,10 @@ export default async function JobSeekersPage() {
           </div>
 
           <div className="grid grid-cols-1 items-start gap-10 md:gap-12 lg:grid-cols-3 lg:gap-2">
-            <ScrollAnimation variant="fadeUp" className="col-span-1 pt-0 lg:col-span-2 lg:pt-0">
+            <ScrollAnimation
+              variant="fadeUp"
+              className="col-span-1 pt-0 lg:col-span-2 lg:pt-0"
+            >
               <h1 className="mb-12 text-3xl font-semibold leading-[1.1] tracking-tight text-[#252e3d] sm:text-4xl md:mb-12 md:text-5xl lg:text-6xl">
                 Career Insights & Guidance
               </h1>
@@ -163,7 +174,11 @@ export default async function JobSeekersPage() {
               </div>
             </ScrollAnimation>
 
-            <ScrollAnimation variant="scaleUp" delay={0.08} className="col-span-1 flex w-full justify-center lg:justify-start">
+            <ScrollAnimation
+              variant="scaleUp"
+              delay={0.08}
+              className="col-span-1 flex w-full justify-center lg:justify-start"
+            >
               <div className="w-full max-w-sm sm:max-w-md lg:max-w-none">
                 <JobSeekersForm />
               </div>
@@ -176,193 +191,211 @@ export default async function JobSeekersPage() {
               paidBookings: paidBookingCount,
               completedInterviews: completedInterviewCount,
             }}
-            />
+          />
 
-          <ScrollAnimation variant="fadeUp" delay={0.12} className="mt-12 md:mt-16">
+          <ScrollAnimation
+            variant="fadeUp"
+            delay={0.12}
+            className="mt-12 md:mt-16"
+          >
             <section>
-            <div className="overflow-hidden rounded-[2rem] border border-[#e5ebf8] bg-linear-to-br from-white via-[#fbfaff] to-[#f6f3ff] px-5 py-8 shadow-[0_16px_50px_rgba(37,55,77,0.08)] md:px-8 md:py-10">
-              <div className="mx-auto max-w-3xl text-center">
-                <span className="inline-flex items-center rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#5a58ab] shadow-sm">
-                  Service impact
-                </span>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#252e3d] sm:text-4xl">
-                  How our services help job seekers
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-[#5b6476] sm:text-base">
-                  A quick snapshot of our most-used services and the value they create.
-
-                </p>
-              </div>
-
-              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                {[
-                  {
-                    value: "2,400+",
-                    label: "Resumes improved",
-                    detail:
-                      "Sharper resumes with stronger impact.",
-                  },
-                  {
-                    value: "1,100+",
-                    label: "LinkedIn profiles tuned",
-                    detail:
-                      "Better recruiter discoverability.",
-                  },
-                  {
-                    value: "900+",
-                    label: "Interview sessions",
-                    detail:
-                      "More confident interview practice.",
-                  },
-                  {
-                    value: "750+",
-                    label: "Tailored job shortlists",
-                    detail:
-                      "Curated jobs that save time.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-[1.75rem] border border-[#e5ebf8] bg-white/95 p-6 shadow-[0_10px_30px_rgba(37,55,77,0.06)]"
-                  >
-                    <div className="text-4xl font-semibold tracking-tight text-[#5a58ab] sm:text-5xl">
-                      {item.value}
-                    </div>
-                    <h3 className="mt-5 text-lg font-semibold text-[#252e3d]">
-                      {item.label}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-[#5b6476]">
-                      {item.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-white/90 p-5 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a93a8]">
-                    Candidate journey
+              <div className="overflow-hidden rounded-[2rem] border border-[#e5ebf8] bg-linear-to-br from-white via-[#fbfaff] to-[#f6f3ff] px-5 py-8 shadow-[0_16px_50px_rgba(37,55,77,0.08)]">
+                <div className="mx-auto max-w-3xl text-center">
+                  <span className="inline-flex items-center rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#5a58ab] shadow-sm">
+                    Service impact
+                  </span>
+                  <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#252e3d] sm:text-4xl">
+                    How our services help job seekers
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-[#5b6476] sm:text-base">
+                    A quick snapshot of our most-used services and the value
+                    they create.
                   </p>
-                  <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#252e3d]">
-                    From profile polish to interview-ready applications
-                  </h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
-                    We do not just sell services â€” we move a candidate through a
-                    clear journey that builds credibility, speeds up action, and
-                    raises the odds of a stronger outcome.
-                  </p>
-
-                  <div className={`${styles.journeyTimeline} mt-5 space-y-3`}>
-                    {[
-                      {
-                        step: "01",
-                        title: "Clarify the story",
-                        note:
-                          "Resume Review & Rewriting turns experience into a sharper, role-focused narrative.",
-                      },
-                      {
-                        step: "02",
-                        title: "Build discoverability",
-                        note:
-                          "LinkedIn Optimization helps recruiters and hiring teams find the right profile faster.",
-                      },
-                      {
-                        step: "03",
-                        title: "Practice with precision",
-                        note:
-                          "Mock Interviews and Interview Prep make answers more structured, relevant, and confident.",
-                      },
-                      {
-                        step: "04",
-                        title: "Move faster to apply",
-                        note:
-                          "Ready-to-Apply Job Packs shorten the search by surfacing curated public opportunities.",
-                      },
-                    ].map((item, index) => (
-                      <div
-                        key={item.title}
-                        className={`${styles.journeyItem} flex gap-4 rounded-2xl border border-[#dbe2f3] bg-[#fbfcff] px-4 py-4 shadow-[0_8px_24px_rgba(37,55,77,0.04)] transition-all duration-500 hover:-translate-y-0.5 hover:border-[#bfcdf2] hover:shadow-[0_14px_32px_rgba(37,55,77,0.08)]`}
-                        style={{ animationDelay: `${index * 120}ms` }}
-                      >
-                        <div className="relative flex shrink-0 items-center">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#dbe2f3] bg-white text-xs font-semibold tracking-[0.18em] text-[#5a58ab] shadow-sm">
-                            {item.step}
-                          </div>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-[#252e3d]">
-                            {item.title}
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-[#5b6476]">
-                            {item.note}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
-                <div className="flex h-full flex-col justify-between rounded-[1.5rem] border border-[#e5ebf8] bg-[#252e3d] p-5 text-white shadow-sm">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                      Why choose us
+                <div className="mt-8 grid gap-5 grid-cols-2 md:grid-cols-4">
+                  {[
+                    {
+                      value: "2,400+",
+                      label: "Resumes improved",
+                      detail: "Sharper resumes with stronger impact.",
+                    },
+                    {
+                      value: "1,100+",
+                      label: "LinkedIn profiles tuned",
+                      detail: "Better recruiter discoverability.",
+                    },
+                    {
+                      value: "900+",
+                      label: "Interview sessions",
+                      detail: "More confident interview practice.",
+                    },
+                    {
+                      value: "750+",
+                      label: "Tailored job shortlists",
+                      detail: "Curated jobs that save time.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-[1.75rem] border border-[#e5ebf8] bg-white/95 p-4 md:p-6 shadow-[0_10px_30px_rgba(37,55,77,0.06)]"
+                    >
+                      <div className="text-3xl md:text-4xl font-semibold tracking-tight text-[#5a58ab] sm:text-5xl">
+                        {item.value}
+                      </div>
+                      <h3 className="mt-3 md:mt-5 text-md md:text-lg font-semibold text-[#252e3d]">
+                        {item.label}
+                      </h3>
+                      {/* <p className="mt-2 text-sm leading-6 text-[#5b6476]">
+                      {item.detail}
+                    </p> */}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-white/90 p-5 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a93a8]">
+                      Candidate journey
                     </p>
-                    <p className="mt-3 text-lg leading-7 text-white/90">
-                      Job seekers do better when their resume, LinkedIn,
-                      interview preparation, and opportunity search all work
-                      together.
+                    <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#252e3d]">
+                      From profile polish to interview-ready applications
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
+                      We do not just sell services - we move a candidate
+                      through a clear journey that builds credibility, speeds up
+                      action, and raises the odds of a stronger outcome.
                     </p>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+
+                    <div className={`${styles.journeyTimeline} mt-5 space-y-3`}>
                       {[
                         {
-                          title: "Less time searching",
-                          note: "Curated services and shortlists keep candidates focused on the right actions.",
+                          step: "01",
+                          title: "Clarify the story",
+                          note: "Resume Review & Rewriting turns experience into a sharper, role-focused narrative.",
                         },
                         {
-                          title: "Sharper positioning",
-                          note: "Resume and LinkedIn work together so recruiters understand the profile faster.",
+                          step: "02",
+                          title: "Build discoverability",
+                          note: "LinkedIn Optimization helps recruiters and hiring teams find the right profile faster.",
                         },
                         {
-                          title: "More interview confidence",
-                          note: "Practice and structure make answers easier to deliver under pressure.",
+                          step: "03",
+                          title: "Practice with precision",
+                          note: "Mock Interviews and Interview Prep make answers more structured, relevant, and confident.",
                         },
                         {
-                          title: "Better decision clarity",
-                          note: "Candidates can compare services, act quickly, and move with purpose.",
+                          step: "04",
+                          title: "Move faster to apply",
+                          note: "Ready-to-Apply Job Packs shorten the search by surfacing curated public opportunities.",
                         },
-                      ].map((item) => (
+                      ].map((item, index) => (
                         <div
                           key={item.title}
-                          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white/85"
+                          className={`${styles.journeyItem} flex gap-4 rounded-2xl px-4 py-1 `}
+                          style={{ animationDelay: `${index * 120}ms` }}
                         >
-                          <p className="font-semibold text-white">{item.title}</p>
-                          <p className="mt-1 text-white/75">{item.note}</p>
+                          <div className="relative flex shrink-0 items-center">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-sm font-semibold tracking-[0.18em] text-[#5a58ab] shadow-sm border border-[#e5ebf8]">
+                              {item.step}
+                            </div>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[#252e3d]">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-[#5b6476]">
+                              {item.note}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-[1.25rem] border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                      See the proof
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-white/85">
-                      Browse real reviews and feedback on LinkedIn to back up
-                      the story with social proof.
-                    </p>
+                  <div className="flex h-full flex-col justify-between rounded-[1.5rem] border border-[#e5ebf8] bg-[#252e3d] p-5 text-white shadow-sm">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                        Real results, real people
+                      </p>
+                      <p className="mt-3 text-lg leading-7 text-white/90">
+                        Every review below is from someone who worked with
+                        Juhi and landed real results.
+                      </p>
+                      <div className="mt-6 border-t border-white/10">
+                        {[
+                          {
+                            name: "Simona Nyagolova",
+                            role: "Sales Development Representative at GoDaddy",
+                            review:
+                              "Highly recommend Juhi's services! Very professional, on time and genuinely does a great job at her requests.",
+                          },
+                          {
+                            name: "BriAnna Beard, M.A.",
+                            role: "Supervisor at Adidas",
+                            review:
+                              "Juhi was great! She was able to revise my resume and optimize my LinkedIn and I am extremely satisfied. I will absolutely be recommending her to others.",
+                          },
+                          {
+                            name: "Carlos Augusto, PHR",
+                            role: "Human Resources & Military Operations Expert",
+                            review:
+                              "I am pleased with Juhi's services. Once I got my new resume, I started getting interview calls. That is wild! Give it a try. I recommend it.",
+                          },
+                        ].map((item, index) => (
+                          <div
+                            key={item.name}
+                            className={`flex gap-3 py-4 text-sm leading-6 ${
+                              index !== 0 ? "border-t border-white/10 ml-12 pl-0" : ""
+                            }`}
+                          >
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold leading-none text-white ${index !== 0 ? "-ml-12" : ""}`}>
+                              <span className="translate-y-px">
+                                {item.name
+                                  .split(" ")
+                                  .slice(0, 2)
+                                  .map((part) => part[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-baseline gap-x-2">
+                                <p className="font-semibold text-white">
+                                  {item.name}
+                                </p>
+                                <p className="text-xs text-white/50">
+                                  {item.role}
+                                </p>
+                              </div>
+                              <div className="mt-1 flex gap-0.5 text-[#f5b942]" aria-hidden="true">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <svg key={i} viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L10 14.9l-5.2 2.6.99-5.79-4.21-4.1 5.82-.85z" />
+                                  </svg>
+                                ))}
+                              </div>
+                              <p className="mt-1.5 text-white/75">
+                                {item.review}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     <Link
                       href="https://www.linkedin.com/services/page/71481432514867b3ab/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group mt-4 inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#252e3d] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
+                      className="group inline-flex w-fit items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#252e3d] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
                     >
-                      Open live reviews
-                      <RxArrowTopRight className="h-4 w-4 transform group-hover:rotate-45 group-hover:translate-x-1 transition-transform duration-300" />
+                      View more reviews
+                      <RxArrowTopRight className="h-4 w-4 transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1" />
                     </Link>
                   </div>
                 </div>
               </div>
-            </div>
             </section>
           </ScrollAnimation>
         </div>
@@ -370,5 +403,3 @@ export default async function JobSeekersPage() {
     </div>
   );
 }
-
-

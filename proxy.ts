@@ -17,7 +17,11 @@ export function proxy(request: NextRequest) {
   // Guard all admin paths
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     // Always allow the login page and login API through unauthenticated
-    if (pathname === "/admin" || pathname === "/api/admin/auth/login") {
+    if (
+      pathname === "/admin" ||
+      pathname === "/api/admin/login" ||
+      pathname === "/api/admin/auth/login"
+    ) {
       return NextResponse.next();
     }
 

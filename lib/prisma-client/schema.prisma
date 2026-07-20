@@ -145,6 +145,11 @@ enum CandidateInterviewPreference {
   MANUAL
 }
 
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
 enum CandidateApplicationStatus {
   APPLIED
   MANUAL_REVIEW_PENDING
@@ -162,6 +167,20 @@ enum InterviewSessionStatus {
   COMPLETED
   TERMINATED
   FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  fullName     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role, isActive])
+  @@index([createdAt])
 }
 
 model InterviewTemplate {

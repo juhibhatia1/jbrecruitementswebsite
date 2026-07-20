@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function EmployeeLoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
@@ -21,7 +21,7 @@ export default function EmployeeLoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -71,21 +71,21 @@ export default function EmployeeLoginForm() {
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div>
-                <label
-                  className="text-sm font-semibold text-slate-700"
-                  htmlFor="username"
-                >
-                  Username
-                </label>
-                <input
-                  id="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-[#5a58ab] focus:bg-white text-sm"
-                  placeholder="Enter employee username"
-                />
+                  <label
+                    className="text-sm font-semibold text-slate-700"
+                    htmlFor="email"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-[#5a58ab] focus:bg-white text-sm"
+                    placeholder="Enter employee email"
+                  />
               </div>
 
               <div>

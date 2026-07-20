@@ -9,6 +9,7 @@
     "build": "prisma generate && next build",
     "start": "tsx server.ts",
     "lint": "eslint",
+    "auth:bootstrap": "tsx scripts/bootstrap-auth-users.ts",
     "reindex:knowledge": "tsx scripts/rebuild-knowledge-embeddings.ts",
     "seo:check": "echo 'Checking SEO implementation...' && node -e \"console.log('✅ Sitemap: http://localhost:3000/sitemap.xml'); console.log('✅ Robots: http://localhost:3000/robots.txt'); console.log('✅ OG Image: http://localhost:3000/opengraph-image'); console.log('Run dev server and visit these URLs to verify')\"",
     "seo:test": "npm run build && npm run start"

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
@@ -21,7 +21,7 @@ export default function AdminLoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -71,18 +71,18 @@ export default function AdminLoginForm() {
               <div>
                 <label
                   className="text-sm font-semibold text-slate-700"
-                  htmlFor="username"
+                  htmlFor="email"
                 >
-                  Username
+                  Email
                 </label>
                 <input
-                  id="username"
-                  type="text"
+                  id="email"
+                  type="email"
                   required
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-[#605dba] focus:bg-white"
-                  placeholder="Enter username"
+                  placeholder="Enter email"
                 />
               </div>
 

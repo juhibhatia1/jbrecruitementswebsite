@@ -79,7 +79,7 @@ function BarList({
   const maxValue = items[0]?.count || 1;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
         {title}
       </h3>
@@ -95,11 +95,11 @@ function BarList({
               <span className="truncate text-slate-700">{item.label}</span>
               <span className="font-semibold text-slate-900">{item.count}</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-100">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
               <div
                 className="h-2 rounded-full bg-[#605dba]"
                 style={{
-                  width: `${Math.max((item.count / maxValue) * 100, 8)}%`,
+                  width: `${Math.min(Math.max((item.count / maxValue) * 100, 8), 100)}%`,
                 }}
               />
             </div>

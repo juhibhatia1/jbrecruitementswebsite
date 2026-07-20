@@ -182,7 +182,7 @@ export default function HowWeHelpSection() {
         </div>
 
         {/* Explore More pill aligned right beneath the card */}
-        <div className="w-full flex justify-end mt-10 lg:mt-12">
+        {/* <div className="w-full flex justify-end mt-10 lg:mt-12">
           <Link
             href="/about-us"
             className="inline-flex items-center gap-1 rounded-full bg-[#252e3d] px-6 py-3 text-base md:text-lg font-medium text-white shadow-[0_10px_20px_rgba(96,93,186,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_25px_rgba(96,93,186,0.4)] group"
@@ -194,7 +194,7 @@ export default function HowWeHelpSection() {
               className="transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-1"
             />
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );

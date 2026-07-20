@@ -3,6 +3,14 @@ import { PrismaClient } from "./prisma-client";
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 let candidateApplicationSchemaRepairPromise: Promise<void> | null = null;
 
+function sanitizeDatabaseUrl(rawUrl?: string | null): string {
+  return (rawUrl ?? "").trim().replace(/^["']|["']$/g, "");
+}
+
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = sanitizeDatabaseUrl(process.env.DATABASE_URL);
+}
+
 function createPrismaClient() {
   return new PrismaClient({
     log: ["warn", "error"],
@@ -15,7 +23,7 @@ function createPrismaClient() {
 }
 
 function buildDatabaseUrl(): string {
-  const base = process.env.DATABASE_URL ?? "";
+  const base = sanitizeDatabaseUrl(process.env.DATABASE_URL);
   // Neon serverless: append connection params to handle idle TCP timeout.
   // connect_timeout — abort if can't establish connection within N seconds.
   // pool_timeout — wait up to N seconds for a pooled connection.
