@@ -293,12 +293,23 @@ export class OpenAIWebRtcInterviewTransport {
 
       if (message.type === "input_audio_buffer.speech_started") {
         if (this.assistantSpeaking) {
-          // Only interrupt if AI has been speaking long enough (avoids noise-triggered cancellation)
           const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
           if (speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS) {
-            this.cancelResponse();
+            if (this.responseInFlight) {
+              // Genuine interruption — cancel the active response
+              this.cancelResponse();
+            } else {
+              // Response done but audio still playing (tail audio).
+              // Capture is echo of the playing audio — stop playback and discard the buffer
+              // so the model doesn't see its own voice as candidate input.
+              this.stopPlayback();
+              this.sendJson({ type: "input_audio_buffer.clear" });
+            }
+          } else {
+            // AI has been speaking < 2s — almost certainly echo or ambient noise.
+            // Discard whatever was captured in the buffer; do NOT cancel the response.
+            this.sendJson({ type: "input_audio_buffer.clear" });
           }
-          // If AI just started speaking (<2s), ignore the speech_started — it's likely noise or echo
         }
         this.callbacks.onInterrupted();
       }
@@ -318,9 +329,15 @@ export class OpenAIWebRtcInterviewTransport {
 
       if (message.type === "response.done") {
         this.responseInFlight = false;
-        this.assistantSpeaking = false;
-        this.callbacks.onAssistantSpeakingChange?.(false);
-        // Bug 3 fix: if a response.create was queued while response was in flight, send it now
+        // Only mark not-speaking if all audio buffers have also finished.
+        // response.done fires when generation ends, but audio is still playing.
+        // Premature assistantSpeaking=false → debounce doesn't protect tail audio
+        // → mic picks up AI voice echo → VAD triggers → "I noticed a brief pause" loop.
+        if (this.scheduledSources.length === 0) {
+          this.assistantSpeaking = false;
+          this.callbacks.onAssistantSpeakingChange?.(false);
+        }
+        // else: source.onended will clear assistantSpeaking when last buffer finishes
         if (this.pendingResponseCreate) {
           this.pendingResponseCreate = false;
           this.safeResponseCreate();
@@ -588,10 +605,18 @@ export class OpenAIWebRtcInterviewTransport {
     const buffer = pcmBytesToAudioBuffer(ctx, bytes, 24000);
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(ctx.destination);
+    // DO NOT connect to ctx.destination — audio comes from the WebRTC remote audio track.
+    // Connecting here causes double audio, which phases out AEC and lets mic pick up AI voice,
+    // causing VAD false triggers ("I noticed a brief pause" loop).
+    // We schedule the source purely to fire source.onended for assistantSpeaking tracking.
     this.scheduledSources.push(source);
     source.onended = () => {
       this.scheduledSources = this.scheduledSources.filter((item) => item !== source);
+      // Last buffer finished AND no response generating → AI is truly done speaking
+      if (this.scheduledSources.length === 0 && !this.responseInFlight) {
+        this.assistantSpeaking = false;
+        this.callbacks.onAssistantSpeakingChange?.(false);
+      }
     };
 
     const startAt = Math.max(ctx.currentTime, this.playbackCursor);
