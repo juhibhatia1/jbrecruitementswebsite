@@ -233,7 +233,7 @@ export default function InterviewRoom({ token }: { token: string }) {
     const now = Date.now();
     const targetAt = interviewStartedAtRef.current + interviewDurationMsRef.current;
     const warningAt = targetAt - 30_000;
-    const hardStopAt = targetAt + 5 * 60_000;
+    const hardStopAt = targetAt + 2 * 60_000; // 2 min grace after duration (not 5)
 
     const schedule = (at: number, setter: (timerId: number) => void, action: () => void) => {
       const delay = at - now;
@@ -269,7 +269,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (phaseRef.current !== "live" || durationCompleteSignalSentRef.current) return;
         durationCompleteSignalSentRef.current = true;
         transportRef.current?.sendOrchestrationMessage(
-          "TIME_SIGNAL:DURATION_COMPLETE. The scheduled interview duration is now complete. Do not end abruptly. Let the candidate finish naturally, complete essential coverage, and begin professional wrap-up cadence.",
+          "TIME_SIGNAL:DURATION_COMPLETE. The scheduled interview duration is NOW COMPLETE. You MUST begin wrapping up immediately. Steps: (1) Let the candidate finish their current answer if mid-response. (2) Ask AT MOST 1-2 more quick questions if critical coverage is missing. (3) Ask 'Do you have any questions about the role or company?' — this is the FINAL candidate question. (4) After the candidate responds, thank them and call finalize_interview_report IMMEDIATELY. Do NOT continue asking new technical questions after this signal.",
         );
       },
     );
@@ -283,7 +283,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (phaseRef.current !== "live" || hardStopSignalSentRef.current) return;
         hardStopSignalSentRef.current = true;
         transportRef.current?.sendOrchestrationMessage(
-          "TIME_SIGNAL:HARD_STOP_REACHED. You are now at the maximum grace threshold (+5 minutes). Do not start new topics. Let the candidate finish the current answer, ask only essential final clarifications, deliver a professional closing, and call finalize_interview_report now.",
+          "TIME_SIGNAL:HARD_STOP_REACHED. MANDATORY: Stop all questioning NOW. Say 'Thank you for your time — your performance report will be generated shortly.' Then IMMEDIATELY call finalize_interview_report with your evaluation. Do NOT ask any more questions.",
         );
       },
     );

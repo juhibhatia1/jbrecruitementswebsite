@@ -358,6 +358,10 @@ export class OpenAIWebRtcInterviewTransport {
   endInterview(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
 
+    // Immediately bypass all finalization blockers — candidate wants to end
+    this.hardStopSignaled = true;
+    this.durationCompleteSignaled = true;
+
     this.sendJson({
       type: "conversation.item.create",
       item: {
@@ -594,9 +598,9 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.94,
-              prefix_padding_ms: 120,
-              silence_duration_ms: 820,
+              threshold: 0.7,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 1200,
             },
             transcription: { model: "whisper-1" },
           },
@@ -641,18 +645,18 @@ export class OpenAIWebRtcInterviewTransport {
           {
             type: "function",
             name: "show_reference_card",
-            description: "Display a reference card with structured information on the candidate's screen.",
+            description: "MUST USE for every MCQ, code snippet, or visual question. Display structured content on the candidate's screen BEFORE asking the question verbally. Use for: interview structure (opening), MCQ options, code snippets to analyze, comparison tables, diagrams. Call this tool BEFORE speaking the question so the candidate can see and read the content.",
             parameters: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Card title" },
-                question: { type: "string", description: "Exact question to show on the card when the card is a structured question." },
+                title: { type: "string", description: "Card title (e.g., 'MCQ: Java Collections', 'Code Snippet: Debugging')" },
+                question: { type: "string", description: "The exact question text to display. REQUIRED for MCQ and code snippet cards." },
                 options: {
                   type: "array",
                   items: { type: "string" },
-                  description: "Answer options for MCQ-style cards.",
+                  description: "Answer options for MCQ-style cards. Each item is one option (e.g., 'ArrayList is synchronized').",
                 },
-                content: { type: "string", description: "Markdown content to display" },
+                content: { type: "string", description: "Markdown content: code blocks, tables, or formatted text. Use ```java for code snippets." },
               },
               required: ["title", "content"],
             },
@@ -754,6 +758,18 @@ export class OpenAIWebRtcInterviewTransport {
       );
       const behindPace = this.questionsAsked < expectedByNow;
       const sectionGuidance = this.getSectionPacingGuidance(sectionName);
+      const durationDone = this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs;
+
+      // After duration is complete, instruct the AI to wrap up
+      let instruction: string;
+      if (durationDone) {
+        instruction = "DURATION IS COMPLETE. Ask at most 1-2 more questions, then ask the candidate if they have any questions about the role/company, and call finalize_interview_report. Do NOT continue with new topics.";
+      } else if (behindPace) {
+        instruction = `You are behind question pace. Keep acknowledgment concise, ask the next high-signal question now. IMPORTANT: For at least every 3rd question, use show_reference_card to display a code snippet, MCQ, or visual prompt on the candidate's screen before asking.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`;
+      } else {
+        instruction = `Pacing is acceptable. Continue with section objectives. REMINDER: Use show_reference_card for code snippets, MCQs, and visual questions — aim for at least 1 reference card per section.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`;
+      }
+
       result = {
         ok: true,
         stored: event,
@@ -762,12 +778,11 @@ export class OpenAIWebRtcInterviewTransport {
           minimumQuestionTarget: this.minimumQuestionTarget,
           expectedByNow,
           behindPace,
+          durationComplete: durationDone,
         },
         section: sectionName || this.currentSectionName,
         sectionPacing: sectionGuidance,
-        instruction: behindPace
-          ? `You are behind question pace. Keep acknowledgment concise, ask the next high-signal question now, and use generate_section_questions if needed.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`
-          : `Pacing is acceptable. Continue with section objectives and maintain interview flow.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`,
+        instruction,
       };
     } else if (readString(message.name) === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
@@ -791,41 +806,9 @@ export class OpenAIWebRtcInterviewTransport {
             "Do not finalize yet. Continue interviewing with deeper or generated follow-up questions until duration-complete is reached.",
         };
       } else {
-        const questionTargetReached =
-          this.questionsAsked >= this.minimumQuestionTarget || this.hardStopSignaled;
-        const sectionTimeStatus = this.getSectionTimingStatus();
-        if (!questionTargetReached) {
-          const questionsRemaining = this.minimumQuestionTarget - this.questionsAsked;
-          console.info("[InterviewTiming] finalize blocked: question target not met", {
-            sessionId: this.sessionId,
-            elapsedSeconds: Math.floor(elapsedMs / 1000),
-            questionsAsked: this.questionsAsked,
-            minimumQuestionTarget: this.minimumQuestionTarget,
-            questionsRemaining,
-            hardStopSignaled: this.hardStopSignaled,
-          });
-          result = {
-            ok: false,
-            blocked: true,
-            reason: "QUESTION_TARGET_NOT_REACHED",
-            questionsAsked: this.questionsAsked,
-            minimumQuestionTarget: this.minimumQuestionTarget,
-            questionsRemaining,
-            instruction:
-            "Do not finalize yet. Ask additional high-signal questions now. Use generate_section_questions with mixed formats (NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL) and continue until question target is met.",
-          };
-        } else if (!this.hardStopSignaled && sectionTimeStatus.pendingSections.length > 0) {
-          const pending = sectionTimeStatus.pendingSections[0];
-          result = {
-            ok: false,
-            blocked: true,
-            reason: "SECTION_TIME_NOT_MET",
-            pendingSections: sectionTimeStatus.pendingSections,
-            instruction:
-            `Do not finalize yet. Continue section "${pending.name}" until its allotted time is covered. Use generate_section_questions for this section if planned questions are exhausted.`,
-          };
-        } else {
-        console.info("[InterviewTiming] finalize allowed", {
+        // Once duration is reached, ALWAYS allow finalization.
+        // Question targets and section times are soft guidance, not hard blockers after duration.
+        console.info("[InterviewTiming] finalize allowed (duration reached)", {
           sessionId: this.sessionId,
           elapsedSeconds: Math.floor(elapsedMs / 1000),
           durationCompleteSignaled: this.durationCompleteSignaled,
@@ -847,7 +830,6 @@ export class OpenAIWebRtcInterviewTransport {
         }
         result = { ok: true, reportStored: true };
         needsContinuation = false;
-        }
       }
     } else if (readString(message.name) === "show_reference_card") {
       const question = readString(args.question).trim();
@@ -1064,17 +1046,12 @@ export class OpenAIWebRtcInterviewTransport {
       if (!closingWindowReached) {
         this.lastGuardInterventionAtMs = now;
         this.sendOrchestrationMessage(
-          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do not ask 'Do you have any questions for me/about role/company' until the final 60 seconds or after TIME_SIGNAL:DURATION_COMPLETE. Continue technical questioning now.",
+          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Retract this and continue with the next technical question immediately. Do not repeat this closing question.",
         );
         return;
       }
-      const blockers = this.getCompletionBlockers();
-      if (blockers.length > 0 && !this.hardStopSignaled) {
-        this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
-          `CLOSING_GUARD: Do not start closing sequence yet. ${blockers.join(" ")} Continue technical questioning and only close after blockers are cleared.`,
-        );
-      }
+      // If closing window IS reached, do NOT block — let the AI proceed to finalize
+      // The one-way gate rule in system instructions ensures it won't go back to technical questions
     }
   }
 
