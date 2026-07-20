@@ -632,18 +632,34 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.sessionUpdateSent || !this.dc || this.dc.readyState !== "open") return;
     this.sessionUpdateSent = true;
 
+    // Prepend turn-completion behavioral rules. The job-specific systemInstructions
+    // doesn't know about "I'm done" / "done" / "finished" being candidate cues,
+    // so the model interprets them as exit requests ("Since you're done, we'll pause here").
+    const SESSION_BEHAVIORAL_RULES = `SYSTEM BEHAVIORAL RULES — override job-specific instructions on conflict:
+1. TURN-COMPLETION CUES: When the candidate says "I'm done", "done", "finished", "that's all", "okay", "alright", "I'm finished with that", "next question", or similar — treat this as a signal they completed their answer. Continue the interview with the next planned question immediately. Do NOT pause, do NOT say "since you're done we'll pause here", do NOT treat these as requests to end the session. The session ends ONLY when finalize_interview_report is called.
+2. META-COMMENTARY: If the candidate says "why are you pausing", "give me a response", "reply please", "are you stuck" — they are asking you to speak. Acknowledge briefly ("Sorry about that") and continue with the next question.
+3. BRIEF UTTERANCES: Short phrases like "bye", "thank you", "ok", "yes" between answers are acknowledgments or noise, not answers to interview questions. Do not score or evaluate them. Continue to the next question naturally.
+4. CONTINUITY: Never announce that you are "pausing" or "waiting". Keep the interview flowing at all times.
+
+---
+
+${systemInstructions}`;
+
     this.sendJson({
       type: "session.update",
       session: {
         type: "realtime",
-        instructions: systemInstructions,
+        instructions: SESSION_BEHAVIORAL_RULES,
         audio: {
           input: {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              // Use API defaults for threshold/silence/padding — tuning these
-              // has consistently caused more problems than it solved.
+              // 700ms silence before committing candidate turn.
+              // API default (500ms) is too short — natural speaking pauses fragment
+              // one answer into multiple commits causing premature AI responses.
+              // 700ms allows natural breathing/thinking pauses without feeling sluggish.
+              silence_duration_ms: 700,
             },
             transcription: { model: "whisper-1" },
           },
