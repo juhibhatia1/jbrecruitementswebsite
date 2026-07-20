@@ -151,6 +151,10 @@ export class OpenAIWebRtcInterviewTransport {
   private responseInFlight = false;
   private pendingResponseCreate = false;
 
+  // Interruption debounce: track when AI started speaking to avoid premature cancellation
+  private assistantSpeakingStartedAtMs = 0;
+  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 2000; // Let AI speak at least 2s before allowing interruption
+
   // Bug 3 fix: stall watchdog - detects when AI stops responding
   private lastEventAtMs = 0;
   private stallWatchdogTimer: ReturnType<typeof setInterval> | null = null;
@@ -289,7 +293,12 @@ export class OpenAIWebRtcInterviewTransport {
 
       if (message.type === "input_audio_buffer.speech_started") {
         if (this.assistantSpeaking) {
-          this.cancelResponse();
+          // Only interrupt if AI has been speaking long enough (avoids noise-triggered cancellation)
+          const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
+          if (speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS) {
+            this.cancelResponse();
+          }
+          // If AI just started speaking (<2s), ignore the speech_started — it's likely noise or echo
         }
         this.callbacks.onInterrupted();
       }
@@ -297,6 +306,7 @@ export class OpenAIWebRtcInterviewTransport {
       if (message.type === "response.created") {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
+        this.assistantSpeakingStartedAtMs = Date.now();
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -598,9 +608,9 @@ export class OpenAIWebRtcInterviewTransport {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.85,
-              prefix_padding_ms: 250,
-              silence_duration_ms: 1000,
+              threshold: 0.92,
+              prefix_padding_ms: 200,
+              silence_duration_ms: 800,
             },
             transcription: { model: "whisper-1" },
           },
