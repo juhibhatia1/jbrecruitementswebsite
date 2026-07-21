@@ -68,7 +68,9 @@ function computeMinimumQuestionTarget(durationMinutes: number): number {
   return 5;
 }
 
-const FINAL_CLOSING_WINDOW_MS = 60_000;
+// Closing question is ONLY allowed after an explicit TIME_SIGNAL:DURATION_COMPLETE
+// or TIME_SIGNAL:HARD_STOP_REACHED. No time-window fallback — hard gate only.
+const FINAL_CLOSING_WINDOW_MS = 0;
 
 function isSectionTransitionCue(text: string): boolean {
   const t = text.toLowerCase();
@@ -168,6 +170,9 @@ export class OpenAIWebRtcInterviewTransport {
   private static readonly STALL_THRESHOLD_MS = 45_000; // 45s — candidates can think for 30+ seconds
   private static readonly MAX_STALL_RECOVERIES = 3;
 
+  // Section boundary timers — fire TIME_SIGNAL:SECTION_COMPLETE at each planned boundary
+  private sectionTransitionTimers: ReturnType<typeof setTimeout>[] = [];
+
   // Bug 4 fix: absolute kill timer after hard stop
   private killTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly KILL_AFTER_HARD_STOP_MS = 90_000; // 90 seconds after hard stop
@@ -224,6 +229,7 @@ export class OpenAIWebRtcInterviewTransport {
       this.callbacks.onStatus("OpenAI WebRTC data channel opened.");
       this.sendSessionUpdate(payload.systemInstructions);
       this.sendOpeningPrompt(payload.openingPrompt);
+      this.scheduleSectionTransitions();
       this.startStallWatchdog();
       this.callbacks.onReady();
     };
@@ -455,6 +461,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.completed = true;
     this.stopStallWatchdog();
     this.clearKillTimer();
+    this.clearSectionTransitionTimers();
     this.stopPlayback();
     try {
       this.dc?.close();
@@ -558,6 +565,44 @@ export class OpenAIWebRtcInterviewTransport {
     }
   }
 
+  // Schedule hard transition signals at each planned section boundary.
+  // These fire as TIME_SIGNAL:SECTION_COMPLETE events via sendOrchestrationMessage,
+  // which forces the model to move to the next section regardless of how many
+  // questions it has asked. This is the ONLY reliable way to enforce section timing —
+  // soft guidance in save_interview_event results is ignored by the model when rushing.
+  private scheduleSectionTransitions(): void {
+    this.clearSectionTransitionTimers();
+    if (this.sectionPlan.length <= 1) return;
+
+    let cumulativeMs = 0;
+    for (let i = 0; i < this.sectionPlan.length - 1; i++) {
+      cumulativeMs += this.sectionPlan[i].minutes * 60_000;
+      const section = this.sectionPlan[i];
+      const nextSection = this.sectionPlan[i + 1];
+      const fireAt = this.sessionStartedAtMs + cumulativeMs;
+      const delayMs = fireAt - Date.now();
+
+      if (delayMs <= 0) {
+        // This boundary already passed (e.g., session reconnect) — skip it.
+        continue;
+      }
+
+      const timer = setTimeout(() => {
+        if (this.completed || this.manuallyClosed) return;
+        this.sendOrchestrationMessage(
+          `TIME_SIGNAL:SECTION_COMPLETE:${section.name}. The planned ${section.minutes}-minute window for section "${section.name}" is now complete. IMMEDIATELY transition to section "${nextSection.name}" on your next response. Ask your first question in "${nextSection.name}" now. Do not ask any more questions about "${section.name}".`,
+        );
+      }, delayMs);
+
+      this.sectionTransitionTimers.push(timer);
+    }
+  }
+
+  private clearSectionTransitionTimers(): void {
+    for (const t of this.sectionTransitionTimers) clearTimeout(t);
+    this.sectionTransitionTimers = [];
+  }
+
   // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
   private armKillTimer(): void {
     if (this.killTimer) return; // already armed
@@ -582,6 +627,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.completed = true;
     this.stopStallWatchdog();
     this.clearKillTimer();
+    this.clearSectionTransitionTimers();
     this.stopPlayback();
     this.callbacks.onComplete();
     try {
@@ -682,6 +728,9 @@ If the candidate says something clearly unrelated to the interview question (tal
 
 RULE 9 — NO CLOSING QUESTION BEFORE TIME SIGNAL:
 NEVER ask "Do you have any questions for me?" or "Do you have any questions about the role or company?" UNTIL you receive the TIME_SIGNAL:DURATION_COMPLETE message from the system timer. This is a hard rule. Asking this question early wastes interview time. If you feel the urge to close early, ask another technical question from the current section instead.
+
+RULE 10 — OBEY SECTION TRANSITION SIGNALS:
+At planned section boundaries the system sends TIME_SIGNAL:SECTION_COMPLETE:[SectionName]. When you receive this signal you MUST transition to the named next section on your very next response — ask your first question in the new section immediately. Do not finish another question in the old section first. The timer is authoritative.
 
 === END MANDATORY RULES ===
 
@@ -1166,21 +1215,17 @@ ${systemInstructions}`;
     // after the candidate had already answered a Section 2 question.
 
     if (isClosingCue(interviewerText)) {
-      const elapsedMs = Date.now() - this.sessionStartedAtMs;
-      const remainingMs = Math.max(0, this.durationMs - elapsedMs);
-      const closingWindowReached =
-        remainingMs <= FINAL_CLOSING_WINDOW_MS ||
-        this.durationCompleteSignaled ||
-        this.hardStopSignaled;
+      // Closing question ONLY allowed after explicit TIME_SIGNAL:DURATION_COMPLETE
+      // or HARD_STOP. No time-window fallback — section timers enforce pacing,
+      // so the model should never reach the closing question early.
+      const closingWindowReached = this.durationCompleteSignaled || this.hardStopSignaled;
       if (!closingWindowReached) {
         this.lastGuardInterventionAtMs = now;
-        // Silent injection — same reason as above.
         this.sendSilentContextMessage(
-          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Continue with the next technical question. Do not repeat the closing question.",
+          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Continue with the current section's technical questions. Do not repeat the closing question.",
         );
         return;
       }
-      // If closing window IS reached, do NOT block — let the AI proceed to finalize
     }
   }
 
@@ -1203,13 +1248,9 @@ ${systemInstructions}`;
         `Section time still pending for ${pending.map((s) => s.name).join(", ")}.`,
       );
     }
-    const remainingMs = Math.max(0, this.durationMs - elapsedMs);
-    const closingWindowReached =
-      remainingMs <= FINAL_CLOSING_WINDOW_MS ||
-      this.durationCompleteSignaled ||
-      this.hardStopSignaled;
-    if (!closingWindowReached) {
-      blockers.push("Final candidate-question prompt window not reached yet.");
+    // Closing window = signal-only, no time-window fallback
+    if (!this.durationCompleteSignaled && !this.hardStopSignaled) {
+      blockers.push("TIME_SIGNAL:DURATION_COMPLETE not yet received.");
     }
     return blockers;
   }
