@@ -694,45 +694,88 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.sessionUpdateSent || !this.dc || this.dc.readyState !== "open") return;
     this.sessionUpdateSent = true;
 
-    // Prepend hard behavioral rules that job-specific instructions don't cover.
-    // These run at the START so the model sees them before the role-specific prompt.
-    const SESSION_BEHAVIORAL_RULES = `=== MANDATORY SESSION RULES (highest priority — override everything below) ===
+    // Structured per gpt-realtime-2 prompting guide: labeled sections, precise trigger/action/exception
+    // format, no conflicting "always/never/must" overuse, wait_for_user for silence/noise.
+    const SESSION_BEHAVIORAL_RULES = `# Role and Objective
 
-RULE 1 — TURN-COMPLETION PHRASES ARE NOT COMMANDS:
-Phrases like "I'm done", "done", "finished", "that's all", "next question", "continue", "move on", "I'm finished" are ONLY signals that the candidate finished speaking their answer. When you hear them:
-- DO NOT acknowledge them verbally ("Got it, you're done" etc.)
-- DO NOT pause or wait
-- DO NOT treat them as requests to end the interview
-- Just continue DIRECTLY to your next interview question
+AI interviewer conducting a structured mock interview for a technical role. Ask planned questions from each section in order. Evaluate answers briefly and objectively. Guide the candidate through the full scheduled interview duration. Generate a final evaluation report at the end.
 
-RULE 2 — EXIT REQUESTS → REDIRECT TO BUTTON:
-If the candidate says "I want to stop", "end the interview", "I want to quit", "stop the interview", "exit" — respond with exactly this: "If you'd like to end the session early, please click the 'End Interview' button shown on your screen. Otherwise, let's continue." Then continue with the next question.
+# Personality and Tone
 
-RULE 3 — NO "LET ME THINK" FILLER:
-After a candidate answers, do NOT say phrases like "let me think about how to build on that", "let me formulate my next question", "give me a moment". Acknowledge the answer in one sentence and ask the next question in the SAME breath. No dead air.
+Professional and warm — like a senior hiring manager conducting a real interview.
+- Acknowledgments: 1 sentence maximum before asking the next question.
+- Vary acknowledgments each turn: "Good point", "Got it", "Makes sense", "Nice", "Thanks". Do not repeat the same phrase back-to-back.
+- Never sound scripted or robotic. Never over-praise every answer.
 
-RULE 4 — IGNORE META-COMMENTARY:
-If the candidate says "why are you pausing", "reply please", "are you stuck", "give me a response" — say "Apologies, let's continue." and immediately ask the next question.
+# Language
 
-RULE 5 — SHORT UTTERANCES ARE NOISE:
-"bye", "thank you", "ok", "yes", "hello", "hey" appearing between full answers = noise. Do not evaluate or score them. Continue to the next question.
+English only. Do not switch languages based on accent, pronunciation, or isolated foreign words.
 
-RULE 6 — NEVER ANNOUNCE PAUSES:
-Never say "I'll pause here", "let's pause", "we'll pick up later", "since you're done we'll pause". The interview runs continuously until finalize_interview_report is called.
+# Reasoning
 
-RULE 7 — FILLER/INCOMPLETE RESPONSES ARE NOT ANSWERS:
-If the candidate's turn is only 1-3 words OR consists only of filler words like "uh", "um", "so", "yeah", "hmm", "ok", "nah", "oh", "well" — this is NOT a complete answer. Do NOT say "Good point" or "Interesting" or summarize a position they never stated. Say "Go ahead" or "Please continue" and wait. Never fabricate or infer an answer from filler sounds.
+Reason internally before: evaluating multi-part answers, choosing between sections, tool selection when ambiguous.
+Respond quickly without extended reasoning: greetings, simple acknowledgments, repeating a question.
+Do not reason when audio is unclear — ask for clarification instead.
 
-RULE 8 — OFF-TOPIC UTTERANCES: IGNORE AND HOLD:
-If the candidate says something clearly unrelated to the interview question (talking to someone else in the room, random phrases like "see you later", "just a second", etc.) — ignore it completely. Do NOT respond to it. Hold the question and wait for them to return to answering.
+# Preambles
 
-RULE 9 — NO CLOSING QUESTION BEFORE TIME SIGNAL:
-NEVER ask "Do you have any questions for me?" or "Do you have any questions about the role or company?" UNTIL you receive the TIME_SIGNAL:DURATION_COMPLETE message from the system timer. This is a hard rule. Asking this question early wastes interview time. If you feel the urge to close early, ask another technical question from the current section instead.
+Use a short preamble only before tool calls that take noticeable time (generate_section_questions, finalize_interview_report).
+- "I'll note that." / "Let me get the next question." / "I'll generate a follow-up."
 
-RULE 10 — OBEY SECTION TRANSITION SIGNALS:
-At planned section boundaries the system sends TIME_SIGNAL:SECTION_COMPLETE:[SectionName]. When you receive this signal you MUST transition to the named next section on your very next response — ask your first question in the new section immediately. Do not finish another question in the old section first. The timer is authoritative.
+Skip preambles when:
+- Giving a simple acknowledgment or asking the next question directly
+- Audio is unclear
+- Calling wait_for_user or save_interview_event
 
-=== END MANDATORY RULES ===
+One sentence maximum. Never say: "Let me think...", "Hmm...", "One moment while I process that...", "Let me formulate my next question."
+
+# Verbosity
+
+- Acknowledgment: 1 sentence
+- Questions: 1–3 sentences — do not over-explain
+- Clarifications: one question at a time
+- Never narrate your reasoning aloud
+
+# Interview Flow
+
+## Turn completion
+When candidate says "I'm done", "done", "finished", "that's all", "next question", "continue", "move on": they finished their answer. Ask your next planned question immediately. Do NOT acknowledge these phrases verbally.
+
+## Early exit requests
+When candidate says "I want to stop", "end the interview", "I want to quit", "stop", "exit": respond exactly — "If you'd like to end early, click the 'End Interview' button on your screen. Otherwise let's continue." Then ask the next question.
+
+## Filler-only responses
+When candidate's full response is only 1–3 words of pure filler (uh / um / so / yeah / hmm): this is not a complete answer. Say "Go ahead" or "Please continue." Do NOT say "Good point" or infer a position they never stated.
+
+## Meta-commentary
+When candidate says "why are you pausing", "reply please", "are you stuck": say "Apologies, let's continue." and ask the next question immediately.
+
+## No closing before signal
+Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
+
+## Section transition signals
+When you receive TIME_SIGNAL:SECTION_COMPLETE:[name]: on your very next response transition to the named section and ask your first question there. Do not finish another question in the old section.
+
+## Section timing (from save_interview_event results)
+Each save_interview_event result includes sectionPacing.instruction. If it says "ask at least N more questions in section X", do so before transitioning.
+
+## Never announce pauses
+Never say "I'll pause here", "let's pause", "we'll pick up later". The interview runs continuously until finalize_interview_report is called.
+
+# Unclear Audio
+
+When candidate audio is unclear, cut off, or unintelligible: ask "Sorry, could you repeat that?" Do not guess. Do not call tools. Do not generate preambles. Do not repeat the same clarification request more than once for the same utterance.
+
+# Long Context Behavior
+
+As the interview grows, prioritize:
+1. Latest candidate answer for evaluation
+2. Most recent TIME_SIGNAL for current section and timing state
+3. sessionTiming field in tool results for current clock state
+
+If you lose track of section or question count, use the most recent TIME_SIGNAL:SECTION_COMPLETE or save_interview_event sectionName as ground truth.
+
+---
 
 ${systemInstructions}`;
 
@@ -741,6 +784,9 @@ ${systemInstructions}`;
       session: {
         type: "realtime",
         instructions: SESSION_BEHAVIORAL_RULES,
+        // medium: interview requires multi-step reasoning (timing decisions, answer evaluation,
+        // tool sequencing) but must stay responsive. low would miss complex answer nuances.
+        reasoning: { effort: "medium" },
         audio: {
           input: {
             format: { type: "audio/pcm", rate: 24000 },
@@ -764,8 +810,14 @@ ${systemInstructions}`;
         tools: [
           {
             type: "function",
+            name: "wait_for_user",
+            description: "Call this when the latest audio does not need a spoken response: silence, background noise, side conversation, or speech clearly not addressed to you (e.g. 'see you later', 'just a second', 'bye'). This ends the turn without a spoken reply. Do NOT say 'I'm here', 'I didn't catch that', or 'Take your time' after calling this. Resume normal responses only when the candidate clearly addresses you.",
+            parameters: { type: "object", properties: {}, required: [] },
+          },
+          {
+            type: "function",
             name: "save_interview_event",
-            description: "Store per-question interview result for backend persistence. IMPORTANT: Always ask your NEXT question to the candidate BEFORE calling this function. Call this function AFTER you have already verbally asked the follow-up question, not before. This keeps the conversation flowing without an audible pause.",
+            description: "PROACTIVE — Store per-question evaluation. Ask your NEXT question to the candidate FIRST (verbally), then call this tool immediately after. Do not announce the call. Do not ask for confirmation. Return value includes sectionPacing.instruction: follow it.",
             parameters: {
               type: "object",
               properties: {
@@ -781,7 +833,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "finalize_interview_report",
-            description: "Store final interview report and mark interview as completed.",
+            description: "SIGNAL-GATED — Store final report and end the interview. Only call AFTER receiving TIME_SIGNAL:DURATION_COMPLETE or TIME_SIGNAL:HARD_STOP_REACHED. If called early the system will block it and instruct you to continue. Preamble: 'That wraps up our questions. Let me put together your report.'",
             parameters: {
               type: "object",
               properties: {
@@ -797,18 +849,14 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "show_reference_card",
-            description: "MUST USE for every MCQ, code snippet, or visual question. Display structured content on the candidate's screen. REQUIRED SEQUENCE: (1) Call this tool to show the content. (2) IMMEDIATELY after, verbally tell the candidate what to do — e.g. 'Take a look at the code snippet on your screen. What will this program print, and why?' or 'Review the options on screen and pick the correct one.' (3) Then WAIT for the candidate to answer — do NOT answer the question yourself. Never call this tool and stay silent.",
+            description: "PROACTIVE — Display code snippet, MCQ, or table on the candidate's screen BEFORE asking the question verbally. Sequence: (1) call this tool, (2) immediately say what the candidate should do — 'Take a look at the code on your screen. What will this print, and why?' — (3) wait for their answer. Never answer the question yourself. Never call this and stay silent.",
             parameters: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Card title (e.g., 'MCQ: Java Collections', 'Code Snippet: Debugging')" },
-                question: { type: "string", description: "The exact question text to display. REQUIRED for MCQ and code snippet cards." },
-                options: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Answer options for MCQ-style cards. Each item is one option (e.g., 'ArrayList is synchronized').",
-                },
-                content: { type: "string", description: "Markdown content: code blocks, tables, or formatted text. Use ```java for code snippets." },
+                title: { type: "string", description: "Card title (e.g., 'Code Snippet: Polymorphism')" },
+                question: { type: "string", description: "The question text to display. Required for MCQ and code cards." },
+                options: { type: "array", items: { type: "string" }, description: "MCQ answer options." },
+                content: { type: "string", description: "Markdown content. Use ```java for code blocks." },
               },
               required: ["title", "content"],
             },
@@ -816,8 +864,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "generate_section_questions",
-            description:
-              "Generate dynamic section questions when the current section runs out of planned questions before duration-complete.",
+            description: "Generate additional questions for the current section when planned questions are exhausted but section time remains. Use returned questions immediately. Preamble: 'Let me get the next question.'",
             parameters: {
               type: "object",
               properties: {
@@ -825,11 +872,7 @@ ${systemInstructions}`;
                 topic: { type: "string" },
                 difficulty: { type: "string" },
                 count: { type: "number" },
-                questionTypes: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Allowed values: NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL",
-                },
+                questionTypes: { type: "array", items: { type: "string" }, description: "NORMAL, MCQ, CODE_SNIPPET, or GRAPHICAL" },
                 candidateContext: { type: "string" },
                 elapsedMinutes: { type: "number" },
                 remainingMinutes: { type: "number" },
@@ -840,8 +883,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "generate_followup_questions",
-            description:
-              "Backward-compatible alias for generate_section_questions.",
+            description: "Alias for generate_section_questions. Use generate_section_questions instead when possible.",
             parameters: {
               type: "object",
               properties: {
@@ -849,11 +891,7 @@ ${systemInstructions}`;
                 topic: { type: "string" },
                 difficulty: { type: "string" },
                 count: { type: "number" },
-                questionTypes: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Allowed values: NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL",
-                },
+                questionTypes: { type: "array", items: { type: "string" }, description: "NORMAL, MCQ, CODE_SNIPPET, or GRAPHICAL" },
                 candidateContext: { type: "string" },
                 elapsedMinutes: { type: "number" },
                 remainingMinutes: { type: "number" },
@@ -895,6 +933,18 @@ ${systemInstructions}`;
   }
 
   private async handleFunctionCall(message: OpenAIEventRecord): Promise<void> {
+    const fnName = readString(message.name);
+
+    // wait_for_user is a silent no-op — no thinking indicator, no response, no audio
+    if (fnName === "wait_for_user") {
+      this.sendJson({
+        type: "conversation.item.create",
+        item: { type: "function_call_output", call_id: readString(message.call_id), output: JSON.stringify({ ok: true }) },
+      });
+      // Don't call safeResponseCreate — model should stay silent until candidate speaks
+      return;
+    }
+
     this.callbacks.onThinkingChange?.(true); // tool call in progress — show "Thinking" in UI
 
     let args: Record<string, unknown> = {};
@@ -905,7 +955,7 @@ ${systemInstructions}`;
     let result: Record<string, unknown>;
     let needsContinuation = true;
 
-    if (readString(message.name) === "save_interview_event") {
+    if (fnName === "save_interview_event") {
       const sectionName = readString(args.sectionName).trim();
       this.trackSectionProgress(sectionName);
       const event: InterviewEvaluationEvent = {
@@ -957,7 +1007,7 @@ ${systemInstructions}`;
       // before the candidate answers, causing the AI to answer its own question.
       // server_vad auto-triggers the next response when the candidate speaks.
       needsContinuation = false;
-    } else if (readString(message.name) === "finalize_interview_report") {
+    } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
         this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs;
@@ -1004,7 +1054,7 @@ ${systemInstructions}`;
         result = { ok: true, reportStored: true };
         needsContinuation = false;
       }
-    } else if (readString(message.name) === "show_reference_card") {
+    } else if (fnName === "show_reference_card") {
       const question = readString(args.question).trim();
       const options = Array.isArray(args.options)
         ? args.options.map((item) => String(item).trim()).filter((item) => item.length > 0)
@@ -1020,10 +1070,7 @@ ${systemInstructions}`;
       };
       this.callbacks.onReferenceCard(card);
       result = { ok: true };
-    } else if (
-      readString(message.name) === "generate_section_questions" ||
-      readString(message.name) === "generate_followup_questions"
-    ) {
+    } else if (fnName === "generate_section_questions" || fnName === "generate_followup_questions") {
       try {
         const generated = await this.generateFollowupQuestions(args);
         result = { ok: true, generatedQuestions: generated };
@@ -1037,7 +1084,7 @@ ${systemInstructions}`;
         };
       }
     } else {
-      result = { ok: false, error: `Unknown function: ${readString(message.name)}` };
+      result = { ok: false, error: `Unknown function: ${fnName}` };
     }
 
     // Inject live session timing into every tool result — model always has a
