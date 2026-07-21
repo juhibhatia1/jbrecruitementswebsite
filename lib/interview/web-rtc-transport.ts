@@ -586,11 +586,11 @@ export class OpenAIWebRtcInterviewTransport {
     }
   }
 
-  // Schedule hard transition signals at each planned section boundary.
-  // These fire as TIME_SIGNAL:SECTION_COMPLETE events via sendOrchestrationMessage,
-  // which forces the model to move to the next section regardless of how many
-  // questions it has asked. This is the ONLY reliable way to enforce section timing —
-  // soft guidance in save_interview_event results is ignored by the model when rushing.
+  // Schedule section transition signals at each planned section boundary.
+  // Uses sendSilentContextMessage (NOT sendOrchestrationMessage) to avoid
+  // forcing a safeResponseCreate that causes pendingResponseCreate chains
+  // and duplicate "Let's move to Section X" responses when responseInFlight=true.
+  // Model sees TIME_SIGNAL:SECTION_COMPLETE on its next natural turn and obeys RULE 10.
   private scheduleSectionTransitions(): void {
     this.clearSectionTransitionTimers();
     if (this.sectionPlan.length <= 1) return;
@@ -604,14 +604,16 @@ export class OpenAIWebRtcInterviewTransport {
       const delayMs = fireAt - Date.now();
 
       if (delayMs <= 0) {
-        // This boundary already passed (e.g., session reconnect) — skip it.
         continue;
       }
 
       const timer = setTimeout(() => {
         if (this.completed || this.manuallyClosed) return;
-        this.sendOrchestrationMessage(
-          `TIME_SIGNAL:SECTION_COMPLETE:${section.name}. The planned ${section.minutes}-minute window for section "${section.name}" is now complete. IMMEDIATELY transition to section "${nextSection.name}" on your next response. Ask your first question in "${nextSection.name}" now. Do not ask any more questions about "${section.name}".`,
+        // Silent injection: model sees this on next natural response turn.
+        // No safeResponseCreate avoids double "Let's move to Section X" when
+        // the timer fires during an active response (pendingResponseCreate chain).
+        this.sendSilentContextMessage(
+          `TIME_SIGNAL:SECTION_COMPLETE:${section.name}. The planned ${section.minutes}-minute window for section "${section.name}" is now complete. On your next response, transition to section "${nextSection.name}". Ask your first question in "${nextSection.name}". Do not ask more questions about "${section.name}".`,
         );
       }, delayMs);
 
@@ -848,10 +850,9 @@ ${systemInstructions}`;
               // as speech ("And you might be like, oh yeah" artifacts). 0.7 filters
               // casual background sound while still catching clear speech.
               threshold: 0.7,
-              // 1000ms silence: 700ms was still too short — candidates pause mid-sentence
-              // naturally (breathing, thinking) and VAD committed partial answers,
-              // causing AI to interrupt and respond before candidate finished.
-              silence_duration_ms: 1000,
+              // 1200ms silence: 1000ms still cut off mid-sentence pauses. Natural speech
+              // includes 1-1.5s pauses at clause boundaries, breathing, and hesitation.
+              silence_duration_ms: 1200,
             },
             transcription: { model: "whisper-1" },
           },
@@ -1069,7 +1070,7 @@ ${systemInstructions}`;
         if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
         this.sendSilentContextMessage("Ask your next question in the current section now.");
         this.safeResponseCreate();
-      }, 8000);
+      }, 15000); // 15s: nudge starts ~1-2s before mic unmutes; candidate needs ~1-10s to answer
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
