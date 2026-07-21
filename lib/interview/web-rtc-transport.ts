@@ -848,9 +848,10 @@ ${systemInstructions}`;
               // as speech ("And you might be like, oh yeah" artifacts). 0.7 filters
               // casual background sound while still catching clear speech.
               threshold: 0.7,
-              // 700ms silence: API default (500ms) fragmented natural speaking pauses
-              // into multiple commits → AI jumped in mid-answer.
-              silence_duration_ms: 700,
+              // 1000ms silence: 700ms was still too short — candidates pause mid-sentence
+              // naturally (breathing, thinking) and VAD committed partial answers,
+              // causing AI to interrupt and respond before candidate finished.
+              silence_duration_ms: 1000,
             },
             transcription: { model: "whisper-1" },
           },
