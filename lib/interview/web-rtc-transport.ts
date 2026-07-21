@@ -19,6 +19,9 @@ type WebRtcCallbacks = {
   onComplete: () => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
   onThinkingChange?: (thinking: boolean) => void;
+  // Mute the microphone (true=mute, false=unmute). Called without updating the
+  // UI locked state — purely a temporary hardware mute to prevent echo capture.
+  onMuteRequired?: (muted: boolean) => void;
   onRemoteStream?: (stream: MediaStream) => void;
 };
 
@@ -170,6 +173,9 @@ export class OpenAIWebRtcInterviewTransport {
   private static readonly STALL_THRESHOLD_MS = 45_000; // 45s — candidates can think for 30+ seconds
   private static readonly MAX_STALL_RECOVERIES = 3;
 
+  // Mic mute timer — unmutes after estimated AI audio playback duration
+  private muteTimer: ReturnType<typeof setTimeout> | null = null;
+
   // Section boundary timers — fire TIME_SIGNAL:SECTION_COMPLETE at each planned boundary
   private sectionTransitionTimers: ReturnType<typeof setTimeout>[] = [];
 
@@ -282,11 +288,12 @@ export class OpenAIWebRtcInterviewTransport {
           text: interviewerText,
         });
         this.enforceRealtimePacingGuards(interviewerText);
-        // Estimate how long the audio will keep playing: ~12 chars/sec speaking rate.
-        // WebRTC audio keeps playing after response.done fires. Speech events during
-        // this tail are echo, not candidate speech — set protection window.
-        const estimatedAudioMs = Math.max(2000, Math.min(10000, interviewerText.length / 12 * 1000));
+        // Estimate when WebRTC audio finishes (~12 chars/sec speaking rate).
+        // Schedule mic unmute AFTER audio tail — mic is muted on response.created
+        // to prevent AI voice echo being picked up as candidate speech.
+        const estimatedAudioMs = Math.max(1500, Math.min(12000, interviewerText.length / 12 * 1000));
         this.audioTailProtectionUntilMs = Date.now() + estimatedAudioMs;
+        this.scheduleMicUnmute(estimatedAudioMs + 400); // +400ms for WebRTC buffer
       }
 
       if (
@@ -331,7 +338,10 @@ export class OpenAIWebRtcInterviewTransport {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
-        this.callbacks.onThinkingChange?.(false); // model now generating/speaking — not processing a tool
+        this.callbacks.onThinkingChange?.(false);
+        // Mute mic immediately — AI is about to speak. Prevents echo from
+        // feeding back into VAD and being transcribed as fake candidate answers.
+        this.callbacks.onMuteRequired?.(true);
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -343,15 +353,15 @@ export class OpenAIWebRtcInterviewTransport {
 
       if (message.type === "response.done") {
         this.responseInFlight = false;
-        // Only mark not-speaking if all audio buffers have also finished.
-        // response.done fires when generation ends, but audio is still playing.
-        // Premature assistantSpeaking=false → debounce doesn't protect tail audio
-        // → mic picks up AI voice echo → VAD triggers → "I noticed a brief pause" loop.
         if (this.scheduledSources.length === 0) {
           this.assistantSpeaking = false;
           this.callbacks.onAssistantSpeakingChange?.(false);
         }
-        // else: source.onended will clear assistantSpeaking when last buffer finishes
+        // Fallback unmute: if no transcript event fired (function-call-only response),
+        // no scheduleMicUnmute was called — unmute now with a short buffer.
+        if (!this.muteTimer) {
+          this.scheduleMicUnmute(400);
+        }
         if (this.pendingResponseCreate) {
           this.pendingResponseCreate = false;
           this.safeResponseCreate();
@@ -365,6 +375,7 @@ export class OpenAIWebRtcInterviewTransport {
         this.pendingResponseCreate = false;
         this.callbacks.onThinkingChange?.(false);
         this.callbacks.onAssistantSpeakingChange?.(false);
+        this.unmuteMicNow(); // candidate interrupted — unmute immediately
       }
     };
 
@@ -452,7 +463,8 @@ export class OpenAIWebRtcInterviewTransport {
     this.sendJson({ type: "response.cancel" });
     this.responseInFlight = false;
     this.assistantSpeaking = false;
-    this.audioTailProtectionUntilMs = 0; // candidate is interrupting — disable echo protection
+    this.audioTailProtectionUntilMs = 0;
+    this.unmuteMicNow(); // candidate interrupted — unmute so they can speak
     this.stopPlayback();
   }
 
@@ -462,6 +474,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.stopStallWatchdog();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
+    this.unmuteMicNow();
     this.stopPlayback();
     try {
       this.dc?.close();
@@ -605,6 +618,27 @@ export class OpenAIWebRtcInterviewTransport {
     this.sectionTransitionTimers = [];
   }
 
+  // Schedule mic unmute after a delay. Cancels any pending unmute timer first.
+  private scheduleMicUnmute(delayMs: number): void {
+    if (this.muteTimer) {
+      clearTimeout(this.muteTimer);
+      this.muteTimer = null;
+    }
+    this.muteTimer = setTimeout(() => {
+      this.muteTimer = null;
+      this.callbacks.onMuteRequired?.(false);
+    }, delayMs);
+  }
+
+  // Immediately cancel any pending unmute timer and unmute the mic now.
+  private unmuteMicNow(): void {
+    if (this.muteTimer) {
+      clearTimeout(this.muteTimer);
+      this.muteTimer = null;
+    }
+    this.callbacks.onMuteRequired?.(false);
+  }
+
   // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
   private armKillTimer(): void {
     if (this.killTimer) return; // already armed
@@ -630,6 +664,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.stopStallWatchdog();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
+    this.unmuteMicNow();
     this.stopPlayback();
     this.callbacks.onComplete();
     try {
@@ -685,6 +720,7 @@ export class OpenAIWebRtcInterviewTransport {
     }
     this.scheduledSources = [];
     this.playbackCursor = 0;
+    this.unmuteMicNow(); // audio stopped — mic should be unmuted
     if (this.playbackCtx && this.playbackCtxOwned) {
       void this.playbackCtx.close();
     }
@@ -1003,13 +1039,15 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
-      // needsContinuation=true: model MUST generate a continuation after saving.
-      // Setting this to false caused 45-second stalls: model acknowledged answer,
-      // called save without asking next question, we returned no safeResponseCreate,
-      // both sides waited → stall watchdog fired → "Apologies, let's continue" every 45s.
-      // With gpt-realtime-2 reasoning, the model should NOT answer a question it just asked;
-      // it should ask the NEXT question. The tool description reinforces this.
-      // needsContinuation stays true (default).
+      // needsContinuation=false: prevent self-answering.
+      // Previously true caused: save_interview_event → safeResponseCreate → model
+      // answered the question it just asked before candidate spoke.
+      // Now safe because mic is muted on response.created. After save returns:
+      //   - mic is still muted (AI audio still playing)
+      //   - scheduleMicUnmute fires when audio finishes
+      //   - candidate speaks → server_vad auto-triggers model response
+      // No 45s stall: mic unmutes in ~1-5s (not 45s) so candidate can speak.
+      needsContinuation = false;
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =

@@ -562,6 +562,14 @@ export default function InterviewRoom({ token }: { token: string }) {
         onComplete: () => handleTransportMessage({ type: "interview_complete" }),
         onAssistantSpeakingChange: (speaking) => setAiSpeaking(speaking),
         onThinkingChange: (thinking) => setAiThinking(thinking),
+        // Temporarily mute/unmute mic tracks without changing the UI locked state.
+        // This prevents AI voice echo from reaching VAD and being transcribed as
+        // fake candidate answers ("get the recent data..." hallucination pattern).
+        onMuteRequired: (muted) => {
+          streamRef.current?.getAudioTracks().forEach((track) => {
+            track.enabled = !muted;
+          });
+        },
         onRemoteStream: (remoteStream) => {
           if (remoteAudioRef.current) {
             remoteAudioRef.current.srcObject = remoteStream;
