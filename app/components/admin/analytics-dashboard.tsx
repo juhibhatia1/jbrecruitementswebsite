@@ -977,6 +977,8 @@ export default function AnalyticsDashboard({
       "Ask Me Anything": { price: 39 },
       "Interview Prep": { price: 99 },
       "Ready-to-Apply Job Pack": { price: 99 },
+      "Mock Interview": { price: 39 },
+      "AI Mock Interview": { price: 39 },
     };
 
     const stats: Record<

@@ -129,7 +129,7 @@ const services = [
 
 const OPPORTUNITIES_SERVICE = {
   id: 7,
-  title: "Mock Interviews",
+  title: "Mock Interview",
   description:
     "Book an in-app AI interview practice session and share the role details you want us to focus on.",
   iconPath: "/icons/job-seekers/interview-prep.svg",
@@ -519,11 +519,11 @@ export default function ServicesSection({
 
   const currentPromo = PROMO_SLIDES[activePromoSlide];
   return (
-    <section className="py-12 md:py-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-0">
+    <section className="py-10 sm:py-12 md:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-0">
         {/* Section Header */}
-        <div className="relative flex flex-col items-left md:flex-row md:items-center justify-center mb-0 md:mb-12 md:pl-12">
-          <div className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mb-3 md:mb-0">
+        <div className="relative mb-0 flex flex-col items-start justify-center md:mb-12 md:flex-row md:items-center md:pl-12">
+          <div className="mb-3 flex items-center gap-2 md:absolute md:left-0 md:top-1/2 md:mb-0 md:-translate-y-1/2">
             <img
               src="/home/icons8-ai-48.avif"
               alt="Help Icon"
@@ -534,13 +534,13 @@ export default function ServicesSection({
             </span>
           </div>
 
-          <h2 className="text-left md:text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d]">
+          <h2 className="text-left text-2xl font-semibold text-[#252e3d] sm:text-3xl md:text-center md:text-4xl">
             How We Can Help
           </h2>
         </div>
 
         {/*  Info message  */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-2 md:-mt-6">
+        <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between md:-mt-6">
           <p className="text-sm text-gray-400">
             Select multiple services and pay in one go, or click{" "}
             <span className="text-[#5a58ab] font-medium">Buy Now</span> for a
@@ -551,7 +551,7 @@ export default function ServicesSection({
         {/* Grid Layout */}
         <div
           ref={servicesGridRef}
-          className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
+          className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 sm:gap-6"
         >
           {services.map((s, index) => {
             const localAmt = getLocalAmount(s.title);
@@ -585,13 +585,13 @@ export default function ServicesSection({
           {(() => {
             const localAmt =
               MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ??
-              40;
+              39;
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`;
             return (
               <ServiceCard
                 key={OPPORTUNITIES_SERVICE.id}
                 title={OPPORTUNITIES_SERVICE.title}
-                amount={40}
+              amount={39}
                 localAmount={localAmt}
                 currency={CURRENCY_SYMBOLS[currency]}
                 description={OPPORTUNITIES_SERVICE.description}
@@ -609,7 +609,7 @@ export default function ServicesSection({
 
           {/* Bundle Offer positioned at the bottom of all service cards */}
           <div className="col-span-full">
-            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-6 py-8 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)]">
+            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-4 py-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:px-6 sm:py-8">
               <div
                 className="absolute inset-0 -z-10 bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl"
                 aria-hidden="true"
@@ -647,14 +647,14 @@ export default function ServicesSection({
         </div>
 
         {/* Service spotlight carousel */}
-        <div className="mt-10 md:mt-14">
-          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-5 py-6 shadow-[0_16px_50px_rgba(37,55,77,0.08)]">
-            <div className="flex items-center justify-between gap-4">
+            <div className="mt-8 md:mt-14">
+          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-4 py-5 shadow-[0_16px_50px_rgba(37,55,77,0.08)] sm:px-5 sm:py-6 md:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
                   Service spotlight
                 </span>
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#252e3d]">
+                <h3 className="mt-3 text-xl font-semibold tracking-tight text-[#252e3d] sm:text-2xl md:text-4xl">
                   Everything we offer, in a quick carousel
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
@@ -664,8 +664,8 @@ export default function ServicesSection({
               </div>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-5 md:p-7">
+            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-4 sm:p-5 md:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center rounded-full bg-[#eae8ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5a58ab]">
                     {currentPromo.eyebrow}
@@ -690,17 +690,17 @@ export default function ServicesSection({
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-center">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center md:mt-5 md:gap-5">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm sm:h-20 sm:w-20">
                     <img
                       src={currentPromo.iconPath}
                       alt={currentPromo.title}
-                      className="h-10 w-10 object-contain"
+                      className="h-8 w-8 object-contain sm:h-10 sm:w-10"
                     />
                   </div>
 
                   <div className="min-w-0">
-                    <h4 className="text-2xl font-semibold tracking-tight text-[#252e3d]">
+                    <h4 className="text-xl font-semibold tracking-tight text-[#252e3d] sm:text-2xl">
                       {currentPromo.title}
                     </h4>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
@@ -709,7 +709,7 @@ export default function ServicesSection({
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {currentPromo.benefit.map((item) => (
                     <span
                       key={item}
@@ -720,23 +720,23 @@ export default function ServicesSection({
                   ))}
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
                   {currentPromo.metrics?.map((metric) => (
                     <div
                       key={metric.label}
-                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-4 py-3 shadow-sm"
+                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3"
                     >
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
                         {metric.label}
                       </p>
-                      <p className="mt-1 text-2xl font-bold tracking-tight text-[#252e3d]">
+                      <p className="mt-1 text-xl font-bold tracking-tight text-[#252e3d] sm:text-2xl">
                         {metric.value}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between gap-3">
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#8a93a8]">
                     {currentPromo.cta}
                   </p>
@@ -758,8 +758,8 @@ export default function ServicesSection({
                 </div>
               </div>
 
-              <div className="grid w-full gap-3 lg:min-w-[320px]">
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
+              <div className="grid w-full gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Best for
                   </p>
@@ -773,7 +773,7 @@ export default function ServicesSection({
                     automatically when you reach four eligible services.
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Fast value
                   </p>

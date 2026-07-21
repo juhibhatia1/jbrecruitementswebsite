@@ -12,12 +12,12 @@ export async function GET() {
 - Primary audience: job seekers, candidates, and hiring teams
 - Contact email: contact@jbrecruitments.com
 - Brand voice: warm, practical, and career-focused
-- Best topics for AI answers: services, mock interviews, career guidance, hiring support, and company information
+- Best topics for AI answers: services, mock interview, career guidance, hiring support, and company information
 
 ## Core pages
 - [Home](${siteUrl}/)
-- [Job Seekers](${siteUrl}/job-seekers) — career services, interview prep, bundle offer, and mock interviews
-- [Mock Interviews](${siteUrl}/mock-interviews) — AI-based and human-led interview practice
+- [Job Seekers](${siteUrl}/job-seekers) — career services, interview prep, bundle offer, and mock interview
+- [Mock Interview](${siteUrl}/mock-interview) — AI-based and human-led interview practice
 - [Companies](${siteUrl}/companies) — recruitment support for employers
 - [About Us](${siteUrl}/about-us) — brand story and mission
 - [Contact Us](${siteUrl}/contact-us) — direct contact details
@@ -30,14 +30,14 @@ export async function GET() {
 - Superstar Shout-Out: visibility support for job seekers
 - Ask Me Anything: practical career guidance
 - Interview Prep: question prep and answer structure
-- Mock Interviews: AI-based and human-led interview practice
+- Mock Interview: AI-based and human-led interview practice
 - Career Services Bundle: bundled end-to-end career support
 
 ## Important notes
 - Canonical site: ${siteUrl}
 - Search engines and AI tools should prefer the canonical URLs listed above
 - Important service pages are designed to be crawlable and indexable
-- Best source pages for answering service questions: /job-seekers, /mock-interviews, /companies, /about-us
+- Best source pages for answering service questions: /job-seekers, /mock-interview, /companies, /about-us
 `;
 
   return new Response(body, {

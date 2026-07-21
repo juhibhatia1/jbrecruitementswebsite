@@ -674,7 +674,7 @@ export default function InterviewRoom({ token }: { token: string }) {
           <h2 className="text-lg font-semibold text-[#252e3d] mb-2">Unable to Start Interview</h2>
           <p className="text-sm text-slate-500 mb-6 leading-relaxed">{errorMsg}</p>
           <Link
-            href="/mock-interviews"
+            href="/mock-interview"
             className="inline-block rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
           >
             ← Back to Sessions
@@ -879,7 +879,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
           <div className="mt-8 text-center">
             <Link
-              href="/mock-interviews"
+              href="/mock-interview"
               className="inline-block rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
             >
               ← Back to Sessions
