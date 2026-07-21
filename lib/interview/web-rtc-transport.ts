@@ -173,8 +173,11 @@ export class OpenAIWebRtcInterviewTransport {
   private static readonly STALL_THRESHOLD_MS = 45_000; // 45s — candidates can think for 30+ seconds
   private static readonly MAX_STALL_RECOVERIES = 3;
 
-  // Mic mute timer — unmutes after estimated AI audio playback duration
+  // Mic mute timer — unmutes shortly after AI audio finishes
   private muteTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // save_interview_event nudge timer — cancelled if model naturally generates next question
+  private saveNudgeTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Section boundary timers — fire TIME_SIGNAL:SECTION_COMPLETE at each planned boundary
   private sectionTransitionTimers: ReturnType<typeof setTimeout>[] = [];
@@ -288,12 +291,12 @@ export class OpenAIWebRtcInterviewTransport {
           text: interviewerText,
         });
         this.enforceRealtimePacingGuards(interviewerText);
-        // Estimate when WebRTC audio finishes (~12 chars/sec speaking rate).
-        // Schedule mic unmute AFTER audio tail — mic is muted on response.created
-        // to prevent AI voice echo being picked up as candidate speech.
-        const estimatedAudioMs = Math.max(1500, Math.min(12000, interviewerText.length / 12 * 1000));
-        this.audioTailProtectionUntilMs = Date.now() + estimatedAudioMs;
-        this.scheduleMicUnmute(estimatedAudioMs + 400); // +400ms for WebRTC buffer
+        // response.output_audio_transcript.done fires after audio has already played
+        // via the WebRTC RTP stream. Only ~500-800ms of buffer tail remains.
+        // Use a fixed 700ms delay — text-length estimates caused 10-15s mic mutes
+        // making candidates unable to speak even 1-2s after AI finished.
+        this.audioTailProtectionUntilMs = Date.now() + 700;
+        this.scheduleMicUnmute(700);
       }
 
       if (
@@ -316,6 +319,8 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "input_audio_buffer.speech_started") {
+        // Candidate started speaking — no nudge needed
+        if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
         const inTailWindow = Date.now() < this.audioTailProtectionUntilMs;
         if (this.assistantSpeaking || inTailWindow) {
           const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
@@ -339,9 +344,9 @@ export class OpenAIWebRtcInterviewTransport {
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
         this.callbacks.onThinkingChange?.(false);
-        // Mute mic immediately — AI is about to speak. Prevents echo from
-        // feeding back into VAD and being transcribed as fake candidate answers.
         this.callbacks.onMuteRequired?.(true);
+        // Model started generating — cancel any pending save nudge timer
+        if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -474,6 +479,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.stopStallWatchdog();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
+    if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
     this.unmuteMicNow();
     this.stopPlayback();
     try {
@@ -664,6 +670,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.stopStallWatchdog();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
+    if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
     this.unmuteMicNow();
     this.stopPlayback();
     this.callbacks.onComplete();
@@ -789,8 +796,11 @@ When candidate says "I want to stop", "end the interview", "I want to quit", "st
 ## Filler-only responses
 When candidate's full response is only 1–3 words of pure filler (uh / um / so / yeah / hmm): this is not a complete answer. Say "Go ahead" or "Please continue." Do NOT say "Good point" or infer a position they never stated.
 
+## Thinking time
+When candidate says "wait", "I'm thinking", "give me a moment", "let me think", "one second" — say "Take your time." and wait silently. Do NOT repeat the question. Do NOT prompt again for at least 30 seconds.
+
 ## Meta-commentary
-When candidate says "why are you pausing", "reply please", "are you stuck": say "Apologies, let's continue." and ask the next question immediately.
+When candidate says "why are you pausing", "reply please", "are you stuck", "go on", "move on", "do your response" — say "Apologies." and ask the next question immediately.
 
 ## No closing before signal
 Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
@@ -906,7 +916,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "generate_section_questions",
-            description: "Generate additional questions for the current section when planned questions are exhausted but section time remains. Use returned questions immediately. Preamble: 'Let me get the next question.'",
+            description: "Generate additional questions for the current section when planned questions are exhausted but section time remains. Call silently — NO preamble, do NOT say 'I'll generate a follow-up', 'Let me get the next question', or anything before calling. After receiving results, ask the first returned question directly.",
             parameters: {
               type: "object",
               properties: {
@@ -1050,13 +1060,15 @@ ${systemInstructions}`;
       // (both sides would be silently waiting). 8s is long enough not to interrupt normal
       // candidate thinking, short enough to avoid the old 45s deadlock.
       needsContinuation = false;
-      const nudgeDelay = 8000;
-      setTimeout(() => {
+      // Trackable nudge timer — cancelled when response.created or speech_started fires,
+      // preventing duplicate responses when section timers or model naturally continues.
+      if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
+      this.saveNudgeTimer = setTimeout(() => {
+        this.saveNudgeTimer = null;
         if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
-        // Still silent 8s after save — model didn't ask next question. Nudge it.
         this.sendSilentContextMessage("Ask your next question in the current section now.");
         this.safeResponseCreate();
-      }, nudgeDelay);
+      }, 8000);
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
