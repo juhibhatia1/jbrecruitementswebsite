@@ -18,6 +18,7 @@ type WebRtcCallbacks = {
   onInterrupted: () => void;
   onComplete: () => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
+  onThinkingChange?: (thinking: boolean) => void;
   onRemoteStream?: (stream: MediaStream) => void;
 };
 
@@ -324,6 +325,7 @@ export class OpenAIWebRtcInterviewTransport {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
+        this.callbacks.onThinkingChange?.(false); // model now generating/speaking — not processing a tool
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -354,11 +356,8 @@ export class OpenAIWebRtcInterviewTransport {
       if (message.type === "response.cancelled") {
         this.responseInFlight = false;
         this.assistantSpeaking = false;
-        // Clear stale pending request: a pacing guard may have set this while a response
-        // was in flight; after cancellation response.done never fires, so without this
-        // clear the pending request would leak into the next response's done handler
-        // and fire a spurious extra AI turn.
         this.pendingResponseCreate = false;
+        this.callbacks.onThinkingChange?.(false);
         this.callbacks.onAssistantSpeakingChange?.(false);
       }
     };
@@ -833,7 +832,22 @@ ${systemInstructions}`;
     this.safeResponseCreate();
   }
 
+  // Returns live session + section timing. Included in every tool result so
+  // the model always has a fresh clock without a dedicated time-check tool call.
+  private getSessionTiming() {
+    const elapsedMs = Math.max(0, Date.now() - this.sessionStartedAtMs);
+    const remainingMs = Math.max(0, this.durationMs - elapsedMs);
+    return {
+      sessionElapsedMinutes: Number((elapsedMs / 60000).toFixed(1)),
+      sessionRemainingMinutes: Number((remainingMs / 60000).toFixed(1)),
+      durationComplete: this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs,
+      currentSection: this.currentSectionName,
+    };
+  }
+
   private async handleFunctionCall(message: OpenAIEventRecord): Promise<void> {
+    this.callbacks.onThinkingChange?.(true); // tool call in progress — show "Thinking" in UI
+
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(readString(message.arguments) || "{}") as Record<string, unknown>;
@@ -977,14 +991,20 @@ ${systemInstructions}`;
       result = { ok: false, error: `Unknown function: ${readString(message.name)}` };
     }
 
+    // Inject live session timing into every tool result — model always has a
+    // fresh clock without needing a dedicated time-check tool call.
+    const resultWithTiming = { ...result, sessionTiming: this.getSessionTiming() };
+
     this.sendJson({
       type: "conversation.item.create",
       item: {
         type: "function_call_output",
         call_id: readString(message.call_id),
-        output: JSON.stringify(result),
+        output: JSON.stringify(resultWithTiming),
       },
     });
+
+    this.callbacks.onThinkingChange?.(false); // tool result sent — back to listening or speaking
 
     if (needsContinuation) {
       this.safeResponseCreate();
