@@ -60,11 +60,11 @@ function readString(value: unknown): string {
 }
 
 function computeMinimumQuestionTarget(durationMinutes: number): number {
-  if (durationMinutes >= 30) return 14;
-  if (durationMinutes >= 20) return 10;
-  if (durationMinutes >= 15) return 8;
-  if (durationMinutes >= 10) return 6;
-  return 4;
+  if (durationMinutes >= 30) return 20;
+  if (durationMinutes >= 20) return 15;
+  if (durationMinutes >= 15) return 12;
+  if (durationMinutes >= 10) return 8;
+  return 5;
 }
 
 const FINAL_CLOSING_WINDOW_MS = 60_000;
@@ -154,6 +154,11 @@ export class OpenAIWebRtcInterviewTransport {
   // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
   private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 500;
+
+  // Audio tail protection: WebRTC audio keeps playing after response.done fires.
+  // During this window, VAD speech_started events are echo — clear the buffer.
+  private audioTailProtectionUntilMs = 0;
+  private static readonly AUDIO_TAIL_FALLBACK_MS = 3000;
 
   // Stall watchdog - detects truly stuck AI (not candidate thinking pauses)
   private lastEventAtMs = 0;
@@ -270,6 +275,11 @@ export class OpenAIWebRtcInterviewTransport {
           text: interviewerText,
         });
         this.enforceRealtimePacingGuards(interviewerText);
+        // Estimate how long the audio will keep playing: ~12 chars/sec speaking rate.
+        // WebRTC audio keeps playing after response.done fires. Speech events during
+        // this tail are echo, not candidate speech — set protection window.
+        const estimatedAudioMs = Math.max(2000, Math.min(10000, interviewerText.length / 12 * 1000));
+        this.audioTailProtectionUntilMs = Date.now() + estimatedAudioMs;
       }
 
       if (
@@ -292,13 +302,20 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "input_audio_buffer.speech_started") {
-        if (this.assistantSpeaking) {
+        const inTailWindow = Date.now() < this.audioTailProtectionUntilMs;
+        if (this.assistantSpeaking || inTailWindow) {
           const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
-          if (speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS) {
-            // AI has been speaking long enough that this is a genuine interruption
+          const isGenuineInterruption =
+            this.assistantSpeaking &&
+            this.responseInFlight &&
+            speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS;
+          if (isGenuineInterruption) {
             this.cancelResponse();
+          } else {
+            // Echo from still-playing AI audio — discard captured buffer so model
+            // does not receive its own voice as "candidate speech"
+            this.sendJson({ type: "input_audio_buffer.clear" });
           }
-          // else: within debounce window — brief noise, ignore
         }
         this.callbacks.onInterrupted();
       }
@@ -428,9 +445,9 @@ export class OpenAIWebRtcInterviewTransport {
   cancelResponse(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
     this.sendJson({ type: "response.cancel" });
-    // Mark response as no longer in flight — the model may send response.cancelled or response.done
     this.responseInFlight = false;
     this.assistantSpeaking = false;
+    this.audioTailProtectionUntilMs = 0; // candidate is interrupting — disable echo protection
     this.stopPlayback();
   }
 
@@ -657,6 +674,15 @@ RULE 5 — SHORT UTTERANCES ARE NOISE:
 
 RULE 6 — NEVER ANNOUNCE PAUSES:
 Never say "I'll pause here", "let's pause", "we'll pick up later", "since you're done we'll pause". The interview runs continuously until finalize_interview_report is called.
+
+RULE 7 — FILLER/INCOMPLETE RESPONSES ARE NOT ANSWERS:
+If the candidate's turn is only 1-3 words OR consists only of filler words like "uh", "um", "so", "yeah", "hmm", "ok", "nah", "oh", "well" — this is NOT a complete answer. Do NOT say "Good point" or "Interesting" or summarize a position they never stated. Say "Go ahead" or "Please continue" and wait. Never fabricate or infer an answer from filler sounds.
+
+RULE 8 — OFF-TOPIC UTTERANCES: IGNORE AND HOLD:
+If the candidate says something clearly unrelated to the interview question (talking to someone else in the room, random phrases like "see you later", "just a second", etc.) — ignore it completely. Do NOT respond to it. Hold the question and wait for them to return to answering.
+
+RULE 9 — NO CLOSING QUESTION BEFORE TIME SIGNAL:
+NEVER ask "Do you have any questions for me?" or "Do you have any questions about the role or company?" UNTIL you receive the TIME_SIGNAL:DURATION_COMPLETE message from the system timer. This is a hard rule. Asking this question early wastes interview time. If you feel the urge to close early, ask another technical question from the current section instead.
 
 === END MANDATORY RULES ===
 
@@ -1089,14 +1115,17 @@ ${systemInstructions}`;
         : 0;
     const elapsedMinutes = (accumulatedMs + currentRunningMs) / 60000;
     const remainingMinutes = Math.max(0, section.minutes - elapsedMinutes);
+    const questionsPerMinute = (section.questionBankTarget ?? 3) / section.minutes;
+    const suggestedMore = Math.max(1, Math.round(questionsPerMinute * remainingMinutes));
+
     return {
       sectionName,
       elapsedMinutes: Number(elapsedMinutes.toFixed(2)),
       remainingMinutes: Number(remainingMinutes.toFixed(2)),
       instruction:
-        remainingMinutes > 0.4
-          ? `Stay in section "${sectionName}" until roughly ${section.minutes} minutes are covered.`
-          : `Section "${sectionName}" time target is nearly met. You may transition when objective is complete.`,
+        remainingMinutes > 0.5
+          ? `SECTION TIMING REQUIRED: "${sectionName}" has ${remainingMinutes.toFixed(1)} of ${section.minutes} min remaining. Ask at least ${suggestedMore} more question(s) in this section before any transition. Use generate_section_questions if you run out of planned questions.`
+          : `Section "${sectionName}" time nearly met. May transition when objective is complete.`,
     };
   }
 
