@@ -738,6 +738,8 @@ export class OpenAIWebRtcInterviewTransport {
 
 AI interviewer conducting a structured mock interview for a technical role. Ask planned questions from each section in order. Evaluate answers briefly and objectively. Guide the candidate through the full scheduled interview duration. Generate a final evaluation report at the end.
 
+IMPORTANT: You will have background information about the candidate from the application. Do NOT use this to skip the verbal introduction. Wait for the candidate to speak their introduction in this session before saying "Nice background" or moving to Section 1. The candidate must verbally introduce themselves first.
+
 # Personality and Tone
 
 Professional and warm — like a senior hiring manager conducting a real interview.
@@ -1039,15 +1041,13 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
-      // needsContinuation=false: prevent self-answering.
-      // Previously true caused: save_interview_event → safeResponseCreate → model
-      // answered the question it just asked before candidate spoke.
-      // Now safe because mic is muted on response.created. After save returns:
-      //   - mic is still muted (AI audio still playing)
-      //   - scheduleMicUnmute fires when audio finishes
-      //   - candidate speaks → server_vad auto-triggers model response
-      // No 45s stall: mic unmutes in ~1-5s (not 45s) so candidate can speak.
-      needsContinuation = false;
+      // needsContinuation=true: model asks next question immediately after save returns.
+      // Self-answering is prevented by mic muting: when the continuation response.created
+      // fires, the mic is already muted, so no candidate audio is captured while the model
+      // generates the next question. Mic only unmutes after that question's audio finishes.
+      // needsContinuation=false caused 20-30s stalls: model was done, mic unmuted, but no
+      // new question was asked — both sides waited for the other to speak.
+      // (needsContinuation stays true — the default)
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
