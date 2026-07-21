@@ -22,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/mock-interviews`,
+      url: `${siteUrl}/mock-interview`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,

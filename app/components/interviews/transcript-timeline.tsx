@@ -8,6 +8,7 @@ import type { TimelineItem } from "./timeline-utils";
 export { buildTimeline } from "./timeline-utils";
 
 function ReferenceCardBlock({ card }: { card: InterviewReferenceCard }) {
+  const hasStructuredQuestion = Boolean(card.question || (card.options && card.options.length > 0));
   return (
     <div className="my-3 rounded-xl border border-[#5a58ab]/20 bg-[#f8f7ff] overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 bg-[#5a58ab]/8 border-b border-[#5a58ab]/15">
@@ -32,6 +33,21 @@ function ReferenceCardBlock({ card }: { card: InterviewReferenceCard }) {
         [&_th]:border [&_th]:border-[#5a58ab]/25 [&_th]:bg-[#5a58ab]/8 [&_th]:px-2 [&_th]:py-1 [&_th]:text-[#5a58ab] [&_th]:font-semibold [&_th]:text-left
         [&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1 [&_td]:text-slate-600
         [&_p]:mt-1 [&_p]:mb-1 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0.5 [&_a]:text-[#5a58ab] [&_a]:underline">
+        {hasStructuredQuestion && (
+          <div className="mb-3 rounded-lg border border-[#5a58ab]/15 bg-white px-3 py-2">
+            {card.question && <p className="font-semibold text-[#252e3d]">Question: {card.question}</p>}
+            {card.options && card.options.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {card.options.map((option, index) => (
+                  <div key={`${card.id}-option-${index}`} className="rounded-md bg-[#faf9ff] px-2 py-1 border border-[#5a58ab]/10 text-slate-600">
+                    <span className="font-semibold text-[#5a58ab]">{String.fromCharCode(65 + index)}.</span>{" "}
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.content}</ReactMarkdown>
       </div>
     </div>

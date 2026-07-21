@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 import { hashInterviewAccessToken } from "./access-token";
 import { buildFallbackReport } from "./utils";
@@ -11,6 +11,7 @@ import type {
 import { getMailerTransporter } from "@/lib/mailer";
 import { escapeHtml } from "@/lib/security";
 import { sendInterviewResultsToCandidate } from "@/lib/emailService";
+import { buildAppUrl } from "@/lib/app-url";
 
 type JsonValue = string | number | boolean | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
@@ -79,6 +80,7 @@ export function buildWebRtcSystemInstructions(payload: {
   baseInstructions: string;
   sessionBlueprint?: InterviewSessionBlueprint | null;
   transcript?: InterviewTranscriptEntry[];
+  referenceCards?: InterviewReferenceCard[];
   isResuming?: boolean;
   resumeText?: string;
   jobDescription?: string;
@@ -91,6 +93,7 @@ export function buildWebRtcSystemInstructions(payload: {
     baseInstructions,
     sessionBlueprint,
     transcript,
+    referenceCards,
     isResuming,
     resumeText,
     difficultyLevel,
@@ -100,6 +103,23 @@ export function buildWebRtcSystemInstructions(payload: {
     ? transcript
         .map((entry) => `${entry.role === "interviewer" ? "Interviewer" : "Candidate"}: ${entry.text}`)
         .join("\n")
+    : "";
+  const referenceCardsText = referenceCards && referenceCards.length > 0
+    ? `
+
+<previous_reference_cards>
+${referenceCards
+  .map((card) => {
+    const optionsText = card.options && card.options.length > 0
+      ? `\nOptions: ${card.options.map((option, index) => `${String.fromCharCode(65 + index)}. ${option}`).join(" | ")}`
+      : "";
+    const questionText = card.question ? `\nQuestion: ${card.question}` : "";
+    return `[${card.title}]${questionText}${optionsText}\n${card.content}`;
+  })
+  .join("\n\n")}
+</previous_reference_cards>
+Do NOT lose track of any question or options that were shown visually. When you refer back to a reference card, reuse its exact question text and options if present.
+`
     : "";
 
   const resumeBlock = isResuming && transcriptText
@@ -113,6 +133,8 @@ ${transcriptText}
 </previous_transcript>
 
 Do NOT repeat any questions or topics already covered. Do NOT re-introduce yourself or restart the interview. Continue naturally from where the conversation left off.
+
+${referenceCardsText}
 `
     : "";
 
@@ -164,9 +186,11 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - You may receive orchestration notes such as TIME_SIGNAL:30_SECONDS_REMAINING, TIME_SIGNAL:DURATION_COMPLETE, and TIME_SIGNAL:HARD_STOP_REACHED. Follow them strictly: acknowledge briefly when appropriate, tighten pacing, and conclude professionally once the current answer/essential final point is complete.
 - If a section runs out of useful questions before duration-complete, call generate_section_questions to get new runtime questions. Ask a balanced mix of NORMAL, MCQ, CODE_SNIPPET, and GRAPHICAL questions as appropriate for the role and section.
 - For MCQ, CODE_SNIPPET, and GRAPHICAL questions, use show_reference_card to present the prompt/options/snippet on screen before asking.
+- When showing an MCQ, include the exact question text in both the verbal question and the show_reference_card payload, and pass the answer choices in the tool call's options field so the card renders in a structured way.
 - You may give short teaching feedback after acknowledging answers, but keep it concise and return quickly to the next question so pacing stays on target.
-- Never ask "Do you have any questions for me?" until duration-complete is reached and mandatory section/time/question objectives are satisfied (unless hard-stop mode is active).
-- FINAL CLOSING WINDOW RULE: Ask "Do you have any questions for me/about the role/company?" only in the final minute of the scheduled duration or after TIME_SIGNAL:DURATION_COMPLETE. Asking it earlier is not allowed.
+- Never ask "Do you have any questions for me?" until duration-complete is reached and mandatory section/time/question objectives are satisfied (unless hard-stop mode is active). CRITICAL: Once you ask this closing question and the candidate responds, you MUST call finalize_interview_report immediately. Do NOT go back to asking technical questions after asking the closing question.
+- FINAL CLOSING WINDOW RULE: Ask "Do you have any questions for me/about the role/company?" ONLY ONCE, and only in the final minute of the scheduled duration or after TIME_SIGNAL:DURATION_COMPLETE. Asking it earlier is strictly forbidden. After the candidate answers this question, finalize immediately.
+- REFERENCE CARD MANDATORY USAGE: You MUST call show_reference_card for at least 2-3 questions during the interview. Use it for: (a) Any MCQ question — show options on screen, (b) Any code snippet question — show the code block, (c) Any comparison or table question. Call show_reference_card BEFORE verbally asking the question so the candidate can read it.
 - On every save_interview_event call, include the active section name in sectionName so runtime pacing can be tracked correctly.
 `;
 
@@ -206,7 +230,8 @@ generate_section_questions ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã�
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate.
 
 CLOSING SEQUENCE:
-After all technical and behavioral sections are complete and before you end the interview: you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for the candidate's response. Evaluate the quality of the questions they ask (or their response if they have no questions) as part of their final evaluation. After answering their questions, conclude the interview by thanking them sincerely, giving a brief verbal summary of the topics covered, and wishing them well. Then ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â and only then ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â call finalize_interview_report.
+After all technical and behavioral sections are complete and before you end the interview: you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for the candidate's response. Evaluate the quality of the questions they ask (or their response if they have no questions) as part of their final evaluation. After answering their questions, conclude the interview by thanking them sincerely, giving a brief verbal summary of the topics covered, and wishing them well. Then -- and only then -- call finalize_interview_report.
+CRITICAL RULE: Once you ask "Do you have any questions?" and receive a response, you MUST NOT ask any more technical questions. This is a ONE-WAY gate -- proceed directly to closing remarks and call finalize_interview_report. Going back to technical questions after asking this closing question is strictly forbidden.
 ${resumeBlock}
 ${dynamicGuidelines}`;
 }
@@ -536,9 +561,7 @@ export async function finalizeWebRtcInterviewSession(payload: {
         weaknesses: finalReport.weaknesses ?? [],
         improvements: finalReport.improvements,
         evaluationEvents: payload.events,
-        resultsPageUrl: process.env.NEXT_PUBLIC_SITE_URL
-          ? `${process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${payload.sessionId}`
-          : undefined,
+        resultsPageUrl: buildAppUrl(`/interview/results/${payload.sessionId}`),
       }),
     ]);
   }

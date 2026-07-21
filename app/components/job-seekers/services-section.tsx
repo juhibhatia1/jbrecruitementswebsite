@@ -111,12 +111,27 @@ const services = [
       "Structured answers using the STAR method",
     ],
   },
+  {
+    id: 8,
+    title: "Ready-to-Apply Job Pack",
+    description:
+      "A curated shortlist of active, relevant public job opportunities matched to your experience, skills, and target locations.",
+    iconPath: "/icons/job-seekers/resume-review.svg",
+    timeline: "Curated within 3 days",
+    features: [
+      "Targeted opportunities based on your background",
+      "Preferred location filtering",
+      "Public job listings from portals and company career pages",
+      "Direct application links for faster applying",
+    ],
+  },
 ];
 
 const OPPORTUNITIES_SERVICE = {
   id: 7,
-  title: "Mock Interviews",
-  description: "Book an in-app AI interview practice session and share the role details you want us to focus on.",
+  title: "Mock Interview",
+  description:
+    "Book an in-app AI interview practice session and share the role details you want us to focus on.",
   iconPath: "/icons/job-seekers/interview-prep.svg",
   timeline: "Instant access",
   features: [
@@ -124,21 +139,6 @@ const OPPORTUNITIES_SERVICE = {
     "Role-specific interview questions and scenarios",
     "Receive detailed performance feedback",
     "Strengthen your confidence before real interviews",
-  ],
-};
-
-const READY_TO_APPLY_SERVICE = {
-  id: 8,
-  title: "Ready-to-Apply Job Pack",
-  description:
-    "A curated shortlist of active, relevant public job opportunities matched to your experience, skills, and target locations.",
-  iconPath: "/icons/job-seekers/resume-review.svg",
-  timeline: "Curated within 3 days",
-  features: [
-    "Targeted opportunities based on your background",
-    "Preferred location filtering",
-    "Public job listings from portals and company career pages",
-    "Direct application links for faster applying",
   ],
 };
 
@@ -204,22 +204,6 @@ const PROMO_SLIDES = [
     cta: "Browse interview options",
   },
   {
-    title: READY_TO_APPLY_SERVICE.title,
-    eyebrow: "Job search support",
-    summary: READY_TO_APPLY_SERVICE.description,
-    benefit: [
-      "Curated from active public listings",
-      "Focused by role, skills, and location",
-    ],
-    metrics: [
-      { value: "1.6k+", label: "Job packs" },
-      { value: "94%", label: "Relevance" },
-      { value: "3 days", label: "Curated in" },
-    ],
-    iconPath: READY_TO_APPLY_SERVICE.iconPath,
-    cta: "Explore job pack",
-  },
-  {
     title: "All Career Services Bundle",
     eyebrow: "Best value",
     summary:
@@ -244,14 +228,18 @@ type PromoMetrics = {
   completedInterviews: number;
 };
 
-export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoMetrics }) {
+export default function ServicesSection({
+  promoMetrics,
+}: {
+  promoMetrics: PromoMetrics;
+}) {
   const router = useRouter();
   const [currentFlipIndex, setCurrentFlipIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
   const [activePromoSlide, setActivePromoSlide] = useState(0);
 
-  //  Currency state 
+  //  Currency state
   const [currency, setCurrency] = useState<Currency>("USD");
 
   // Multi-select cart state
@@ -312,13 +300,16 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
         }
       })
       .catch((err) => {
-        console.warn("[geo] Local geo API lookup failed, falling back to ipapi.co:", err);
+        console.warn(
+          "[geo] Local geo API lookup failed, falling back to ipapi.co:",
+          err,
+        );
         // Fallback to client-side ipapi.co (might be blocked by adblockers)
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
 
         fetch("https://ipapi.co/json/", {
-          headers: { "Accept": "application/json" },
+          headers: { Accept: "application/json" },
           signal: controller.signal,
         })
           .then((r) => {
@@ -326,17 +317,23 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
             return r.json();
           })
           .then((data: { country_code?: string; error?: boolean }) => {
-            if (data.error) throw new Error("ipapi.co returned an error response");
+            if (data.error)
+              throw new Error("ipapi.co returned an error response");
             const code = (data.country_code || "").toUpperCase();
             let detected: Currency = "USD";
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
-            console.log(`[geo] Detected country: ${code} â†’ currency: ${detected}`);
+            console.log(
+              `[geo] Detected country: ${code} â†’ currency: ${detected}`,
+            );
             setCurrency(detected);
             sessionStorage.setItem(GEO_CACHE_KEY, detected);
           })
           .catch((fallbackErr) => {
-            console.warn("[geo] Could not detect location, defaulting to USD:", fallbackErr.message);
+            console.warn(
+              "[geo] Could not detect location, defaulting to USD:",
+              fallbackErr.message,
+            );
           })
           .finally(() => clearTimeout(timeout));
       });
@@ -421,17 +418,24 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
   };
 
   // Cart totals (in selected currency)
-  const cartServices = [...services, READY_TO_APPLY_SERVICE].filter((s) => selectedTitles.has(s.title));
+  const cartServices = [...services].filter((s) =>
+    selectedTitles.has(s.title),
+  );
   const cartEligibleServices = cartServices.filter(
     (service) => !BUNDLE_EXCLUDED_TITLES.has(service.title),
   );
   const cartTotal = cartServices.reduce(
     (sum, s) => sum + getLocalAmount(s.title),
-    0
+    0,
   );
-  const bundleDiscount = cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT
-    ? cartEligibleServices.reduce((sum, service) => sum + getLocalAmount(service.title), 0) * (BUNDLE_DISCOUNT_PERCENT / 100)
-    : 0;
+  const bundleDiscount =
+    cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT
+      ? cartEligibleServices.reduce(
+          (sum, service) => sum + getLocalAmount(service.title),
+          0,
+        ) *
+        (BUNDLE_DISCOUNT_PERCENT / 100)
+      : 0;
   const discountedCartTotal = cartTotal - bundleDiscount;
 
   useEffect(() => {
@@ -508,17 +512,18 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
   }, []);
 
   const goToPromoSlide = (nextIndex: number) => {
-    const boundedIndex = (nextIndex + PROMO_SLIDES.length) % PROMO_SLIDES.length;
+    const boundedIndex =
+      (nextIndex + PROMO_SLIDES.length) % PROMO_SLIDES.length;
     setActivePromoSlide(boundedIndex);
   };
 
   const currentPromo = PROMO_SLIDES[activePromoSlide];
   return (
-    <section className="py-12 md:py-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
+    <section className="py-10 sm:py-12 md:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-0">
         {/* Section Header */}
-        <div className="relative flex flex-col items-left md:flex-row md:items-center justify-center mb-0 md:mb-12 md:pl-12">
-          <div className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mb-3 md:mb-0">
+        <div className="relative mb-0 flex flex-col items-start justify-center md:mb-12 md:flex-row md:items-center md:pl-12">
+          <div className="mb-3 flex items-center gap-2 md:absolute md:left-0 md:top-1/2 md:mb-0 md:-translate-y-1/2">
             <img
               src="/home/icons8-ai-48.avif"
               alt="Help Icon"
@@ -529,21 +534,25 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
             </span>
           </div>
 
-          <h2 className="text-left md:text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-[#252e3d]">
+          <h2 className="text-left text-2xl font-semibold text-[#252e3d] sm:text-3xl md:text-center md:text-4xl">
             How We Can Help
           </h2>
         </div>
 
         {/*  Info message  */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 -mt-2 md:-mt-6">
+        <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between md:-mt-6">
           <p className="text-sm text-gray-400">
             Select multiple services and pay in one go, or click{" "}
-            <span className="text-[#5a58ab] font-medium">Buy Now</span> for a single service.
+            <span className="text-[#5a58ab] font-medium">Buy Now</span> for a
+            single service.
           </p>
         </div>
 
         {/* Grid Layout */}
-        <div ref={servicesGridRef} className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div
+          ref={servicesGridRef}
+          className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 sm:gap-6"
+        >
           {services.map((s, index) => {
             const localAmt = getLocalAmount(s.title);
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`;
@@ -559,7 +568,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                 description={s.description}
                 iconPath={s.iconPath}
                 features={dynamicFeatures}
-                shouldFlip={started && currentFlipIndex === index && !isModalOpen}
+                shouldFlip={
+                  started && currentFlipIndex === index && !isModalOpen
+                }
                 onManualFlip={pauseTemporarily}
                 onHoverStart={handleHoverStart}
                 onHoverEnd={() => handleHoverEnd(index)}
@@ -572,18 +583,23 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
 
           {/* Opportunities card  navigates to /opportunities */}
           {(() => {
-            const localAmt = MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ?? 40;
+            const localAmt =
+              MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ??
+              39;
             const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`;
             return (
               <ServiceCard
                 key={OPPORTUNITIES_SERVICE.id}
                 title={OPPORTUNITIES_SERVICE.title}
-                amount={40}
+              amount={39}
                 localAmount={localAmt}
                 currency={CURRENCY_SYMBOLS[currency]}
                 description={OPPORTUNITIES_SERVICE.description}
                 iconPath={OPPORTUNITIES_SERVICE.iconPath}
-                features={[...OPPORTUNITIES_SERVICE.features, dynamicPriceBullet]}
+                features={[
+                  ...OPPORTUNITIES_SERVICE.features,
+                  dynamicPriceBullet,
+                ]}
                 shouldFlip={false}
                 onBuyClick={() => router.push("/mock-interviews/custom")}
                 buyLabel="Book Now"
@@ -591,31 +607,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
             );
           })()}
 
-          {(() => {
-            const localAmt = MULTI_CURRENCY_PRICING[READY_TO_APPLY_SERVICE.title]?.[currency] ?? 99;
-            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${READY_TO_APPLY_SERVICE.timeline}`;
-            return (
-              <ServiceCard
-                key={READY_TO_APPLY_SERVICE.id}
-                title={READY_TO_APPLY_SERVICE.title}
-                amount={99}
-                localAmount={localAmt}
-                currency={CURRENCY_SYMBOLS[currency]}
-                description={READY_TO_APPLY_SERVICE.description}
-                iconPath={READY_TO_APPLY_SERVICE.iconPath}
-                features={[...READY_TO_APPLY_SERVICE.features, dynamicPriceBullet]}
-                shouldFlip={false}
-                onBuyClick={() => handleBuyClick(READY_TO_APPLY_SERVICE.title, READY_TO_APPLY_SERVICE.description)}
-                buyLabel="Buy Now"
-                isSelected={selectedTitles.has(READY_TO_APPLY_SERVICE.title)}
-                onToggleSelect={() => handleToggleSelect(READY_TO_APPLY_SERVICE.title)}
-              />
-            );
-          })()}
-
           {/* Bundle Offer positioned at the bottom of all service cards */}
           <div className="col-span-full">
-            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-6 py-8 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)]">
+            <div className="relative isolate h-full overflow-hidden rounded-3xl border border-[#e6eefc] px-4 py-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:px-6 sm:py-8">
               <div
                 className="absolute inset-0 -z-10 bg-linear-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl"
                 aria-hidden="true"
@@ -628,7 +622,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   Get 10% off when you choose any 4 or more services.
                 </h2>
                 <p className="text-sm leading-relaxed text-[#4b5563]">
-                  Pick the services that fit you best. The discount applies automatically at checkout, and AI Mock Interview does not count toward the bundle.
+                  Pick the services that fit you best. The discount applies
+                  automatically at checkout, and AI Mock Interview does not
+                  count toward the bundle.
                 </p>
                 <span className="text-sm text-[#4b5563]">
                   Select{" "}
@@ -641,7 +637,9 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   onClick={handleBundleCtaClick}
                   className="mt-2 rounded-xl bg-[#5a58ab] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#4a489b] hover:shadow-md active:scale-[0.98] cursor-pointer"
                 >
-                  {cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT ? "Checkout with discount" : "Build my bundle"}
+                  {cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT
+                    ? "Checkout with discount"
+                    : "Build my bundle"}
                 </button>
               </div>
             </div>
@@ -649,24 +647,25 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
         </div>
 
         {/* Service spotlight carousel */}
-        <div className="mt-10 md:mt-14">
-          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-5 py-6 shadow-[0_16px_50px_rgba(37,55,77,0.08)] md:px-8 md:py-8">
-            <div className="flex items-center justify-between gap-4">
+            <div className="mt-8 md:mt-14">
+          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-4 py-5 shadow-[0_16px_50px_rgba(37,55,77,0.08)] sm:px-5 sm:py-6 md:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
                   Service spotlight
                 </span>
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#252e3d]">
+                <h3 className="mt-3 text-xl font-semibold tracking-tight text-[#252e3d] sm:text-2xl md:text-4xl">
                   Everything we offer, in a quick carousel
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
-                  Tap through to see how each service helps candidates move faster and show up stronger.
+                  Tap through to see how each service helps candidates move
+                  faster and show up stronger.
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-5 md:p-7">
+            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-4 sm:p-5 md:p-7">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center rounded-full bg-[#eae8ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5a58ab]">
                     {currentPromo.eyebrow}
@@ -691,17 +690,17 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-center">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center md:mt-5 md:gap-5">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm sm:h-20 sm:w-20">
                     <img
                       src={currentPromo.iconPath}
                       alt={currentPromo.title}
-                      className="h-10 w-10 object-contain"
+                      className="h-8 w-8 object-contain sm:h-10 sm:w-10"
                     />
                   </div>
 
                   <div className="min-w-0">
-                    <h4 className="text-2xl font-semibold tracking-tight text-[#252e3d]">
+                    <h4 className="text-xl font-semibold tracking-tight text-[#252e3d] sm:text-2xl">
                       {currentPromo.title}
                     </h4>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
@@ -710,7 +709,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {currentPromo.benefit.map((item) => (
                     <span
                       key={item}
@@ -721,23 +720,23 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                   ))}
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
                   {currentPromo.metrics?.map((metric) => (
                     <div
                       key={metric.label}
-                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-4 py-3 shadow-sm"
+                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3"
                     >
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
                         {metric.label}
                       </p>
-                      <p className="mt-1 text-2xl font-bold tracking-tight text-[#252e3d]">
+                      <p className="mt-1 text-xl font-bold tracking-tight text-[#252e3d] sm:text-2xl">
                         {metric.value}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between gap-3">
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#8a93a8]">
                     {currentPromo.cta}
                   </p>
@@ -759,66 +758,71 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                 </div>
               </div>
 
-              <div className="grid w-full gap-3 lg:min-w-[320px]">
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
+              <div className="grid w-full gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Best for
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#252e3d]">
-                    Candidates who want a flexible way to combine profile help, application support, and interview prep without a heavy checkout flow.
+                    Candidates who want a flexible way to combine profile help,
+                    application support, and interview prep without a heavy
+                    checkout flow.
                   </p>
                   <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    Add the services you need and the bundle discount appears automatically when you reach four eligible services.
+                    Add the services you need and the bundle discount appears
+                    automatically when you reach four eligible services.
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4 md:p-5">
+                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Fast value
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#252e3d]">
-                    One section. One quick scan. Clear reasons to choose the service that fits you best.
+                    One section. One quick scan. Clear reasons to choose the
+                    service that fits you best.
                   </p>
                   <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    Compare services quickly, understand the value, and act immediately with less friction.
+                    Compare services quickly, understand the value, and act
+                    immediately with less friction.
                   </p>
                 </div>
               </div>
             </div>
           </section>
         </div>
-
       </div>
-      {/*  Sticky Cart Bar  */} 
+      {/*  Sticky Cart Bar  */}
       {cartServices.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-2 animate-slideUp">
           <div className="mx-auto max-w-2xl bg-[#252e3d] rounded-2xl shadow-[0_-4px_32px_rgba(37,46,61,0.25)] px-5 py-4">
             {/* Bundle banner shown when the 10% discount threshold is reached */}
             {showBundleBanner && (
-                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-[#5a58ab]/20 border border-[#5a58ab]/30 rounded-xl p-3 pr-10">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowBundleBanner(false);
-                      setBundleBannerDismissed(true);
-                    }}
-                    aria-label="Dismiss bundle offer"
-                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
-                  >
-                    <IoClose className="h-4 w-4" />
-                  </button>
-                  <div className="flex items-start gap-3 min-w-0">
-                    <IoSparkles className="text-yellow-300 w-5 h-5 shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="text-white text-sm font-semibold leading-snug">
-                       You’ve unlocked the bundle discount!
-                     </p>
-                      <p className="text-white/70 text-xs mt-0.5">
-                        You have {cartEligibleServices.length} eligible services in your cart, so the{" "}
-                        <span className="text-yellow-300 font-semibold">
-                          {BUNDLE_DISCOUNT_PERCENT}% bundle discount
-                        </span>{" "}
-                        now applies automatically.
-                     </p>
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 mb-3 bg-[#5a58ab]/20 border border-[#5a58ab]/30 rounded-xl p-3 pr-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBundleBanner(false);
+                    setBundleBannerDismissed(true);
+                  }}
+                  aria-label="Dismiss bundle offer"
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  <IoClose className="h-4 w-4" />
+                </button>
+                <div className="flex items-start gap-3 min-w-0">
+                  <IoSparkles className="text-yellow-300 w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-semibold leading-snug">
+                      You’ve unlocked the bundle discount!
+                    </p>
+                    <p className="text-white/70 text-xs mt-0.5">
+                      You have {cartEligibleServices.length} eligible services
+                      in your cart, so the{" "}
+                      <span className="text-yellow-300 font-semibold">
+                        {BUNDLE_DISCOUNT_PERCENT}% bundle discount
+                      </span>{" "}
+                      now applies automatically.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -827,7 +831,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
             <div className="flex flex-col gap-3">
               {/* Top Row: Selected service pills */}
               <div className="flex flex-row md:flex-wrap items-center gap-1.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {cartServices.map((s) => (
+                {cartServices.map((s) => (
                   <span
                     key={s.title}
                     className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/15 text-white/90 text-xs px-2.5 py-1 rounded-lg transition-colors shrink-0"
@@ -866,7 +870,11 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
                     </p>
                     {bundleDiscount > 0 && (
                       <p className="text-[10px] text-emerald-300 mt-1">
-                        Bundle discount applied ( {CURRENCY_SYMBOLS[currency]} {bundleDiscount.toLocaleString(undefined, { maximumFractionDigits: 2 })} off )
+                        Bundle discount applied ( {CURRENCY_SYMBOLS[currency]}{" "}
+                        {bundleDiscount.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        off )
                       </p>
                     )}
                   </div>
@@ -874,7 +882,7 @@ export default function ServicesSection({ promoMetrics }: { promoMetrics: PromoM
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                    <button
+                  <button
                     onClick={() => {
                       setSelectedTitles(new Set());
                       setShowBundleBanner(false);

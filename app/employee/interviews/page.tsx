@@ -110,7 +110,7 @@ export default async function EmployeeInterviewsPage() {
       where: {
         OR: [
           { serviceName: { contains: "Mock Interview" } },
-          { serviceName: "Mock Interviews" },
+          { serviceName: "Mock Interview" },
         ],
       },
       orderBy: { createdAt: "desc" },

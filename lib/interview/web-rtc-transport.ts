@@ -18,6 +18,10 @@ type WebRtcCallbacks = {
   onInterrupted: () => void;
   onComplete: () => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
+  onThinkingChange?: (thinking: boolean) => void;
+  // Mute the microphone (true=mute, false=unmute). Called without updating the
+  // UI locked state — purely a temporary hardware mute to prevent echo capture.
+  onMuteRequired?: (muted: boolean) => void;
   onRemoteStream?: (stream: MediaStream) => void;
 };
 
@@ -60,14 +64,16 @@ function readString(value: unknown): string {
 }
 
 function computeMinimumQuestionTarget(durationMinutes: number): number {
-  if (durationMinutes >= 30) return 14;
-  if (durationMinutes >= 20) return 10;
-  if (durationMinutes >= 15) return 8;
-  if (durationMinutes >= 10) return 6;
-  return 4;
+  if (durationMinutes >= 30) return 20;
+  if (durationMinutes >= 20) return 15;
+  if (durationMinutes >= 15) return 12;
+  if (durationMinutes >= 10) return 8;
+  return 5;
 }
 
-const FINAL_CLOSING_WINDOW_MS = 60_000;
+// Closing question is ONLY allowed after an explicit TIME_SIGNAL:DURATION_COMPLETE
+// or TIME_SIGNAL:HARD_STOP_REACHED. No time-window fallback — hard gate only.
+const FINAL_CLOSING_WINDOW_MS = 0;
 
 function isSectionTransitionCue(text: string): boolean {
   const t = text.toLowerCase();
@@ -140,14 +146,52 @@ export class OpenAIWebRtcInterviewTransport {
   private sectionAccumulatedMs = new Map<string, number>();
   private sectionLastEnteredAtMs = new Map<string, number>();
   private currentSectionName: string | null = null;
+  private transcriptItemCount = 0;
   private lastGuardInterventionAtMs = 0;
   private playbackCtx: AudioContext | null = null;
   private playbackCtxOwned = false;
   private playbackCursor = 0;
   private scheduledSources: AudioBufferSourceNode[] = [];
 
+  // Bug 3 fix: response-in-flight tracking to prevent concurrent response.create
+  private responseInFlight = false;
+  private pendingResponseCreate = false;
+
+  // Interruption debounce: brief noise filter — AEC handles echo so this can be small
+  private assistantSpeakingStartedAtMs = 0;
+  private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 500;
+
+  // Audio tail protection: WebRTC audio keeps playing after response.done fires.
+  // During this window, VAD speech_started events are echo — clear the buffer.
+  private audioTailProtectionUntilMs = 0;
+  private static readonly AUDIO_TAIL_FALLBACK_MS = 3000;
+
+  // Stall watchdog - detects truly stuck AI (not candidate thinking pauses)
+  private lastEventAtMs = 0;
+  private stallWatchdogTimer: ReturnType<typeof setInterval> | null = null;
+  private stallRecoveryAttempts = 0;
+  private static readonly STALL_THRESHOLD_MS = 45_000; // 45s — candidates can think for 30+ seconds
+  private static readonly MAX_STALL_RECOVERIES = 3;
+
+  // Mic mute timer — unmutes shortly after AI audio finishes
+  private muteTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // save_interview_event nudge timer — cancelled if model naturally generates next question
+  private saveNudgeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Section boundary timers — fire TIME_SIGNAL:SECTION_COMPLETE at each planned boundary
+  private sectionTransitionTimers: ReturnType<typeof setTimeout>[] = [];
+
+  // Bug 4 fix: absolute kill timer after hard stop
+  private killTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly KILL_AFTER_HARD_STOP_MS = 90_000; // 90 seconds after hard stop
+
   constructor(callbacks: WebRtcCallbacks) {
     this.callbacks = callbacks;
+  }
+
+  isReady(): boolean {
+    return this.dc !== null && this.dc.readyState === "open" && this.openingPromptSent;
   }
 
   async connect(payload: ConnectPayload, localStream: MediaStream): Promise<void> {
@@ -166,6 +210,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.sectionAccumulatedMs = new Map();
     this.sectionLastEnteredAtMs = new Map();
     this.currentSectionName = null;
+    this.transcriptItemCount = 0;
     const parsedStart = Date.parse(payload.sessionStartedAt);
     this.sessionStartedAtMs = Number.isFinite(parsedStart) ? parsedStart : Date.now();
     this.playbackCtx = payload.playbackAudioContext ?? null;
@@ -193,12 +238,33 @@ export class OpenAIWebRtcInterviewTransport {
       this.callbacks.onStatus("OpenAI WebRTC data channel opened.");
       this.sendSessionUpdate(payload.systemInstructions);
       this.sendOpeningPrompt(payload.openingPrompt);
+      this.scheduleSectionTransitions();
+      this.startStallWatchdog();
       this.callbacks.onReady();
+    };
+
+    this.dc.onclose = () => {
+      if (!this.manuallyClosed && !this.completed) {
+        console.warn("[WebRTC] Data channel closed unexpectedly");
+        this.callbacks.onError("Connection to AI interviewer lost. The session will be finalized.");
+        this.forceComplete();
+      }
+    };
+
+    this.dc.onerror = (event) => {
+      console.error("[WebRTC] Data channel error:", event);
+      if (!this.manuallyClosed && !this.completed) {
+        this.callbacks.onError("Connection error with AI interviewer.");
+      }
     };
 
     this.dc.onmessage = (event) => {
       const message = safeParseMessage(String(event.data));
       if (!message) return;
+
+      // Bug 3 fix: track last event time for stall detection
+      this.lastEventAtMs = Date.now();
+      this.stallRecoveryAttempts = 0;
 
       if (message.type === "session.created" || message.type === "session.updated") {
         this.callbacks.onStatus("OpenAI Realtime session ready.");
@@ -209,16 +275,28 @@ export class OpenAIWebRtcInterviewTransport {
           readString(message.error?.message) ||
           readString(message.message) ||
           JSON.stringify(message);
-        this.callbacks.onError(errMsg);
+        // Don't treat "Cancellation failed" as fatal — it just means no active response
+        if (!errMsg.toLowerCase().includes("cancellation")) {
+          this.callbacks.onError(errMsg);
+        } else {
+          console.info("[WebRTC] Non-fatal cancellation error:", errMsg);
+        }
       }
 
       if (message.type === "response.output_audio_transcript.done" && message.transcript) {
         const interviewerText = String(message.transcript).trim();
+        this.transcriptItemCount += 1;
         this.callbacks.onTranscript({
           role: "interviewer",
           text: interviewerText,
         });
         this.enforceRealtimePacingGuards(interviewerText);
+        // response.output_audio_transcript.done fires after audio has already played
+        // via the WebRTC RTP stream. Only ~500-800ms of buffer tail remains.
+        // Use a fixed 700ms delay — text-length estimates caused 10-15s mic mutes
+        // making candidates unable to speak even 1-2s after AI finished.
+        this.audioTailProtectionUntilMs = Date.now() + 700;
+        this.scheduleMicUnmute(700);
       }
 
       if (
@@ -228,10 +306,11 @@ export class OpenAIWebRtcInterviewTransport {
       ) {
         const text = String(message.transcript || message.text || "").trim();
         if (text) {
+          this.transcriptItemCount += 1;
           this.callbacks.onTranscript({ role: "candidate", text });
-          if (!this.completed) {
-            this.sendJson({ type: "response.create" });
-          }
+          // NOTE: Do NOT send response.create here. With server_vad, OpenAI automatically
+          // generates a response after detecting end of speech. Sending a manual response.create
+          // causes duplicate responses (AI repeats questions, says "let me think", etc.)
         }
       }
 
@@ -240,14 +319,34 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "input_audio_buffer.speech_started") {
-        if (this.assistantSpeaking) {
-          this.cancelResponse();
+        // Candidate started speaking — no nudge needed
+        if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+        const inTailWindow = Date.now() < this.audioTailProtectionUntilMs;
+        if (this.assistantSpeaking || inTailWindow) {
+          const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
+          const isGenuineInterruption =
+            this.assistantSpeaking &&
+            this.responseInFlight &&
+            speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS;
+          if (isGenuineInterruption) {
+            this.cancelResponse();
+          } else {
+            // Echo from still-playing AI audio — discard captured buffer so model
+            // does not receive its own voice as "candidate speech"
+            this.sendJson({ type: "input_audio_buffer.clear" });
+          }
         }
         this.callbacks.onInterrupted();
       }
 
       if (message.type === "response.created") {
+        this.responseInFlight = true;
         this.assistantSpeaking = true;
+        this.assistantSpeakingStartedAtMs = Date.now();
+        this.callbacks.onThinkingChange?.(false);
+        this.callbacks.onMuteRequired?.(true);
+        // Model started generating — cancel any pending save nudge timer
+        if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -258,8 +357,30 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.done") {
+        this.responseInFlight = false;
+        if (this.scheduledSources.length === 0) {
+          this.assistantSpeaking = false;
+          this.callbacks.onAssistantSpeakingChange?.(false);
+        }
+        // Fallback unmute: if no transcript event fired (function-call-only response),
+        // no scheduleMicUnmute was called — unmute now with a short buffer.
+        if (!this.muteTimer) {
+          this.scheduleMicUnmute(400);
+        }
+        if (this.pendingResponseCreate) {
+          this.pendingResponseCreate = false;
+          this.safeResponseCreate();
+        }
+      }
+
+      // Handle response.cancelled (response was interrupted)
+      if (message.type === "response.cancelled") {
+        this.responseInFlight = false;
         this.assistantSpeaking = false;
+        this.pendingResponseCreate = false;
+        this.callbacks.onThinkingChange?.(false);
         this.callbacks.onAssistantSpeakingChange?.(false);
+        this.unmuteMicNow(); // candidate interrupted — unmute immediately
       }
     };
 
@@ -296,6 +417,10 @@ export class OpenAIWebRtcInterviewTransport {
   endInterview(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
 
+    // Immediately bypass all finalization blockers — candidate wants to end
+    this.hardStopSignaled = true;
+    this.durationCompleteSignaled = true;
+
     this.sendJson({
       type: "conversation.item.create",
       item: {
@@ -309,12 +434,10 @@ export class OpenAIWebRtcInterviewTransport {
         ],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
 
     setTimeout(() => {
-      if (this.pc && this.pc.connectionState !== "closed") {
-        this.pc.close();
-      }
+      this.forceComplete();
     }, 12000);
   }
 
@@ -325,6 +448,8 @@ export class OpenAIWebRtcInterviewTransport {
     }
     if (text.includes("TIME_SIGNAL:HARD_STOP_REACHED")) {
       this.hardStopSignaled = true;
+      // Bug 4 fix: arm absolute kill timer after hard stop
+      this.armKillTimer();
     }
 
     this.sendJson({
@@ -335,17 +460,27 @@ export class OpenAIWebRtcInterviewTransport {
         content: [{ type: "input_text", text }],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
   }
 
   cancelResponse(): void {
     if (!this.dc || this.dc.readyState !== "open") return;
     this.sendJson({ type: "response.cancel" });
+    this.responseInFlight = false;
+    this.assistantSpeaking = false;
+    this.audioTailProtectionUntilMs = 0;
+    this.unmuteMicNow(); // candidate interrupted — unmute so they can speak
+    this.stopPlayback();
   }
 
   close(): void {
     this.manuallyClosed = true;
     this.completed = true;
+    this.stopStallWatchdog();
+    this.clearKillTimer();
+    this.clearSectionTransitionTimers();
+    if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+    this.unmuteMicNow();
     this.stopPlayback();
     try {
       this.dc?.close();
@@ -355,6 +490,198 @@ export class OpenAIWebRtcInterviewTransport {
     } catch {}
     this.dc = null;
     this.pc = null;
+  }
+
+  // Injects a context message silently — no response.create triggered.
+  // Used by pacing guards so the model sees guidance on next natural turn
+  // without generating a spurious extra AI response.
+  private sendSilentContextMessage(text: string): void {
+    if (!text.trim() || !this.dc || this.dc.readyState !== "open" || this.completed) return;
+    this.sendJson({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
+      },
+    });
+  }
+
+  // Bug 3 fix: safe response.create that respects in-flight status
+  private safeResponseCreate(): void {
+    if (this.completed || !this.dc || this.dc.readyState !== "open") return;
+    if (this.responseInFlight) {
+      // Queue the request — it will be sent when current response completes
+      this.pendingResponseCreate = true;
+      return;
+    }
+    this.sendJson({ type: "response.create" });
+  }
+
+  // Bug 3 fix: stall watchdog — detects when AI stops responding
+  private startStallWatchdog(): void {
+    this.lastEventAtMs = Date.now();
+    this.stallRecoveryAttempts = 0;
+    this.stallWatchdogTimer = setInterval(() => {
+      if (this.completed || this.manuallyClosed) {
+        this.stopStallWatchdog();
+        return;
+      }
+      const silenceMs = Date.now() - this.lastEventAtMs;
+      if (silenceMs >= OpenAIWebRtcInterviewTransport.STALL_THRESHOLD_MS) {
+        this.handleStallDetected();
+      }
+    }, 5_000); // check every 5 seconds
+  }
+
+  private stopStallWatchdog(): void {
+    if (this.stallWatchdogTimer) {
+      clearInterval(this.stallWatchdogTimer);
+      this.stallWatchdogTimer = null;
+    }
+  }
+
+  private handleStallDetected(): void {
+    if (this.completed || this.manuallyClosed) return;
+
+    this.stallRecoveryAttempts += 1;
+    console.warn(`[WebRTC] Stall detected (attempt ${this.stallRecoveryAttempts}/${OpenAIWebRtcInterviewTransport.MAX_STALL_RECOVERIES})`);
+
+    if (this.stallRecoveryAttempts > OpenAIWebRtcInterviewTransport.MAX_STALL_RECOVERIES) {
+      // Exceeded max recovery attempts — force complete
+      console.error("[WebRTC] Max stall recoveries exceeded, force-completing session");
+      this.callbacks.onError("AI interviewer became unresponsive. Ending session.");
+      this.forceComplete();
+      return;
+    }
+
+    // Recovery: reset response tracking and send a nudge
+    this.responseInFlight = false;
+    this.pendingResponseCreate = false;
+    this.assistantSpeaking = false;
+    this.callbacks.onAssistantSpeakingChange?.(false);
+
+    if (this.dc && this.dc.readyState === "open") {
+      // Send a lightweight nudge — the SYSTEM_RECOVERY text was confusing the model
+      // into saying "Apologies, the connection experienced a brief interruption" which
+      // sounded broken to the candidate. A simple nudge keeps the interview flowing.
+      this.sendJson({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{
+            type: "input_text",
+            text: "NUDGE: Continue the interview. Ask your next planned question in the current section now.",
+          }],
+        },
+      });
+      this.sendJson({ type: "response.create" });
+      // Reset the timer so we don't immediately re-trigger
+      this.lastEventAtMs = Date.now();
+    } else {
+      // Data channel is not open — force complete
+      this.callbacks.onError("Connection to AI interviewer lost.");
+      this.forceComplete();
+    }
+  }
+
+  // Schedule hard transition signals at each planned section boundary.
+  // These fire as TIME_SIGNAL:SECTION_COMPLETE events via sendOrchestrationMessage,
+  // which forces the model to move to the next section regardless of how many
+  // questions it has asked. This is the ONLY reliable way to enforce section timing —
+  // soft guidance in save_interview_event results is ignored by the model when rushing.
+  private scheduleSectionTransitions(): void {
+    this.clearSectionTransitionTimers();
+    if (this.sectionPlan.length <= 1) return;
+
+    let cumulativeMs = 0;
+    for (let i = 0; i < this.sectionPlan.length - 1; i++) {
+      cumulativeMs += this.sectionPlan[i].minutes * 60_000;
+      const section = this.sectionPlan[i];
+      const nextSection = this.sectionPlan[i + 1];
+      const fireAt = this.sessionStartedAtMs + cumulativeMs;
+      const delayMs = fireAt - Date.now();
+
+      if (delayMs <= 0) {
+        // This boundary already passed (e.g., session reconnect) — skip it.
+        continue;
+      }
+
+      const timer = setTimeout(() => {
+        if (this.completed || this.manuallyClosed) return;
+        this.sendOrchestrationMessage(
+          `TIME_SIGNAL:SECTION_COMPLETE:${section.name}. The planned ${section.minutes}-minute window for section "${section.name}" is now complete. IMMEDIATELY transition to section "${nextSection.name}" on your next response. Ask your first question in "${nextSection.name}" now. Do not ask any more questions about "${section.name}".`,
+        );
+      }, delayMs);
+
+      this.sectionTransitionTimers.push(timer);
+    }
+  }
+
+  private clearSectionTransitionTimers(): void {
+    for (const t of this.sectionTransitionTimers) clearTimeout(t);
+    this.sectionTransitionTimers = [];
+  }
+
+  // Schedule mic unmute after a delay. Cancels any pending unmute timer first.
+  private scheduleMicUnmute(delayMs: number): void {
+    if (this.muteTimer) {
+      clearTimeout(this.muteTimer);
+      this.muteTimer = null;
+    }
+    this.muteTimer = setTimeout(() => {
+      this.muteTimer = null;
+      this.callbacks.onMuteRequired?.(false);
+    }, delayMs);
+  }
+
+  // Immediately cancel any pending unmute timer and unmute the mic now.
+  private unmuteMicNow(): void {
+    if (this.muteTimer) {
+      clearTimeout(this.muteTimer);
+      this.muteTimer = null;
+    }
+    this.callbacks.onMuteRequired?.(false);
+  }
+
+  // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
+  private armKillTimer(): void {
+    if (this.killTimer) return; // already armed
+    this.killTimer = setTimeout(() => {
+      if (!this.completed && !this.manuallyClosed) {
+        console.warn("[WebRTC] Kill timer fired — force-completing session after hard stop");
+        this.forceComplete();
+      }
+    }, OpenAIWebRtcInterviewTransport.KILL_AFTER_HARD_STOP_MS);
+  }
+
+  private clearKillTimer(): void {
+    if (this.killTimer) {
+      clearTimeout(this.killTimer);
+      this.killTimer = null;
+    }
+  }
+
+  // Force complete the interview — used by kill timer and stall recovery
+  private forceComplete(): void {
+    if (this.completed) return;
+    this.completed = true;
+    this.stopStallWatchdog();
+    this.clearKillTimer();
+    this.clearSectionTransitionTimers();
+    if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+    this.unmuteMicNow();
+    this.stopPlayback();
+    this.callbacks.onComplete();
+    try {
+      this.dc?.close();
+    } catch {}
+    try {
+      if (this.pc && this.pc.connectionState !== "closed") {
+        this.pc.close();
+      }
+    } catch {}
   }
 
   private playAudioDelta(b64: string): void {
@@ -373,10 +700,18 @@ export class OpenAIWebRtcInterviewTransport {
     const buffer = pcmBytesToAudioBuffer(ctx, bytes, 24000);
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(ctx.destination);
+    // DO NOT connect to ctx.destination — audio comes from the WebRTC remote audio track.
+    // Connecting here causes double audio, which phases out AEC and lets mic pick up AI voice,
+    // causing VAD false triggers ("I noticed a brief pause" loop).
+    // We schedule the source purely to fire source.onended for assistantSpeaking tracking.
     this.scheduledSources.push(source);
     source.onended = () => {
       this.scheduledSources = this.scheduledSources.filter((item) => item !== source);
+      // Last buffer finished AND no response generating → AI is truly done speaking
+      if (this.scheduledSources.length === 0 && !this.responseInFlight) {
+        this.assistantSpeaking = false;
+        this.callbacks.onAssistantSpeakingChange?.(false);
+      }
     };
 
     const startAt = Math.max(ctx.currentTime, this.playbackCursor);
@@ -392,6 +727,7 @@ export class OpenAIWebRtcInterviewTransport {
     }
     this.scheduledSources = [];
     this.playbackCursor = 0;
+    this.unmuteMicNow(); // audio stopped — mic should be unmuted
     if (this.playbackCtx && this.playbackCtxOwned) {
       void this.playbackCtx.close();
     }
@@ -403,19 +739,119 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.sessionUpdateSent || !this.dc || this.dc.readyState !== "open") return;
     this.sessionUpdateSent = true;
 
+    // Structured per gpt-realtime-2 prompting guide: labeled sections, precise trigger/action/exception
+    // format, no conflicting "always/never/must" overuse, wait_for_user for silence/noise.
+    const SESSION_BEHAVIORAL_RULES = `# Role and Objective
+
+AI interviewer conducting a structured mock interview for a technical role. Ask planned questions from each section in order. Evaluate answers briefly and objectively. Guide the candidate through the full scheduled interview duration. Generate a final evaluation report at the end.
+
+IMPORTANT: You will have background information about the candidate from the application. Do NOT use this to skip the verbal introduction. Wait for the candidate to speak their introduction in this session before saying "Nice background" or moving to Section 1. The candidate must verbally introduce themselves first.
+
+# Personality and Tone
+
+Professional and warm — like a senior hiring manager conducting a real interview.
+- Acknowledgments: 1 sentence maximum before asking the next question.
+- Vary acknowledgments each turn: "Good point", "Got it", "Makes sense", "Nice", "Thanks". Do not repeat the same phrase back-to-back.
+- Never sound scripted or robotic. Never over-praise every answer.
+
+# Language
+
+English only. Do not switch languages based on accent, pronunciation, or isolated foreign words.
+
+# Reasoning
+
+Reason internally before: evaluating multi-part answers, choosing between sections, tool selection when ambiguous.
+Respond quickly without extended reasoning: greetings, simple acknowledgments, repeating a question.
+Do not reason when audio is unclear — ask for clarification instead.
+
+# Preambles
+
+Use a short preamble only before tool calls that take noticeable time (generate_section_questions, finalize_interview_report).
+- "I'll note that." / "Let me get the next question." / "I'll generate a follow-up."
+
+Skip preambles when:
+- Giving a simple acknowledgment or asking the next question directly
+- Audio is unclear
+- Calling wait_for_user
+- Calling save_interview_event — NEVER say "I'll note that", "Let me save that",
+  "I'll log that", or anything before calling this tool. Call it silently.
+
+One sentence maximum. Never say: "Let me think...", "Hmm...", "One moment while I process that...", "Let me formulate my next question."
+
+# Verbosity
+
+- Acknowledgment: 1 sentence
+- Questions: 1–3 sentences — do not over-explain
+- Clarifications: one question at a time
+- Never narrate your reasoning aloud
+
+# Interview Flow
+
+## Turn completion
+When candidate says "I'm done", "done", "finished", "that's all", "next question", "continue", "move on": they finished their answer. Ask your next planned question immediately. Do NOT acknowledge these phrases verbally.
+
+## Early exit requests
+When candidate says "I want to stop", "end the interview", "I want to quit", "stop", "exit": respond exactly — "If you'd like to end early, click the 'End Interview' button on your screen. Otherwise let's continue." Then ask the next question.
+
+## Filler-only responses
+When candidate's full response is only 1–3 words of pure filler (uh / um / so / yeah / hmm): this is not a complete answer. Say "Go ahead" or "Please continue." Do NOT say "Good point" or infer a position they never stated.
+
+## Thinking time
+When candidate says "wait", "I'm thinking", "give me a moment", "let me think", "one second" — say "Take your time." and wait silently. Do NOT repeat the question. Do NOT prompt again for at least 30 seconds.
+
+## Meta-commentary
+When candidate says "why are you pausing", "reply please", "are you stuck", "go on", "move on", "do your response" — say "Apologies." and ask the next question immediately.
+
+## No closing before signal
+Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
+
+## Section transition signals
+When you receive TIME_SIGNAL:SECTION_COMPLETE:[name]: on your very next response transition to the named section and ask your first question there. Do not finish another question in the old section.
+
+## Section timing (from save_interview_event results)
+Each save_interview_event result includes sectionPacing.instruction. If it says "ask at least N more questions in section X", do so before transitioning.
+
+## Never announce pauses
+Never say "I'll pause here", "let's pause", "we'll pick up later". The interview runs continuously until finalize_interview_report is called.
+
+# Unclear Audio
+
+When candidate audio is unclear, cut off, or unintelligible: ask "Sorry, could you repeat that?" Do not guess. Do not call tools. Do not generate preambles. Do not repeat the same clarification request more than once for the same utterance.
+
+# Long Context Behavior
+
+As the interview grows, prioritize:
+1. Latest candidate answer for evaluation
+2. Most recent TIME_SIGNAL for current section and timing state
+3. sessionTiming field in tool results for current clock state
+
+If you lose track of section or question count, use the most recent TIME_SIGNAL:SECTION_COMPLETE or save_interview_event sectionName as ground truth.
+
+---
+
+${systemInstructions}`;
+
     this.sendJson({
       type: "session.update",
       session: {
         type: "realtime",
-        instructions: systemInstructions,
+        instructions: SESSION_BEHAVIORAL_RULES,
+        // medium: interview requires multi-step reasoning (timing decisions, answer evaluation,
+        // tool sequencing) but must stay responsive. low would miss complex answer nuances.
+        reasoning: { effort: "medium" },
         audio: {
           input: {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              threshold: 0.94,
-              prefix_padding_ms: 120,
-              silence_duration_ms: 820,
+              // threshold 0.7: API default (0.5) captured too much ambient noise
+              // as speech ("And you might be like, oh yeah" artifacts). 0.7 filters
+              // casual background sound while still catching clear speech.
+              threshold: 0.7,
+              // 1000ms silence: 700ms was still too short — candidates pause mid-sentence
+              // naturally (breathing, thinking) and VAD committed partial answers,
+              // causing AI to interrupt and respond before candidate finished.
+              silence_duration_ms: 1000,
             },
             transcription: { model: "whisper-1" },
           },
@@ -427,8 +863,14 @@ export class OpenAIWebRtcInterviewTransport {
         tools: [
           {
             type: "function",
+            name: "wait_for_user",
+            description: "Call this when the latest audio does not need a spoken response: silence, background noise, side conversation, or speech clearly not addressed to you (e.g. 'see you later', 'just a second', 'bye'). This ends the turn without a spoken reply. Do NOT say 'I'm here', 'I didn't catch that', or 'Take your time' after calling this. Resume normal responses only when the candidate clearly addresses you.",
+            parameters: { type: "object", properties: {}, required: [] },
+          },
+          {
+            type: "function",
             name: "save_interview_event",
-            description: "Store per-question interview result for backend persistence.",
+            description: "PROACTIVE — Evaluate and store a candidate answer. CRITICAL SEQUENCE: (1) In your CURRENT spoken response, acknowledge the answer AND ask the NEXT planned question. Both must be in the SAME spoken turn. (2) THEN call this tool silently — no preamble, no 'I'll note that', no spoken announcement of any kind. (3) Do NOT generate another spoken response after this tool returns (no continuation). The next spoken response comes when the candidate answers your question. Do NOT say 'I'll note that' or any other indicator before calling this tool.",
             parameters: {
               type: "object",
               properties: {
@@ -444,7 +886,7 @@ export class OpenAIWebRtcInterviewTransport {
           {
             type: "function",
             name: "finalize_interview_report",
-            description: "Store final interview report and mark interview as completed.",
+            description: "SIGNAL-GATED — Store final report and end the interview. Only call AFTER receiving TIME_SIGNAL:DURATION_COMPLETE or TIME_SIGNAL:HARD_STOP_REACHED. If called early the system will block it and instruct you to continue. Preamble: 'That wraps up our questions. Let me put together your report.'",
             parameters: {
               type: "object",
               properties: {
@@ -460,12 +902,14 @@ export class OpenAIWebRtcInterviewTransport {
           {
             type: "function",
             name: "show_reference_card",
-            description: "Display a reference card with structured information on the candidate's screen.",
+            description: "PROACTIVE — Display code snippet, MCQ, or table on the candidate's screen BEFORE asking the question verbally. Sequence: (1) call this tool, (2) immediately say what the candidate should do — 'Take a look at the code on your screen. What will this print, and why?' — (3) wait for their answer. Never answer the question yourself. Never call this and stay silent.",
             parameters: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Card title" },
-                content: { type: "string", description: "Markdown content to display" },
+                title: { type: "string", description: "Card title (e.g., 'Code Snippet: Polymorphism')" },
+                question: { type: "string", description: "The question text to display. Required for MCQ and code cards." },
+                options: { type: "array", items: { type: "string" }, description: "MCQ answer options." },
+                content: { type: "string", description: "Markdown content. Use ```java for code blocks." },
               },
               required: ["title", "content"],
             },
@@ -473,8 +917,7 @@ export class OpenAIWebRtcInterviewTransport {
           {
             type: "function",
             name: "generate_section_questions",
-            description:
-              "Generate dynamic section questions when the current section runs out of planned questions before duration-complete.",
+            description: "Generate additional questions for the current section when planned questions are exhausted but section time remains. Call silently — NO preamble, do NOT say 'I'll generate a follow-up', 'Let me get the next question', or anything before calling. After receiving results, ask the first returned question directly.",
             parameters: {
               type: "object",
               properties: {
@@ -482,11 +925,7 @@ export class OpenAIWebRtcInterviewTransport {
                 topic: { type: "string" },
                 difficulty: { type: "string" },
                 count: { type: "number" },
-                questionTypes: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Allowed values: NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL",
-                },
+                questionTypes: { type: "array", items: { type: "string" }, description: "NORMAL, MCQ, CODE_SNIPPET, or GRAPHICAL" },
                 candidateContext: { type: "string" },
                 elapsedMinutes: { type: "number" },
                 remainingMinutes: { type: "number" },
@@ -497,8 +936,7 @@ export class OpenAIWebRtcInterviewTransport {
           {
             type: "function",
             name: "generate_followup_questions",
-            description:
-              "Backward-compatible alias for generate_section_questions.",
+            description: "Alias for generate_section_questions. Use generate_section_questions instead when possible.",
             parameters: {
               type: "object",
               properties: {
@@ -506,11 +944,7 @@ export class OpenAIWebRtcInterviewTransport {
                 topic: { type: "string" },
                 difficulty: { type: "string" },
                 count: { type: "number" },
-                questionTypes: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Allowed values: NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL",
-                },
+                questionTypes: { type: "array", items: { type: "string" }, description: "NORMAL, MCQ, CODE_SNIPPET, or GRAPHICAL" },
                 candidateContext: { type: "string" },
                 elapsedMinutes: { type: "number" },
                 remainingMinutes: { type: "number" },
@@ -535,10 +969,37 @@ export class OpenAIWebRtcInterviewTransport {
         content: [{ type: "input_text", text: openingPrompt }],
       },
     });
-    this.sendJson({ type: "response.create" });
+    this.safeResponseCreate();
+  }
+
+  // Returns live session + section timing. Included in every tool result so
+  // the model always has a fresh clock without a dedicated time-check tool call.
+  private getSessionTiming() {
+    const elapsedMs = Math.max(0, Date.now() - this.sessionStartedAtMs);
+    const remainingMs = Math.max(0, this.durationMs - elapsedMs);
+    return {
+      sessionElapsedMinutes: Number((elapsedMs / 60000).toFixed(1)),
+      sessionRemainingMinutes: Number((remainingMs / 60000).toFixed(1)),
+      durationComplete: this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs,
+      currentSection: this.currentSectionName,
+    };
   }
 
   private async handleFunctionCall(message: OpenAIEventRecord): Promise<void> {
+    const fnName = readString(message.name);
+
+    // wait_for_user is a silent no-op — no thinking indicator, no response, no audio
+    if (fnName === "wait_for_user") {
+      this.sendJson({
+        type: "conversation.item.create",
+        item: { type: "function_call_output", call_id: readString(message.call_id), output: JSON.stringify({ ok: true }) },
+      });
+      // Don't call safeResponseCreate — model should stay silent until candidate speaks
+      return;
+    }
+
+    this.callbacks.onThinkingChange?.(true); // tool call in progress — show "Thinking" in UI
+
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(readString(message.arguments) || "{}") as Record<string, unknown>;
@@ -547,7 +1008,7 @@ export class OpenAIWebRtcInterviewTransport {
     let result: Record<string, unknown>;
     let needsContinuation = true;
 
-    if (readString(message.name) === "save_interview_event") {
+    if (fnName === "save_interview_event") {
       const sectionName = readString(args.sectionName).trim();
       this.trackSectionProgress(sectionName);
       const event: InterviewEvaluationEvent = {
@@ -567,6 +1028,18 @@ export class OpenAIWebRtcInterviewTransport {
       );
       const behindPace = this.questionsAsked < expectedByNow;
       const sectionGuidance = this.getSectionPacingGuidance(sectionName);
+      const durationDone = this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs;
+
+      // After duration is complete, instruct the AI to wrap up
+      let instruction: string;
+      if (durationDone) {
+        instruction = "DURATION IS COMPLETE. Ask at most 1-2 more questions, then ask the candidate if they have any questions about the role/company, and call finalize_interview_report. Do NOT continue with new topics.";
+      } else if (behindPace) {
+        instruction = `You are behind question pace. Keep acknowledgment concise, ask the next high-signal question now. IMPORTANT: For at least every 3rd question, use show_reference_card to display a code snippet, MCQ, or visual prompt on the candidate's screen before asking.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`;
+      } else {
+        instruction = `Pacing is acceptable. Continue with section objectives. REMINDER: Use show_reference_card for code snippets, MCQs, and visual questions — aim for at least 1 reference card per section.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`;
+      }
+
       result = {
         ok: true,
         stored: event,
@@ -575,14 +1048,29 @@ export class OpenAIWebRtcInterviewTransport {
           minimumQuestionTarget: this.minimumQuestionTarget,
           expectedByNow,
           behindPace,
+          durationComplete: durationDone,
         },
         section: sectionName || this.currentSectionName,
         sectionPacing: sectionGuidance,
-        instruction: behindPace
-          ? `You are behind question pace. Keep acknowledgment concise, ask the next high-signal question now, and use generate_section_questions if needed.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`
-          : `Pacing is acceptable. Continue with section objectives and maintain interview flow.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`,
+        instruction,
       };
-    } else if (readString(message.name) === "finalize_interview_report") {
+      // needsContinuation=false: model must ask next question IN ITS VERBAL AUDIO before
+      // calling this tool (per tool description). No safeResponseCreate needed — mic muting
+      // keeps the window clean until audio finishes, then candidate answers naturally.
+      // Fallback: 8-second nudge if model somehow got here without asking the next question
+      // (both sides would be silently waiting). 8s is long enough not to interrupt normal
+      // candidate thinking, short enough to avoid the old 45s deadlock.
+      needsContinuation = false;
+      // Trackable nudge timer — cancelled when response.created or speech_started fires,
+      // preventing duplicate responses when section timers or model naturally continues.
+      if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
+      this.saveNudgeTimer = setTimeout(() => {
+        this.saveNudgeTimer = null;
+        if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
+        this.sendSilentContextMessage("Ask your next question in the current section now.");
+        this.safeResponseCreate();
+      }, 8000);
+    } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
         this.durationCompleteSignaled || this.hardStopSignaled || elapsedMs >= this.durationMs;
@@ -604,41 +1092,9 @@ export class OpenAIWebRtcInterviewTransport {
             "Do not finalize yet. Continue interviewing with deeper or generated follow-up questions until duration-complete is reached.",
         };
       } else {
-        const questionTargetReached =
-          this.questionsAsked >= this.minimumQuestionTarget || this.hardStopSignaled;
-        const sectionTimeStatus = this.getSectionTimingStatus();
-        if (!questionTargetReached) {
-          const questionsRemaining = this.minimumQuestionTarget - this.questionsAsked;
-          console.info("[InterviewTiming] finalize blocked: question target not met", {
-            sessionId: this.sessionId,
-            elapsedSeconds: Math.floor(elapsedMs / 1000),
-            questionsAsked: this.questionsAsked,
-            minimumQuestionTarget: this.minimumQuestionTarget,
-            questionsRemaining,
-            hardStopSignaled: this.hardStopSignaled,
-          });
-          result = {
-            ok: false,
-            blocked: true,
-            reason: "QUESTION_TARGET_NOT_REACHED",
-            questionsAsked: this.questionsAsked,
-            minimumQuestionTarget: this.minimumQuestionTarget,
-            questionsRemaining,
-            instruction:
-            "Do not finalize yet. Ask additional high-signal questions now. Use generate_section_questions with mixed formats (NORMAL, MCQ, CODE_SNIPPET, GRAPHICAL) and continue until question target is met.",
-          };
-        } else if (!this.hardStopSignaled && sectionTimeStatus.pendingSections.length > 0) {
-          const pending = sectionTimeStatus.pendingSections[0];
-          result = {
-            ok: false,
-            blocked: true,
-            reason: "SECTION_TIME_NOT_MET",
-            pendingSections: sectionTimeStatus.pendingSections,
-            instruction:
-            `Do not finalize yet. Continue section "${pending.name}" until its allotted time is covered. Use generate_section_questions for this section if planned questions are exhausted.`,
-          };
-        } else {
-        console.info("[InterviewTiming] finalize allowed", {
+        // Once duration is reached, ALWAYS allow finalization.
+        // Question targets and section times are soft guidance, not hard blockers after duration.
+        console.info("[InterviewTiming] finalize allowed (duration reached)", {
           sessionId: this.sessionId,
           elapsedSeconds: Math.floor(elapsedMs / 1000),
           durationCompleteSignaled: this.durationCompleteSignaled,
@@ -660,20 +1116,24 @@ export class OpenAIWebRtcInterviewTransport {
         }
         result = { ok: true, reportStored: true };
         needsContinuation = false;
-        }
       }
-    } else if (readString(message.name) === "show_reference_card") {
+    } else if (fnName === "show_reference_card") {
+      const question = readString(args.question).trim();
+      const options = Array.isArray(args.options)
+        ? args.options.map((item) => String(item).trim()).filter((item) => item.length > 0)
+        : [];
+      const content = readString(args.content).trim();
       const card: InterviewReferenceCard = {
         id: `card-${Date.now()}`,
         title: readString(args.title),
-        content: readString(args.content),
+        question: question || undefined,
+        options: options.length > 0 ? options : undefined,
+        content: content || this.buildReferenceCardContent(question, options, content),
+        afterTranscriptIndex: this.transcriptItemCount,
       };
       this.callbacks.onReferenceCard(card);
       result = { ok: true };
-    } else if (
-      readString(message.name) === "generate_section_questions" ||
-      readString(message.name) === "generate_followup_questions"
-    ) {
+    } else if (fnName === "generate_section_questions" || fnName === "generate_followup_questions") {
       try {
         const generated = await this.generateFollowupQuestions(args);
         result = { ok: true, generatedQuestions: generated };
@@ -687,57 +1147,92 @@ export class OpenAIWebRtcInterviewTransport {
         };
       }
     } else {
-      result = { ok: false, error: `Unknown function: ${readString(message.name)}` };
+      result = { ok: false, error: `Unknown function: ${fnName}` };
     }
+
+    // Inject live session timing into every tool result — model always has a
+    // fresh clock without needing a dedicated time-check tool call.
+    const resultWithTiming = { ...result, sessionTiming: this.getSessionTiming() };
 
     this.sendJson({
       type: "conversation.item.create",
       item: {
         type: "function_call_output",
         call_id: readString(message.call_id),
-        output: JSON.stringify(result),
+        output: JSON.stringify(resultWithTiming),
       },
     });
 
+    this.callbacks.onThinkingChange?.(false); // tool result sent — back to listening or speaking
+
     if (needsContinuation) {
-      this.sendJson({ type: "response.create" });
+      this.safeResponseCreate();
     }
   }
 
   private async generateFollowupQuestions(args: Record<string, unknown>) {
-    const response = await fetch("/api/interviews/webrtc/questions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token: this.token,
-        sessionId: this.sessionId,
-        sectionName: readString(args.sectionName),
-        topic: readString(args.topic),
-        difficulty: readString(args.difficulty),
-        count: Number(args.count ?? 3),
-        questionTypes: Array.isArray(args.questionTypes)
-          ? args.questionTypes.map((item) => String(item))
-          : ["NORMAL"],
-        candidateContext: readString(args.candidateContext),
-        elapsedMinutes: Number(args.elapsedMinutes ?? 0),
-        remainingMinutes: Number(args.remainingMinutes ?? 0),
-      }),
-    });
+    // Bug 3 fix: add timeout to prevent indefinite hang
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10 second timeout
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      return {
-        questions: [],
-        error: `Failed to generate follow-up questions (${response.status})${body ? `: ${body}` : ""}`,
+    try {
+      const response = await fetch("/api/interviews/webrtc/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          token: this.token,
+          sessionId: this.sessionId,
+          sectionName: readString(args.sectionName),
+          topic: readString(args.topic),
+          difficulty: readString(args.difficulty),
+          count: Number(args.count ?? 3),
+          questionTypes: Array.isArray(args.questionTypes)
+            ? args.questionTypes.map((item) => String(item))
+            : ["NORMAL"],
+          candidateContext: readString(args.candidateContext),
+          elapsedMinutes: Number(args.elapsedMinutes ?? 0),
+          remainingMinutes: Number(args.remainingMinutes ?? 0),
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        return {
+          questions: [],
+          error: `Failed to generate follow-up questions (${response.status})${body ? `: ${body}` : ""}`,
+        };
+      }
+
+      const data = (await response.json()) as {
+        questions?: Array<Record<string, unknown>>;
       };
+      return {
+        questions: Array.isArray(data.questions) ? data.questions : [],
+      };
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return { questions: [], error: "Question generation timed out. Continue with your own questions." };
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private buildReferenceCardContent(question: string, options: string[], content: string) {
+    if (content) {
+      return content;
     }
 
-    const data = (await response.json()) as {
-      questions?: Array<Record<string, unknown>>;
-    };
-    return {
-      questions: Array.isArray(data.questions) ? data.questions : [],
-    };
+    const lines: string[] = [];
+    if (question) {
+      lines.push(`**Question:** ${question}`);
+    }
+    if (options.length > 0) {
+      lines.push("", "**Options:**", ...options.map((option, index) => `${String.fromCharCode(65 + index)}. ${option}`));
+    }
+    return lines.join("\n");
   }
 
   private trackSectionProgress(sectionName: string) {
@@ -799,14 +1294,17 @@ export class OpenAIWebRtcInterviewTransport {
         : 0;
     const elapsedMinutes = (accumulatedMs + currentRunningMs) / 60000;
     const remainingMinutes = Math.max(0, section.minutes - elapsedMinutes);
+    const questionsPerMinute = (section.questionBankTarget ?? 3) / section.minutes;
+    const suggestedMore = Math.max(1, Math.round(questionsPerMinute * remainingMinutes));
+
     return {
       sectionName,
       elapsedMinutes: Number(elapsedMinutes.toFixed(2)),
       remainingMinutes: Number(remainingMinutes.toFixed(2)),
       instruction:
-        remainingMinutes > 0.4
-          ? `Stay in section "${sectionName}" until roughly ${section.minutes} minutes are covered.`
-          : `Section "${sectionName}" time target is nearly met. You may transition when objective is complete.`,
+        remainingMinutes > 0.5
+          ? `SECTION TIMING REQUIRED: "${sectionName}" has ${remainingMinutes.toFixed(1)} of ${section.minutes} min remaining. Ask at least ${suggestedMore} more question(s) in this section before any transition. Use generate_section_questions if you run out of planned questions.`
+          : `Section "${sectionName}" time nearly met. May transition when objective is complete.`,
     };
   }
 
@@ -819,37 +1317,24 @@ export class OpenAIWebRtcInterviewTransport {
       return;
     }
 
-    if (isSectionTransitionCue(interviewerText) && this.currentSectionName) {
-      const guidance = this.getSectionPacingGuidance(this.currentSectionName);
-      if (guidance && guidance.remainingMinutes > 0.4 && !this.hardStopSignaled) {
-        this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
-          `PACING_GUARD: Do not transition sections yet. Stay in section "${this.currentSectionName}" and continue asking high-signal questions until its allotted time is met. Use generate_section_questions for this section if needed.`,
-        );
-        return;
-      }
-    }
+    // NOTE: Section transition guard removed.
+    // The save_interview_event return value already carries sectionPacing.instruction
+    // which tells the model to stay in the current section. Having a SECOND guard that
+    // fires AFTER the AI has already verbally said "Let's move to Section 2" caused
+    // jarring mid-interview reverts — the AI would go back and re-ask Section 1 questions
+    // after the candidate had already answered a Section 2 question.
 
     if (isClosingCue(interviewerText)) {
-      const elapsedMs = Date.now() - this.sessionStartedAtMs;
-      const remainingMs = Math.max(0, this.durationMs - elapsedMs);
-      const closingWindowReached =
-        remainingMs <= FINAL_CLOSING_WINDOW_MS ||
-        this.durationCompleteSignaled ||
-        this.hardStopSignaled;
+      // Closing question ONLY allowed after explicit TIME_SIGNAL:DURATION_COMPLETE
+      // or HARD_STOP. No time-window fallback — section timers enforce pacing,
+      // so the model should never reach the closing question early.
+      const closingWindowReached = this.durationCompleteSignaled || this.hardStopSignaled;
       if (!closingWindowReached) {
         this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
-          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do not ask 'Do you have any questions for me/about role/company' until the final 60 seconds or after TIME_SIGNAL:DURATION_COMPLETE. Continue technical questioning now.",
+        this.sendSilentContextMessage(
+          "CLOSING_WINDOW_GUARD: You asked the final candidate-question prompt too early. Do NOT ask 'Do you have any questions for me/about role/company' until TIME_SIGNAL:DURATION_COMPLETE. Continue with the current section's technical questions. Do not repeat the closing question.",
         );
         return;
-      }
-      const blockers = this.getCompletionBlockers();
-      if (blockers.length > 0 && !this.hardStopSignaled) {
-        this.lastGuardInterventionAtMs = now;
-        this.sendOrchestrationMessage(
-          `CLOSING_GUARD: Do not start closing sequence yet. ${blockers.join(" ")} Continue technical questioning and only close after blockers are cleared.`,
-        );
       }
     }
   }
@@ -873,13 +1358,9 @@ export class OpenAIWebRtcInterviewTransport {
         `Section time still pending for ${pending.map((s) => s.name).join(", ")}.`,
       );
     }
-    const remainingMs = Math.max(0, this.durationMs - elapsedMs);
-    const closingWindowReached =
-      remainingMs <= FINAL_CLOSING_WINDOW_MS ||
-      this.durationCompleteSignaled ||
-      this.hardStopSignaled;
-    if (!closingWindowReached) {
-      blockers.push("Final candidate-question prompt window not reached yet.");
+    // Closing window = signal-only, no time-window fallback
+    if (!this.durationCompleteSignaled && !this.hardStopSignaled) {
+      blockers.push("TIME_SIGNAL:DURATION_COMPLETE not yet received.");
     }
     return blockers;
   }

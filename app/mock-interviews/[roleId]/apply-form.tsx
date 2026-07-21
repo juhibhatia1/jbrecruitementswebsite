@@ -140,7 +140,7 @@ export default function ApplyForm({
 
   // Derive prices directly from currency
   const aiPrice = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
-  const coachPrice = currency === "AED" ? 150 : currency === "INR" ? 3500 : 40;
+  const coachPrice = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
 
   // Detect currency using local /api/geo first, then ipapi.co
   useEffect(() => {

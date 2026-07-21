@@ -18,9 +18,9 @@ export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = 
   "Interview Prep":              { USD: 99,  AED: 299,  INR: 6999  },
   "Ready-to-Apply Job Pack":     { USD: 99,  AED: 299,  INR: 6999  },
   "All Career Services Bundle":  { USD: 480, AED: 1600, INR: 30000 },
-  "Mock Interviews":             { USD: 40,  AED: 150,  INR: 3500  },
+  "Mock Interview":             { USD: 39,  AED: 99,   INR: 499   },
   "AI Mock Interview":           { USD: 39,  AED: 99,   INR: 499   },
-  "Coach Mock Interview":        { USD: 40,  AED: 150,  INR: 3500  },
+  "Coach Mock Interview":        { USD: 39,  AED: 99,   INR: 499   },
 };
 
 export const SYSTEM_SERVICES: SystemService[] = [

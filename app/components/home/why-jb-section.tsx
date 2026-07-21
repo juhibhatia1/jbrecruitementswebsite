@@ -98,7 +98,7 @@ export default function WhyJBSection() {
           <div className="mt-10 rounded-[2rem] border border-[#e5ebf8] bg-[#fbfcff] px-5 py-6 shadow-sm md:px-8">
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
-                Trusted by candidates at top companies
+                Our Placement Success
               </p>
             </div>
             <TopCompaniesMarquee compact className="mt-5" />

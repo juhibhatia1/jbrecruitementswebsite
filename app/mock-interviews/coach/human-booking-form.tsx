@@ -160,7 +160,7 @@ export default function HumanInterviewBookingForm() {
   }, []);
 
   const coachPrice = useMemo(
-    () => MULTI_CURRENCY_PRICING[SERVICE_NAME]?.[currency] ?? 3500,
+    () => MULTI_CURRENCY_PRICING[SERVICE_NAME]?.[currency] ?? 499,
     [currency],
   );
 

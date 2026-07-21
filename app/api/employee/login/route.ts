@@ -1,28 +1,29 @@
 import { NextResponse } from "next/server";
 import {
   EMPLOYEE_SESSION_COOKIE,
-  getEmployeeAuthConfigError,
+  authenticateEmployeeCredentials,
   generateEmployeeSessionToken,
-  isValidEmployeeCredentials,
 } from "@/lib/employee-auth";
 
 export async function POST(request: Request) {
   try {
-    const configError = getEmployeeAuthConfigError();
-    if (configError) {
-      return NextResponse.json({ error: configError }, { status: 503 });
-    }
+    const body = (await request.json()) as {
+      email?: string;
+      username?: string;
+      password?: string;
+    };
+    const email = body?.email?.trim() || body?.username?.trim() || "";
+    const password = body?.password || "";
 
-    const { username, password } = await request.json();
-
-    if (!isValidEmployeeCredentials(username, password)) {
+    const session = await authenticateEmployeeCredentials(email, password);
+    if (!session) {
       return NextResponse.json(
-        { error: "Invalid username or password." },
+        { error: "Invalid email or password." },
         { status: 401 }
       );
     }
 
-    const token = generateEmployeeSessionToken(username);
+    const token = generateEmployeeSessionToken(session);
     const response = NextResponse.json({ success: true });
 
     // Set secure HttpOnly session cookie

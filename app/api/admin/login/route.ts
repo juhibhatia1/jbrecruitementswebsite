@@ -1,38 +1,35 @@
 import { NextResponse } from "next/server";
 import {
   ADMIN_SESSION_COOKIE,
-  getAdminAuthConfigError,
-  getSessionToken,
-  isValidAdminCredentials,
+  authenticateAdminCredentials,
+  generateAdminSessionToken,
 } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
-    const configError = getAdminAuthConfigError();
-    if (configError) {
-      return NextResponse.json({ error: configError }, { status: 503 });
-    }
-
     const body = (await request.json()) as {
+      email?: string;
       username?: string;
       password?: string;
     };
 
-    const username = body?.username?.trim() || "";
+    const email = body?.email?.trim() || body?.username?.trim() || "";
     const password = body?.password || "";
 
-    if (!isValidAdminCredentials(username, password)) {
+    const session = await authenticateAdminCredentials(email, password);
+    if (!session) {
       return NextResponse.json(
-        { error: "Invalid username or password." },
+        { error: "Invalid email or password." },
         { status: 401 },
       );
     }
 
+    const token = generateAdminSessionToken(session);
     const response = NextResponse.json({ success: true }, { status: 200 });
 
     response.cookies.set({
       name: ADMIN_SESSION_COOKIE,
-      value: getSessionToken(),
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

@@ -102,7 +102,9 @@ Return JSON only:
 Rules:
 - Return exactly ${count} questions.
 - Keep questions high-signal and interview-grade.
-- For MCQ, CODE_SNIPPET, and GRAPHICAL questions, include referenceCardTitle and referenceCardContent.
+- For MCQ questions, make referenceCardContent a well-structured markdown card that includes the exact question text and each option on its own line or in a markdown table. Do not compress options into a single sentence.
+- For CODE_SNIPPET and GRAPHICAL questions, include referenceCardTitle and referenceCardContent with a clear title, the prompt, and any code/diagram content formatted as markdown.
+- When a question has answer options, keep the exact question text in both the question field and the reference card content so the interviewer can refer back to it.
 - For NORMAL questions, do not include options unless it is naturally MCQ.
 - Keep code snippets realistic and concise; use markdown code fences in referenceCardContent.`;
 

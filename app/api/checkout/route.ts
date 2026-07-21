@@ -24,6 +24,7 @@ const SERVICE_PRICING_USD: Record<string, number> = {
   "Ask Me Anything": 39,
   "Interview Prep": 99,
   "Ready-to-Apply Job Pack": 99,
+  "Mock Interview": 39,
   "All Career Services Bundle": 480,
 };
 
