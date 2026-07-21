@@ -765,7 +765,9 @@ Use a short preamble only before tool calls that take noticeable time (generate_
 Skip preambles when:
 - Giving a simple acknowledgment or asking the next question directly
 - Audio is unclear
-- Calling wait_for_user or save_interview_event
+- Calling wait_for_user
+- Calling save_interview_event — NEVER say "I'll note that", "Let me save that",
+  "I'll log that", or anything before calling this tool. Call it silently.
 
 One sentence maximum. Never say: "Let me think...", "Hmm...", "One moment while I process that...", "Let me formulate my next question."
 
@@ -857,7 +859,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "save_interview_event",
-            description: "PROACTIVE — Store per-question evaluation after each candidate answer. After calling this tool and receiving the result: ask the NEXT planned question in the current section. Do NOT answer the question you just asked the candidate. Do NOT wait for the candidate to speak first — they are waiting for you. Do not announce the call or ask for confirmation. Follow sectionPacing.instruction in the result.",
+            description: "PROACTIVE — Evaluate and store a candidate answer. CRITICAL SEQUENCE: (1) In your CURRENT spoken response, acknowledge the answer AND ask the NEXT planned question. Both must be in the SAME spoken turn. (2) THEN call this tool silently — no preamble, no 'I'll note that', no spoken announcement of any kind. (3) Do NOT generate another spoken response after this tool returns (no continuation). The next spoken response comes when the candidate answers your question. Do NOT say 'I'll note that' or any other indicator before calling this tool.",
             parameters: {
               type: "object",
               properties: {
@@ -1041,13 +1043,20 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
-      // needsContinuation=true: model asks next question immediately after save returns.
-      // Self-answering is prevented by mic muting: when the continuation response.created
-      // fires, the mic is already muted, so no candidate audio is captured while the model
-      // generates the next question. Mic only unmutes after that question's audio finishes.
-      // needsContinuation=false caused 20-30s stalls: model was done, mic unmuted, but no
-      // new question was asked — both sides waited for the other to speak.
-      // (needsContinuation stays true — the default)
+      // needsContinuation=false: model must ask next question IN ITS VERBAL AUDIO before
+      // calling this tool (per tool description). No safeResponseCreate needed — mic muting
+      // keeps the window clean until audio finishes, then candidate answers naturally.
+      // Fallback: 8-second nudge if model somehow got here without asking the next question
+      // (both sides would be silently waiting). 8s is long enough not to interrupt normal
+      // candidate thinking, short enough to avoid the old 45s deadlock.
+      needsContinuation = false;
+      const nudgeDelay = 8000;
+      setTimeout(() => {
+        if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
+        // Still silent 8s after save — model didn't ask next question. Nudge it.
+        this.sendSilentContextMessage("Ask your next question in the current section now.");
+        this.safeResponseCreate();
+      }, nudgeDelay);
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
