@@ -543,7 +543,9 @@ export class OpenAIWebRtcInterviewTransport {
     this.callbacks.onAssistantSpeakingChange?.(false);
 
     if (this.dc && this.dc.readyState === "open") {
-      // Send a recovery prompt to the model
+      // Send a lightweight nudge — the SYSTEM_RECOVERY text was confusing the model
+      // into saying "Apologies, the connection experienced a brief interruption" which
+      // sounded broken to the candidate. A simple nudge keeps the interview flowing.
       this.sendJson({
         type: "conversation.item.create",
         item: {
@@ -551,7 +553,7 @@ export class OpenAIWebRtcInterviewTransport {
           role: "user",
           content: [{
             type: "input_text",
-            text: "SYSTEM_RECOVERY: The connection experienced a brief interruption. Please continue the interview from where you left off. If you were in the middle of asking a question, repeat it. If waiting for a response, acknowledge the pause and move on to the next question.",
+            text: "NUDGE: Continue the interview. Ask your next planned question in the current section now.",
           }],
         },
       });
@@ -817,7 +819,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "save_interview_event",
-            description: "PROACTIVE — Store per-question evaluation. Ask your NEXT question to the candidate FIRST (verbally), then call this tool immediately after. Do not announce the call. Do not ask for confirmation. Return value includes sectionPacing.instruction: follow it.",
+            description: "PROACTIVE — Store per-question evaluation after each candidate answer. After calling this tool and receiving the result: ask the NEXT planned question in the current section. Do NOT answer the question you just asked the candidate. Do NOT wait for the candidate to speak first — they are waiting for you. Do not announce the call or ask for confirmation. Follow sectionPacing.instruction in the result.",
             parameters: {
               type: "object",
               properties: {
@@ -1001,12 +1003,13 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
-      // Do NOT trigger a new response after save_interview_event.
-      // The model already verbally asked the next question before calling this function
-      // (per tool description instruction). safeResponseCreate would force a new AI turn
-      // before the candidate answers, causing the AI to answer its own question.
-      // server_vad auto-triggers the next response when the candidate speaks.
-      needsContinuation = false;
+      // needsContinuation=true: model MUST generate a continuation after saving.
+      // Setting this to false caused 45-second stalls: model acknowledged answer,
+      // called save without asking next question, we returned no safeResponseCreate,
+      // both sides waited → stall watchdog fired → "Apologies, let's continue" every 45s.
+      // With gpt-realtime-2 reasoning, the model should NOT answer a question it just asked;
+      // it should ask the NEXT question. The tool description reinforces this.
+      // needsContinuation stays true (default).
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
