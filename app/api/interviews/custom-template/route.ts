@@ -9,6 +9,7 @@ interface RequestBody {
   jobRole: string;
   experienceLevel: string;
   difficultyLevel: string;
+  durationMinutes?: number;
   jobDescription: string;
   resumeText?: string;
 }
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     const openai = new OpenAI({ apiKey });
-    const durationMinutes = 30; // standard mock interview duration
+    const durationMinutes = body.durationMinutes && body.durationMinutes >= 10 && body.durationMinutes <= 120 ? body.durationMinutes : 30;
     const prompt = buildCustomJdPrompt(body, durationMinutes);
 
     console.log(`[CustomJD] Querying OpenAI (${TEMPLATE_MODEL}) to parse JD for role: ${jobRole}`);
@@ -166,7 +167,22 @@ export async function POST(request: NextRequest) {
     try {
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found in OpenAI response");
-      parsed = JSON.parse(jsonMatch[0]) as typeof parsed;
+      // Model sometimes emits literal control chars (e.g. newline) inside JSON string values.
+      // Walk char-by-char and escape them only when inside a string.
+      let jsonStr = jsonMatch[0];
+      let inStr = false, esc = false, sanitized = "";
+      for (const ch of jsonStr) {
+        if (esc) { esc = false; sanitized += ch; continue; }
+        if (ch === "\\" && inStr) { esc = true; sanitized += ch; continue; }
+        if (ch === '"') { inStr = !inStr; sanitized += ch; continue; }
+        if (inStr && ch.charCodeAt(0) < 0x20) {
+          const map: Record<string, string> = { "\n": "\\n", "\r": "\\r", "\t": "\\t", "\b": "\\b", "\f": "\\f" };
+          sanitized += map[ch] ?? `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`;
+        } else {
+          sanitized += ch;
+        }
+      }
+      parsed = JSON.parse(sanitized) as typeof parsed;
     } catch (parseError) {
       console.error("[CustomJD] OpenAI parsing failed for raw output:", rawText, parseError);
       return NextResponse.json(

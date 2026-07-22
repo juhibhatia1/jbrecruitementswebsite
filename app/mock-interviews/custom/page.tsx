@@ -9,7 +9,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as pdfjs from "pdfjs-dist";
 import {
   IoAlertCircle,
   IoLockClosed,
@@ -22,7 +22,7 @@ import {
 } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -433,6 +433,7 @@ export default function CustomJdMockInterviewPage() {
           jobRole: form.jobRole,
           experienceLevel: form.experienceLevel,
           difficultyLevel: form.difficultyLevel,
+          durationMinutes: 30,
           jobDescription: form.jobDescription,
           resumeText,
         }),
@@ -650,8 +651,8 @@ export default function CustomJdMockInterviewPage() {
                 </div>
 
                 {/* Job Configuration */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-100 pt-6">
-                  <div className="sm:col-span-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-slate-100 pt-6">
+                  <div>
                     <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
                       Job Title / Target Role{" "}
                       <span className="text-[#5a58ab]">*</span>

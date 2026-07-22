@@ -9,6 +9,7 @@ import {
   sendInterviewInvitationEmail,
   sendNewApplicationAlertEmail,
 } from "@/lib/emailService";
+import { buildAppUrl } from "@/lib/app-url";
 
 const TOKEN_EXPIRY_DAYS = 7;
 
@@ -78,11 +79,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const interviewLink =
-      interviewPreference === "AI"
-        ? `${appUrl}/interview/${accessToken}`
-        : undefined;
+      interviewPreference === "AI" ? buildAppUrl(`/interview/${accessToken}`) : undefined;
 
     try {
       await sendInterviewInvitationEmail({

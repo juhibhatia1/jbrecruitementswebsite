@@ -10,6 +10,7 @@ import {
   sendNewApplicationAlertEmail,
 } from "@/lib/emailService";
 import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
+import { buildAppUrl, getAppBaseUrl } from "@/lib/app-url";
 
 let stripe: Stripe | null = null;
 
@@ -57,10 +58,6 @@ export async function GET(request: Request) {
     }
 
     if (isCoach && meta.jobRole && !meta.interviewTemplateId) {
-      const appUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "https://jbrecruitments.com";
-
       return NextResponse.json({
         isCoach: true,
         isAi: false,
@@ -73,7 +70,7 @@ export async function GET(request: Request) {
         interviewBrief: meta.interviewBrief || "",
         mockInterviewStatus: purchase?.mockInterviewStatus || "PENDING_SCHEDULE",
         mockInterviewDate: purchase?.mockInterviewDate ? purchase.mockInterviewDate.toISOString() : null,
-        bookingLink: `${appUrl.replace(/\/$/, "")}/payment/success?payment_intent=${paymentIntentId}`,
+        bookingLink: buildAppUrl(`/payment/success?payment_intent=${paymentIntentId}`),
       });
     }
 
@@ -138,12 +135,9 @@ export async function GET(request: Request) {
         });
 
         const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
-        const appUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ||
-          "https://jbrecruitments.com";
         const calSchedulingLink = calLink.startsWith("http")
           ? calLink
-          : `${appUrl.replace(/\/$/, "")}/${calLink}`;
+          : `${getAppBaseUrl()}/${calLink.replace(/^\/+/, "")}`;
 
         // Send email notifications
         try {
@@ -187,12 +181,9 @@ export async function GET(request: Request) {
         });
 
         const calLink = process.env.NEXT_PUBLIC_CAL_LINK || "jbrecruitments/mock-interview";
-        const appUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ||
-          "https://jbrecruitments.com";
         const calSchedulingLink = calLink.startsWith("http")
           ? calLink
-          : `${appUrl.replace(/\/$/, "")}/${calLink}`;
+          : `${getAppBaseUrl()}/${calLink.replace(/^\/+/, "")}`;
 
         // Send email notifications
         try {
@@ -283,10 +274,7 @@ export async function GET(request: Request) {
           },
         });
 
-        const appUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ||
-          "https://jbrecruitments.com";
-        const interviewLink = `${appUrl.replace(/\/$/, "")}/interview/${accessToken}`;
+        const interviewLink = buildAppUrl(`/interview/${accessToken}`);
 
         // Send email notifications
         try {
@@ -330,10 +318,7 @@ export async function GET(request: Request) {
           },
         });
 
-        const appUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ||
-          "https://jbrecruitments.com";
-        const interviewLink = `${appUrl.replace(/\/$/, "")}/interview/${accessToken}`;
+        const interviewLink = buildAppUrl(`/interview/${accessToken}`);
 
         // Send email notifications
         try {
@@ -361,11 +346,8 @@ export async function GET(request: Request) {
         }
       }
 
-      const appUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "https://jbrecruitments.com";
       const startUrl = rawToken 
-        ? `${appUrl.replace(/\/$/, "")}/interview/${rawToken}` 
+        ? buildAppUrl(`/interview/${rawToken}`)
         : "";
 
       return NextResponse.json({

@@ -18,7 +18,7 @@ type WebRtcCallbacks = {
   onInterrupted: () => void;
   onComplete: () => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
-  onThinkingChange?: (thinking: boolean) => void;
+  onThinkingChange?: (thinking: boolean, context?: string) => void;
   // Mute the microphone (true=mute, false=unmute). Called without updating the
   // UI locked state — purely a temporary hardware mute to prevent echo capture.
   onMuteRequired?: (muted: boolean) => void;
@@ -156,6 +156,9 @@ export class OpenAIWebRtcInterviewTransport {
   // Bug 3 fix: response-in-flight tracking to prevent concurrent response.create
   private responseInFlight = false;
   private pendingResponseCreate = false;
+  // Tracks async tool execution (HTTP calls). Blocks nudge timers during long tool calls
+  // so response.created doesn't fire mid-tool and clear the Thinking UI state.
+  private toolCallInProgress = false;
 
   // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
@@ -367,7 +370,9 @@ export class OpenAIWebRtcInterviewTransport {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
-        this.callbacks.onThinkingChange?.(false);
+        // Don't clear thinking if a tool HTTP call is still running — the response.created
+        // may be a spurious one triggered before the tool completed.
+        if (!this.toolCallInProgress) this.callbacks.onThinkingChange?.(false);
         // RE-ENABLED: Logs confirmed echo loop — "গাস টাক গরু নেচ কোশেং" garbage
         // transcriptions are echo being mis-transcribed by Whisper. AEC is NOT cancelling
         // physical speaker echo. input_audio_buffer.clear alone can't keep up (echo refills
@@ -682,7 +687,7 @@ export class OpenAIWebRtcInterviewTransport {
         if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
         this.saveNudgeTimer = setTimeout(() => {
           this.saveNudgeTimer = null;
-          if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
+          if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking || this.toolCallInProgress) return;
           this.sendSilentContextMessage("Ask your next question in the current section now.");
           this.safeResponseCreate();
         }, 8000);
@@ -901,10 +906,11 @@ ${systemInstructions}`;
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              // threshold: 0.5 (API default — permissive, ambient noise during pauses
-              // keeps VAD active and resets silence timer, helping prevent mid-sentence cuts).
-              // silence_duration_ms: 1000ms — 500ms default caused answer fragmentation:
-              // candidate pauses mid-sentence, buffer commits, model responds before finished.
+              // threshold 0.65: raised from API default 0.5 — keyboard clicks, ambient noise,
+              // and breathing no longer trigger speech detection mid-answer. Normal speech volume
+              // still clears this easily. silence_duration_ms: 1000ms prevents fragmentation when
+              // candidate pauses briefly mid-sentence.
+              threshold: 0.65,
               silence_duration_ms: 1000,
             },
             transcription: { model: "whisper-1" },
@@ -971,7 +977,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "generate_section_questions",
-            description: "Generate additional questions for the current section when planned questions are exhausted but section time remains. Call silently — NO preamble, do NOT say 'I'll generate a follow-up', 'Let me get the next question', or anything before calling. After receiving results, ask the first returned question directly.",
+            description: "Generate additional questions when planned questions run out but section time remains. Set count = Math.ceil(sessionTiming.sessionRemainingMinutes * 1.2) capped at 5, minimum 2 — use remaining interview time to generate the right number, not a fixed 3. Call silently — no preamble. After receiving results, ask the first question directly.",
             parameters: {
               type: "object",
               properties: {
@@ -1052,7 +1058,17 @@ ${systemInstructions}`;
       return;
     }
 
-    this.callbacks.onThinkingChange?.(true); // tool call in progress — show "Thinking" in UI
+    // Emit contextual thinking text so UI can show what's happening
+    const thinkingContext: Record<string, string> = {
+      save_interview_event: "Evaluating answer…",
+      finalize_interview_report: "Generating your report…",
+      show_reference_card: "Preparing question…",
+      generate_section_questions: "Planning follow-up questions…",
+      generate_followup_questions: "Planning follow-up questions…",
+      wait_for_user: "",
+    };
+    this.callbacks.onThinkingChange?.(true, thinkingContext[fnName] ?? "Processing…");
+    this.toolCallInProgress = true;
 
     let args: Record<string, unknown> = {};
     try {
@@ -1214,6 +1230,7 @@ ${systemInstructions}`;
       },
     });
 
+    this.toolCallInProgress = false;
     this.callbacks.onThinkingChange?.(false); // tool result sent — back to listening or speaking
 
     if (needsContinuation) {
