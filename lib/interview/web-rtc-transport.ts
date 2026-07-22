@@ -262,9 +262,28 @@ export class OpenAIWebRtcInterviewTransport {
       const message = safeParseMessage(String(event.data));
       if (!message) return;
 
-      // Bug 3 fix: track last event time for stall detection
       this.lastEventAtMs = Date.now();
       this.stallRecoveryAttempts = 0;
+
+      // ── PIPELINE TIMESTAMP LOGGING (for latency diagnosis) ──────────────────
+      // Events that matter for measuring listening/response delay.
+      // Format: [RTPIPE] <event_type> <timestamp_ms>
+      const pipelineEvents = new Set([
+        "input_audio_buffer.speech_started",
+        "input_audio_buffer.speech_stopped",
+        "input_audio_buffer.committed",
+        "response.created",
+        "response.output_audio.delta",
+        "response.output_audio_transcript.done",
+        "response.done",
+        "response.cancelled",
+        "conversation.item.input_audio_transcription.completed",
+      ]);
+      if (message.type && pipelineEvents.has(message.type as string)) {
+        const extra = message.type === "response.output_audio.delta" ? " (first_delta_only_once)" : "";
+        console.log(`[RTPIPE] ${message.type}${extra} @ ${Date.now()}ms`);
+      }
+      // ─────────────────────────────────────────────────────────────────────────
 
       if (message.type === "session.created" || message.type === "session.updated") {
         this.callbacks.onStatus("OpenAI Realtime session ready.");
@@ -293,10 +312,15 @@ export class OpenAIWebRtcInterviewTransport {
         this.enforceRealtimePacingGuards(interviewerText);
         // response.output_audio_transcript.done fires after audio has already played
         // via the WebRTC RTP stream. Only ~500-800ms of buffer tail remains.
-        // Use a fixed 700ms delay — text-length estimates caused 10-15s mic mutes
-        // making candidates unable to speak even 1-2s after AI finished.
-        this.audioTailProtectionUntilMs = Date.now() + 700;
-        this.scheduleMicUnmute(700);
+        // 500ms: enough for WebRTC buffer tail (~200-400ms). Was 700ms but reducing
+        // to cut total response latency (700ms unmute + 800ms VAD = 1.5s before AI can
+        // start processing candidate speech).
+        // Text-length-based unmute: ~15 chars/sec speaking rate + 1000ms WebRTC buffer.
+        // Previous fixed 500ms was wrong — transcript.done fires while audio still plays
+        // 1-3s more. This unmutes AFTER audio actually finishes so AEC has nothing to cancel.
+        const estimatedAudioMs = Math.max(1500, Math.min(10000, interviewerText.length / 15 * 1000));
+        this.audioTailProtectionUntilMs = Date.now() + estimatedAudioMs + 1000;
+        this.scheduleMicUnmute(estimatedAudioMs + 1000);
       }
 
       if (
@@ -344,8 +368,13 @@ export class OpenAIWebRtcInterviewTransport {
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
         this.callbacks.onThinkingChange?.(false);
+        // RE-ENABLED: Logs confirmed echo loop — "গাস টাক গরু নেচ কোশেং" garbage
+        // transcriptions are echo being mis-transcribed by Whisper. AEC is NOT cancelling
+        // physical speaker echo. input_audio_buffer.clear alone can't keep up (echo refills
+        // buffer faster than we clear). Mic muting is the only reliable solution.
+        // Previous unmute timing was wrong (500ms after transcript.done while audio still
+        // played 1-3s more). Now using text-length estimate to unmute AFTER audio finishes.
         this.callbacks.onMuteRequired?.(true);
-        // Model started generating — cancel any pending save nudge timer
         if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
@@ -359,13 +388,19 @@ export class OpenAIWebRtcInterviewTransport {
       if (message.type === "response.done") {
         this.responseInFlight = false;
         if (this.scheduledSources.length === 0) {
-          this.assistantSpeaking = false;
-          this.callbacks.onAssistantSpeakingChange?.(false);
+          // Only clear assistantSpeaking if muteTimer is NOT running.
+          // If muteTimer is still active, the previous real response's audio is still
+          // playing. A fast save_interview_event response.done fires between the real
+          // response's audio start and end — setting assistantSpeaking=false here causes
+          // the UI to briefly flash "Listening" while mic is muted, confusing the candidate.
+          if (!this.muteTimer) {
+            this.assistantSpeaking = false;
+            this.callbacks.onAssistantSpeakingChange?.(false);
+          }
         }
-        // Fallback unmute: if no transcript event fired (function-call-only response),
-        // no scheduleMicUnmute was called — unmute now with a short buffer.
+        // Function-call-only response (no audio) — unmute quickly since no audio played
         if (!this.muteTimer) {
-          this.scheduleMicUnmute(400);
+          this.scheduleMicUnmute(300);
         }
         if (this.pendingResponseCreate) {
           this.pendingResponseCreate = false;
@@ -373,14 +408,13 @@ export class OpenAIWebRtcInterviewTransport {
         }
       }
 
-      // Handle response.cancelled (response was interrupted)
       if (message.type === "response.cancelled") {
         this.responseInFlight = false;
         this.assistantSpeaking = false;
         this.pendingResponseCreate = false;
         this.callbacks.onThinkingChange?.(false);
         this.callbacks.onAssistantSpeakingChange?.(false);
-        this.unmuteMicNow(); // candidate interrupted — unmute immediately
+        this.unmuteMicNow();
       }
     };
 
@@ -469,7 +503,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.responseInFlight = false;
     this.assistantSpeaking = false;
     this.audioTailProtectionUntilMs = 0;
-    this.unmuteMicNow(); // candidate interrupted — unmute so they can speak
+    this.unmuteMicNow();
     this.stopPlayback();
   }
 
@@ -635,6 +669,24 @@ export class OpenAIWebRtcInterviewTransport {
     this.muteTimer = setTimeout(() => {
       this.muteTimer = null;
       this.callbacks.onMuteRequired?.(false);
+      // Audio has finished playing — now safe to show "Listening"
+      if (!this.responseInFlight) {
+        this.assistantSpeaking = false;
+        this.callbacks.onAssistantSpeakingChange?.(false);
+        // Start nudge from MIC UNMUTE TIME (not save time).
+        // Previous nudge started at save time → fired 466ms before speech_started
+        // → race condition → mid-answer interruption. Starting from unmute avoids this:
+        // mic is already open, candidate had time to hear the question, if they haven't
+        // spoken in 8s the model probably forgot to ask next question → prompt it.
+        // speech_started and response.created still cancel this timer.
+        if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
+        this.saveNudgeTimer = setTimeout(() => {
+          this.saveNudgeTimer = null;
+          if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
+          this.sendSilentContextMessage("Ask your next question in the current section now.");
+          this.safeResponseCreate();
+        }, 8000);
+      }
     }, delayMs);
   }
 
@@ -729,7 +781,7 @@ export class OpenAIWebRtcInterviewTransport {
     }
     this.scheduledSources = [];
     this.playbackCursor = 0;
-    this.unmuteMicNow(); // audio stopped — mic should be unmuted
+    this.unmuteMicNow();
     if (this.playbackCtx && this.playbackCtxOwned) {
       void this.playbackCtx.close();
     }
@@ -840,19 +892,20 @@ ${systemInstructions}`;
         instructions: SESSION_BEHAVIORAL_RULES,
         // medium: interview requires multi-step reasoning (timing decisions, answer evaluation,
         // tool sequencing) but must stay responsive. low would miss complex answer nuances.
-        reasoning: { effort: "medium" },
+        // low: interview conductor doesn't need deep reasoning. medium added ~1s latency
+        // per response making conversation feel sluggish. low is sufficient for
+        // answer evaluation, tool selection, and section timing decisions.
+        reasoning: { effort: "low" },
         audio: {
           input: {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
               type: "server_vad",
-              // threshold 0.7: API default (0.5) captured too much ambient noise
-              // as speech ("And you might be like, oh yeah" artifacts). 0.7 filters
-              // casual background sound while still catching clear speech.
-              threshold: 0.7,
-              // 1200ms silence: 1000ms still cut off mid-sentence pauses. Natural speech
-              // includes 1-1.5s pauses at clause boundaries, breathing, and hesitation.
-              silence_duration_ms: 1200,
+              // threshold: 0.5 (API default — permissive, ambient noise during pauses
+              // keeps VAD active and resets silence timer, helping prevent mid-sentence cuts).
+              // silence_duration_ms: 1000ms — 500ms default caused answer fragmentation:
+              // candidate pauses mid-sentence, buffer commits, model responds before finished.
+              silence_duration_ms: 1000,
             },
             transcription: { model: "whisper-1" },
           },
@@ -903,7 +956,7 @@ ${systemInstructions}`;
           {
             type: "function",
             name: "show_reference_card",
-            description: "PROACTIVE — Display code snippet, MCQ, or table on the candidate's screen BEFORE asking the question verbally. Sequence: (1) call this tool, (2) immediately say what the candidate should do — 'Take a look at the code on your screen. What will this print, and why?' — (3) wait for their answer. Never answer the question yourself. Never call this and stay silent.",
+            description: "PROACTIVE — Display a code snippet or MCQ on the candidate's screen BEFORE asking the question verbally. ONLY USE FOR: code snippets (Java code to analyze/debug), MCQ answer options. DO NOT USE FOR: architecture diagrams, system design prompts, or open-ended design questions — those must be asked verbally only, no card. Sequence when appropriate: (1) call tool, (2) immediately say 'Take a look at the code on your screen. What will this print, and why?' — (3) wait for answer. Never answer the question yourself. Never call this and stay silent.",
             parameters: {
               type: "object",
               properties: {
@@ -1062,15 +1115,12 @@ ${systemInstructions}`;
       // (both sides would be silently waiting). 8s is long enough not to interrupt normal
       // candidate thinking, short enough to avoid the old 45s deadlock.
       needsContinuation = false;
-      // Trackable nudge timer — cancelled when response.created or speech_started fires,
-      // preventing duplicate responses when section timers or model naturally continues.
-      if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
-      this.saveNudgeTimer = setTimeout(() => {
-        this.saveNudgeTimer = null;
-        if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking) return;
-        this.sendSilentContextMessage("Ask your next question in the current section now.");
-        this.safeResponseCreate();
-      }, 15000); // 15s: nudge starts ~1-2s before mic unmutes; candidate needs ~1-10s to answer
+      // NO saveNudgeTimer: the nudge caused race conditions and UI flickering.
+      // Race: nudge fires ~466ms before speech_started → response.create sent to API →
+      // can't be unsent → response.created arrives mid-candidate-answer → mutes mic →
+      // interrupts answer. Also caused "Speaking↔Listening" flicker after mic unmute.
+      // The model asks the next question in the same spoken turn (per tool description),
+      // so a nudge is rarely needed. The 45s stall watchdog handles genuine stalls.
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =
