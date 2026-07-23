@@ -108,14 +108,14 @@ export default function HeroSection() {
                       className="bg-[#3399FE] text-white px-5 max-h-[650px]:px-4 py-2.5 max-h-[650px]:py-2 md:px-8 md:py-4 rounded-full text-sm max-h-[650px]:text-xs md:text-lg font-medium hover:bg-[#285b8d] transition-all shadow-lg cursor-pointer"
                       onClick={() => router.push("/companies")}
                     >
-                      Build Your Team
+                      I Need to Hire Talent
                     </button>
 
                     <button
                       className="bg-transparent border border-white/80 text-white px-5 max-h-[650px]:px-4 py-2.5 max-h-[650px]:py-2 md:px-8 md:py-4 rounded-full text-sm max-h-[650px]:text-xs md:text-lg font-medium hover:scale-105 transform transition-all backdrop-blur-sm ease-in-out duration-300 cursor-pointer"
                       onClick={() => router.push("/job-seekers")}
                     >
-                      Explore Opportunities
+                      I Need Career Support
                     </button>
                   </div>
                 </motion.div>
