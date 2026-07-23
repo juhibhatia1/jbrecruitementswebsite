@@ -102,7 +102,7 @@ export default function HiringJourney() {
               </ScrollAnimation>
 
               {/* Hiring image + CTA — fills the sticky space beside the timeline (desktop) */}
-              <div className="mt-8 hidden lg:block">
+              {/* <div className="mt-8 hidden lg:block">
                 <div className="relative h-95 w-full max-w-md overflow-hidden rounded-3xl border border-gray-100 shadow-[0_16px_50px_rgba(37,55,77,0.1)]">
                   <Image
                     src="/home/image.jpg"
@@ -125,7 +125,7 @@ export default function HiringJourney() {
                     <RxArrowTopRight className="h-4 w-4 transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-0.5" />
                   </Link>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
