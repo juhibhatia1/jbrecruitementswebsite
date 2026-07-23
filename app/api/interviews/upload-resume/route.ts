@@ -21,11 +21,24 @@ function isImageKitQuotaError(error: unknown) {
   return /upload limit exceeded/i.test(message) || /upload limit exceeded/i.test(help);
 }
 
-const imagekit = new ImageKit({
-  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
-  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || "",
-});
+// Lazily construct ImageKit on first request. Constructing at module scope would
+// run during `next build` page-data collection, where the ImageKit constructor
+// throws "Missing publicKey" and fails the whole build.
+let imagekitClient: ImageKit | null = null;
+function getImageKit(): ImageKit {
+  if (!imagekitClient) {
+    const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;
+    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
+    const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+    if (!publicKey || !privateKey || !urlEndpoint) {
+      throw new Error(
+        "ImageKit is not configured: set NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, and NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT.",
+      );
+    }
+    imagekitClient = new ImageKit({ publicKey, privateKey, urlEndpoint });
+  }
+  return imagekitClient;
+}
 
 export async function POST(request: Request) {
   try {
@@ -83,7 +96,7 @@ export async function POST(request: Request) {
     // Upload to ImageKit (no local storage fallback)
     let resumeUrl = "";
     try {
-      const uploadResponse = await imagekit.upload({
+      const uploadResponse = await getImageKit().upload({
         file: buffer,
         fileName: file.name,
         folder: "/job-seekers-resumes",
