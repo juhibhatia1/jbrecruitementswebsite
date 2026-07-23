@@ -342,6 +342,7 @@ nextApp
       let provider: any = null;
       let interviewSessionId: string | null = null;
       let applicationId: string | null = null;
+      let purchaseId: string | null = null;
       let finalized = false;
       let endInterviewRequested = false;
       let durationKillTimer: ReturnType<typeof setTimeout> | null = null;
@@ -420,6 +421,18 @@ nextApp
             where: { id: applicationId },
             data: { status: "INTERVIEW_COMPLETED" },
           });
+
+          // Propagate completion onto the Purchase the admin/employee dashboard reads.
+          // updateMany (not update) so a missing/unlinked purchase is a no-op, not a throw.
+          if (purchaseId) {
+            await prisma.purchase.updateMany({
+              where: { id: purchaseId },
+              data: {
+                mockInterviewStatus: "COMPLETED",
+                deliveryStatus: "COMPLETED",
+              },
+            });
+          }
         }
 
         if (finalReport && candidateContext) {
@@ -568,6 +581,7 @@ nextApp
             }
 
             applicationId = application.id;
+            purchaseId = application.purchaseId ?? null;
             candidateContext = {
               candidateName: application.candidateName,
               candidateEmail: application.candidateEmail,

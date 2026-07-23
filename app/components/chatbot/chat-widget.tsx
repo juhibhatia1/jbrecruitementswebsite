@@ -275,8 +275,8 @@ export default function ChatWidget() {
 
   const starterPrompts = [
     "What specific career consulting packages do you offer to help job seekers stand out?",
-    "Can you explain the details, services, and savings included in the All Career Services Bundle?",
-    "Could you tell me more about Juhi Bhatia's professional background and coaching philosophy?",
+    "What are the pricing and turnaround times for your career services?",
+    "Could you tell me about Juhi Bhatia's professional background and coaching philosophy?",
   ];
 
   return (

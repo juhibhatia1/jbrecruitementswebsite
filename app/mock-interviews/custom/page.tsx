@@ -9,7 +9,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import * as pdfjs from "pdfjs-dist";
 import {
   IoAlertCircle,
   IoLockClosed,
@@ -21,8 +20,6 @@ import {
   IoCloseOutline,
 } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
-
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -831,7 +828,11 @@ export default function CustomJdMockInterviewPage() {
 
               <div className="flex-1 bg-slate-50 min-h-0">
                 {resumeFile?.type === "application/pdf" ? (
-                  <ResumePdfPreview file={resumeFile} />
+                  <iframe
+                    src={resumePreviewUrl ?? undefined}
+                    title="Resume preview"
+                    className="h-full w-full border-0"
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center p-8 text-center">
                     <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -849,125 +850,6 @@ export default function CustomJdMockInterviewPage() {
           </div>
         )}
       </main>
-    </div>
-  );
-}
-
-function ResumePdfPreview({ file }: { file: File }) {
-  const [pageImages, setPageImages] = useState<string[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    let loadingTask: ReturnType<typeof pdfjs.getDocument> | null = null;
-
-    const loadAndRender = async () => {
-      setStatus("loading");
-      setPageImages([]);
-      setErrorMessage(null);
-
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        if (cancelled) return;
-
-        loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-        const pdfDocument = await loadingTask.promise;
-        if (cancelled || !pdfDocument) return;
-
-        const images: string[] = [];
-
-        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
-          if (cancelled) return;
-
-          const page = await pdfDocument.getPage(pageNumber);
-          const viewport = page.getViewport({ scale: 1.5 });
-
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const context = canvas.getContext("2d");
-          if (!context) continue;
-
-          await page.render({
-            canvasContext: context,
-            canvas,
-            viewport,
-          }).promise;
-
-          if (cancelled) return;
-          images.push(canvas.toDataURL("image/png"));
-        }
-
-        if (!cancelled) {
-          setPageImages(images);
-          setStatus("ready");
-        }
-      } catch (error) {
-        console.error("Failed to load PDF preview:", error);
-        if (!cancelled) {
-          setErrorMessage(
-            "This PDF could not be rendered. It may be corrupted, password-protected, or in an unsupported format.",
-          );
-          setStatus("error");
-        }
-      }
-    };
-
-    void loadAndRender();
-
-    return () => {
-      cancelled = true;
-      loadingTask?.destroy();
-    };
-  }, [file]);
-
-  if (status === "loading") {
-    return (
-      <div className="flex h-full items-center justify-center p-8 text-center">
-        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-base font-semibold text-[#252e3d]">
-            Preview is loading
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            If the file is large, give us a moment to render it.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className="flex h-full items-center justify-center p-8 text-center">
-        <div className="max-w-md rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
-          <p className="text-base font-semibold text-[#252e3d]">
-            Couldn&apos;t preview this file
-          </p>
-          <p className="mt-2 text-sm text-slate-500">{errorMessage}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-4">
-      <div className="mx-auto max-w-3xl space-y-4">
-        {pageImages.map((src, index) => (
-          <div
-            key={index}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-          >
-            <div className="border-b border-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Page {index + 1}
-            </div>
-            <div className="bg-white p-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`Page ${index + 1}`} className="w-full" />
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { CiRoute } from "react-icons/ci";
+import { RxArrowTopRight } from "react-icons/rx";
 import { motion, useScroll, useSpring } from "framer-motion";
 import ScrollAnimation from "../ui/scroll-animation";
 
@@ -97,6 +100,32 @@ export default function HiringJourney() {
                   companies and professionals.
                 </p>
               </ScrollAnimation>
+
+              {/* Hiring image + CTA — fills the sticky space beside the timeline (desktop) */}
+              <div className="mt-8 hidden lg:block">
+                <div className="relative h-95 w-full max-w-md overflow-hidden rounded-3xl border border-gray-100 shadow-[0_16px_50px_rgba(37,55,77,0.1)]">
+                  <Image
+                    src="/home/image.jpg"
+                    alt="A recruitment team collaborating and shaking hands during a hiring meeting"
+                    fill
+                    sizes="(min-width: 1024px) 40vw, 100vw"
+                    className="object-cover object-[center_28%]"
+                  />
+                </div>
+
+                <div className="mt-6 max-w-md">
+                  <p className="text-lg font-semibold text-[#252e3d]">
+                    Ready to find your next great hire?
+                  </p>
+                  <Link
+                    href="/contact-us"
+                    className="group mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1f2733] hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
+                  >
+                    Start hiring with us
+                    <RxArrowTopRight className="h-4 w-4 transform transition-transform duration-300 group-hover:rotate-45 group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -111,7 +140,7 @@ export default function HiringJourney() {
               style={{ scaleY, height: "100%" }}
             />
 
-            <div className="space-y-16 md:space-y-20 lg:space-y-24">
+            <div className="space-y-16 md:space-y-16">
               {steps.map((step, index) => (
                 <div
                   key={step.id}

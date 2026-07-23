@@ -44,7 +44,8 @@ export default function TopCompaniesMarquee({
                   alt={logo.alt}
                   width={120}
                   height={48}
-                  className="h-8 w-auto object-contain opacity-90 transition duration-300 hover:opacity-100"
+                  style={{ width: "auto", height: "2rem" }}
+                  className="object-contain opacity-90 transition duration-300 hover:opacity-100"
                 />
               </div>
             ))}
@@ -78,7 +79,8 @@ export default function TopCompaniesMarquee({
                   alt={logo.alt}
                   width={140}
                   height={56}
-                  className="h-10 w-auto object-contain opacity-90 transition duration-300 hover:opacity-100"
+                  style={{ width: "auto", height: "2.5rem" }}
+                  className="object-contain opacity-90 transition duration-300 hover:opacity-100"
                 />
               </div>
             ))}

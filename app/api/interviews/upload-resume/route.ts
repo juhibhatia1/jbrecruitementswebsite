@@ -4,6 +4,23 @@ import { extractTextFromFile } from "@/lib/rag/document-parsers";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import path from "path";
 
+function isImageKitQuotaError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof (error as { message?: unknown }).message === "string"
+      ? (error as { message: string }).message
+      : "";
+  const help =
+    "help" in error && typeof (error as { help?: unknown }).help === "string"
+      ? (error as { help: string }).help
+      : "";
+
+  return /upload limit exceeded/i.test(message) || /upload limit exceeded/i.test(help);
+}
+
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "",
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
@@ -74,6 +91,15 @@ export async function POST(request: Request) {
       resumeUrl = uploadResponse.url;
     } catch (uploadError) {
       console.error("[Upload Resume] ImageKit upload failed:", uploadError);
+      if (isImageKitQuotaError(uploadError)) {
+        return NextResponse.json(
+          {
+            error:
+              "Resume storage is temporarily full on our cloud provider. Please try again later or contact support if the issue persists.",
+          },
+          { status: 507 },
+        );
+      }
       return NextResponse.json(
         { error: "Failed to upload resume to cloud storage. Please try again." },
         { status: 500 },

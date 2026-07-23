@@ -62,23 +62,24 @@ model JobSeekerSubmission {
 }
 
 model Purchase {
-  id                    String    @id @default(cuid())
+  id                    String                @id @default(cuid())
   candidateName         String
   candidateEmail        String
   candidatePhone        String?
   serviceName           String
   amount                Float
-  currency              String    @default("USD")
-  stripePaymentIntentId String    @unique
+  currency              String                @default("USD")
+  stripePaymentIntentId String                @unique
   status                String // "PENDING", "COMPLETED", "FAILED"
   country               String?
   mockInterviewStatus   String? // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
   mockInterviewDate     DateTime?
-  deliveryStatus        String    @default("PENDING") // "PENDING", "COMPLETED"
+  deliveryStatus        String                @default("PENDING") // "PENDING", "COMPLETED"
   deliveryDeadline      DateTime?
   completionNotes       String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  application           CandidateApplication?
 
   @@index([candidateEmail])
   @@index([createdAt])
@@ -218,10 +219,12 @@ model CandidateApplication {
   accessTokenExpiresAt DateTime
   status               CandidateApplicationStatus   @default(APPLIED)
   scheduledAt          DateTime?
+  purchaseId           String?                      @unique
   createdAt            DateTime                     @default(now())
   updatedAt            DateTime                     @updatedAt
   template             InterviewTemplate            @relation(fields: [templateId], references: [id], onDelete: Cascade)
   session              InterviewSession?
+  purchase             Purchase?                    @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 
   @@index([templateId, createdAt])
   @@index([candidateEmail])

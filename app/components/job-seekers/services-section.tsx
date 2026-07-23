@@ -179,11 +179,17 @@ const PROMO_SLIDES = [
                     { value: "92%", label: "Satisfaction" },
                     { value: "24h", label: "Avg. reply" },
                   ]
-                : [
-                    { value: "980+", label: "Prep sessions" },
-                    { value: "79%", label: "Confidence gain" },
-                    { value: "5.0/5", label: "Feedback score" },
-                  ],
+                : service.title === "Ready-to-Apply Job Pack"
+                  ? [
+                      { value: "750+", label: "Job packs sent" },
+                      { value: "15+", label: "Roles per pack" },
+                      { value: "3 days", label: "Turnaround" },
+                    ]
+                  : [
+                      { value: "48h", label: "Turnaround" },
+                      { value: "79%", label: "Confidence gain" },
+                      { value: "5.0/5", label: "Feedback score" },
+                    ],
     iconPath: service.iconPath,
     cta: "Explore this service",
   })),
@@ -238,6 +244,7 @@ export default function ServicesSection({
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [started, setStarted] = useState<boolean>(false);
   const [activePromoSlide, setActivePromoSlide] = useState(0);
+  const [isPromoPaused, setIsPromoPaused] = useState(false);
 
   //  Currency state
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -502,14 +509,14 @@ export default function ServicesSection({
   }, []);
 
   useEffect(() => {
-    if (PROMO_SLIDES.length <= 1) return;
+    if (PROMO_SLIDES.length <= 1 || isPromoPaused) return;
 
     const interval = setInterval(() => {
       setActivePromoSlide((current) => (current + 1) % PROMO_SLIDES.length);
     }, 7000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isPromoPaused]);
 
   const goToPromoSlide = (nextIndex: number) => {
     const boundedIndex =
@@ -541,7 +548,7 @@ export default function ServicesSection({
 
         {/*  Info message  */}
         <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between md:-mt-6">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600">
             Select multiple services and pay in one go, or click{" "}
             <span className="text-[#5a58ab] font-medium">Buy Now</span> for a
             single service.
@@ -648,7 +655,11 @@ export default function ServicesSection({
 
         {/* Service spotlight carousel */}
             <div className="mt-8 md:mt-14">
-          <section className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-4 py-5 shadow-[0_16px_50px_rgba(37,55,77,0.08)] sm:px-5 sm:py-6 md:px-6">
+          <section
+            onMouseEnter={() => setIsPromoPaused(true)}
+            onMouseLeave={() => setIsPromoPaused(false)}
+            className="overflow-hidden rounded-[2rem] border border-[#dde6f7] bg-white px-4 py-5 shadow-[0_16px_50px_rgba(37,55,77,0.08)] sm:px-5 sm:py-6 md:px-6"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-[#f2f0ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">

@@ -57,6 +57,23 @@ function logJobSeekerError(
   console.error("[job-seekers]", JSON.stringify(payload));
 }
 
+function isImageKitQuotaError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof (error as { message?: unknown }).message === "string"
+      ? (error as { message: string }).message
+      : "";
+  const help =
+    "help" in error && typeof (error as { help?: unknown }).help === "string"
+      ? (error as { help: string }).help
+      : "";
+
+  return /upload limit exceeded/i.test(message) || /upload limit exceeded/i.test(help);
+}
+
 export async function POST(request: Request) {
   const requestId = randomUUID();
 
@@ -160,8 +177,9 @@ export async function POST(request: Request) {
       bufferSize: buffer.length,
     });
 
-    // Upload to ImageKit (no local storage fallback)
+    // Upload to ImageKit (fallback to email attachment + DB record if quota is exhausted)
     let fileUrl = "";
+    let imageKitUploadSucceeded = false;
     try {
       logJobSeekerEvent(requestId, "resume.imagekit_upload_started", {
         fileName: file.name,
@@ -174,25 +192,47 @@ export async function POST(request: Request) {
         folder: "/job-seekers-resumes",
       });
       fileUrl = uploadResponse.url;
+      imageKitUploadSucceeded = true;
       logJobSeekerEvent(requestId, "resume.imagekit_upload_succeeded", {
         fileName: file.name,
         fileUrl,
         imagekitFileId: uploadResponse.fileId,
       });
     } catch (uploadError) {
-      logJobSeekerError(
-        requestId,
-        "resume.imagekit_upload_failed",
-        uploadError,
-        {
-          fileName: file.name,
-          fileSize: file.size,
-        },
-      );
-      return NextResponse.json(
-        { error: "Failed to upload resume to cloud storage. Please try again." },
-        { status: 500 },
-      );
+      if (isImageKitQuotaError(uploadError)) {
+        logJobSeekerError(
+          requestId,
+          "resume.imagekit_quota_exceeded",
+          uploadError,
+          {
+            fileName: file.name,
+            fileSize: file.size,
+            action: "continuing_with_email_attachment",
+          },
+        );
+      } else {
+        logJobSeekerError(
+          requestId,
+          "resume.imagekit_upload_failed",
+          uploadError,
+          {
+            fileName: file.name,
+            fileSize: file.size,
+          },
+        );
+        return NextResponse.json(
+          { error: "Failed to upload resume to cloud storage. Please try again." },
+          { status: 500 },
+        );
+      }
+    }
+
+    if (!imageKitUploadSucceeded) {
+      logJobSeekerEvent(requestId, "resume.imagekit_upload_skipped", {
+        fileName: file.name,
+        reason: "quota_or_storage_limit",
+        fallback: "email_attachment_and_database_record",
+      });
     }
 
     // Save to database immediately (independent of email)

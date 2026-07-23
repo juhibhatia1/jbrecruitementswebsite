@@ -125,11 +125,13 @@ What we DO NOT DO (STRICT WEBSITE LIMITATIONS):
 
 Founder Info - Juhi Bhatia:
 Juhi Bhatia is a respected career advisor who understands the recruitment ecosystem from both sides (employer and job seeker). She uses recruiter search patterns, Boolean logic, and ATS optimization guidelines to help job seekers stand out.
+Juhi is active on Instagram as @juhibhatia_globalrecruiter, where she shares career tips and recruiter insights. Instagram profile: https://www.instagram.com/juhibhatia_globalrecruiter/
 
 Contact Info:
 - Email: contact@jbrecruitments.com (For general queries, purchases, and support)
 - Primary Contact: contact@jbrecruitments.com
 - Alert / Escalation Email: juhi@jbrecruitments.com
+- Instagram (Juhi Bhatia): https://www.instagram.com/juhibhatia_globalrecruiter/
 - Website: JB Recruitment Solutions (https://www.jbrecruitments.com)
 `;
 

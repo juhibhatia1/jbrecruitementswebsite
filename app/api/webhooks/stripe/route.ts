@@ -177,6 +177,7 @@ export async function POST(request: Request) {
                   status: "AI_INVITED",
                   accessTokenHash,
                   accessTokenExpiresAt,
+                  purchaseId: purchase.id,
                 },
               });
             } else {
@@ -192,6 +193,7 @@ export async function POST(request: Request) {
                   accessTokenHash,
                   accessTokenExpiresAt,
                   status: "AI_INVITED",
+                  purchaseId: purchase.id,
                 },
               });
             }

@@ -4196,6 +4196,7 @@ export namespace Prisma {
     completionNotes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    application?: boolean | Purchase$applicationArgs<ExtArgs>
   }, ExtArgs["result"]["purchase"]>
 
   export type PurchaseSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4238,10 +4239,16 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
+  export type PurchaseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    application?: boolean | Purchase$applicationArgs<ExtArgs>
+  }
+  export type PurchaseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $PurchasePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Purchase"
-    objects: {}
+    objects: {
+      application: Prisma.$CandidateApplicationPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       candidateName: string
@@ -4624,6 +4631,7 @@ export namespace Prisma {
    */
   export interface Prisma__PurchaseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    application<T extends Purchase$applicationArgs<ExtArgs> = {}>(args?: Subset<T, Purchase$applicationArgs<ExtArgs>>): Prisma__CandidateApplicationClient<$Result.GetResult<Prisma.$CandidateApplicationPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4683,6 +4691,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * Filter, which Purchase to fetch.
      */
     where: PurchaseWhereUniqueInput
@@ -4697,6 +4709,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * Filter, which Purchase to fetch.
      */
     where: PurchaseWhereUniqueInput
@@ -4710,6 +4726,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Purchase
      */
     select?: PurchaseSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
     /**
      * Filter, which Purchase to fetch.
      */
@@ -4755,6 +4775,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * Filter, which Purchase to fetch.
      */
     where?: PurchaseWhereInput
@@ -4799,6 +4823,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * Filter, which Purchases to fetch.
      */
     where?: PurchaseWhereInput
@@ -4837,6 +4865,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Purchase
      */
     select?: PurchaseSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
     /**
      * The data needed to create a Purchase.
      */
@@ -4878,6 +4910,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * The data needed to update a Purchase.
      */
     data: XOR<PurchaseUpdateInput, PurchaseUncheckedUpdateInput>
@@ -4910,6 +4946,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * The filter to search for the Purchase to update in case it exists.
      */
     where: PurchaseWhereUniqueInput
@@ -4932,6 +4972,10 @@ export namespace Prisma {
      */
     select?: PurchaseSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    /**
      * Filter which Purchase to delete.
      */
     where: PurchaseWhereUniqueInput
@@ -4948,6 +4992,21 @@ export namespace Prisma {
   }
 
   /**
+   * Purchase.application
+   */
+  export type Purchase$applicationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateApplication
+     */
+    select?: CandidateApplicationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateApplicationInclude<ExtArgs> | null
+    where?: CandidateApplicationWhereInput
+  }
+
+  /**
    * Purchase without action
    */
   export type PurchaseDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4955,6 +5014,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Purchase
      */
     select?: PurchaseSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
   }
 
 
@@ -10533,6 +10596,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | null
     status: $Enums.CandidateApplicationStatus | null
     scheduledAt: Date | null
+    purchaseId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10551,6 +10615,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | null
     status: $Enums.CandidateApplicationStatus | null
     scheduledAt: Date | null
+    purchaseId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10569,6 +10634,7 @@ export namespace Prisma {
     accessTokenExpiresAt: number
     status: number
     scheduledAt: number
+    purchaseId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -10589,6 +10655,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: true
     status?: true
     scheduledAt?: true
+    purchaseId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10607,6 +10674,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: true
     status?: true
     scheduledAt?: true
+    purchaseId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10625,6 +10693,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: true
     status?: true
     scheduledAt?: true
+    purchaseId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -10716,6 +10785,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date
     status: $Enums.CandidateApplicationStatus
     scheduledAt: Date | null
+    purchaseId: string | null
     createdAt: Date
     updatedAt: Date
     _count: CandidateApplicationCountAggregateOutputType | null
@@ -10751,10 +10821,12 @@ export namespace Prisma {
     accessTokenExpiresAt?: boolean
     status?: boolean
     scheduledAt?: boolean
+    purchaseId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
     session?: boolean | CandidateApplication$sessionArgs<ExtArgs>
+    purchase?: boolean | CandidateApplication$purchaseArgs<ExtArgs>
   }, ExtArgs["result"]["candidateApplication"]>
 
   export type CandidateApplicationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -10771,9 +10843,11 @@ export namespace Prisma {
     accessTokenExpiresAt?: boolean
     status?: boolean
     scheduledAt?: boolean
+    purchaseId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+    purchase?: boolean | CandidateApplication$purchaseArgs<ExtArgs>
   }, ExtArgs["result"]["candidateApplication"]>
 
   export type CandidateApplicationSelectScalar = {
@@ -10790,6 +10864,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: boolean
     status?: boolean
     scheduledAt?: boolean
+    purchaseId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -10797,9 +10872,11 @@ export namespace Prisma {
   export type CandidateApplicationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
     session?: boolean | CandidateApplication$sessionArgs<ExtArgs>
+    purchase?: boolean | CandidateApplication$purchaseArgs<ExtArgs>
   }
   export type CandidateApplicationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     template?: boolean | InterviewTemplateDefaultArgs<ExtArgs>
+    purchase?: boolean | CandidateApplication$purchaseArgs<ExtArgs>
   }
 
   export type $CandidateApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10807,6 +10884,7 @@ export namespace Prisma {
     objects: {
       template: Prisma.$InterviewTemplatePayload<ExtArgs>
       session: Prisma.$InterviewSessionPayload<ExtArgs> | null
+      purchase: Prisma.$PurchasePayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -10822,6 +10900,7 @@ export namespace Prisma {
       accessTokenExpiresAt: Date
       status: $Enums.CandidateApplicationStatus
       scheduledAt: Date | null
+      purchaseId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["candidateApplication"]>
@@ -11190,6 +11269,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     template<T extends InterviewTemplateDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InterviewTemplateDefaultArgs<ExtArgs>>): Prisma__InterviewTemplateClient<$Result.GetResult<Prisma.$InterviewTemplatePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     session<T extends CandidateApplication$sessionArgs<ExtArgs> = {}>(args?: Subset<T, CandidateApplication$sessionArgs<ExtArgs>>): Prisma__InterviewSessionClient<$Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    purchase<T extends CandidateApplication$purchaseArgs<ExtArgs> = {}>(args?: Subset<T, CandidateApplication$purchaseArgs<ExtArgs>>): Prisma__PurchaseClient<$Result.GetResult<Prisma.$PurchasePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11232,6 +11312,7 @@ export namespace Prisma {
     readonly accessTokenExpiresAt: FieldRef<"CandidateApplication", 'DateTime'>
     readonly status: FieldRef<"CandidateApplication", 'CandidateApplicationStatus'>
     readonly scheduledAt: FieldRef<"CandidateApplication", 'DateTime'>
+    readonly purchaseId: FieldRef<"CandidateApplication", 'String'>
     readonly createdAt: FieldRef<"CandidateApplication", 'DateTime'>
     readonly updatedAt: FieldRef<"CandidateApplication", 'DateTime'>
   }
@@ -11564,6 +11645,21 @@ export namespace Prisma {
      */
     include?: InterviewSessionInclude<ExtArgs> | null
     where?: InterviewSessionWhereInput
+  }
+
+  /**
+   * CandidateApplication.purchase
+   */
+  export type CandidateApplication$purchaseArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Purchase
+     */
+    select?: PurchaseSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseInclude<ExtArgs> | null
+    where?: PurchaseWhereInput
   }
 
   /**
@@ -12776,6 +12872,7 @@ export namespace Prisma {
     accessTokenExpiresAt: 'accessTokenExpiresAt',
     status: 'status',
     scheduledAt: 'scheduledAt',
+    purchaseId: 'purchaseId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -13258,6 +13355,7 @@ export namespace Prisma {
     completionNotes?: StringNullableFilter<"Purchase"> | string | null
     createdAt?: DateTimeFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeFilter<"Purchase"> | Date | string
+    application?: XOR<CandidateApplicationNullableRelationFilter, CandidateApplicationWhereInput> | null
   }
 
   export type PurchaseOrderByWithRelationInput = {
@@ -13278,6 +13376,7 @@ export namespace Prisma {
     completionNotes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    application?: CandidateApplicationOrderByWithRelationInput
   }
 
   export type PurchaseWhereUniqueInput = Prisma.AtLeast<{
@@ -13301,6 +13400,7 @@ export namespace Prisma {
     completionNotes?: StringNullableFilter<"Purchase"> | string | null
     createdAt?: DateTimeFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeFilter<"Purchase"> | Date | string
+    application?: XOR<CandidateApplicationNullableRelationFilter, CandidateApplicationWhereInput> | null
   }, "id" | "stripePaymentIntentId">
 
   export type PurchaseOrderByWithAggregationInput = {
@@ -13773,10 +13873,12 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
     scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
+    purchaseId?: StringNullableFilter<"CandidateApplication"> | string | null
     createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
     session?: XOR<InterviewSessionNullableRelationFilter, InterviewSessionWhereInput> | null
+    purchase?: XOR<PurchaseNullableRelationFilter, PurchaseWhereInput> | null
   }
 
   export type CandidateApplicationOrderByWithRelationInput = {
@@ -13793,15 +13895,18 @@ export namespace Prisma {
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
     scheduledAt?: SortOrderInput | SortOrder
+    purchaseId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     template?: InterviewTemplateOrderByWithRelationInput
     session?: InterviewSessionOrderByWithRelationInput
+    purchase?: PurchaseOrderByWithRelationInput
   }
 
   export type CandidateApplicationWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     accessTokenHash?: string
+    purchaseId?: string
     AND?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
     OR?: CandidateApplicationWhereInput[]
     NOT?: CandidateApplicationWhereInput | CandidateApplicationWhereInput[]
@@ -13820,7 +13925,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     template?: XOR<InterviewTemplateRelationFilter, InterviewTemplateWhereInput>
     session?: XOR<InterviewSessionNullableRelationFilter, InterviewSessionWhereInput> | null
-  }, "id" | "accessTokenHash">
+    purchase?: XOR<PurchaseNullableRelationFilter, PurchaseWhereInput> | null
+  }, "id" | "accessTokenHash" | "purchaseId">
 
   export type CandidateApplicationOrderByWithAggregationInput = {
     id?: SortOrder
@@ -13836,6 +13942,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
     scheduledAt?: SortOrderInput | SortOrder
+    purchaseId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CandidateApplicationCountOrderByAggregateInput
@@ -13860,6 +13967,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
     scheduledAt?: DateTimeNullableWithAggregatesFilter<"CandidateApplication"> | Date | string | null
+    purchaseId?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
   }
@@ -14278,6 +14386,7 @@ export namespace Prisma {
     completionNotes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    application?: CandidateApplicationCreateNestedOneWithoutPurchaseInput
   }
 
   export type PurchaseUncheckedCreateInput = {
@@ -14298,6 +14407,7 @@ export namespace Prisma {
     completionNotes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    application?: CandidateApplicationUncheckedCreateNestedOneWithoutPurchaseInput
   }
 
   export type PurchaseUpdateInput = {
@@ -14318,6 +14428,7 @@ export namespace Prisma {
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    application?: CandidateApplicationUpdateOneWithoutPurchaseNestedInput
   }
 
   export type PurchaseUncheckedUpdateInput = {
@@ -14338,6 +14449,7 @@ export namespace Prisma {
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    application?: CandidateApplicationUncheckedUpdateOneWithoutPurchaseNestedInput
   }
 
   export type PurchaseCreateManyInput = {
@@ -14848,6 +14960,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
     session?: InterviewSessionCreateNestedOneWithoutApplicationInput
+    purchase?: PurchaseCreateNestedOneWithoutApplicationInput
   }
 
   export type CandidateApplicationUncheckedCreateInput = {
@@ -14864,6 +14977,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
     scheduledAt?: Date | string | null
+    purchaseId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
@@ -14886,6 +15000,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
     session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
+    purchase?: PurchaseUpdateOneWithoutApplicationNestedInput
   }
 
   export type CandidateApplicationUncheckedUpdateInput = {
@@ -14902,6 +15017,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
     scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    purchaseId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
@@ -14921,6 +15037,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
     scheduledAt?: Date | string | null
+    purchaseId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -14956,6 +15073,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
     scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    purchaseId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15316,6 +15434,11 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type CandidateApplicationNullableRelationFilter = {
+    is?: CandidateApplicationWhereInput | null
+    isNot?: CandidateApplicationWhereInput | null
   }
 
   export type PurchaseCountOrderByAggregateInput = {
@@ -15841,6 +15964,11 @@ export namespace Prisma {
     isNot?: InterviewSessionWhereInput | null
   }
 
+  export type PurchaseNullableRelationFilter = {
+    is?: PurchaseWhereInput | null
+    isNot?: PurchaseWhereInput | null
+  }
+
   export type CandidateApplicationCountOrderByAggregateInput = {
     id?: SortOrder
     templateId?: SortOrder
@@ -15855,6 +15983,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
     scheduledAt?: SortOrder
+    purchaseId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15873,6 +16002,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
     scheduledAt?: SortOrder
+    purchaseId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15891,6 +16021,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: SortOrder
     status?: SortOrder
     scheduledAt?: SortOrder
+    purchaseId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15989,6 +16120,18 @@ export namespace Prisma {
     set?: Date | string
   }
 
+  export type CandidateApplicationCreateNestedOneWithoutPurchaseInput = {
+    create?: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutPurchaseInput
+    connect?: CandidateApplicationWhereUniqueInput
+  }
+
+  export type CandidateApplicationUncheckedCreateNestedOneWithoutPurchaseInput = {
+    create?: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutPurchaseInput
+    connect?: CandidateApplicationWhereUniqueInput
+  }
+
   export type FloatFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -15999,6 +16142,26 @@ export namespace Prisma {
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
+  }
+
+  export type CandidateApplicationUpdateOneWithoutPurchaseNestedInput = {
+    create?: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutPurchaseInput
+    upsert?: CandidateApplicationUpsertWithoutPurchaseInput
+    disconnect?: CandidateApplicationWhereInput | boolean
+    delete?: CandidateApplicationWhereInput | boolean
+    connect?: CandidateApplicationWhereUniqueInput
+    update?: XOR<XOR<CandidateApplicationUpdateToOneWithWhereWithoutPurchaseInput, CandidateApplicationUpdateWithoutPurchaseInput>, CandidateApplicationUncheckedUpdateWithoutPurchaseInput>
+  }
+
+  export type CandidateApplicationUncheckedUpdateOneWithoutPurchaseNestedInput = {
+    create?: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+    connectOrCreate?: CandidateApplicationCreateOrConnectWithoutPurchaseInput
+    upsert?: CandidateApplicationUpsertWithoutPurchaseInput
+    disconnect?: CandidateApplicationWhereInput | boolean
+    delete?: CandidateApplicationWhereInput | boolean
+    connect?: CandidateApplicationWhereUniqueInput
+    update?: XOR<XOR<CandidateApplicationUpdateToOneWithWhereWithoutPurchaseInput, CandidateApplicationUpdateWithoutPurchaseInput>, CandidateApplicationUncheckedUpdateWithoutPurchaseInput>
   }
 
   export type KnowledgeChunkCreateNestedManyWithoutDocumentInput = {
@@ -16129,6 +16292,12 @@ export namespace Prisma {
     connect?: InterviewSessionWhereUniqueInput
   }
 
+  export type PurchaseCreateNestedOneWithoutApplicationInput = {
+    create?: XOR<PurchaseCreateWithoutApplicationInput, PurchaseUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: PurchaseCreateOrConnectWithoutApplicationInput
+    connect?: PurchaseWhereUniqueInput
+  }
+
   export type InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput = {
     create?: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
     connectOrCreate?: InterviewSessionCreateOrConnectWithoutApplicationInput
@@ -16159,6 +16328,16 @@ export namespace Prisma {
     delete?: InterviewSessionWhereInput | boolean
     connect?: InterviewSessionWhereUniqueInput
     update?: XOR<XOR<InterviewSessionUpdateToOneWithWhereWithoutApplicationInput, InterviewSessionUpdateWithoutApplicationInput>, InterviewSessionUncheckedUpdateWithoutApplicationInput>
+  }
+
+  export type PurchaseUpdateOneWithoutApplicationNestedInput = {
+    create?: XOR<PurchaseCreateWithoutApplicationInput, PurchaseUncheckedCreateWithoutApplicationInput>
+    connectOrCreate?: PurchaseCreateOrConnectWithoutApplicationInput
+    upsert?: PurchaseUpsertWithoutApplicationInput
+    disconnect?: PurchaseWhereInput | boolean
+    delete?: PurchaseWhereInput | boolean
+    connect?: PurchaseWhereUniqueInput
+    update?: XOR<XOR<PurchaseUpdateToOneWithWhereWithoutApplicationInput, PurchaseUpdateWithoutApplicationInput>, PurchaseUncheckedUpdateWithoutApplicationInput>
   }
 
   export type InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput = {
@@ -16508,6 +16687,98 @@ export namespace Prisma {
     _max?: NestedEnumInterviewSessionStatusFilter<$PrismaModel>
   }
 
+  export type CandidateApplicationCreateWithoutPurchaseInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
+    session?: InterviewSessionCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationUncheckedCreateWithoutPurchaseInput = {
+    id?: string
+    templateId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    linkedInUrl?: string | null
+    resumeUrl?: string | null
+    resumeText?: string | null
+    interviewPreference: $Enums.CandidateInterviewPreference
+    accessTokenHash: string
+    accessTokenExpiresAt: Date | string
+    status?: $Enums.CandidateApplicationStatus
+    scheduledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
+  }
+
+  export type CandidateApplicationCreateOrConnectWithoutPurchaseInput = {
+    where: CandidateApplicationWhereUniqueInput
+    create: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+  }
+
+  export type CandidateApplicationUpsertWithoutPurchaseInput = {
+    update: XOR<CandidateApplicationUpdateWithoutPurchaseInput, CandidateApplicationUncheckedUpdateWithoutPurchaseInput>
+    create: XOR<CandidateApplicationCreateWithoutPurchaseInput, CandidateApplicationUncheckedCreateWithoutPurchaseInput>
+    where?: CandidateApplicationWhereInput
+  }
+
+  export type CandidateApplicationUpdateToOneWithWhereWithoutPurchaseInput = {
+    where?: CandidateApplicationWhereInput
+    data: XOR<CandidateApplicationUpdateWithoutPurchaseInput, CandidateApplicationUncheckedUpdateWithoutPurchaseInput>
+  }
+
+  export type CandidateApplicationUpdateWithoutPurchaseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
+    session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
+  }
+
+  export type CandidateApplicationUncheckedUpdateWithoutPurchaseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedInUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeText?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
+    accessTokenHash?: StringFieldUpdateOperationsInput | string
+    accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
+    scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
+  }
+
   export type KnowledgeChunkUpdateWithWhereUniqueWithoutDocumentInput = {
     where: KnowledgeChunkWhereUniqueInput
     data: XOR<KnowledgeChunkUpdateWithoutDocumentInput, KnowledgeChunkUncheckedUpdateWithoutDocumentInput>
@@ -16605,6 +16876,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionCreateNestedOneWithoutApplicationInput
+    purchase?: PurchaseCreateNestedOneWithoutApplicationInput
   }
 
   export type CandidateApplicationUncheckedCreateWithoutTemplateInput = {
@@ -16620,6 +16892,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
     scheduledAt?: Date | string | null
+    purchaseId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     session?: InterviewSessionUncheckedCreateNestedOneWithoutApplicationInput
@@ -16668,6 +16941,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
     scheduledAt?: DateTimeNullableFilter<"CandidateApplication"> | Date | string | null
+    purchaseId?: StringNullableFilter<"CandidateApplication"> | string | null
     createdAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateApplication"> | Date | string
   }
@@ -16744,6 +17018,51 @@ export namespace Prisma {
   export type InterviewSessionCreateOrConnectWithoutApplicationInput = {
     where: InterviewSessionWhereUniqueInput
     create: XOR<InterviewSessionCreateWithoutApplicationInput, InterviewSessionUncheckedCreateWithoutApplicationInput>
+  }
+
+  export type PurchaseCreateWithoutApplicationInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    serviceName: string
+    amount: number
+    currency?: string
+    stripePaymentIntentId: string
+    status: string
+    country?: string | null
+    mockInterviewStatus?: string | null
+    mockInterviewDate?: Date | string | null
+    deliveryStatus?: string
+    deliveryDeadline?: Date | string | null
+    completionNotes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PurchaseUncheckedCreateWithoutApplicationInput = {
+    id?: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string | null
+    serviceName: string
+    amount: number
+    currency?: string
+    stripePaymentIntentId: string
+    status: string
+    country?: string | null
+    mockInterviewStatus?: string | null
+    mockInterviewDate?: Date | string | null
+    deliveryStatus?: string
+    deliveryDeadline?: Date | string | null
+    completionNotes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PurchaseCreateOrConnectWithoutApplicationInput = {
+    where: PurchaseWhereUniqueInput
+    create: XOR<PurchaseCreateWithoutApplicationInput, PurchaseUncheckedCreateWithoutApplicationInput>
   }
 
   export type InterviewTemplateUpsertWithoutApplicationsInput = {
@@ -16832,6 +17151,57 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PurchaseUpsertWithoutApplicationInput = {
+    update: XOR<PurchaseUpdateWithoutApplicationInput, PurchaseUncheckedUpdateWithoutApplicationInput>
+    create: XOR<PurchaseCreateWithoutApplicationInput, PurchaseUncheckedCreateWithoutApplicationInput>
+    where?: PurchaseWhereInput
+  }
+
+  export type PurchaseUpdateToOneWithWhereWithoutApplicationInput = {
+    where?: PurchaseWhereInput
+    data: XOR<PurchaseUpdateWithoutApplicationInput, PurchaseUncheckedUpdateWithoutApplicationInput>
+  }
+
+  export type PurchaseUpdateWithoutApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceName?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    mockInterviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deliveryStatus?: StringFieldUpdateOperationsInput | string
+    deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PurchaseUncheckedUpdateWithoutApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateName?: StringFieldUpdateOperationsInput | string
+    candidateEmail?: StringFieldUpdateOperationsInput | string
+    candidatePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceName?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    mockInterviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deliveryStatus?: StringFieldUpdateOperationsInput | string
+    deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type CandidateApplicationCreateWithoutSessionInput = {
     id?: string
     candidateName: string
@@ -16848,6 +17218,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     template: InterviewTemplateCreateNestedOneWithoutApplicationsInput
+    purchase?: PurchaseCreateNestedOneWithoutApplicationInput
   }
 
   export type CandidateApplicationUncheckedCreateWithoutSessionInput = {
@@ -16864,6 +17235,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
     scheduledAt?: Date | string | null
+    purchaseId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -16900,6 +17272,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     template?: InterviewTemplateUpdateOneRequiredWithoutApplicationsNestedInput
+    purchase?: PurchaseUpdateOneWithoutApplicationNestedInput
   }
 
   export type CandidateApplicationUncheckedUpdateWithoutSessionInput = {
@@ -16916,6 +17289,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
     scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    purchaseId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16954,6 +17328,7 @@ export namespace Prisma {
     accessTokenExpiresAt: Date | string
     status?: $Enums.CandidateApplicationStatus
     scheduledAt?: Date | string | null
+    purchaseId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -16974,6 +17349,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUpdateOneWithoutApplicationNestedInput
+    purchase?: PurchaseUpdateOneWithoutApplicationNestedInput
   }
 
   export type CandidateApplicationUncheckedUpdateWithoutTemplateInput = {
@@ -16989,6 +17365,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
     scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    purchaseId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     session?: InterviewSessionUncheckedUpdateOneWithoutApplicationNestedInput
@@ -17007,6 +17384,7 @@ export namespace Prisma {
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumCandidateApplicationStatusFieldUpdateOperationsInput | $Enums.CandidateApplicationStatus
     scheduledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    purchaseId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

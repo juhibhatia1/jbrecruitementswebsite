@@ -79,6 +79,7 @@ model Purchase {
   completionNotes       String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+  application           CandidateApplication?
 
   @@index([candidateEmail])
   @@index([createdAt])
@@ -218,10 +219,12 @@ model CandidateApplication {
   accessTokenExpiresAt DateTime
   status              CandidateApplicationStatus   @default(APPLIED)
   scheduledAt         DateTime?
+  purchaseId          String?                      @unique
   createdAt           DateTime                     @default(now())
   updatedAt           DateTime                     @updatedAt
   template            InterviewTemplate            @relation(fields: [templateId], references: [id], onDelete: Cascade)
   session             InterviewSession?
+  purchase            Purchase?                    @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 
   @@index([templateId, createdAt])
   @@index([candidateEmail])

@@ -48,7 +48,23 @@ async function ensureCandidateApplicationSchema(client: PrismaClient): Promise<v
         ALTER TABLE "CandidateApplication"
           ADD COLUMN IF NOT EXISTS "resumeUrl" TEXT,
           ADD COLUMN IF NOT EXISTS "resumeText" TEXT,
-          ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3);
+          ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3),
+          ADD COLUMN IF NOT EXISTS "purchaseId" TEXT;
+      `);
+
+      await client.$executeRawUnsafe(`
+        CREATE UNIQUE INDEX IF NOT EXISTS "CandidateApplication_purchaseId_key"
+          ON "CandidateApplication"("purchaseId");
+      `);
+
+      await client.$executeRawUnsafe(`
+        DO $$ BEGIN
+          ALTER TABLE "CandidateApplication"
+            ADD CONSTRAINT "CandidateApplication_purchaseId_fkey"
+            FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id")
+            ON DELETE SET NULL ON UPDATE CASCADE;
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
       `);
     })().catch((error) => {
       candidateApplicationSchemaRepairPromise = null;
@@ -74,6 +90,7 @@ function withRetryMiddleware(client: PrismaClient): PrismaClient {
       const isCandidateApplicationSchemaErr =
         msg.includes("CandidateApplication.resumeUrl") ||
         msg.includes("CandidateApplication.scheduledAt") ||
+        msg.includes("CandidateApplication.purchaseId") ||
         (msg.includes("CandidateApplication") && msg.includes("does not exist"));
 
       if (isCandidateApplicationSchemaErr) {

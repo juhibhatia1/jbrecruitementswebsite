@@ -30,6 +30,7 @@ export default function WhyJBSection() {
               src="/logo.avif"
               alt="Professional workspace with laptop and office supplies"
               fill
+              sizes="(max-width: 1024px) 100vw, 600px"
               className="object-contain"
               priority
             />

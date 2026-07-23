@@ -130,7 +130,7 @@ export default function JobSeekersForm() {
 
   return (
     <div
-      className="w-full mx-auto pt-0 lg:pt-10"
+      className="w-full mx-auto pt-0 lg:pt-5"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       {/* Custom alert popup */}
