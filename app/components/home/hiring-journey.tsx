@@ -99,6 +99,15 @@ export default function HiringJourney() {
                   create alignment, clarity, and meaningful outcomes for both
                   companies and professionals.
                 </p>
+
+                <p className="mt-4 max-w-md text-base md:text-lg leading-relaxed text-[#252e3d]">
+                  Our expertise lies in{" "}
+                  <span className="font-semibold">Technology and Finance</span>{" "}
+                  recruitment, helping businesses access top talent across
+                  global markets. However, our recruitment capabilities extend
+                  beyond these sectors, supporting organizations across diverse
+                  industries and functions.
+                </p>
               </ScrollAnimation>
 
               {/* Hiring image + CTA — fills the sticky space beside the timeline (desktop) */}
