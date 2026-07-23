@@ -513,7 +513,9 @@ export function EmployeeInterviewsDashboard({
 
 function InterviewConfigSection() {
   const [config, setConfig] = useState<InterviewConfig>(DEFAULT_CONFIG);
+  const [draft, setDraft] = useState<InterviewConfig>(DEFAULT_CONFIG);
   const [mounted, setMounted] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -524,12 +526,14 @@ function InterviewConfigSection() {
       const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<InterviewConfig>;
-        setConfig({
+        const loaded: InterviewConfig = {
           defaultDurationMinutes: parsed.defaultDurationMinutes ?? DEFAULT_CONFIG.defaultDurationMinutes,
           defaultVoice: (parsed.defaultVoice && OPENAI_REALTIME_VOICES.includes(parsed.defaultVoice as Voice))
             ? parsed.defaultVoice as Voice
             : DEFAULT_CONFIG.defaultVoice,
-        });
+        };
+        setConfig(loaded);
+        setDraft(loaded);
       }
     } catch {
       // ignore
@@ -544,16 +548,21 @@ function InterviewConfigSection() {
     saveTimerRef.current = setTimeout(() => setSaved(false), 2000);
   };
 
-  const setDuration = (value: number) => {
-    const next = { ...config, defaultDurationMinutes: value };
-    setConfig(next);
-    persist(next);
+  const handleEdit = () => {
+    setDraft({ ...config });
+    setEditMode(true);
+    setSaved(false);
   };
 
-  const setVoice = (voice: Voice) => {
-    const next = { ...config, defaultVoice: voice };
-    setConfig(next);
-    persist(next);
+  const handleSave = () => {
+    setConfig(draft);
+    persist(draft);
+    setEditMode(false);
+  };
+
+  const handleCancel = () => {
+    setDraft({ ...config });
+    setEditMode(false);
   };
 
   const handleVoicePreview = (voice: string) => {
@@ -587,118 +596,204 @@ function InterviewConfigSection() {
           </h2>
           <p className="mt-1 text-sm text-slate-500">Default settings applied to all new interviews.</p>
         </div>
-        {saved && (
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Saved
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {saved && !editMode && (
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Saved
+            </span>
+          )}
+          {!editMode && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-slate-500">
+                <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm1.414 1.06a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354l-1.086-1.086ZM11.189 6.25 9.75 4.81l-6.286 6.287a.25.25 0 0 0-.064.108l-.558 1.953 1.953-.558a.249.249 0 0 0 .108-.064l6.286-6.286Z" />
+              </svg>
+              Edit
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Duration */}
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Duration</p>
-          <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-5">
-            <div className="flex items-center justify-between mb-3">
+      {/* View mode */}
+      {!editMode && (
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Duration</p>
+            <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-5 flex items-center justify-between">
               <span className="text-sm font-medium text-slate-600">Interview length</span>
-              <span className="rounded-xl bg-[#f0efff] px-3 py-1 text-sm font-bold text-[#5a58ab]">
+              <span className="rounded-xl bg-[#f0efff] px-4 py-2 text-base font-bold text-[#5a58ab]">
                 {config.defaultDurationMinutes} min
               </span>
             </div>
-            <input
-              type="range"
-              min={10}
-              max={120}
-              step={5}
-              value={config.defaultDurationMinutes}
-              onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full accent-[#5a58ab]"
-            />
-            <div className="flex justify-between mt-1 text-[10px] font-semibold text-slate-400">
-              <span>10 min</span>
-              <span>60 min</span>
-              <span>120 min</span>
-            </div>
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {[15, 30, 45, 60].map((preset) => (
+          </div>
+
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Voice</p>
+            <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-5">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#5a58ab] bg-[#f0efff] px-4 py-3">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold capitalize text-[#252e3d]">{config.defaultVoice}</span>
+                    {RECOMMENDED_VOICES.includes(config.defaultVoice) && (
+                      <span className="rounded-full bg-[#5a58ab]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#5a58ab]">Best</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[10px] text-slate-500">{VOICE_DESCRIPTIONS[config.defaultVoice]}</p>
+                </div>
                 <button
-                  key={preset}
                   type="button"
-                  onClick={() => setDuration(preset)}
-                  className={`rounded-xl border py-2 text-xs font-semibold transition ${
-                    config.defaultDurationMinutes === preset
+                  onClick={() => handleVoicePreview(config.defaultVoice)}
+                  title={previewingVoice === config.defaultVoice ? "Stop preview" : "Preview voice"}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition ${
+                    previewingVoice === config.defaultVoice
                       ? "border-[#5a58ab] bg-[#5a58ab] text-white"
-                      : "border-slate-200 text-slate-600 hover:border-[#5a58ab] hover:text-[#5a58ab]"
+                      : "border-[#5a58ab]/40 bg-white text-[#5a58ab] hover:bg-[#5a58ab] hover:text-white"
                   }`}
                 >
-                  {preset}m
+                  {previewingVoice === config.defaultVoice ? (
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                      <rect x="3" y="3" width="4" height="10" rx="1" />
+                      <rect x="9" y="3" width="4" height="10" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                      <path d="M4 3l9 5-9 5V3z" />
+                    </svg>
+                  )}
                 </button>
-              ))}
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Voice */}
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Voice</p>
-          <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-5">
-            <div className="grid grid-cols-2 gap-2">
-              {OPENAI_REALTIME_VOICES.map((voice) => {
-                const isSelected = config.defaultVoice === voice;
-                const isPreviewing = previewingVoice === voice;
-                const isRecommended = RECOMMENDED_VOICES.includes(voice);
-                return (
-                  <div
-                    key={voice}
-                    className={`flex items-center justify-between gap-2 rounded-xl border p-3 transition cursor-pointer ${
-                      isSelected
-                        ? "border-[#5a58ab] bg-[#f0efff]"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                    }`}
-                    onClick={() => setVoice(voice)}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold capitalize text-[#252e3d]">{voice}</span>
-                        {isRecommended && (
-                          <span className="rounded-full bg-[#5a58ab]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#5a58ab]">
-                            Best
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-[10px] text-slate-500 truncate">{VOICE_DESCRIPTIONS[voice]}</p>
-                    </div>
+      {/* Edit mode */}
+      {editMode && (
+        <>
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Duration */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Duration</p>
+              <div className="rounded-2xl border border-[#5a58ab]/30 bg-[#fbfbfd] p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-slate-600">Interview length</span>
+                  <span className="rounded-xl bg-[#f0efff] px-3 py-1 text-sm font-bold text-[#5a58ab]">
+                    {draft.defaultDurationMinutes} min
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={120}
+                  step={5}
+                  value={draft.defaultDurationMinutes}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, defaultDurationMinutes: Number(e.target.value) }))}
+                  className="w-full accent-[#5a58ab]"
+                />
+                <div className="flex justify-between mt-1 text-[10px] font-semibold text-slate-400">
+                  <span>10 min</span>
+                  <span>60 min</span>
+                  <span>120 min</span>
+                </div>
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  {[15, 30, 45, 60].map((preset) => (
                     <button
+                      key={preset}
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleVoicePreview(voice);
-                      }}
-                      title={isPreviewing ? "Stop preview" : "Preview voice"}
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition ${
-                        isPreviewing
+                      onClick={() => setDraft((prev) => ({ ...prev, defaultDurationMinutes: preset }))}
+                      className={`rounded-xl border py-2 text-xs font-semibold transition ${
+                        draft.defaultDurationMinutes === preset
                           ? "border-[#5a58ab] bg-[#5a58ab] text-white"
-                          : "border-slate-200 bg-white text-slate-500 hover:border-[#5a58ab] hover:text-[#5a58ab]"
+                          : "border-slate-200 text-slate-600 hover:border-[#5a58ab] hover:text-[#5a58ab]"
                       }`}
                     >
-                      {isPreviewing ? (
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-                          <rect x="3" y="3" width="4" height="10" rx="1" />
-                          <rect x="9" y="3" width="4" height="10" rx="1" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-                          <path d="M4 3l9 5-9 5V3z" />
-                        </svg>
-                      )}
+                      {preset}m
                     </button>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Voice */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Default Voice</p>
+              <div className="rounded-2xl border border-[#5a58ab]/30 bg-[#fbfbfd] p-5">
+                <div className="grid grid-cols-2 gap-2">
+                  {OPENAI_REALTIME_VOICES.map((voice) => {
+                    const isSelected = draft.defaultVoice === voice;
+                    const isPreviewing = previewingVoice === voice;
+                    const isRecommended = RECOMMENDED_VOICES.includes(voice);
+                    return (
+                      <div
+                        key={voice}
+                        className={`flex items-center justify-between gap-2 rounded-xl border p-3 transition cursor-pointer ${
+                          isSelected
+                            ? "border-[#5a58ab] bg-[#f0efff]"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
+                        onClick={() => setDraft((prev) => ({ ...prev, defaultVoice: voice }))}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-semibold capitalize text-[#252e3d]">{voice}</span>
+                            {isRecommended && (
+                              <span className="rounded-full bg-[#5a58ab]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#5a58ab]">
+                                Best
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-[10px] text-slate-500 truncate">{VOICE_DESCRIPTIONS[voice]}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleVoicePreview(voice); }}
+                          title={isPreviewing ? "Stop preview" : "Preview voice"}
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition ${
+                            isPreviewing
+                              ? "border-[#5a58ab] bg-[#5a58ab] text-white"
+                              : "border-slate-200 bg-white text-slate-500 hover:border-[#5a58ab] hover:text-[#5a58ab]"
+                          }`}
+                        >
+                          {isPreviewing ? (
+                            <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                              <rect x="3" y="3" width="4" height="10" rx="1" />
+                              <rect x="9" y="3" width="4" height="10" rx="1" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                              <path d="M4 3l9 5-9 5V3z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+
+          <div className="flex items-center gap-3 mt-6">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="rounded-xl bg-[#5a58ab] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4a49a0] transition"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
