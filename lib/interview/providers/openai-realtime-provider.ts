@@ -332,7 +332,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
               type: "server_vad",
               threshold: 0.82,
               prefix_padding_ms: 200,
-              silence_duration_ms: 900,
+              silence_duration_ms: 1500,
             },
             transcription: { model: "whisper-1" },
           },

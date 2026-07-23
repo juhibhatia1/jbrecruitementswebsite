@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isValidAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { isValidEmployeeSessionToken, EMPLOYEE_SESSION_COOKIE } from "@/lib/employee-auth";
 import { sendInterviewResultsToCandidate } from "@/lib/emailService";
+import { buildAppUrl } from "@/lib/app-url";
 import type { InterviewFinalReport, InterviewEvaluationEvent } from "@/lib/interview/types";
 
 type RouteContext = { params: Promise<{ sessionId: string }> };
@@ -64,9 +65,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       feedback:       e.feedback,
       improvementTip: e.improvementTip,
     })),
-    resultsPageUrl: process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${sessionId}`
-      : undefined,
+    resultsPageUrl: buildAppUrl(`/interview/results/${sessionId}`),
   });
 
   if (!result.success) {

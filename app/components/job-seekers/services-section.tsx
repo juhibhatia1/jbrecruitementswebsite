@@ -196,9 +196,9 @@ const PROMO_SLIDES = [
       "Get role-specific questions and feedback",
     ],
     metrics: [
-      { value: "1.8k+", label: "Mock sessions" },
+      { value: "80k+", label: "Mock sessions" },
       { value: "88%", label: "Skill lift" },
-      { value: "5 min", label: "Start time" },
+      { value: "30 min", label: "Start time" },
     ],
     iconPath: OPPORTUNITIES_SERVICE.iconPath,
     cta: "Browse interview options",
@@ -324,7 +324,7 @@ export default function ServicesSection({
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
             console.log(
-              `[geo] Detected country: ${code} â†’ currency: ${detected}`,
+              `[geo] Detected country: ${code} → currency: ${detected}`,
             );
             setCurrency(detected);
             sessionStorage.setItem(GEO_CACHE_KEY, detected);

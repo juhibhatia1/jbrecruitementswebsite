@@ -317,7 +317,7 @@ We understand that job searching can sometimes feel overwhelming, so here’s a 
 
 Also, make sure your resume is ATS-friendly and your LinkedIn profile is well-optimized with the right keywords and skills for the roles you’re aiming for.
 
-If you need any support with this or would like career guidance, you can explore the “Services” section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
+If you need any support with this or would like career guidance, you can explore the "Services" section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
 
 Wishing you all the very best in your job search - Team JB is rooting for you.
 
@@ -336,7 +336,7 @@ We understand that job searching can sometimes feel overwhelming, so here’s a 
 
 Also, make sure your resume is ATS-friendly and your LinkedIn profile is well-optimized with the right keywords and skills for the roles you’re aiming for.
 
-If you need any support with this or would like career guidance, you can explore the “Services” section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
+If you need any support with this or would like career guidance, you can explore the "Services" section on our founder Juhi Bhatia’s LinkedIn profile - we’d be more than happy to support you.
 
 Wishing you all the very best in your job search - Team JB is rooting for you.
 

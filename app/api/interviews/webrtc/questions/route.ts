@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
     }
 
     const openai = new OpenAI({ apiKey });
-    const model = process.env.OPENAI_TEMPLATE_MODEL || "gpt-4o";
+    // Use a fast model for real-time question generation — gpt-4o-mini is sufficient
+    // for generating interview questions mid-session and significantly faster than gpt-4o.
+    const model = process.env.OPENAI_QUESTIONS_MODEL || process.env.OPENAI_TEMPLATE_MODEL || "gpt-4o-mini";
     const requestedTypes = normalizeQuestionTypes(body.questionTypes);
     const count = Math.min(4, Math.max(1, Math.floor(Number(body.count ?? 3))));
     const techStack = application.template.techStack?.join(", ") || "General";

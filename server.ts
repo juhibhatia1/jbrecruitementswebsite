@@ -16,6 +16,7 @@ import {
 import { GeminiLiveInterviewProvider } from "./lib/interview/providers/gemini-live-provider";
 import { OpenAiRealtimeProvider } from "./lib/interview/providers/openai-realtime-provider";
 import { getMailerTransporter } from "./lib/mailer";
+import { buildAppUrl } from "./lib/app-url";
 import { escapeHtml } from "./lib/security";
 import { sendInterviewResultsToCandidate } from "./lib/emailService";
 
@@ -440,9 +441,7 @@ nextApp
               weaknesses: finalReport.weaknesses ?? [],
               improvements: finalReport.improvements,
               evaluationEvents: accumulator.events,
-              resultsPageUrl: (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL)
-                ? `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/interview/results/${interviewSessionId}`
-                : undefined,
+              resultsPageUrl: buildAppUrl(`/interview/results/${interviewSessionId}`),
             }),
           ]);
         }
@@ -657,6 +656,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
 - MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
+- TOOL CALL SILENCE: When calling any tool (save_interview_event, show_reference_card, finalize_interview_report), do NOT say anything out loud. Never say phrases like "I'll note that", "I'll generate a follow-up", "Let me get the next question", "I'll save that", "One moment", or any other verbal filler while invoking a tool. Call the tool silently and continue speaking naturally afterwards.
 `;
 
             let systemInstructions = baseInstructions + dynamicGuidelines;
@@ -883,6 +883,7 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
 - MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
+- TOOL CALL SILENCE: When calling any tool (save_interview_event, show_reference_card, finalize_interview_report), do NOT say anything out loud. Never say phrases like "I'll note that", "I'll generate a follow-up", "Let me get the next question", "I'll save that", "One moment", or any other verbal filler while invoking a tool. Call the tool silently and continue speaking naturally afterwards.
 `;
 
           void devProvider.connect({

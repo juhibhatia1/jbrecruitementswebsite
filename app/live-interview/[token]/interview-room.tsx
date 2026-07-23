@@ -40,6 +40,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [finalReport, setFinalReport] = useState<InterviewFinalReport | null>(null);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
+  const [aiThinkingText, setAiThinkingText] = useState("Thinking…");
   const [isStarting, setIsStarting] = useState(false);
   const [micLocked, setMicLocked] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -561,7 +562,10 @@ export default function InterviewRoom({ token }: { token: string }) {
         onInterrupted: () => handleTransportMessage({ type: "ai_interrupted" }),
         onComplete: () => handleTransportMessage({ type: "interview_complete" }),
         onAssistantSpeakingChange: (speaking) => setAiSpeaking(speaking),
-        onThinkingChange: (thinking) => setAiThinking(thinking),
+        onThinkingChange: (thinking, context) => {
+          setAiThinking(thinking);
+          if (thinking && context) setAiThinkingText(context);
+        },
         // Temporarily mute/unmute mic tracks without changing the UI locked state.
         // This prevents AI voice echo from reaching VAD and being transcribed as
         // fake candidate answers ("get the recent data..." hallucination pattern).
@@ -939,19 +943,18 @@ export default function InterviewRoom({ token }: { token: string }) {
         {/* Left: JB circle logo in the center — fixed size, bg white panel, border right */}
         <div className="flex flex-col items-center justify-center px-6 py-6 shrink-0 lg:w-80 lg:border-r lg:border-slate-200 bg-white h-[260px] lg:h-auto shadow-sm">
           <div className="relative w-48 h-48 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#5a58ab]/10 via-[#7b79d4]/5 to-transparent border border-slate-100 shadow-inner">
-            {/* Pulsing rings: purple when speaking, amber when thinking */}
-            {aiSpeaking && (
-              <>
-                <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
-                <div className="absolute inset-4 rounded-full bg-[#5a58ab]/20 animate-pulse" />
-              </>
-            )}
-            {!aiSpeaking && aiThinking && (
+            {/* Thinking takes priority over Speaking for rings */}
+            {aiThinking ? (
               <>
                 <div className="absolute inset-0 rounded-full bg-amber-400/10 animate-ping" style={{ animationDuration: "1.4s" }} />
                 <div className="absolute inset-4 rounded-full bg-amber-400/15 animate-pulse" />
               </>
-            )}
+            ) : aiSpeaking ? (
+              <>
+                <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
+                <div className="absolute inset-4 rounded-full bg-[#5a58ab]/20 animate-pulse" />
+              </>
+            ) : null}
             <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-[#7b79d4] via-[#5a58ab] to-[#3d3b8a] flex items-center justify-center text-white font-bold text-4xl shadow-lg border-2 border-white/20 transition-transform duration-300 ${aiSpeaking ? "scale-105" : "scale-100"}`}>
               JB
             </div>
@@ -959,13 +962,13 @@ export default function InterviewRoom({ token }: { token: string }) {
           <div className="mt-4 text-center">
             <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
             <p className="text-xs mt-0.5 font-medium">
-              {aiSpeaking ? (
-                <span className="text-[#5a58ab]">Speaking…</span>
-              ) : aiThinking ? (
+              {aiThinking ? (
                 <span className="text-amber-500 flex items-center justify-center gap-1">
                   <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                  Thinking…
+                  {aiThinkingText}
                 </span>
+              ) : aiSpeaking ? (
+                <span className="text-[#5a58ab]">Speaking…</span>
               ) : (
                 <span className="text-slate-500">Listening…</span>
               )}
