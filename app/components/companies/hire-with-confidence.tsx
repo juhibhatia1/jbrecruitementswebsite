@@ -12,10 +12,7 @@ export default function HireWithConfidence() {
             Hire with Confidence
           </h1>
           <p className="mx-auto max-w-3xl text-[#252e3d] text-base md:text-lg lg:text-xl leading-relaxed text-left raleway">
-            Hiring is one of the most crucial decisions a business makes. At JB, we treat it with the importance it deserves. Our
-            recruitment approach goes beyond matching skills - we look at
-            culture compatibility, long-term potential, and the real impact a
-            candidate can bring to the team.
+            Specializing in IT, Tech and Finance recruitment, JB helps businesses across diverse industries find the right talent. Our approach goes beyond matching skills - we focus on culture fit, long-term potential, and candidates who create lasting impact for your team.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 ﻿import JobSeekersForm from "../components/job-seekers/job-seekers-form";
 import ServicesSection from "../components/job-seekers/services-section";
 import ReviewsCarousel from "../components/job-seekers/reviews-carousel";
+import TermsAndConditions from "../components/job-seekers/terms-and-conditions";
 import ScrollAnimation from "../components/ui/scroll-animation";
 import { jobSeekersMetadata } from "../lib/metadata";
 import { prisma } from "@/lib/prisma";
@@ -153,48 +154,8 @@ export default async function JobSeekersPage() {
           />
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 pb-14 sm:px-5 md:px-6 md:pb-20">
-          <section className="overflow-hidden px-5 py-4">
-            <div className="max-w-6xl">
-              <h4
-                className="text-lg font-semibold text-[#252e3d] sm:text-xl lg:text-2xl"
-                style={{ fontFamily: "Crimson Text, serif" }}
-              >
-                Terms & Conditions
-              </h4>
-              <p className="mt-2 text-sm leading-relaxed text-gray-700 sm:text-base">
-                Please review our service terms carefully before making a
-                purchase.
-              </p>
-              <ol className="mt-4 list-inside list-decimal space-y-2 text-sm leading-relaxed text-gray-700 sm:text-base">
-                <li>
-                  <span className="font-semibold">No Refund Policy:</span> All
-                  services are non-refundable once payment has been made, as
-                  work begins immediately on strategy, review, and
-                  documentation.
-                </li>
-                <li>
-                  <span className="font-semibold">Revision Window:</span>{" "}
-                  Revision requests must be shared within 10 days of receiving
-                  the first edited draft (or within 10 days of LinkedIn
-                  optimization for LinkedIn services). Requests after this
-                  period may require an additional fee.
-                </li>
-                <li>
-                  <span className="font-semibold">Client Responsibility:</span>{" "}
-                  Clients are responsible for providing accurate information,
-                  career details, and required documents on time. Delays in
-                  sharing information may impact turnaround time.
-                </li>
-                <li>
-                  <span className="font-semibold">Service Scope:</span> Services
-                  include editing, optimization, and professional structuring
-                  of provided information. We do not guarantee job placement,
-                  interview calls, or hiring outcomes.
-                </li>
-              </ol>
-            </div>
-          </section>
+        <div className="mx-auto max-w-7xl px-4 pb-14 text-center sm:px-5 md:px-6 md:pb-20">
+          <TermsAndConditions />
         </div>
       </main>
     </div>

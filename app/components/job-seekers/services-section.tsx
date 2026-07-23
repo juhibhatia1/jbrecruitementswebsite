@@ -654,7 +654,7 @@ export default function ServicesSection({
         </div>
 
         {/* Service spotlight carousel */}
-            <div className="mt-8 md:mt-14">
+            <div className="mx-auto mt-8 max-w-4xl md:mt-14">
           <section
             onMouseEnter={() => setIsPromoPaused(true)}
             onMouseLeave={() => setIsPromoPaused(false)}
@@ -675,8 +675,9 @@ export default function ServicesSection({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-stretch">
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f8f8ff] to-white p-4 sm:p-5 md:p-7">
+            <div className="mt-5 lg:items-stretch">
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e5ebf8] bg-linear-to-br from-[#f6f5ff] via-white to-white p-5 sm:p-7 md:p-8">
+                {/* Top row: eyebrow + arrows */}
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center rounded-full bg-[#eae8ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5a58ab]">
                     {currentPromo.eyebrow}
@@ -701,75 +702,96 @@ export default function ServicesSection({
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center md:mt-5 md:gap-5">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm sm:h-20 sm:w-20">
-                    <img
-                      src={currentPromo.iconPath}
-                      alt={currentPromo.title}
-                      className="h-8 w-8 object-contain sm:h-10 sm:w-10"
-                    />
-                  </div>
+                {/* Body: content (left) + metrics (right) */}
+                <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-10">
+                  {/* Content */}
+                  <div>
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-[#eae8ff] to-white shadow-sm sm:h-[72px] sm:w-[72px]">
+                        <img
+                          src={currentPromo.iconPath}
+                          alt={currentPromo.title}
+                          className="h-8 w-8 object-contain sm:h-9 sm:w-9"
+                        />
+                      </div>
 
-                  <div className="min-w-0">
-                    <h4 className="text-xl font-semibold tracking-tight text-[#252e3d] sm:text-2xl">
-                      {currentPromo.title}
-                    </h4>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6476]">
-                      {currentPromo.summary}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {currentPromo.benefit.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-[#e5ebf8] bg-white px-3 py-1 text-xs font-medium text-[#4b5563]"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
-                  {currentPromo.metrics?.map((metric) => (
-                    <div
-                      key={metric.label}
-                      className="rounded-2xl border border-[#e5ebf8] bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3"
-                    >
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8a93a8]">
-                        {metric.label}
-                      </p>
-                      <p className="mt-1 text-xl font-bold tracking-tight text-[#252e3d] sm:text-2xl">
-                        {metric.value}
-                      </p>
+                      <div className="min-w-0">
+                        <h4
+                          className="text-2xl font-semibold tracking-tight text-[#252e3d] sm:text-3xl"
+                          style={{ fontFamily: "Crimson Text, serif" }}
+                        >
+                          {currentPromo.title}
+                        </h4>
+                        <p className="mt-2 text-sm leading-6 text-[#5b6476] sm:text-base">
+                          {currentPromo.summary}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
 
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#8a93a8]">
-                    {currentPromo.cta}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {PROMO_SLIDES.map((slide, index) => (
-                      <button
-                        key={`${slide.title}-${index}`}
-                        type="button"
-                        onClick={() => setActivePromoSlide(index)}
-                        className={`h-2.5 rounded-full transition-all duration-300 ${
-                          index === activePromoSlide
-                            ? "w-8 bg-[#5a58ab]"
-                            : "w-2.5 bg-[#d6ddf0] hover:bg-[#bac6e3]"
-                        }`}
-                        aria-label={`Go to ${slide.title}`}
-                      />
+                    <div className="mt-5 flex flex-col items-start gap-2">
+                      {currentPromo.benefit.map((item) => (
+                        <span
+                          key={item}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[#e5ebf8] bg-white px-3 py-1.5 text-xs font-medium text-[#4b5563]"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#5a58ab]" />
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        servicesGridRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        })
+                      }
+                      className="group mt-6 inline-flex items-center gap-2 rounded-full bg-[#5a58ab] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#4a489b] hover:shadow-md active:scale-[0.98] cursor-pointer"
+                    >
+                      {currentPromo.cta}
+                      <IoArrowForward className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </button>
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                    {currentPromo.metrics?.map((metric) => (
+                      <div
+                        key={metric.label}
+                        className="rounded-2xl border border-[#e5ebf8] bg-white px-4 py-3.5 shadow-sm"
+                      >
+                        <p className="text-2xl font-bold tracking-tight text-[#5a58ab] sm:text-3xl">
+                          {metric.value}
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
+                          {metric.label}
+                        </p>
+                      </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Pagination dots */}
+                <div className="mt-7 flex items-center justify-center gap-2">
+                  {PROMO_SLIDES.map((slide, index) => (
+                    <button
+                      key={`${slide.title}-${index}`}
+                      type="button"
+                      onClick={() => setActivePromoSlide(index)}
+                      className={`h-2.5 rounded-full transition-all duration-300 ${
+                        index === activePromoSlide
+                          ? "w-8 bg-[#5a58ab]"
+                          : "w-2.5 bg-[#d6ddf0] hover:bg-[#bac6e3]"
+                      }`}
+                      aria-label={`Go to ${slide.title}`}
+                    />
+                  ))}
+                </div>
               </div>
 
-              <div className="grid w-full gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
+              {/* <div className="grid w-full gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
                 <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
                     Best for
@@ -797,7 +819,7 @@ export default function ServicesSection({
                     immediately with less friction.
                   </p>
                 </div>
-              </div>
+              </div> */}
             </div>
           </section>
         </div>

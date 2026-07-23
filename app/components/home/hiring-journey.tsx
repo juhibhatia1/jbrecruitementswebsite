@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CiRoute } from "react-icons/ci";
 import { RxArrowTopRight } from "react-icons/rx";
+import { IoBriefcaseOutline } from "react-icons/io5";
 import { motion, useScroll, useSpring } from "framer-motion";
 import ScrollAnimation from "../ui/scroll-animation";
 
@@ -100,14 +101,40 @@ export default function HiringJourney() {
                   companies and professionals.
                 </p>
 
-                <p className="mt-4 max-w-md text-base md:text-lg leading-relaxed text-[#252e3d]">
-                  Our expertise lies in{" "}
-                  <span className="font-semibold">Technology and Finance</span>{" "}
-                  recruitment, helping businesses access top talent across
-                  global markets. However, our recruitment capabilities extend
-                  beyond these sectors, supporting organizations across diverse
-                  industries and functions.
-                </p>
+                <div className="relative mt-8 max-w-md overflow-hidden rounded-2xl border border-[#d9d5f7] border-l-4 border-l-[#5a58ab] bg-linear-to-br from-[#eeecff] via-[#f5f4ff] to-white p-6 shadow-[0_18px_45px_rgba(96,93,186,0.18)] sm:p-8">
+                  <div className="relative">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#e7e4ff] text-[#5a58ab] shadow-sm">
+                      <IoBriefcaseOutline size={24} />
+                    </div>
+
+                    <p className="mt-5 text-base font-semibold uppercase tracking-[0.18em] text-[#605dba]">
+                      Areas of specialization
+                    </p>
+
+                    <div className="mt-5 flex flex-wrap gap-2.5">
+                      <span className="inline-flex items-center rounded-full border border-[#dcd8f8] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#5a58ab] shadow-sm">
+                        IT
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-[#dcd8f8] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#5a58ab] shadow-sm">
+                        Technology
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-[#dcd8f8] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#5a58ab] shadow-sm">
+                        Finance
+                      </span>
+                    </div>
+
+                    <div className="mt-7 h-px w-full bg-[#e3e0f7]" />
+
+                    <p className="mt-7 text-base leading-relaxed text-[#3d4557] md:text-lg">
+                      <span className="font-semibold text-[#252e3d]">
+                        Our expertise lies in IT, Tech and Finance recruitment,
+                        helping businesses access top talent across global
+                        markets.
+                      </span>{" "}<br/><br/>
+                      Beyond our core expertise, we support organizations across a wide range of industries with their recruitment needs.
+                    </p>
+                  </div>
+                </div>
               </ScrollAnimation>
 
               {/* Hiring image + CTA — fills the sticky space beside the timeline (desktop) */}
