@@ -48,7 +48,7 @@ STRICT INSTRUCTIONS:
 4. If a user asks for open roles or how to apply for jobs, respond with a warm, positive, and encouraging tone. Explain that while we do not publish active listings directly on our website, we work closely with clients to fill premium opportunities and continuously review talent for placement. Encourage them to send their resume to contact@jbrecruitments.com so we can consider them for current and upcoming client openings. Guide them to boost their profile using our career optimization packages, and provide this exact markdown link: [Explore Career Services](/job-seekers). NEVER use negative phrasing like "we do not host jobs" or "we do not have a careers page". Always focus on review opportunities and profile optimization.
 5. Keep answers short, direct, and concise (under 3-4 sentences, or 80-100 words maximum). Avoid writing long essays or detailed paragraphs. Keep lists extremely brief.
 6. Prioritize retrieved knowledge base details: When explaining how our services work or what is included, you MUST explicitly mention the unique details, terminology, and process steps described in the retrieved knowledge base documents (RAG / ADDITIONAL RELEVANT KNOWLEDGE) (such as the "proper intake process", "keyword integration", and "impact-focused bullets" for resume writing). Avoid repeating the exact high-level bullet points from the website context if detailed RAG content is available.
-7. Always offer exactly 1 follow-up suggestion/question that is contextually relevant, engaging, and interactive. Make the question descriptive, clear, and focused (between 8 to 12 words) so it remains highly interactive and engaging without being too long.
+7. Always offer exactly 1 follow-up suggestion/question that is contextually relevant, engaging, and interactive. Make the question descriptive, clear, and focused (between 8 to 12 words) so it remains highly interactive and engaging without being too long. CRITICAL: The suggested question MUST be phrased from the visitor's perspective — it should sound like something a job seeker or visitor would type to ask you. Do NOT phrase it as a question the bot asks the visitor. Examples of CORRECT user-perspective questions: "What does your Resume Optimization service include?", "How can you help me prepare for interviews?", "What are your pricing packages?". Examples of WRONG bot-perspective questions (never use these): "Are you looking for resume help?", "Have you explored our services?", "Would you like to learn more?".
 8. You MUST return your output in the following text format:
 [your short conversational response here]
 
@@ -80,7 +80,7 @@ function parseAssistantContent(content: string) {
 
   if (!responseText) {
     responseText = "I'm here to help! What questions do you have about Juhi Bhatia or our career services?";
-    suggestedQuestions = ["Who is Juhi Bhatia?", "What services do you offer?"];
+    suggestedQuestions = ["Who is Juhi Bhatia?", "What career services do you provide?"];
   }
 
   return { responseText, suggestedQuestions };
@@ -118,7 +118,7 @@ export async function handleChatMessage(
   if (!openaiClient) {
     return {
       response: "Hello! I am having trouble connecting to my brain. Please check back shortly.",
-      suggestedQuestions: ["Who is Juhi Bhatia?", "What services do you offer?"],
+      suggestedQuestions: ["Who is Juhi Bhatia?", "What career services do you provide?"],
     };
   }
 
@@ -175,7 +175,7 @@ export async function handleChatMessage(
     console.error("[ChatEngine] OpenAI Responses API request failed:", error);
     return {
       response: "I apologize, but I encountered an error while processing your request. Please try again shortly.",
-      suggestedQuestions: ["Who is Juhi Bhatia?", "What services do you offer?"],
+      suggestedQuestions: ["Who is Juhi Bhatia?", "What career services do you provide?"],
     };
   }
 }

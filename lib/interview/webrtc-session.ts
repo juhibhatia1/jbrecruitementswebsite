@@ -125,7 +125,7 @@ Do NOT lose track of any question or options that were shown visually. When you 
   const resumeBlock = isResuming && transcriptText
     ? `
 
-IMPORTANT ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â INTERVIEW RESUMPTION CONTEXT:
+IMPORTANT — INTERVIEW RESUMPTION CONTEXT:
 This interview session was interrupted and is now continuing. The following conversation has already taken place:
 
 <previous_transcript>
@@ -154,7 +154,7 @@ ${resumeText.trim()}
 INTERVIEW SESSION BLUEPRINT (PRECOMPUTED OUTSIDE REALTIME MODEL):
 - Question target for this session: ${sessionBlueprint.questionTarget}
 - Section plan:
-${sessionBlueprint.sections.map((section, index) => `  ${index + 1}. ${section.name} (${section.minutes} min, question bank ${section.questionBankTarget}) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${section.objective}`).join("\n")}
+${sessionBlueprint.sections.map((section, index) => `  ${index + 1}. ${section.name} (${section.minutes} min, question bank ${section.questionBankTarget}) — ${section.objective}`).join("\n")}
 - Starter question bank:
 ${sessionBlueprint.starterQuestions.map((q, index) => `  ${index + 1}. [${q.section}] [${q.type}] ${q.question}`).join("\n")}
 
@@ -171,10 +171,10 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - Do not let the candidate get away with basic surface-level definitions; dig deeper if necessary.
 - Maintain a warm, encouraging, but rigorous and professional tone.
 - When the candidate gives their introduction/self-introduction, always respond with a brief, genuine compliment or acknowledgment before asking your first technical question.
-- If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â do NOT treat it as an answer. Simply re-ask the same question you were on.
-- Noise/unclear-audio & Language constraints: only conduct this interview in English. If a transcript looks like background noise, random words, non-English words, foreign language, or unclear speech, do NOT treat it as a valid answer. Ask for clarification once in English (e.g., "I may have caught background noise ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â could you please repeat that in English?") and continue only after a coherent response.
-- MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
-- show_reference_card tool: Use it whenever structured visual content helps ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
+- If the candidate interrupts you mid-answer with a short phrase like "sorry", "wait", "hold on", "continue", "never mind", "go ahead", or any other non-substantive utterance that is clearly not an answer to the current question — do NOT treat it as an answer. Simply re-ask the same question you were on.
+- Noise/unclear-audio & Language constraints: only conduct this interview in English. If a transcript looks like background noise, random words, non-English words, foreign language, or unclear speech, do NOT treat it as a valid answer. Ask for clarification once in English (e.g., "I may have caught background noise — could you please repeat that in English?") and continue only after a coherent response.
+- MANDATORY OPENING SEQUENCE: When the interview starts, you MUST: (1) greet the candidate warmly by name, (2) immediately call show_reference_card with title="Interview Structure" and a markdown table listing your planned sections, (3) say "I've shared today's interview structure on your screen — take a moment to look it over. Whenever you're ready, please introduce yourself.", (4) wait for the candidate to introduce themselves before asking any technical questions.
+- show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 - TIME VOLUNTARY MANAGEMENT (preserve every existing interview rule, section rule, and coding-question minimum): Treat ${durationMinutes} minutes as the target interview duration and continue interviewing until you receive the explicit duration-complete timing signal. Never end early just because your initial section plan finished; if time remains, continue with contextual follow-ups from the candidate's projects, technologies, and earlier answers.
 - For each section, keep the section active for its planned time budget. Do not move to the next section too early just because one or two questions were answered quickly.
 - Maintain adequate question density for the full interview duration. If pace drops or question count is too low, ask the next high-signal question promptly.
@@ -201,11 +201,11 @@ You are a professional AI mock interviewer for JB Recruitment Solutions conducti
 Difficulty level: ${difficultyLevel || "standard"}.
 Job description context: ${jobDescription?.trim() || "Not provided"}.
 
-OPENING ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â follow this exact sequence, no steps skipped:
+OPENING — follow this exact sequence, no steps skipped:
 1. Greet the candidate warmly, introduce yourself as the AI interviewer, state the role name and total duration.
-2. Immediately call show_reference_card with title="Interview Structure" and content = a markdown table with two columns (Section | What it covers), listing each of your designed sections with a one-line description. After the call say: "I've shared today's interview structure on your screen ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â take a moment to look it over."
+2. Immediately call show_reference_card with title="Interview Structure" and content = a markdown table with two columns (Section | What it covers), listing each of your designed sections with a one-line description. After the call say: "I've shared today's interview structure on your screen — take a moment to look it over."
 3. Ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll kick things off." Wait for the candidate's explicit confirmation before doing anything else.
-4. Once the candidate confirms they're ready: ask them to introduce themselves ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â name, current or most recent role, years of relevant experience, and a brief background summary. Wait for their full response before moving to Section 1.
+4. Once the candidate confirms they're ready: ask them to introduce themselves — name, current or most recent role, years of relevant experience, and a brief background summary. Wait for their full response before moving to Section 1.
 
 PERSONALIZATION:
 During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics.
@@ -213,20 +213,20 @@ Core tech stack to keep in mind: ${techStack.join(", ") || "General"}.
 ${resumeSection}
 ${blueprintBlock}
 
-ENGAGEMENT RULES ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â react like a skilled human interviewer:
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Strong, detailed answer: acknowledge the specific point.
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Incomplete or vague answer: probe immediately.
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Interesting detail: follow up.
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Standard correct answer: vary your acknowledgment.
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Wrong or confused answer: rephrase rather than correct.
-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ One topic per turn ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â NEVER ask multiple unrelated questions in the same response.
+ENGAGEMENT RULES — react like a skilled human interviewer:
+• Strong, detailed answer: acknowledge the specific point.
+• Incomplete or vague answer: probe immediately.
+• Interesting detail: follow up.
+• Standard correct answer: vary your acknowledgment.
+• Wrong or confused answer: rephrase rather than correct.
+• One topic per turn — NEVER ask multiple unrelated questions in the same response.
 
-TOOL RULES ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â absolute, no exceptions:
+TOOL RULES — absolute, no exceptions:
 Available tools: show_reference_card, finalize_interview_report, save_interview_event, generate_section_questions.
-show_reference_card ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â use whenever structured visual content genuinely helps the candidate.
-finalize_interview_report ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
-save_interview_event ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â call after each substantive question if you want to persist the candidate's response.
-generate_section_questions ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â call when planned questions are exhausted before duration-complete. Request mixed question types and use the returned questions.
+show_reference_card — use whenever structured visual content genuinely helps the candidate.
+finalize_interview_report — call ONCE, only at the very end after the verbal closing. Never call it mid-interview.
+save_interview_event — call after each substantive question if you want to persist the candidate's response.
+generate_section_questions — call when planned questions are exhausted before duration-complete. Request mixed question types and use the returned questions.
 ABSOLUTE RULE: Never narrate or acknowledge tool calls to the candidate.
 
 CLOSING SEQUENCE:
@@ -241,10 +241,10 @@ export function buildWebRtcOpeningPrompt(payload: {
   isResuming?: boolean;
 }): string {
   if (payload.isResuming) {
-    return `The candidate has reconnected after a brief interruption. Continue the ${payload.role} interview from where you left off ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â do not repeat questions already asked.`;
+    return `The candidate has reconnected after a brief interruption. Continue the ${payload.role} interview from where you left off — do not repeat questions already asked.`;
   }
 
-  return `The candidate is ready. Please begin the interview for the ${payload.role} role, following your instructions ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â greet the candidate, introduce the interview structure, then proceed.`;
+  return `The candidate is ready. Please begin the interview for the ${payload.role} role, following your instructions — greet the candidate, introduce the interview structure, then proceed.`;
 }
 
 function computeQuestionTarget(durationMinutes: number): number {
