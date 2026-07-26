@@ -112,6 +112,15 @@ export async function GET(request: Request) {
         });
       }
 
+      // Self-heal purchase association if application exists but lacks purchaseId
+      if (application && !application.purchaseId && purchase) {
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: { purchaseId: purchase.id },
+          select: candidateApplicationSafeSelect,
+        });
+      }
+
       // Self-healing creation or activation if webhook hasn't fired yet
       if (!application) {
         const accessToken = generateInterviewAccessToken();
@@ -131,6 +140,7 @@ export async function GET(request: Request) {
             accessTokenHash,
             accessTokenExpiresAt,
             status: "MANUAL_REVIEW_PENDING",
+            purchaseId: purchase?.id || null,
           },
         });
 
@@ -177,6 +187,7 @@ export async function GET(request: Request) {
             status: "MANUAL_REVIEW_PENDING",
             accessTokenHash,
             accessTokenExpiresAt,
+            purchaseId: purchase?.id || null,
           },
         });
 
@@ -248,6 +259,15 @@ export async function GET(request: Request) {
         });
       }
 
+      // Self-heal purchase association if application exists but lacks purchaseId
+      if (application && !application.purchaseId && purchase) {
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: { purchaseId: purchase.id },
+          select: candidateApplicationSafeSelect,
+        });
+      }
+
       let rawToken = "";
 
       // Self-healing creation or activation if webhook hasn't fired yet
@@ -271,6 +291,7 @@ export async function GET(request: Request) {
             accessTokenHash,
             accessTokenExpiresAt,
             status: "AI_INVITED",
+            purchaseId: purchase?.id || null,
           },
         });
 
@@ -315,6 +336,7 @@ export async function GET(request: Request) {
             status: "AI_INVITED",
             accessTokenHash,
             accessTokenExpiresAt,
+            purchaseId: purchase?.id || null,
           },
         });
 

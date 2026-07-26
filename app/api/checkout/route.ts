@@ -239,6 +239,13 @@ export async function POST(request: Request) {
       },
     });
 
+    if (applicationId) {
+      await prisma.candidateApplication.update({
+        where: { id: applicationId },
+        data: { purchaseId: purchase.id },
+      });
+    }
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       purchaseId: purchase.id,

@@ -9,6 +9,7 @@ export const candidateApplicationSafeSelect = {
   accessTokenHash: true,
   accessTokenExpiresAt: true,
   status: true,
+  purchaseId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
