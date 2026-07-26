@@ -23,6 +23,9 @@ type WebRtcCallbacks = {
   // UI locked state — purely a temporary hardware mute to prevent echo capture.
   onMuteRequired?: (muted: boolean) => void;
   onRemoteStream?: (stream: MediaStream) => void;
+  // Fired when the mic produces zero audio for ~30s while it should be active.
+  // Handler should re-acquire the mic device and call transport.replaceAudioTrack().
+  onMicHealthFailed?: () => void;
 };
 
 type ConnectPayload = {
@@ -159,6 +162,13 @@ export class OpenAIWebRtcInterviewTransport {
   // Tracks async tool execution (HTTP calls). Blocks nudge timers during long tool calls
   // so response.created doesn't fire mid-tool and clear the Thinking UI state.
   private toolCallInProgress = false;
+  // True if the current response included a function call. Prevents response.done from
+  // starting a spurious silence nudge after the candidate's answer was processed via tool.
+  private currentResponseHadToolCall = false;
+  // True if the current response included audio output. Used to decide needsContinuation
+  // for save_interview_event: audio responses already asked the next question so no extra
+  // response.create needed; tool-call-only responses need one to avoid a 47s stall.
+  private currentResponseHadAudio = false;
 
   // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
@@ -181,6 +191,19 @@ export class OpenAIWebRtcInterviewTransport {
 
   // save_interview_event nudge timer — cancelled if model naturally generates next question
   private saveNudgeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // True while PCM audio sources are scheduled and playing naturally (false after cancel/stop)
+  // Used in source.onended to gate nudge start — prevents spurious nudge after cancelResponse
+  private audioPlaybackActive = false;
+  // True from speech_started until speech_stopped/committed — prevents nudge firing mid-answer
+  private candidateSpeaking = false;
+
+  // Mic health monitoring — detects silent/dead tracks (e.g. headset init race)
+  private micHealthCheckInterval: ReturnType<typeof setInterval> | null = null;
+  private lastTotalAudioEnergy = 0;
+  private zeroEnergyStreak = 0;
+  // Timestamp of last detected candidate speech — guards health check from normal silence
+  private lastCandidateSpeechAtMs = 0;
 
   // Section boundary timers — fire TIME_SIGNAL:SECTION_COMPLETE at each planned boundary
   private sectionTransitionTimers: ReturnType<typeof setTimeout>[] = [];
@@ -243,6 +266,7 @@ export class OpenAIWebRtcInterviewTransport {
       this.sendOpeningPrompt(payload.openingPrompt);
       this.scheduleSectionTransitions();
       this.startStallWatchdog();
+      this.startMicHealthCheck();
       this.callbacks.onReady();
     };
 
@@ -321,9 +345,18 @@ export class OpenAIWebRtcInterviewTransport {
         // Text-length-based unmute: ~15 chars/sec speaking rate + 1000ms WebRTC buffer.
         // Previous fixed 500ms was wrong — transcript.done fires while audio still plays
         // 1-3s more. This unmutes AFTER audio actually finishes so AEC has nothing to cancel.
-        const estimatedAudioMs = Math.max(1500, Math.min(10000, interviewerText.length / 15 * 1000));
-        this.audioTailProtectionUntilMs = Date.now() + estimatedAudioMs + 1000;
-        this.scheduleMicUnmute(estimatedAudioMs + 1000);
+        // transcript.done fires after all RTP audio has been sent; only ~200-400ms of
+        // WebRTC buffer tail remains. Use actual playbackCursor remainder + 500ms tail guard
+        // instead of total-text-length estimate, which was keeping mic muted 10-14s.
+        let unmuteDelayMs: number;
+        if (this.playbackCtx) {
+          const remainingAudioMs = Math.max(0, (this.playbackCursor - this.playbackCtx.currentTime) * 1000);
+          unmuteDelayMs = Math.max(800, remainingAudioMs + 500);
+        } else {
+          unmuteDelayMs = 1500;
+        }
+        this.audioTailProtectionUntilMs = Date.now() + unmuteDelayMs;
+        this.scheduleMicUnmute(unmuteDelayMs);
       }
 
       if (
@@ -335,18 +368,34 @@ export class OpenAIWebRtcInterviewTransport {
         if (text) {
           this.transcriptItemCount += 1;
           this.callbacks.onTranscript({ role: "candidate", text });
+          // Candidate transcription received — mic is working; reset health streak
+          this.zeroEnergyStreak = 0;
+          // Candidate transcription received — they answered; clear any stale nudge timer
+          this.candidateSpeaking = false;
+          if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
           // NOTE: Do NOT send response.create here. With server_vad, OpenAI automatically
           // generates a response after detecting end of speech. Sending a manual response.create
           // causes duplicate responses (AI repeats questions, says "let me think", etc.)
         }
       }
 
+      if (
+        message.type === "input_audio_buffer.speech_stopped" ||
+        message.type === "input_audio_buffer.committed"
+      ) {
+        // VAD detected end of candidate speech — clear speaking flag so nudge can run again
+        this.candidateSpeaking = false;
+      }
+
       if (message.type === "response.function_call_arguments.done") {
+        this.currentResponseHadToolCall = true;
         void this.handleFunctionCall(message);
       }
 
       if (message.type === "input_audio_buffer.speech_started") {
-        // Candidate started speaking — no nudge needed
+        // Candidate started speaking — cancel nudge, mark speaking
+        this.candidateSpeaking = true;
+        this.lastCandidateSpeechAtMs = Date.now();
         if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
         const inTailWindow = Date.now() < this.audioTailProtectionUntilMs;
         if (this.assistantSpeaking || inTailWindow) {
@@ -367,6 +416,8 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.created") {
+        this.currentResponseHadToolCall = false;
+        this.currentResponseHadAudio = false;
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
@@ -385,6 +436,7 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.output_audio.delta" && message.delta) {
+        this.currentResponseHadAudio = true;
         this.playAudioDelta(readString(message.delta));
         this.assistantSpeaking = true;
         this.callbacks.onAssistantSpeakingChange?.(true);
@@ -403,9 +455,11 @@ export class OpenAIWebRtcInterviewTransport {
             this.callbacks.onAssistantSpeakingChange?.(false);
           }
         }
-        // Function-call-only response (no audio) — unmute quickly since no audio played
-        if (!this.muteTimer) {
-          this.scheduleMicUnmute(300);
+        // No-audio response with no tool call — unmute quickly and start nudge timer.
+        // Skip if response had a tool call: either muteTimer covers it (audio+tool), or
+        // the candidate already answered and we must not restart the silence clock.
+        if (!this.muteTimer && !this.currentResponseHadToolCall) {
+          this.scheduleMicUnmute(300, () => this.startCandidateSilenceNudge());
         }
         if (this.pendingResponseCreate) {
           this.pendingResponseCreate = false;
@@ -512,10 +566,20 @@ export class OpenAIWebRtcInterviewTransport {
     this.stopPlayback();
   }
 
+  async replaceAudioTrack(newTrack: MediaStreamTrack): Promise<void> {
+    if (!this.pc) return;
+    const audioSender = this.pc.getSenders().find(s => s.track?.kind === 'audio');
+    if (audioSender) await audioSender.replaceTrack(newTrack);
+    // Reset energy baseline — new track starts at 0
+    this.lastTotalAudioEnergy = 0;
+    this.zeroEnergyStreak = 0;
+  }
+
   close(): void {
     this.manuallyClosed = true;
     this.completed = true;
     this.stopStallWatchdog();
+    this.stopMicHealthCheck();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
     if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
@@ -577,6 +641,65 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.stallWatchdogTimer) {
       clearInterval(this.stallWatchdogTimer);
       this.stallWatchdogTimer = null;
+    }
+  }
+
+  // Mic health monitoring — polls RTCStats every 5s for zero audio energy.
+  // 15s startup delay lets the device and AI opening message settle first.
+  // After 6 consecutive zero-energy polls (30s), fires onMicHealthFailed so
+  // the room can re-acquire the mic device (handles headset init race / AEC over-suppression).
+  private startMicHealthCheck(): void {
+    setTimeout(() => {
+      if (this.completed || this.manuallyClosed) return;
+      this.micHealthCheckInterval = setInterval(() => void this.checkMicHealth(), 5_000);
+    }, 15_000);
+  }
+
+  private stopMicHealthCheck(): void {
+    if (this.micHealthCheckInterval) {
+      clearInterval(this.micHealthCheckInterval);
+      this.micHealthCheckInterval = null;
+    }
+  }
+
+  private async checkMicHealth(): Promise<void> {
+    if (!this.pc || this.completed || this.manuallyClosed) return;
+    // Skip while mic is intentionally muted — no audio expected
+    if (this.assistantSpeaking || this.muteTimer) {
+      this.zeroEnergyStreak = 0;
+      return;
+    }
+    // Normal interview silence (candidate thinking between questions) looks identical to a
+    // dead mic. If candidate spoke within the last 90s the mic is clearly working — reset
+    // streak. The hardware init bug only happens when the mic NEVER produces any energy.
+    if (this.lastCandidateSpeechAtMs > 0 && Date.now() - this.lastCandidateSpeechAtMs < 90_000) {
+      this.zeroEnergyStreak = 0;
+      return;
+    }
+    try {
+      const stats = await this.pc.getStats();
+      let totalAudioEnergy = 0;
+      stats.forEach((report) => {
+        // media-source report tracks the local audio source (microphone)
+        if (report.type === "media-source" && (report as Record<string, unknown>)["kind"] === "audio") {
+          totalAudioEnergy = Number((report as Record<string, unknown>)["totalAudioEnergy"] ?? 0);
+        }
+      });
+      const delta = totalAudioEnergy - this.lastTotalAudioEnergy;
+      this.lastTotalAudioEnergy = totalAudioEnergy;
+      if (delta < 1e-6) {
+        this.zeroEnergyStreak++;
+      } else {
+        this.zeroEnergyStreak = 0;
+      }
+      if (this.zeroEnergyStreak >= 6) {
+        console.warn("[WebRTC] Mic silent for 30s — triggering device recovery");
+        this.zeroEnergyStreak = 0;
+        this.lastTotalAudioEnergy = 0;
+        this.callbacks.onMicHealthFailed?.();
+      }
+    } catch {
+      // getStats throws when connection is closing — safe to ignore
     }
   }
 
@@ -666,7 +789,7 @@ export class OpenAIWebRtcInterviewTransport {
   }
 
   // Schedule mic unmute after a delay. Cancels any pending unmute timer first.
-  private scheduleMicUnmute(delayMs: number): void {
+  private scheduleMicUnmute(delayMs: number, onUnmuted?: () => void): void {
     if (this.muteTimer) {
       clearTimeout(this.muteTimer);
       this.muteTimer = null;
@@ -674,24 +797,11 @@ export class OpenAIWebRtcInterviewTransport {
     this.muteTimer = setTimeout(() => {
       this.muteTimer = null;
       this.callbacks.onMuteRequired?.(false);
-      // Audio has finished playing — now safe to show "Listening"
       if (!this.responseInFlight) {
         this.assistantSpeaking = false;
         this.callbacks.onAssistantSpeakingChange?.(false);
-        // Start nudge from MIC UNMUTE TIME (not save time).
-        // Previous nudge started at save time → fired 466ms before speech_started
-        // → race condition → mid-answer interruption. Starting from unmute avoids this:
-        // mic is already open, candidate had time to hear the question, if they haven't
-        // spoken in 8s the model probably forgot to ask next question → prompt it.
-        // speech_started and response.created still cancel this timer.
-        if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
-        this.saveNudgeTimer = setTimeout(() => {
-          this.saveNudgeTimer = null;
-          if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking || this.toolCallInProgress) return;
-          this.sendSilentContextMessage("Ask your next question in the current section now.");
-          this.safeResponseCreate();
-        }, 8000);
       }
+      onUnmuted?.();
     }, delayMs);
   }
 
@@ -702,6 +812,21 @@ export class OpenAIWebRtcInterviewTransport {
       this.muteTimer = null;
     }
     this.callbacks.onMuteRequired?.(false);
+  }
+
+  // Start nudge timer after AI speech is fully done. Called from source.onended (audio path)
+  // or scheduleMicUnmute callback (no-audio path). Uses 30s if candidate requested more time.
+  private startCandidateSilenceNudge(): void {
+    if (this.completed || this.manuallyClosed || this.responseInFlight || this.candidateSpeaking) return;
+    if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
+    this.saveNudgeTimer = setTimeout(() => {
+      this.saveNudgeTimer = null;
+      if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking || this.toolCallInProgress || this.candidateSpeaking) return;
+      this.sendSilentContextMessage(
+        "CANDIDATE_SILENT_CHECK: The candidate has been silent since your last question. Check in naturally — vary your phrasing, never repeat the same check-in twice.",
+      );
+      this.safeResponseCreate();
+    }, 15000);
   }
 
   // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
@@ -727,6 +852,7 @@ export class OpenAIWebRtcInterviewTransport {
     if (this.completed) return;
     this.completed = true;
     this.stopStallWatchdog();
+    this.stopMicHealthCheck();
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
     if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
@@ -763,6 +889,7 @@ export class OpenAIWebRtcInterviewTransport {
     // Connecting here causes double audio, which phases out AEC and lets mic pick up AI voice,
     // causing VAD false triggers ("I noticed a brief pause" loop).
     // We schedule the source purely to fire source.onended for assistantSpeaking tracking.
+    this.audioPlaybackActive = true;
     this.scheduledSources.push(source);
     source.onended = () => {
       this.scheduledSources = this.scheduledSources.filter((item) => item !== source);
@@ -770,6 +897,10 @@ export class OpenAIWebRtcInterviewTransport {
       if (this.scheduledSources.length === 0 && !this.responseInFlight) {
         this.assistantSpeaking = false;
         this.callbacks.onAssistantSpeakingChange?.(false);
+        // Start nudge only if playback ended naturally (not cancelled via stopPlayback)
+        if (this.audioPlaybackActive) {
+          this.startCandidateSilenceNudge();
+        }
       }
     };
 
@@ -779,6 +910,8 @@ export class OpenAIWebRtcInterviewTransport {
   }
 
   private stopPlayback(): void {
+    // Clear flag before stopping sources so source.onended does NOT trigger nudge
+    this.audioPlaybackActive = false;
     for (const source of this.scheduledSources) {
       try {
         source.stop();
@@ -808,10 +941,7 @@ IMPORTANT: You will have background information about the candidate from the app
 
 # Personality and Tone
 
-Professional and warm — like a senior hiring manager conducting a real interview.
-- Acknowledgments: 1 sentence maximum before asking the next question.
-- Vary acknowledgments each turn: "Good point", "Got it", "Makes sense", "Nice", "Thanks". Do not repeat the same phrase back-to-back.
-- Never sound scripted or robotic. Never over-praise every answer.
+Senior engineer running a mock interview — you are both evaluating the candidate honestly AND coaching them to improve. Warm but direct. Engaged and curious. Evaluate each answer on its merit — strong answers get genuine acknowledgment, weak or wrong answers get an honest assessment plus the correct explanation. When they miss something, name what they missed and why it matters in real interviews. Your dual goal: give them an accurate sense of where they stand, and leave them knowing more than when they started. React to each answer differently based on quality — over-praising everything equally is both dishonest and unhelpful.
 
 # Language
 
@@ -825,17 +955,12 @@ Do not reason when audio is unclear — ask for clarification instead.
 
 # Preambles
 
-Use a short preamble only before tool calls that take noticeable time (generate_section_questions, finalize_interview_report).
-- "I'll note that." / "Let me get the next question." / "I'll generate a follow-up."
+Use a short preamble only before generate_section_questions, finalize_interview_report:
+"Let me get the next question." / "I'll generate a follow-up."
 
-Skip preambles when:
-- Giving a simple acknowledgment or asking the next question directly
-- Audio is unclear
-- Calling wait_for_user
-- Calling save_interview_event — NEVER say "I'll note that", "Let me save that",
-  "I'll log that", or anything before calling this tool. Call it silently.
+Before save_interview_event: evaluate and acknowledge the answer aloud first (see ## Answer handling), then call the tool silently — never say "I'll save that", "I'll note that", or "I'll log that".
 
-One sentence maximum. Never say: "Let me think...", "Hmm...", "One moment while I process that...", "Let me formulate my next question."
+Never say: "Let me think...", "Hmm...", "One moment...", "Let me formulate my next question."
 
 # Verbosity
 
@@ -858,17 +983,68 @@ When candidate's full response is only 1–3 words of pure filler (uh / um / so 
 ## Thinking time
 When candidate says "wait", "I'm thinking", "give me a moment", "let me think", "one second" — say "Take your time." and wait silently. Do NOT repeat the question. Do NOT prompt again for at least 30 seconds.
 
-## Meta-commentary
-When candidate says "why are you pausing", "reply please", "are you stuck", "go on", "move on", "do your response" — say "Apologies." and ask the next question immediately.
+## Answer handling
+
+You are a mock interviewer whose job is to help the candidate improve. React to what they actually said — like a senior engineer having a real conversation, not a rubric scoring answers into buckets.
+
+After every complete answer:
+1. Respond naturally to the specific content (1–3 sentences). Reference their actual words. Examples of the kind of responses to give:
+   - Strong answer: "Yes — you nailed the [specific point they made]. Worth knowing too that [one depth/nuance], which comes up in system design rounds."
+   - Missed key points: "You got [what they said correctly], but the piece that usually matters most here is [missing concept]. In practice, [brief why it matters]."
+   - Wrong answer: "Not quite — [what they said] is actually [clarification]. The real answer is [correct explanation]. Common mix-up."
+   - Surprising insight: React with genuine interest. "That's a good point — not everyone thinks of [X]. Yes, exactly."
+   - Weak/vague answer: "That touches on it, but can you be more specific? What's the actual mechanism behind [specific part]?"
+   Vary tone and energy based on answer quality. Strong answer gets warmth. Weak/wrong gets a calm correction with the right info. Never praise every answer the same way — that feels fake.
+2. Call save_interview_event silently.
+3. After save_interview_event returns: ask next planned question directly.
+
+MCQ answers: name the choice, say if right or wrong, give the one-line reason — then save and continue.
+
+## Incomplete answers
+If a technical or behavioral question gets a 1–5 word answer with no explanation: do NOT call save_interview_event. Ask specifically for what's missing: "Can you explain what that looks like in practice?" or "How would that work in a real system?" Wait for a real answer, then respond and save. Do NOT probe MCQ answers — they are closed-choice.
+
+## Transition sentences
+Never end a response with a transition sentence alone ("Let's build on that", "Let's move to the next question", "Let's keep going", "Let's continue with", "Moving on to"). Every response that contains a transition MUST include the actual question in the same response. Transition + question = one single response. Never split across two turns.
+
+## Meta-commentary (expanded)
+When candidate says "why are you pausing", "reply please", "are you stuck", "go on", "move on", "do your response", "I already answered", "I said that", "I did complete my answer" — say "Apologies." and ask your next planned question immediately. Do not generate an empty or silent response.
+
+## Silence check-in (CANDIDATE_SILENT_CHECK)
+IMPORTANT: The check-in phrases below are EXCLUSIVELY for use when you receive the explicit CANDIDATE_SILENT_CHECK signal. Never use them in any other context — especially not after save_interview_event returns or after a candidate completes their answer.
+When you receive CANDIDATE_SILENT_CHECK: the candidate has been silent since your last question. Check in briefly and naturally — vary your wording every time, never repeat the same phrasing twice in a row. Examples (use ONLY when triggered by CANDIDATE_SILENT_CHECK):
+- "Take your time — still working through it, or ready to move on?"
+- "No rush — need more time, or shall we continue?"
+- "Still thinking? Whenever you're ready."
+- "Are you ready for the next question, or would you like more time?"
+Then:
+- If they say they need time / are thinking / "yes" / "give me a sec" / any affirmative: say "Of course." or "Sure, take your time." and wait silently. Do NOT ask another question. Do NOT send another check-in.
+- If they say skip / next / move on / "next question": acknowledge briefly and ask your next planned question.
+- If response is unclear: treat it as needing more time and wait silently.
+
+## Repeat requests
+When candidate says "repeat", "can you repeat that", "say that again", "ask again", "what was the question", "didn't catch that", "pardon", "come again", "I didn't hear you", "could you repeat" — immediately repeat your last question verbatim, word for word. Rules:
+- Do NOT call save_interview_event.
+- Do NOT evaluate this as an answer.
+- Do NOT move to the next question.
+- Do NOT add commentary before repeating — just say the question again.
+- If candidate asks to repeat multiple times in a row: repeat each time without frustration.
 
 ## No closing before signal
 Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
 
-## Section transition signals
-When you receive TIME_SIGNAL:SECTION_COMPLETE:[name]: on your very next response transition to the named section and ask your first question there. Do not finish another question in the old section.
+## Section timing — HARD CONSTRAINT
 
-## Section timing (from save_interview_event results)
-Each save_interview_event result includes sectionPacing.instruction. If it says "ask at least N more questions in section X", do so before transitioning.
+NEVER self-initiate a section transition. Only transition when:
+- You receive TIME_SIGNAL:SECTION_COMPLETE:[name], OR
+- sectionPacing.instruction explicitly says "time nearly met"
+
+Every save_interview_event result includes sectionPacing.instruction. Treat it as a hard order:
+- "X min remaining, ask at least N more question(s)": you MUST stay in the current section and ask those questions. Do NOT wrap up. Do NOT close. Do NOT ask "any questions for me?".
+- "time nearly met": you may transition when the current question cycle completes naturally.
+
+If you run out of planned questions but sectionPacing says time remains: call generate_section_questions immediately (sectionName = current section, count = ceil(remainingMinutes × 1.2) capped at 5, min 2). After results return, continue in the same section — do NOT transition.
+
+When you receive TIME_SIGNAL:SECTION_COMPLETE:[name]: transition on your very next response and ask the first question of the named section. Do not finish another question in the old section.
 
 ## Never announce pauses
 Never say "I'll pause here", "let's pause", "we'll pick up later". The interview runs continuously until finalize_interview_report is called.
@@ -911,7 +1087,7 @@ ${systemInstructions}`;
               // still clears this easily. silence_duration_ms: 1000ms prevents fragmentation when
               // candidate pauses briefly mid-sentence.
               threshold: 0.65,
-              silence_duration_ms: 1000,
+              silence_duration_ms: 1500,
             },
             transcription: { model: "whisper-1" },
           },
@@ -1124,19 +1300,12 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
-      // needsContinuation=false: model must ask next question IN ITS VERBAL AUDIO before
-      // calling this tool (per tool description). No safeResponseCreate needed — mic muting
-      // keeps the window clean until audio finishes, then candidate answers naturally.
-      // Fallback: 8-second nudge if model somehow got here without asking the next question
-      // (both sides would be silently waiting). 8s is long enough not to interrupt normal
-      // candidate thinking, short enough to avoid the old 45s deadlock.
-      needsContinuation = false;
-      // NO saveNudgeTimer: the nudge caused race conditions and UI flickering.
-      // Race: nudge fires ~466ms before speech_started → response.create sent to API →
-      // can't be unsent → response.created arrives mid-candidate-answer → mutes mic →
-      // interrupts answer. Also caused "Speaking↔Listening" flicker after mic unmute.
-      // The model asks the next question in the same spoken turn (per tool description),
-      // so a nudge is rarely needed. The 45s stall watchdog handles genuine stalls.
+      // needsContinuation=!currentResponseHadAudio: if the model combined audio + tool in one
+      // response (spoke acknowledgment then called tool), it already asked the next question —
+      // no extra response.create needed. If it sent tool-only (no audio), fire safeResponseCreate()
+      // after HTTP returns to avoid a 47s stall. currentResponseHadToolCall=true blocks the
+      // response.done nudge-restart path so we don't restart the 15s silence timer.
+      needsContinuation = !this.currentResponseHadAudio;
     } else if (fnName === "finalize_interview_report") {
       const elapsedMs = Date.now() - this.sessionStartedAtMs;
       const durationReached =

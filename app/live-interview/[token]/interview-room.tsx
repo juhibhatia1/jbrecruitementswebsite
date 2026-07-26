@@ -53,6 +53,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+  const handleMicTrackEndedRef = useRef<() => void>(() => {});
 
   const streamRef = useRef<MediaStream | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
@@ -131,6 +132,48 @@ export default function InterviewRoom({ token }: { token: string }) {
     streamRef.current = null;
     micCtxRef.current = null;
   }, []);
+
+  const handleMicTrackEnded = useCallback(async () => {
+    if (phaseRef.current !== "live") return;
+    toast.warning("Microphone disconnected. Attempting to reconnect…");
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+        video: false,
+      });
+      const newTrack = newStream.getAudioTracks()[0];
+      if (!newTrack) throw new Error("No audio track in new stream");
+      newTrack.onended = () => void handleMicTrackEndedRef.current();
+      await transportRef.current?.replaceAudioTrack(newTrack);
+      const oldStream = streamRef.current;
+      streamRef.current = newStream;
+      if (micCtxRef.current && analyserRef.current) {
+        sourceRef.current?.disconnect();
+        const newSource = micCtxRef.current.createMediaStreamSource(newStream);
+        newSource.connect(analyserRef.current);
+        sourceRef.current = newSource;
+      }
+      oldStream?.getTracks().forEach((t) => t.stop());
+      newTrack.enabled = !micLocked;
+      toast.success("Microphone reconnected.");
+    } catch {
+      toast.error("Could not reconnect microphone. Please check your microphone settings.");
+    }
+  }, [micLocked]);
+
+  // Keep ref current so `newTrack.onended` always calls the latest closure.
+  useEffect(() => { handleMicTrackEndedRef.current = handleMicTrackEnded; }, [handleMicTrackEnded]);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices) return;
+    const handleDeviceChange = () => {
+      if (phaseRef.current !== "live" || !streamRef.current) return;
+      const hasEndedTrack = streamRef.current.getAudioTracks().some((t) => t.readyState === "ended");
+      if (hasEndedTrack) void handleMicTrackEnded();
+    };
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+    return () => navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+  }, [handleMicTrackEnded]);
 
   const scheduleSync = useCallback(() => {
     if (!sessionIdRef.current) return;
@@ -448,6 +491,9 @@ export default function InterviewRoom({ token }: { token: string }) {
         return;
       }
       streamRef.current = stream;
+      stream.getAudioTracks().forEach((track) => {
+        track.onended = () => void handleMicTrackEndedRef.current();
+      });
       setMicCaptureEnabled(false);
 
       setSetupStep("connecting");
@@ -574,6 +620,7 @@ export default function InterviewRoom({ token }: { token: string }) {
             track.enabled = !muted;
           });
         },
+        onMicHealthFailed: () => void handleMicTrackEndedRef.current(),
         onRemoteStream: (remoteStream) => {
           if (remoteAudioRef.current) {
             remoteAudioRef.current.srcObject = remoteStream;
