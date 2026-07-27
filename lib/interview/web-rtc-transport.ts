@@ -385,6 +385,11 @@ export class OpenAIWebRtcInterviewTransport {
       ) {
         // VAD detected end of candidate speech — clear speaking flag so nudge can run again
         this.candidateSpeaking = false;
+        // Refresh lastCandidateSpeechAtMs on each VAD commit so the 30s guard stays
+        // active for the full duration of long answers (not just from speech_started).
+        if (message.type === "input_audio_buffer.committed") {
+          this.lastCandidateSpeechAtMs = Date.now();
+        }
       }
 
       if (message.type === "response.function_call_arguments.done") {
@@ -1304,6 +1309,9 @@ ${systemInstructions}`;
         sectionPacing: sectionGuidance,
         instruction,
       };
+      // Reset speech timestamp so the nudge guard doesn't block the NEXT question's
+      // silence window — answer is saved, new question cycle starts clean.
+      this.lastCandidateSpeechAtMs = 0;
       // needsContinuation=!currentResponseHadAudio: if the model combined audio + tool in one
       // response (spoke acknowledgment then called tool), it already asked the next question —
       // no extra response.create needed. If it sent tool-only (no audio), fire safeResponseCreate()
