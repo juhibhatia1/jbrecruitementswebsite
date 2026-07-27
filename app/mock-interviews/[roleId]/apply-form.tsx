@@ -127,6 +127,9 @@ export default function ApplyForm({
     candidatePhone: "",
     linkedInUrl: "",
     interviewPreference: defaultPreference as "AI" | "MANUAL" | "",
+    careerGoal: "",
+    focusAreas: "",
+    selfIntroNotes: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -218,7 +221,7 @@ export default function ApplyForm({
 
 
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -282,6 +285,9 @@ export default function ApplyForm({
             interviewPreference: pref,
             resumeUrl,
             resumeText,
+            careerGoal: form.careerGoal || undefined,
+            focusAreas: form.focusAreas || undefined,
+            selfIntroNotes: form.selfIntroNotes || undefined,
           },
         }),
       });
@@ -326,6 +332,12 @@ export default function ApplyForm({
     if (form.interviewPreference === "AI" && !resumeFile) {
       toast.error("Resume Required", {
         description: "Please upload your resume to personalize your AI Mock Interview.",
+      });
+      return;
+    }
+    if (form.interviewPreference === "AI" && !form.careerGoal) {
+      toast.error("Career Goal Required", {
+        description: "Please tell us your main career goal so we can personalise your interview.",
       });
       return;
     }
@@ -513,6 +525,60 @@ export default function ApplyForm({
               <p className="text-red-500 text-xs mt-1 font-semibold">{resumeError}</p>
             )}
           </div>
+
+          {/* Personalisation fields — shown when AI is selected */}
+          {form.interviewPreference === "AI" && (
+            <>
+              <div>
+                <label className={labelClass} htmlFor="careerGoal">Main Career Goal *</label>
+                <select
+                  id="careerGoal"
+                  name="careerGoal"
+                  value={form.careerGoal}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="">Select your primary goal…</option>
+                  <option value="Get hired for this job">Get hired for this job</option>
+                  <option value="Switch to this industry">Switch to this industry</option>
+                  <option value="Move into a senior / leadership role">Move into a senior / leadership role</option>
+                  <option value="Returning after a career break">Returning after a career break</option>
+                  <option value="Practice and sharpen interview skills">Practice and sharpen interview skills</option>
+                  <option value="Prepare for a specific company">Prepare for a specific company</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="focusAreas">
+                  Focus Areas <span className="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <textarea
+                  id="focusAreas"
+                  name="focusAreas"
+                  rows={2}
+                  value={form.focusAreas}
+                  onChange={handleChange}
+                  placeholder="e.g. system design, SQL, behavioural questions, salary negotiation…"
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="selfIntroNotes">
+                  Anything you'd like the AI interviewer to know? <span className="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <textarea
+                  id="selfIntroNotes"
+                  name="selfIntroNotes"
+                  rows={3}
+                  value={form.selfIntroNotes}
+                  onChange={handleChange}
+                  placeholder="e.g. I have a 2-year gap due to caregiving, I'm pivoting from finance to tech, I struggled with live coding in past interviews…"
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+            </>
+          )}
 
           {/* Session Preference Cards */}
           {!hidePreferenceSelection && (

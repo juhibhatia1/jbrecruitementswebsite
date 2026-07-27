@@ -86,6 +86,8 @@ Required skills: ${requiredSkills}
 Elapsed minutes: ${Number(body.elapsedMinutes ?? 0)}
 Remaining minutes: ${Number(body.remainingMinutes ?? 0)}
 Candidate context: ${body.candidateContext || "Use earlier answers and intro details"}
+Candidate resume: ${application.resumeText?.trim() || "Not provided"}
+Candidate career goal: ${application.careerGoal?.trim() || "Not specified"}
 Already asked questions (DO NOT repeat or rephrase any of these): ${Array.isArray(body.alreadyAskedQuestions) && body.alreadyAskedQuestions.length > 0 ? body.alreadyAskedQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "None"}
 Requested question count: ${count}
 Requested question types: ${requestedTypes.join(", ")}
@@ -105,6 +107,8 @@ Return JSON only:
 
 Rules:
 - Return exactly ${count} questions.
+- PERSONALIZATION: If candidate resume is provided, at least half the questions should be anchored to specific details from that resume (actual projects, companies, technologies, job titles). Generic textbook questions are not acceptable when resume context is available.
+- If a career goal is specified, at least one question should probe readiness or skills relevant to that goal.
 - Keep questions high-signal and interview-grade.
 - For MCQ questions, make referenceCardContent a well-structured markdown card that includes the exact question text and each option on its own line or in a markdown table. Do not compress options into a single sentence.
 - For CODE_SNIPPET and GRAPHICAL questions, include referenceCardTitle and referenceCardContent with a clear title, the prompt, and any code/diagram content formatted as markdown.
