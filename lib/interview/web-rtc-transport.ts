@@ -818,6 +818,8 @@ export class OpenAIWebRtcInterviewTransport {
   // or scheduleMicUnmute callback (no-audio path). Uses 30s if candidate requested more time.
   private startCandidateSilenceNudge(): void {
     if (this.completed || this.manuallyClosed || this.responseInFlight || this.candidateSpeaking) return;
+    // Don't restart nudge clock if candidate spoke within last 30s — prevents firing mid long-answer
+    if (this.lastCandidateSpeechAtMs > 0 && Date.now() - this.lastCandidateSpeechAtMs < 30_000) return;
     if (this.saveNudgeTimer) clearTimeout(this.saveNudgeTimer);
     this.saveNudgeTimer = setTimeout(() => {
       this.saveNudgeTimer = null;
@@ -955,12 +957,11 @@ Do not reason when audio is unclear — ask for clarification instead.
 
 # Preambles
 
-Use a short preamble only before generate_section_questions, finalize_interview_report:
-"Let me get the next question." / "I'll generate a follow-up."
+Never announce tool calls. generate_section_questions and finalize_interview_report run silently — do NOT say "Let me get the next question", "I'll generate a follow-up", or any variation before calling them. The sequence is: evaluate/acknowledge answer aloud → call save_interview_event silently → (if needed) call generate_section_questions silently → ask the next question directly.
 
 Before save_interview_event: evaluate and acknowledge the answer aloud first (see ## Answer handling), then call the tool silently — never say "I'll save that", "I'll note that", or "I'll log that".
 
-Never say: "Let me think...", "Hmm...", "One moment...", "Let me formulate my next question."
+Never say: "Let me think...", "Hmm...", "One moment...", "Let me formulate my next question.", "I'll generate a follow-up.", "Let me get the next question."
 
 # Verbosity
 
@@ -1028,6 +1029,9 @@ When candidate says "repeat", "can you repeat that", "say that again", "ask agai
 - Do NOT move to the next question.
 - Do NOT add commentary before repeating — just say the question again.
 - If candidate asks to repeat multiple times in a row: repeat each time without frustration.
+
+## No duplicate questions
+Never ask a question you have already asked in this interview, even rephrased. Each save_interview_event records a question as asked. If generate_section_questions returns, all previously asked questions are automatically excluded. Do NOT revisit covered ground.
 
 ## No closing before signal
 Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
@@ -1400,7 +1404,11 @@ ${systemInstructions}`;
     });
 
     this.toolCallInProgress = false;
-    this.callbacks.onThinkingChange?.(false); // tool result sent — back to listening or speaking
+    // Keep thinking=true when continuation fires — response.created of next response clears it.
+    // Only clear here when no continuation (no more AI response coming immediately).
+    if (!needsContinuation) {
+      this.callbacks.onThinkingChange?.(false);
+    }
 
     if (needsContinuation) {
       this.safeResponseCreate();
@@ -1424,6 +1432,7 @@ ${systemInstructions}`;
           topic: readString(args.topic),
           difficulty: readString(args.difficulty),
           count: Number(args.count ?? 3),
+          alreadyAskedQuestions: this.evaluationEvents.map((e) => e.question),
           questionTypes: Array.isArray(args.questionTypes)
             ? args.questionTypes.map((item) => String(item))
             : ["NORMAL"],
@@ -1519,7 +1528,15 @@ ${systemInstructions}`;
     if (!sectionName) {
       return null;
     }
-    const section = this.sectionPlan.find((item) => item.name === sectionName);
+    // Fuzzy match: strip "Section N - " prefix and normalize case so AI-reported names match blueprint
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/^section\s*\d+[\s\-:]+/i, "")
+        .trim();
+    const section = this.sectionPlan.find(
+      (item) => item.name === sectionName || normalize(item.name) === normalize(sectionName),
+    );
     if (!section) {
       return null;
     }

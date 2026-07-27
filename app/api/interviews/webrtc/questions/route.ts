@@ -12,6 +12,7 @@ type QuestionRequest = {
   topic?: string;
   difficulty?: string;
   count?: number;
+  alreadyAskedQuestions?: string[];
   questionTypes?: string[];
   candidateContext?: string;
   elapsedMinutes?: number;
@@ -85,6 +86,7 @@ Required skills: ${requiredSkills}
 Elapsed minutes: ${Number(body.elapsedMinutes ?? 0)}
 Remaining minutes: ${Number(body.remainingMinutes ?? 0)}
 Candidate context: ${body.candidateContext || "Use earlier answers and intro details"}
+Already asked questions (DO NOT repeat or rephrase any of these): ${Array.isArray(body.alreadyAskedQuestions) && body.alreadyAskedQuestions.length > 0 ? body.alreadyAskedQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "None"}
 Requested question count: ${count}
 Requested question types: ${requestedTypes.join(", ")}
 
@@ -108,7 +110,8 @@ Rules:
 - For CODE_SNIPPET and GRAPHICAL questions, include referenceCardTitle and referenceCardContent with a clear title, the prompt, and any code/diagram content formatted as markdown.
 - When a question has answer options, keep the exact question text in both the question field and the reference card content so the interviewer can refer back to it.
 - For NORMAL questions, do not include options unless it is naturally MCQ.
-- Keep code snippets realistic and concise; use markdown code fences in referenceCardContent.`;
+- Keep code snippets realistic and concise; use markdown code fences in referenceCardContent.
+- NEVER generate a question that is the same as, or a rephrasing of, any question in the "Already asked questions" list above.`;
 
     const response = await openai.responses.create({
       model,
