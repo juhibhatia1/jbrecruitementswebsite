@@ -12,7 +12,7 @@ import { buildTimeline } from "@/app/components/interviews/timeline-utils";
 import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 
 type Phase = "setup" | "live" | "results" | "error";
-type SetupStep = "mic" | "connecting" | "starting" | "done";
+type SetupStep = "mic" | "mic-test" | "connecting" | "starting" | "done";
 
 type ServerMessage =
   | { type: "status"; message: string }
@@ -46,6 +46,8 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [clockTick, setClockTick] = useState(() => Date.now());
   const [hasStream, setHasStream] = useState(false);
+  const [micTestPassed, setMicTestPassed] = useState(false);
+  const [micTestBars, setMicTestBars] = useState<number[]>(Array(20).fill(0));
   const [timingState, setTimingState] = useState({
     startedAt: 0,
     durationMs: 15 * 60 * 1000,
@@ -53,6 +55,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+  const handleMicTrackEndedRef = useRef<() => void>(() => {});
 
   const streamRef = useRef<MediaStream | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
@@ -79,6 +82,11 @@ export default function InterviewRoom({ token }: { token: string }) {
   const hardStopSignalSentRef = useRef(false);
   const interviewStartedAtRef = useRef<number | null>(null);
   const interviewDurationMsRef = useRef(15 * 60 * 1000);
+  const micTestCtxRef = useRef<AudioContext | null>(null);
+  const micTestAnalyserRef = useRef<AnalyserNode | null>(null);
+  const micTestAnimFrameRef = useRef<number | null>(null);
+  const micTestResolveRef = useRef<(() => void) | null>(null);
+  const micTestPassedRef = useRef(false);
 
   const phaseRef = useRef<Phase>("setup");
   const sessionTokenKey = `jb-webrtc-session:${token}`;
@@ -98,6 +106,58 @@ export default function InterviewRoom({ token }: { token: string }) {
 
     return () => window.clearInterval(timerId);
   }, [phase]);
+
+  // Mic test animation loop — runs while setupStep === "mic-test"
+  useEffect(() => {
+    if (setupStep !== "mic-test") return;
+
+    const analyser = micTestAnalyserRef.current;
+    if (!analyser) return;
+
+    const barCount = 20;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    let spikeDetectedAt: number | null = null;
+
+    const loop = () => {
+      micTestAnimFrameRef.current = requestAnimationFrame(loop);
+      analyser.getByteFrequencyData(dataArray);
+
+      // Sample barCount evenly spaced bins
+      const step = Math.floor(dataArray.length / barCount);
+      const bars = Array.from({ length: barCount }, (_, i) => {
+        const raw = dataArray[i * step] ?? 0;
+        return raw / 255;
+      });
+      setMicTestBars(bars);
+
+      // Spike detection: any bar > 0.08 normalized (voice with noise suppression is lower than raw)
+      const hasSpike = bars.some((b) => b > 0.08);
+      if (hasSpike && !micTestPassedRef.current) {
+        if (!spikeDetectedAt) {
+          spikeDetectedAt = Date.now();
+        } else if (Date.now() - spikeDetectedAt > 500) {
+          // Sustained spike for 800ms → pass
+          micTestPassedRef.current = true;
+          setMicTestPassed(true);
+          // Auto-advance after 1.2s so user sees the pass state
+          setTimeout(() => {
+            micTestResolveRef.current?.();
+          }, 1200);
+        }
+      } else if (!hasSpike) {
+        spikeDetectedAt = null;
+      }
+    };
+
+    loop();
+
+    return () => {
+      if (micTestAnimFrameRef.current !== null) {
+        cancelAnimationFrame(micTestAnimFrameRef.current);
+        micTestAnimFrameRef.current = null;
+      }
+    };
+  }, [setupStep]);
 
   const setMicCaptureEnabled = useCallback((enabled: boolean) => {
     streamRef.current?.getAudioTracks().forEach((track) => {
@@ -131,6 +191,48 @@ export default function InterviewRoom({ token }: { token: string }) {
     streamRef.current = null;
     micCtxRef.current = null;
   }, []);
+
+  const handleMicTrackEnded = useCallback(async () => {
+    if (phaseRef.current !== "live") return;
+    toast.warning("Microphone disconnected. Attempting to reconnect…");
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+        video: false,
+      });
+      const newTrack = newStream.getAudioTracks()[0];
+      if (!newTrack) throw new Error("No audio track in new stream");
+      newTrack.onended = () => void handleMicTrackEndedRef.current();
+      await transportRef.current?.replaceAudioTrack(newTrack);
+      const oldStream = streamRef.current;
+      streamRef.current = newStream;
+      if (micCtxRef.current && analyserRef.current) {
+        sourceRef.current?.disconnect();
+        const newSource = micCtxRef.current.createMediaStreamSource(newStream);
+        newSource.connect(analyserRef.current);
+        sourceRef.current = newSource;
+      }
+      oldStream?.getTracks().forEach((t) => t.stop());
+      newTrack.enabled = !micLocked;
+      toast.success("Microphone reconnected.");
+    } catch {
+      toast.error("Could not reconnect microphone. Please check your microphone settings.");
+    }
+  }, [micLocked]);
+
+  // Keep ref current so `newTrack.onended` always calls the latest closure.
+  useEffect(() => { handleMicTrackEndedRef.current = handleMicTrackEnded; }, [handleMicTrackEnded]);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices) return;
+    const handleDeviceChange = () => {
+      if (phaseRef.current !== "live" || !streamRef.current) return;
+      const hasEndedTrack = streamRef.current.getAudioTracks().some((t) => t.readyState === "ended");
+      if (hasEndedTrack) void handleMicTrackEnded();
+    };
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+    return () => navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+  }, [handleMicTrackEnded]);
 
   const scheduleSync = useCallback(() => {
     if (!sessionIdRef.current) return;
@@ -448,7 +550,46 @@ export default function InterviewRoom({ token }: { token: string }) {
         return;
       }
       streamRef.current = stream;
+      stream.getAudioTracks().forEach((track) => {
+        track.onended = () => void handleMicTrackEndedRef.current();
+        // Keep tracks ENABLED during mic test so AnalyserNode gets real audio
+        track.enabled = true;
+      });
+
+      // ── Mic test stage ────────────────────────────────────────────────────
+      micTestPassedRef.current = false;
+      setMicTestPassed(false);
+      setMicTestBars(Array(20).fill(0));
+
+      const testCtx = new AudioContext();
+      micTestCtxRef.current = testCtx;
+      // Resume in case browser started context suspended
+      if (testCtx.state === "suspended") await testCtx.resume();
+      const testSource = testCtx.createMediaStreamSource(stream);
+      const testAnalyser = testCtx.createAnalyser();
+      testAnalyser.fftSize = 512;
+      testAnalyser.smoothingTimeConstant = 0.6;
+      testSource.connect(testAnalyser);
+      micTestAnalyserRef.current = testAnalyser;
+
+      setSetupStep("mic-test");
+      setSetupStatus("Speak something to test your microphone…");
+
+      await new Promise<void>((resolve) => {
+        micTestResolveRef.current = resolve;
+      });
+
+      // Cleanup test audio context, then disable mic for interview start
+      micTestResolveRef.current = null;
+      micTestAnalyserRef.current = null;
+      if (micTestAnimFrameRef.current !== null) {
+        cancelAnimationFrame(micTestAnimFrameRef.current);
+        micTestAnimFrameRef.current = null;
+      }
+      await testCtx.close();
+      micTestCtxRef.current = null;
       setMicCaptureEnabled(false);
+      // ─────────────────────────────────────────────────────────────────────
 
       setSetupStep("connecting");
       setSetupStatus("Initializing interview session…");
@@ -574,6 +715,7 @@ export default function InterviewRoom({ token }: { token: string }) {
             track.enabled = !muted;
           });
         },
+        onMicHealthFailed: () => void handleMicTrackEndedRef.current(),
         onRemoteStream: (remoteStream) => {
           if (remoteAudioRef.current) {
             remoteAudioRef.current.srcObject = remoteStream;
@@ -692,10 +834,11 @@ export default function InterviewRoom({ token }: { token: string }) {
   if (phase === "setup") {
     const steps: { key: SetupStep; label: string }[] = [
       { key: "mic", label: "Microphone access" },
+      { key: "mic-test", label: "Microphone test" },
       { key: "connecting", label: "Connecting to server" },
       { key: "starting", label: "Starting AI interviewer" },
     ];
-    const stepOrder: SetupStep[] = ["mic", "connecting", "starting", "done"];
+    const stepOrder: SetupStep[] = ["mic", "mic-test", "connecting", "starting", "done"];
     const currentIdx = stepOrder.indexOf(setupStep);
 
     return (
@@ -716,16 +859,54 @@ export default function InterviewRoom({ token }: { token: string }) {
             <p className="text-xs text-slate-500 mt-1">Please wait while we set everything up…</p>
           </div>
 
-          {/* Animated blob placeholder */}
-          <div className="flex justify-center mb-8">
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
-              <div className="absolute inset-2 rounded-full bg-[#5a58ab]/15 animate-pulse" />
-              <div className="absolute inset-4 rounded-full bg-[#5a58ab] flex items-center justify-center text-white font-bold">
-                JB
+          {/* Mic test visualizer / blob placeholder */}
+          {setupStep === "mic-test" ? (
+            <div className="flex flex-col items-center mb-8 gap-4">
+              {/* Mic icon with pulse ring */}
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <div
+                  className={`absolute inset-0 rounded-full transition-all duration-300 ${micTestPassed ? "bg-emerald-500/20 animate-none" : "bg-[#5a58ab]/10 animate-ping"}`}
+                  style={micTestPassed ? undefined : { animationDuration: "1.5s" }}
+                />
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-colors duration-300 ${micTestPassed ? "bg-emerald-500" : "bg-[#5a58ab]"}`}
+                >
+                  {micTestPassed ? (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  ) : (
+                    <IoMic className="w-6 h-6" />
+                  )}
+                </div>
+              </div>
+
+              {/* Frequency bars */}
+              <div className="flex items-end gap-[3px] h-14 w-full max-w-[200px]">
+                {micTestBars.map((level, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 rounded-full transition-all duration-75 ${micTestPassed ? "bg-emerald-500" : "bg-[#5a58ab]"}`}
+                    style={{ height: `${Math.max(4, level * 100)}%`, opacity: 0.6 + level * 0.4 }}
+                  />
+                ))}
+              </div>
+
+              <p className={`text-xs font-medium transition-colors duration-300 ${micTestPassed ? "text-emerald-600" : "text-[#5a58ab]"}`}>
+                {micTestPassed ? "Microphone working!" : "Say \u201cHello\u201d to test your microphone"}
+              </p>
+            </div>
+          ) : (
+            <div className="flex justify-center mb-8">
+              <div className="relative w-24 h-24">
+                <div className="absolute inset-0 rounded-full bg-[#5a58ab]/10 animate-ping" style={{ animationDuration: "2s" }} />
+                <div className="absolute inset-2 rounded-full bg-[#5a58ab]/15 animate-pulse" />
+                <div className="absolute inset-4 rounded-full bg-[#5a58ab] flex items-center justify-center text-white font-bold">
+                  JB
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Steps */}
           <div className="space-y-3 mb-6">
@@ -766,13 +947,22 @@ export default function InterviewRoom({ token }: { token: string }) {
           {/* Status text */}
           <p className="text-center text-xs text-slate-500 min-h-[18px]">{setupStatus}</p>
 
-          <button
-            onClick={() => void beginInterview()}
-            disabled={isStarting}
-            className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isStarting ? "Starting…" : "Start Interview"}
-          </button>
+          {setupStep === "mic-test" ? (
+            <button
+              onClick={() => micTestResolveRef.current?.()}
+              className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645]"
+            >
+              {micTestPassed ? "Continue →" : "Skip test"}
+            </button>
+          ) : (
+            <button
+              onClick={() => void beginInterview()}
+              disabled={isStarting}
+              className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isStarting ? "Starting…" : "Start Interview"}
+            </button>
+          )}
         </div>
       </div>
     );

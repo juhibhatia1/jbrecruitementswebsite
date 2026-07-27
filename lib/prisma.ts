@@ -48,6 +48,9 @@ async function ensureCandidateApplicationSchema(client: PrismaClient): Promise<v
         ALTER TABLE "CandidateApplication"
           ADD COLUMN IF NOT EXISTS "resumeUrl" TEXT,
           ADD COLUMN IF NOT EXISTS "resumeText" TEXT,
+          ADD COLUMN IF NOT EXISTS "careerGoal" TEXT,
+          ADD COLUMN IF NOT EXISTS "focusAreas" TEXT,
+          ADD COLUMN IF NOT EXISTS "selfIntroNotes" TEXT,
           ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3),
           ADD COLUMN IF NOT EXISTS "purchaseId" TEXT;
       `);

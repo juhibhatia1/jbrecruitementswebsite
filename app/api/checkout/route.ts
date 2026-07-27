@@ -62,7 +62,12 @@ export async function POST(request: Request) {
     const interviewMetadata = body.interviewMetadata as {
       templateId?: string;
       linkedInUrl?: string;
+      resumeUrl?: string;
+      resumeText?: string;
       interviewPreference?: "AI" | "MANUAL";
+      careerGoal?: string;
+      focusAreas?: string;
+      selfIntroNotes?: string;
       jobRole?: string;
       yearsOfExperience?: string;
       applicationLink?: string;
@@ -170,7 +175,12 @@ export async function POST(request: Request) {
             candidateEmail: candidateEmailLower,
             candidatePhone: candidatePhone || null,
             linkedInUrl: interviewMetadata.linkedInUrl || null,
+            resumeUrl: interviewMetadata.resumeUrl || null,
+            resumeText: interviewMetadata.resumeText || null,
             interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+            careerGoal: interviewMetadata.careerGoal || null,
+            focusAreas: interviewMetadata.focusAreas || null,
+            selfIntroNotes: interviewMetadata.selfIntroNotes || null,
             accessTokenHash,
             accessTokenExpiresAt,
             status: "APPLIED",
@@ -184,7 +194,12 @@ export async function POST(request: Request) {
             candidateName: candidateName.trim(),
             candidatePhone: candidatePhone || null,
             linkedInUrl: interviewMetadata.linkedInUrl || null,
+            resumeUrl: interviewMetadata.resumeUrl || null,
+            resumeText: interviewMetadata.resumeText || null,
             interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+            careerGoal: interviewMetadata.careerGoal || null,
+            focusAreas: interviewMetadata.focusAreas || null,
+            selfIntroNotes: interviewMetadata.selfIntroNotes || null,
           },
         });
       }

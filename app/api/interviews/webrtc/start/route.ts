@@ -28,6 +28,9 @@ function buildSessionInstructions(payload: {
   isResuming?: boolean;
   resumeText?: string;
   jobDescription?: string;
+  careerGoal?: string;
+  focusAreas?: string;
+  selfIntroNotes?: string;
 }) {
   return buildWebRtcSystemInstructions(payload);
 }
@@ -149,6 +152,9 @@ export async function POST(request: NextRequest) {
           jobDescription:
             ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
             undefined,
+          careerGoal: application.careerGoal || undefined,
+          focusAreas: application.focusAreas || undefined,
+          selfIntroNotes: application.selfIntroNotes || undefined,
         });
       } catch (error) {
         console.warn("Blueprint generation failed, continuing without blueprint:", error);
@@ -183,6 +189,9 @@ export async function POST(request: NextRequest) {
       jobDescription:
         ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
         undefined,
+      careerGoal: application.careerGoal || undefined,
+      focusAreas: application.focusAreas || undefined,
+      selfIntroNotes: application.selfIntroNotes || undefined,
     });
 
     const openingPrompt = buildWebRtcOpeningPrompt({

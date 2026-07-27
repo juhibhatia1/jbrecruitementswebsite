@@ -84,6 +84,9 @@ export function buildWebRtcSystemInstructions(payload: {
   isResuming?: boolean;
   resumeText?: string;
   jobDescription?: string;
+  careerGoal?: string;
+  focusAreas?: string;
+  selfIntroNotes?: string;
 }): string {
   const {
     role,
@@ -98,6 +101,9 @@ export function buildWebRtcSystemInstructions(payload: {
     resumeText,
     difficultyLevel,
     jobDescription,
+    careerGoal,
+    focusAreas,
+    selfIntroNotes,
   } = payload;
   const transcriptText = transcript && transcript.length > 0
     ? transcript
@@ -162,6 +168,18 @@ Use this blueprint as your primary starting plan. Adapt naturally to candidate r
 `
     : "";
 
+  const candidateContextBlock = [
+    careerGoal?.trim()
+      ? `CAREER GOAL: "${careerGoal.trim()}". Frame at least 1-2 questions around readiness for this specific goal. Acknowledge this context naturally during the interview (e.g. "Given that you're aiming to ${careerGoal.trim().toLowerCase()}, let me ask...").`
+      : "",
+    focusAreas?.trim()
+      ? `REQUESTED FOCUS AREAS: ${focusAreas.trim()}. Prioritise questions in these areas when they fit naturally within section pacing.`
+      : "",
+    selfIntroNotes?.trim()
+      ? `CANDIDATE'S PERSONAL CONTEXT: ${selfIntroNotes.trim()}. Be sensitive and supportive — acknowledge career gaps, transitions, or personal circumstances positively. Never make the candidate feel judged for these.`
+      : "",
+  ].filter(Boolean).join("\n\n");
+
   const dynamicGuidelines = `
 
 ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
@@ -207,10 +225,10 @@ OPENING — follow this exact sequence, no steps skipped:
 3. Ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll kick things off." Wait for the candidate's explicit confirmation before doing anything else.
 4. Once the candidate confirms they're ready: ask them to introduce themselves — name, current or most recent role, years of relevant experience, and a brief background summary. Wait for their full response before moving to Section 1.
 
-PERSONALIZATION:
-During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics.
+PERSONALIZATION (CRITICAL — determines whether questions feel tailored or generic):
+During the candidate's introduction and throughout the interview, actively reference their SPECIFIC technologies, project names, company names, job titles, and experiences. Never ask a generic textbook question when a personalised version anchored to their actual background is possible.
 Core tech stack to keep in mind: ${techStack.join(", ") || "General"}.
-${resumeSection}
+${candidateContextBlock ? `\n${candidateContextBlock}\n` : ""}${resumeSection}
 ${blueprintBlock}
 
 ENGAGEMENT RULES — react like a skilled human interviewer:
@@ -272,6 +290,9 @@ export async function createInterviewSessionBlueprint(payload: {
   baseInstructions: string;
   resumeText?: string;
   jobDescription?: string;
+  careerGoal?: string;
+  focusAreas?: string;
+  selfIntroNotes?: string;
 }): Promise<InterviewSessionBlueprint | null> {
   const openai = new OpenAI({ apiKey: payload.apiKey });
   const questionTarget = computeQuestionTarget(payload.durationMinutes);
@@ -284,8 +305,11 @@ Duration: ${payload.durationMinutes} minutes
 Tech stack: ${payload.techStack.join(", ") || "General"}
 Required skills: ${payload.requiredSkills.join(", ") || "General"}
 Target substantive question count: ${questionTarget}
-Candidate resume context: ${payload.resumeText?.trim() || "Not provided"}
-Job description context: ${payload.jobDescription?.trim() || "Not provided"}
+Candidate resume: ${payload.resumeText?.trim() || "Not provided"}
+Job description: ${payload.jobDescription?.trim() || "Not provided"}
+Candidate career goal: ${payload.careerGoal?.trim() || "Not specified"}
+Candidate requested focus areas: ${payload.focusAreas?.trim() || "None"}
+Candidate personal context: ${payload.selfIntroNotes?.trim() || "None"}
 
 Return valid JSON only:
 {
@@ -307,6 +331,9 @@ Return valid JSON only:
 Rules:
 - Create 3-4 sections with realistic minute splits summing approximately to ${payload.durationMinutes}.
 - Create exactly ${questionTarget} starterQuestions distributed across sections.
+- CRITICAL PERSONALIZATION: If a candidate resume is provided, at least 50% of starter questions MUST be directly anchored to specific details in that resume — reference actual project names, companies, job titles, technologies, or experiences the candidate mentions. Generic textbook questions are not acceptable when resume data is available.
+- If a career goal is provided, include 1-2 questions specifically testing readiness for that goal (e.g. leadership/influence scenarios for "senior / leadership role", cross-domain knowledge for "Switch to this industry").
+- If focus areas are requested by the candidate, include at least 1 question per focus area when it fits the role and section plan.
 - Include a balanced type mix and at least one CODE_SNIPPET question if role/stack is coding-heavy.
 - Keep questions concise and interview-grade.
 - Align with this base instruction context:

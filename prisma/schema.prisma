@@ -214,6 +214,9 @@ model CandidateApplication {
   linkedInUrl         String?
   resumeUrl           String?
   resumeText          String?
+  careerGoal          String?
+  focusAreas          String?
+  selfIntroNotes      String?
   interviewPreference CandidateInterviewPreference
   accessTokenHash     String                       @unique
   accessTokenExpiresAt DateTime

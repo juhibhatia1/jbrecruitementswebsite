@@ -221,6 +221,9 @@ export default function CustomJdMockInterviewPage() {
     experienceLevel: "",
     difficultyLevel: "",
     jobDescription: "",
+    careerGoal: "",
+    focusAreas: "",
+    selfIntroNotes: "",
   });
 
   const [generating, setGenerating] = useState(false);
@@ -364,6 +367,15 @@ export default function CustomJdMockInterviewPage() {
     },
   ];
 
+  const careerGoalOptions: DropdownOption[] = [
+    { value: "Get hired for this job", label: "Get hired for this job" },
+    { value: "Switch to this industry", label: "Switch to this industry" },
+    { value: "Move into a senior / leadership role", label: "Move into a senior / leadership role" },
+    { value: "Returning after a career break", label: "Returning after a career break" },
+    { value: "Practice and sharpen interview skills", label: "Practice and sharpen interview skills" },
+    { value: "Prepare for a specific company", label: "Prepare for a specific company" },
+  ];
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -378,6 +390,13 @@ export default function CustomJdMockInterviewPage() {
       toast.error("Validation Error", {
         description:
           "Please fill out your role, experience level, difficulty level, and job description before continuing.",
+      });
+      return;
+    }
+
+    if (!form.careerGoal) {
+      toast.error("Career Goal Required", {
+        description: "Please select your main career goal so we can personalise your interview.",
       });
       return;
     }
@@ -465,6 +484,9 @@ export default function CustomJdMockInterviewPage() {
             interviewPreference: "AI",
             resumeUrl,
             resumeText,
+            careerGoal: form.careerGoal || undefined,
+            focusAreas: form.focusAreas || undefined,
+            selfIntroNotes: form.selfIntroNotes || undefined,
           },
         }),
       });
@@ -708,6 +730,46 @@ export default function CustomJdMockInterviewPage() {
                     placeholder="Paste the full job description here (responsibilities, technical requirements, stack, credentials...)"
                     className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition resize-y font-mono text-xs sm:text-sm"
                   />
+                </div>
+
+                {/* Personalisation fields */}
+                <div className="border-t border-slate-100 pt-6 space-y-4">
+                  <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Personalise Your Interview</h3>
+                  <PremiumDropdown
+                    label="Main Career Goal *"
+                    value={form.careerGoal}
+                    options={careerGoalOptions}
+                    placeholder="Select your primary goal…"
+                    onChange={(nextValue) =>
+                      setForm((prev) => ({ ...prev, careerGoal: nextValue }))
+                    }
+                  />
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
+                      Focus Areas <span className="text-slate-400 normal-case font-normal">(optional)</span>
+                    </label>
+                    <textarea
+                      name="focusAreas"
+                      value={form.focusAreas}
+                      onChange={handleChange}
+                      rows={2}
+                      placeholder="e.g. system design, SQL, behavioural questions…"
+                      className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
+                      Anything you'd like the AI interviewer to know? <span className="text-slate-400 normal-case font-normal">(optional)</span>
+                    </label>
+                    <textarea
+                      name="selfIntroNotes"
+                      value={form.selfIntroNotes}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="e.g. I have a 2-year gap due to caregiving, I'm pivoting from finance to tech…"
+                      className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition resize-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Submit button */}
