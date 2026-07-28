@@ -212,6 +212,8 @@ export class OpenAIWebRtcInterviewTransport {
   private killTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly KILL_AFTER_HARD_STOP_MS = 90_000; // 90 seconds after hard stop
 
+  private evaluationEvents: InterviewEvaluationEvent[] = [];
+
   constructor(callbacks: WebRtcCallbacks) {
     this.callbacks = callbacks;
   }
@@ -230,6 +232,7 @@ export class OpenAIWebRtcInterviewTransport {
         ? Math.floor(Number(payload.sessionBlueprint?.questionTarget))
         : computeMinimumQuestionTarget(payload.durationMinutes);
     this.questionsAsked = 0;
+    this.evaluationEvents = [];
     this.sectionPlan = Array.isArray(payload.sessionBlueprint?.sections)
       ? payload.sessionBlueprint!.sections
       : [];
@@ -1274,6 +1277,7 @@ ${systemInstructions}`;
         feedback: readString(args.feedback),
       };
       this.callbacks.onEvaluationEvent(event);
+      this.evaluationEvents.push(event);
       this.questionsAsked += 1;
       const elapsedMs = Math.max(0, Date.now() - this.sessionStartedAtMs);
       const progressRatio = Math.min(1, elapsedMs / this.durationMs);
