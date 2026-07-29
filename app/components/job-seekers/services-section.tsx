@@ -63,12 +63,12 @@ const services = [
     title: "LinkedIn Optimization",
     description:
       "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
-    iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
+    iconPath: "/icons/job-seekers/linkedin-optimization.svg",
     timeline: "5 days",
     features: [
       "Keywords optimized content",
       "Skills-based profile structuring",
-      "LinkedIn banner optimisation for stronger personal branding",
+      "LinkedIn banner optimization for stronger personal branding",
     ],
   },
   {

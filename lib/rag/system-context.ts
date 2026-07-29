@@ -56,7 +56,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
     features: [
       "Keywords optimized content",
       "Skills-based profile structuring",
-      "LinkedIn banner optimisation for stronger personal branding"
+      "LinkedIn banner optimization for stronger personal branding"
     ]
   },
   {

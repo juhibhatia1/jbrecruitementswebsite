@@ -496,7 +496,7 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
               </div>
             </div>
             {[
-              { name: "technicalCompetencies", label: "Technical Competencies", placeholder: "e.g. System design, REST APIs, SQL query optimisation, Git branching strategies" },
+              { name: "technicalCompetencies", label: "Technical Competencies", placeholder: "e.g. System design, REST APIs, SQL query optimization, Git branching strategies" },
               { name: "behaviouralCompetencies", label: "Behavioural Competencies", placeholder: "e.g. Communication clarity, ownership mindset, conflict resolution, adaptability under pressure" },
               { name: "specificQuestions", label: "Specific Questions to Include in Conversation", placeholder: "e.g. Describe a time you debugged a critical production issue. How do you handle tight deadlines?" },
               { name: "evaluationCriteria", label: "Evaluation Criteria", placeholder: "e.g. Technical accuracy (40%), problem-solving approach (30%), communication (20%), culture fit (10%)" },

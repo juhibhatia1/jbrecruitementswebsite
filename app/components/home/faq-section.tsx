@@ -36,7 +36,7 @@ const faqs: FAQ[] = [
   {
     question: "How can JB help me in my job search?",
     answer:
-      "We support you with resume review, LinkedIn optimisation, interview guidance, and access to relevant opportunities.",
+      "We support you with resume review, LinkedIn optimization, interview guidance, profile positioning and access to relevant opportunities.",
   },
   {
     question: "Do I need to apply for every role separately?",

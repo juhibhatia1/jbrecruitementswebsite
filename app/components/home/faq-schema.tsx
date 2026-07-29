@@ -40,7 +40,7 @@ export default function FAQSchema() {
         name: "How can JB help me in my job search?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "We support you with resume review, LinkedIn optimisation, interview guidance, and access to relevant opportunities.",
+          text: "We support you with resume review, LinkedIn optimization, interview guidance, profile positioning and access to relevant opportunities.",
         },
       },
       {
