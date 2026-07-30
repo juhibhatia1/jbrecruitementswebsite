@@ -106,6 +106,18 @@ export const SYSTEM_SERVICES: SystemService[] = [
       "Direct application links for faster applying"
     ]
   },
+  {
+    title: "AI Mock Interview",
+    amount: 39,
+    timeline: "Instant session & report",
+    description: "An interactive, real-time voice-based mock interview conducted by an advanced AI tailored to your target role and resume, yielding an instant performance report.",
+    features: [
+      "Real-time voice-based interactive session",
+      "Tailored to your resume, job role, and experience level",
+      "Instant scorecard grading out of 10",
+      "Question-by-question feedback and improvement plan sent over email"
+    ]
+  }
 ];
 
 export const SYSTEM_ABOUT = `
@@ -151,6 +163,28 @@ A:
 
 Q: Can I get a discount?
 A: Yes! You can get 10% off when you choose any 4 or more services. The AI Mock Interview is excluded from the bundle offer, but all other services can count toward it.
+
+Q: What is the AI Mock Interview and how does it work?
+A: The AI Mock Interview is an interactive, voice-based practice session with our advanced AI interviewer. The AI conducts a realistic interview tailored to your target job role, experience level, and resume. Once completed, a detailed performance scorecard with a score out of 10, a summary of strengths/weaknesses, and a full question-by-question improvement report is instantly generated and emailed to you.
+
+Q: How do I take the AI Mock Interview?
+A:
+1. Select the "AI Based Interview" option under Mock Interviews on our website.
+2. Fill in the job details (or select a role) and upload your resume.
+3. Complete the payment.
+4. You will receive an email invitation with a unique interview link.
+5. Open the link in a modern web browser, allow microphone access, run the quick mic test, and click "Start Interview" to begin speaking with the AI.
+
+Q: Where do I take the AI Mock Interview?
+A: The interview is taken entirely online inside your web browser on our platform. No software installation, third-party apps, or account sign-ups are required. Simply open the unique link sent to your email (e.g., /interview/[token]) on a computer or phone.
+
+Q: What are the recommendations for a smooth experience?
+A: For the best experience, we recommend:
+- **Use a Headset/Earphones:** Wearing headphones with a built-in microphone prevents the AI's voice from feeding back into your mic (avoiding echo loops).
+- **Environment:** Be in a quiet, distraction-free room. Background chatter or noise can interfere with the audio capture.
+- **Internet Connection:** Ensure a stable, low-latency Wi-Fi or wired connection.
+- **Permissions:** Make sure to grant browser microphone permissions when prompted.
+- **Browser:** Use modern browsers like Google Chrome, Safari, or Microsoft Edge.
 `;
 
 /**
