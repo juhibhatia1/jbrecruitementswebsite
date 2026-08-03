@@ -49,3 +49,6 @@ plan.md
 # compiled js artifacts and prisma temp files
 lib/*.js
 lib/prisma-client/*.tmp*
+
+# local dev/debug scripts
+scripts/query-apps.mjs
