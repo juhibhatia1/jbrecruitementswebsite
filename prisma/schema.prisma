@@ -217,6 +217,8 @@ model CandidateApplication {
   careerGoal          String?
   focusAreas          String?
   selfIntroNotes      String?
+  yearsOfExperience   String?
+  jobApplicationLink  String?
   interviewPreference CandidateInterviewPreference
   accessTokenHash     String                       @unique
   accessTokenExpiresAt DateTime

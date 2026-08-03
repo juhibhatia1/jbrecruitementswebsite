@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       jobRole?: string;
       yearsOfExperience?: string;
       applicationLink?: string;
+      jobApplicationLink?: string;
       interviewBrief?: string;
     } | undefined;
 
@@ -181,6 +182,8 @@ export async function POST(request: Request) {
             careerGoal: interviewMetadata.careerGoal || null,
             focusAreas: interviewMetadata.focusAreas || null,
             selfIntroNotes: interviewMetadata.selfIntroNotes || null,
+            yearsOfExperience: interviewMetadata.yearsOfExperience || null,
+            jobApplicationLink: interviewMetadata.jobApplicationLink || null,
             accessTokenHash,
             accessTokenExpiresAt,
             status: "APPLIED",
@@ -200,6 +203,8 @@ export async function POST(request: Request) {
             careerGoal: interviewMetadata.careerGoal || null,
             focusAreas: interviewMetadata.focusAreas || null,
             selfIntroNotes: interviewMetadata.selfIntroNotes || null,
+            yearsOfExperience: interviewMetadata.yearsOfExperience || null,
+            jobApplicationLink: interviewMetadata.jobApplicationLink || null,
           },
         });
       }
@@ -236,6 +241,11 @@ export async function POST(request: Request) {
             interviewBrief: interviewMetadata.interviewBrief || "",
             linkedInUrl: interviewMetadata.linkedInUrl || "",
           }),
+      },
+      payment_method_options: {
+        card: {
+          request_three_d_secure: "any",
+        },
       },
       receipt_email: candidateEmail,
     });

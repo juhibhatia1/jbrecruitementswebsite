@@ -10594,6 +10594,8 @@ export namespace Prisma {
     careerGoal: string | null
     focusAreas: string | null
     selfIntroNotes: string | null
+    yearsOfExperience: string | null
+    jobApplicationLink: string | null
     interviewPreference: $Enums.CandidateInterviewPreference | null
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
@@ -10616,6 +10618,8 @@ export namespace Prisma {
     careerGoal: string | null
     focusAreas: string | null
     selfIntroNotes: string | null
+    yearsOfExperience: string | null
+    jobApplicationLink: string | null
     interviewPreference: $Enums.CandidateInterviewPreference | null
     accessTokenHash: string | null
     accessTokenExpiresAt: Date | null
@@ -10638,6 +10642,8 @@ export namespace Prisma {
     careerGoal: number
     focusAreas: number
     selfIntroNotes: number
+    yearsOfExperience: number
+    jobApplicationLink: number
     interviewPreference: number
     accessTokenHash: number
     accessTokenExpiresAt: number
@@ -10662,6 +10668,8 @@ export namespace Prisma {
     careerGoal?: true
     focusAreas?: true
     selfIntroNotes?: true
+    yearsOfExperience?: true
+    jobApplicationLink?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -10684,6 +10692,8 @@ export namespace Prisma {
     careerGoal?: true
     focusAreas?: true
     selfIntroNotes?: true
+    yearsOfExperience?: true
+    jobApplicationLink?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -10706,6 +10716,8 @@ export namespace Prisma {
     careerGoal?: true
     focusAreas?: true
     selfIntroNotes?: true
+    yearsOfExperience?: true
+    jobApplicationLink?: true
     interviewPreference?: true
     accessTokenHash?: true
     accessTokenExpiresAt?: true
@@ -10801,6 +10813,8 @@ export namespace Prisma {
     careerGoal: string | null
     focusAreas: string | null
     selfIntroNotes: string | null
+    yearsOfExperience: string | null
+    jobApplicationLink: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date
@@ -10840,6 +10854,8 @@ export namespace Prisma {
     careerGoal?: boolean
     focusAreas?: boolean
     selfIntroNotes?: boolean
+    yearsOfExperience?: boolean
+    jobApplicationLink?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -10865,6 +10881,8 @@ export namespace Prisma {
     careerGoal?: boolean
     focusAreas?: boolean
     selfIntroNotes?: boolean
+    yearsOfExperience?: boolean
+    jobApplicationLink?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -10889,6 +10907,8 @@ export namespace Prisma {
     careerGoal?: boolean
     focusAreas?: boolean
     selfIntroNotes?: boolean
+    yearsOfExperience?: boolean
+    jobApplicationLink?: boolean
     interviewPreference?: boolean
     accessTokenHash?: boolean
     accessTokenExpiresAt?: boolean
@@ -10928,6 +10948,8 @@ export namespace Prisma {
       careerGoal: string | null
       focusAreas: string | null
       selfIntroNotes: string | null
+      yearsOfExperience: string | null
+      jobApplicationLink: string | null
       interviewPreference: $Enums.CandidateInterviewPreference
       accessTokenHash: string
       accessTokenExpiresAt: Date
@@ -11343,6 +11365,8 @@ export namespace Prisma {
     readonly careerGoal: FieldRef<"CandidateApplication", 'String'>
     readonly focusAreas: FieldRef<"CandidateApplication", 'String'>
     readonly selfIntroNotes: FieldRef<"CandidateApplication", 'String'>
+    readonly yearsOfExperience: FieldRef<"CandidateApplication", 'String'>
+    readonly jobApplicationLink: FieldRef<"CandidateApplication", 'String'>
     readonly interviewPreference: FieldRef<"CandidateApplication", 'CandidateInterviewPreference'>
     readonly accessTokenHash: FieldRef<"CandidateApplication", 'String'>
     readonly accessTokenExpiresAt: FieldRef<"CandidateApplication", 'DateTime'>
@@ -12906,6 +12930,8 @@ export namespace Prisma {
     careerGoal: 'careerGoal',
     focusAreas: 'focusAreas',
     selfIntroNotes: 'selfIntroNotes',
+    yearsOfExperience: 'yearsOfExperience',
+    jobApplicationLink: 'jobApplicationLink',
     interviewPreference: 'interviewPreference',
     accessTokenHash: 'accessTokenHash',
     accessTokenExpiresAt: 'accessTokenExpiresAt',
@@ -13910,6 +13936,8 @@ export namespace Prisma {
     careerGoal?: StringNullableFilter<"CandidateApplication"> | string | null
     focusAreas?: StringNullableFilter<"CandidateApplication"> | string | null
     selfIntroNotes?: StringNullableFilter<"CandidateApplication"> | string | null
+    yearsOfExperience?: StringNullableFilter<"CandidateApplication"> | string | null
+    jobApplicationLink?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
@@ -13935,6 +13963,8 @@ export namespace Prisma {
     careerGoal?: SortOrderInput | SortOrder
     focusAreas?: SortOrderInput | SortOrder
     selfIntroNotes?: SortOrderInput | SortOrder
+    yearsOfExperience?: SortOrderInput | SortOrder
+    jobApplicationLink?: SortOrderInput | SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -13965,6 +13995,8 @@ export namespace Prisma {
     careerGoal?: StringNullableFilter<"CandidateApplication"> | string | null
     focusAreas?: StringNullableFilter<"CandidateApplication"> | string | null
     selfIntroNotes?: StringNullableFilter<"CandidateApplication"> | string | null
+    yearsOfExperience?: StringNullableFilter<"CandidateApplication"> | string | null
+    jobApplicationLink?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
     status?: EnumCandidateApplicationStatusFilter<"CandidateApplication"> | $Enums.CandidateApplicationStatus
@@ -13988,6 +14020,8 @@ export namespace Prisma {
     careerGoal?: SortOrderInput | SortOrder
     focusAreas?: SortOrderInput | SortOrder
     selfIntroNotes?: SortOrderInput | SortOrder
+    yearsOfExperience?: SortOrderInput | SortOrder
+    jobApplicationLink?: SortOrderInput | SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -14016,6 +14050,8 @@ export namespace Prisma {
     careerGoal?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     focusAreas?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     selfIntroNotes?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    yearsOfExperience?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
+    jobApplicationLink?: StringNullableWithAggregatesFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceWithAggregatesFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringWithAggregatesFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeWithAggregatesFilter<"CandidateApplication"> | Date | string
@@ -15008,6 +15044,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15032,6 +15070,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15054,6 +15094,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15078,6 +15120,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15101,6 +15145,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -15122,6 +15168,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15143,6 +15191,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16056,6 +16106,8 @@ export namespace Prisma {
     careerGoal?: SortOrder
     focusAreas?: SortOrder
     selfIntroNotes?: SortOrder
+    yearsOfExperience?: SortOrder
+    jobApplicationLink?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -16078,6 +16130,8 @@ export namespace Prisma {
     careerGoal?: SortOrder
     focusAreas?: SortOrder
     selfIntroNotes?: SortOrder
+    yearsOfExperience?: SortOrder
+    jobApplicationLink?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -16100,6 +16154,8 @@ export namespace Prisma {
     careerGoal?: SortOrder
     focusAreas?: SortOrder
     selfIntroNotes?: SortOrder
+    yearsOfExperience?: SortOrder
+    jobApplicationLink?: SortOrder
     interviewPreference?: SortOrder
     accessTokenHash?: SortOrder
     accessTokenExpiresAt?: SortOrder
@@ -16782,6 +16838,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -16805,6 +16863,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -16842,6 +16902,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16865,6 +16927,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16967,6 +17031,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -16989,6 +17055,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -17041,6 +17109,8 @@ export namespace Prisma {
     careerGoal?: StringNullableFilter<"CandidateApplication"> | string | null
     focusAreas?: StringNullableFilter<"CandidateApplication"> | string | null
     selfIntroNotes?: StringNullableFilter<"CandidateApplication"> | string | null
+    yearsOfExperience?: StringNullableFilter<"CandidateApplication"> | string | null
+    jobApplicationLink?: StringNullableFilter<"CandidateApplication"> | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFilter<"CandidateApplication"> | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFilter<"CandidateApplication"> | string
     accessTokenExpiresAt?: DateTimeFilter<"CandidateApplication"> | Date | string
@@ -17318,6 +17388,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -17341,6 +17413,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -17378,6 +17452,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17401,6 +17477,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17443,6 +17521,8 @@ export namespace Prisma {
     careerGoal?: string | null
     focusAreas?: string | null
     selfIntroNotes?: string | null
+    yearsOfExperience?: string | null
+    jobApplicationLink?: string | null
     interviewPreference: $Enums.CandidateInterviewPreference
     accessTokenHash: string
     accessTokenExpiresAt: Date | string
@@ -17464,6 +17544,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17486,6 +17568,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17508,6 +17592,8 @@ export namespace Prisma {
     careerGoal?: NullableStringFieldUpdateOperationsInput | string | null
     focusAreas?: NullableStringFieldUpdateOperationsInput | string | null
     selfIntroNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    yearsOfExperience?: NullableStringFieldUpdateOperationsInput | string | null
+    jobApplicationLink?: NullableStringFieldUpdateOperationsInput | string | null
     interviewPreference?: EnumCandidateInterviewPreferenceFieldUpdateOperationsInput | $Enums.CandidateInterviewPreference
     accessTokenHash?: StringFieldUpdateOperationsInput | string
     accessTokenExpiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
