@@ -14,11 +14,11 @@ const nextConfig: NextConfig = {
     const csp = [
       "default-src 'self'",
       // Stripe JS + inline scripts (Next.js needs unsafe-inline for its runtime)
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://app.cal.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://app.cal.com https://cal.com",
       // Stripe payment iframes + same-origin blob: for in-app PDF resume preview
       "frame-src 'self' blob: https://js.stripe.com https://hooks.stripe.com https://m.stripe.network https://app.cal.com https://cal.com",
       // API calls: Stripe, OpenAI Realtime, self (WebSocket upgrades)
-      "connect-src 'self' https://api.stripe.com https://m.stripe.network wss://api.openai.com https://api.openai.com https://upload.imagekit.io https://app.cal.com https://cal.com",
+      "connect-src 'self' https://api.stripe.com https://m.stripe.network wss://api.openai.com https://api.openai.com https://upload.imagekit.io https://app.cal.com https://cal.com *.cal.com",
       // Images: Unsplash, ImageKit, data URIs
       "img-src 'self' data: blob: https://images.unsplash.com https://ik.imagekit.io",
       // Fonts: Google Fonts

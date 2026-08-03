@@ -308,6 +308,38 @@ export async function POST(request: Request) {
       // Return 500 so Stripe retries the webhook
       return NextResponse.json({ error: "Database or email execution failed" }, { status: 500 });
     }
+  } else if (event.type === "payment_intent.payment_failed") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const lastError = paymentIntent.last_payment_error;
+    const failureMsg = lastError?.message || lastError?.code || "Card declined or authentication failed";
+    console.log(`PaymentIntent ${paymentIntent.id} failed: ${failureMsg}`);
+
+    try {
+      await prisma.purchase.update({
+        where: { stripePaymentIntentId: paymentIntent.id },
+        data: {
+          status: "FAILED",
+          completionNotes: `Payment Failed: ${failureMsg}`,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to mark purchase as FAILED:", err);
+    }
+  } else if (event.type === "payment_intent.canceled") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    console.log(`PaymentIntent ${paymentIntent.id} was canceled.`);
+
+    try {
+      await prisma.purchase.update({
+        where: { stripePaymentIntentId: paymentIntent.id },
+        data: {
+          status: "CANCELLED",
+          completionNotes: `Payment Canceled: Customer canceled payment process`,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to mark purchase as CANCELLED:", err);
+    }
   } else {
     console.log(`Unhandled event type: ${event.type}`);
   }

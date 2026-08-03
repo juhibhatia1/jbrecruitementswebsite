@@ -620,11 +620,12 @@ export default function CustomJdMockInterviewPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
-                      Phone Number (optional)
+                      Phone Number <span className="text-[#5a58ab]">*</span>
                     </label>
                     <input
                       type="tel"
                       name="candidatePhone"
+                      required
                       value={form.candidatePhone}
                       onChange={handleChange}
                       placeholder="e.g. +91 99999 99999"
