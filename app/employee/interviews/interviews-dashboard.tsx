@@ -1,11 +1,12 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IoArrowForwardOutline } from "react-icons/io5";
-import type { CandidateInterviewRecord } from "./page";
+import { IoArrowForwardOutline, IoChevronDownOutline } from "react-icons/io5";
+import type { CandidateInterviewRecord, CandidateInterviewBooking } from "./page";
 import { PiXCircleDuotone } from "react-icons/pi";
+import { updatePurchaseStatus } from "./actions";
 
 const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
 type Voice = typeof OPENAI_REALTIME_VOICES[number];
@@ -231,10 +232,10 @@ export function EmployeeInterviewsDashboard({
                           <td className="px-5 py-4">
                             {latestBooking ? (
                               <div className="flex flex-wrap gap-2">
-                                <StatusBadge tone={statusTone(latestBooking.purchase.mockInterviewStatus || latestBooking.purchase.status)}>
-                                  {latestBooking.purchase.mockInterviewStatus || latestBooking.purchase.status}
+                                <StatusBadge tone={statusTone(getInterviewStatus(latestBooking))}>
+                                  {getInterviewStatus(latestBooking)}
                                 </StatusBadge>
-                                <StatusBadge tone={statusTone(latestBooking.purchase.deliveryStatus)}>{latestBooking.purchase.deliveryStatus}</StatusBadge>
+                                <StatusBadge tone={statusTone(getAuditStatus(latestBooking))}>{getAuditStatus(latestBooking)}</StatusBadge>
                               </div>
                             ) : (
                               <span className="text-sm text-slate-400">—</span>
@@ -325,8 +326,8 @@ export function EmployeeInterviewsDashboard({
                                   <StatusBadge tone={booking.preference === "AI" ? "bg-[#f0efff] text-[#5a58ab]" : "bg-slate-100 text-slate-600"}>
                                     {booking.preference === "AI" ? "AI interview" : "Human interview"}
                                   </StatusBadge>
-                                  <StatusBadge tone={statusTone(booking.purchase.mockInterviewStatus || booking.purchase.status)}>
-                                    {booking.purchase.mockInterviewStatus || booking.purchase.status}
+                                  <StatusBadge tone={statusTone(getInterviewStatus(booking))}>
+                                    {getInterviewStatus(booking)}
                                   </StatusBadge>
                                 </div>
                                 <p className="mt-2 font-semibold text-[#252e3d]">{booking.purchase.serviceName}</p>
@@ -421,9 +422,43 @@ export function EmployeeInterviewsDashboard({
               <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Snapshot</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <MiniStat label="Payment" value={selectedInterview.purchase.status} />
-                  <MiniStat label="Interview" value={selectedInterview.purchase.mockInterviewStatus || "Pending"} />
-                  <MiniStat label="Audit" value={selectedInterview.purchase.deliveryStatus} />
+                  <EditableMiniStat
+                    label="Payment"
+                    value={selectedInterview.purchase.status}
+                    options={["PENDING", "COMPLETED", "FAILED"]}
+                    purchaseId={selectedInterview.purchase.id}
+                    field="status"
+                  />
+                  <EditableMiniStat
+                    label="Interview"
+                    value={
+                      selectedInterview.preference === "AI"
+                        ? (selectedInterview.relatedApplication?.status === "INTERVIEW_COMPLETED"
+                          ? "COMPLETED"
+                          : selectedInterview.relatedApplication?.status === "INTERVIEW_STARTED"
+                          ? "IN_PROGRESS"
+                          : selectedInterview.relatedApplication?.status === "AI_INVITED"
+                          ? "INVITED"
+                          : selectedInterview.relatedApplication?.status === "CANCELLED"
+                          ? "CANCELLED"
+                          : "PENDING_SCHEDULE")
+                        : (selectedInterview.purchase.mockInterviewStatus || "PENDING")
+                    }
+                    options={selectedInterview.preference === "MANUAL" ? ["PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"] : undefined}
+                    purchaseId={selectedInterview.purchase.id}
+                    field="mockInterviewStatus"
+                  />
+                  <EditableMiniStat
+                    label="Audit"
+                    value={
+                      selectedInterview.preference === "AI"
+                        ? (selectedInterview.relatedApplication?.session?.finalReport ? "COMPLETED" : "PENDING")
+                        : selectedInterview.purchase.deliveryStatus
+                    }
+                    options={selectedInterview.preference === "MANUAL" ? ["PENDING", "COMPLETED"] : undefined}
+                    purchaseId={selectedInterview.purchase.id}
+                    field="deliveryStatus"
+                  />
                   <MiniStat label="Booking" value={selectedInterview.purchase.mockInterviewDate ? formatDate(selectedInterview.purchase.mockInterviewDate) : "Not scheduled"} />
                 </div>
 
@@ -812,6 +847,25 @@ function formatDate(dateValue: string) {
   });
 }
 
+function getInterviewStatus(booking: CandidateInterviewRecord["bookings"][number]) {
+  if (booking.preference === "AI") {
+    const s = booking.relatedApplication?.status;
+    if (s === "INTERVIEW_COMPLETED") return "COMPLETED";
+    if (s === "INTERVIEW_STARTED") return "IN_PROGRESS";
+    if (s === "AI_INVITED") return "INVITED";
+    if (s === "CANCELLED") return "CANCELLED";
+    return "PENDING_SCHEDULE";
+  }
+  return booking.purchase.mockInterviewStatus || "PENDING";
+}
+
+function getAuditStatus(booking: CandidateInterviewRecord["bookings"][number]) {
+  if (booking.preference === "AI") {
+    return booking.relatedApplication?.session?.finalReport ? "COMPLETED" : "PENDING";
+  }
+  return booking.purchase.deliveryStatus;
+}
+
 function isBookingCompleted(booking: CandidateInterviewRecord["bookings"][number]) {
   if (booking.preference === "AI") {
     return (
@@ -850,6 +904,64 @@ function MiniStat({ label, value }: { label: string; value: number | string }) {
     <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-3 py-2 text-center">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-semibold text-[#252e3d]">{value}</p>
+    </div>
+  );
+}
+
+function EditableMiniStat({
+  label,
+  value,
+  options,
+  purchaseId,
+  field,
+}: {
+  label: string;
+  value: string;
+  options?: string[];
+  purchaseId: string;
+  field: "status" | "mockInterviewStatus" | "deliveryStatus";
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = e.target.value;
+    startTransition(() => {
+      updatePurchaseStatus(purchaseId, field, newValue);
+    });
+  };
+
+  if (!options) {
+    return <MiniStat label={label} value={value} />;
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-3 py-2 text-center relative flex flex-col justify-center items-center group">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <div className="mt-1 relative w-full flex justify-center">
+        <select
+          value={value}
+          onChange={handleChange}
+          disabled={isPending}
+          className="appearance-none bg-transparent outline-none text-sm font-semibold text-[#252e3d] cursor-pointer text-center group-hover:text-[#5a58ab] transition disabled:opacity-50"
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+          {/* Include current value if it's not in options, so it displays correctly */}
+          {!options.includes(value) && (
+            <option value={value}>{value}</option>
+          )}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 group-hover:text-[#5a58ab] transition">
+          {isPending ? (
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
+          ) : (
+            <IoChevronDownOutline className="h-3 w-3" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

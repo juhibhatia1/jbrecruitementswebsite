@@ -118,7 +118,7 @@ Team JB Recruitment Solutions`,
       },
       {
         filename: "logo.avif",
-        path: path.join(process.cwd(), "public", "logo.avif"),
+        path: path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "logo.avif"),
         cid: "jb-logo",
       },
     ],
@@ -331,7 +331,7 @@ Team JB Recruitment Solutions`;
   const attachments = [
     {
       filename: "logo.avif",
-      path: path.join(process.cwd(), "public", "logo.avif"),
+      path: path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "logo.avif"),
       cid: "jb-logo",
     },
   ];
@@ -497,7 +497,7 @@ Team JB Recruitment Solutions`;
     </div>`;
 
   const attachments: Array<{ filename: string; content?: Buffer; path?: string; cid?: string }> = [
-    { filename: "logo.avif", path: path.join(process.cwd(), "public", "logo.avif"), cid: "jb-logo" },
+    { filename: "logo.avif", path: path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "logo.avif"), cid: "jb-logo" },
   ];
   if (pdfBuffer) {
     const safeName = data.jobRole.replace(/[^a-zA-Z0-9_-]/g, "_");
