@@ -142,12 +142,19 @@ export default function EmployeeDirectoryDashboard({
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [customDateFilter, setCustomDateFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Selected Candidate Drawer state
   const [selectedCandidateEmail, setSelectedCandidateEmail] = useState<string | null>(null);
   
   // Loading states for updating delivery completion
   const [updatingPurchaseId, setUpdatingPurchaseId] = useState<string | null>(null);
+
+  // Reset to page 1 on filter/sort changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, deliveryFilter, dateFilter, customDateFilter, sortField, sortOrder]);
 
   // Lock body scroll when drawer is open
   React.useEffect(() => {
@@ -205,36 +212,34 @@ export default function EmployeeDirectoryDashboard({
       }
     });
 
-    // Process Purchases (Only count paid ones)
-    purchases
-      .filter((p) => p.status === "COMPLETED")
-      .forEach((p) => {
-        const email = p.candidateEmail.toLowerCase();
-        const existing = candidateMap.get(email);
+    // Process Purchases (Do not filter status completed here, process all)
+    purchases.forEach((p) => {
+      const email = p.candidateEmail.toLowerCase();
+      const existing = candidateMap.get(email);
 
-        if (existing) {
-          existing.purchases.push(p);
-          if (new Date(p.createdAt) < new Date(existing.firstSeen)) {
-            existing.firstSeen = p.createdAt;
-          }
-          if (!existing.country && p.country) {
-            existing.country = p.country;
-          }
-          if (!existing.phone && p.candidatePhone) {
-            existing.phone = p.candidatePhone;
-          }
-        } else {
-          candidateMap.set(email, {
-            name: p.candidateName,
-            email: p.candidateEmail,
-            phone: p.candidatePhone || undefined,
-            firstSeen: p.createdAt,
-            country: p.country,
-            submissions: [],
-            purchases: [p],
-          });
+      if (existing) {
+        existing.purchases.push(p);
+        if (new Date(p.createdAt) < new Date(existing.firstSeen)) {
+          existing.firstSeen = p.createdAt;
         }
-      });
+        if (!existing.country && p.country) {
+          existing.country = p.country;
+        }
+        if (!existing.phone && p.candidatePhone) {
+          existing.phone = p.candidatePhone;
+        }
+      } else {
+        candidateMap.set(email, {
+          name: p.candidateName,
+          email: p.candidateEmail,
+          phone: p.candidatePhone || undefined,
+          firstSeen: p.createdAt,
+          country: p.country,
+          submissions: [],
+          purchases: [p],
+        });
+      }
+    });
 
     return Array.from(candidateMap.values());
   }, [submissions, purchases]);
@@ -296,7 +301,7 @@ export default function EmployeeDirectoryDashboard({
   const filteredCandidates = useMemo(() => {
     return candidates
       .filter((c) => {
-        // Only show users who have made purchases
+        // Exclude candidates who have no purchase attempts (e.g. pure Contact Us form submissions)
         if (c.purchases.length === 0) return false;
 
         // Search name, email, services
@@ -312,17 +317,23 @@ export default function EmployeeDirectoryDashboard({
 
         // Delivery Status Filter
         if (deliveryFilter !== "all") {
-          const hasPending = c.purchases.some((p) => p.deliveryStatus === "PENDING");
-          const hasCompleted = c.purchases.every((p) => p.deliveryStatus === "COMPLETED");
+          const completedPurchases = c.purchases.filter((p) => p.status === "COMPLETED");
+          if (completedPurchases.length === 0) return false;
+          const hasPending = completedPurchases.some((p) => p.deliveryStatus === "PENDING");
+          const hasCompleted = completedPurchases.every((p) => p.deliveryStatus === "COMPLETED");
 
           if (deliveryFilter === "pending" && !hasPending) return false;
           if (deliveryFilter === "completed" && !hasCompleted) return false;
         }
 
-        // Purchase Date Filter
-        const hasMatchingDate = c.purchases.some((p) =>
-          matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
-        );
+        // Purchase/Registration Date Filter
+        const hasMatchingDate =
+          dateFilter === "all" ||
+          (c.purchases.length === 0
+            ? matchPurchaseDate(c.firstSeen, dateFilter, customDateFilter)
+            : c.purchases.some((p) =>
+                matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
+              ));
         if (!hasMatchingDate) return false;
 
         return true;
@@ -338,8 +349,8 @@ export default function EmployeeDirectoryDashboard({
           valA = new Date(a.firstSeen).getTime();
           valB = new Date(b.firstSeen).getTime();
         } else if (sortField === "activeDeliveries") {
-          valA = a.purchases.filter((p) => p.deliveryStatus === "PENDING").length;
-          valB = b.purchases.filter((p) => p.deliveryStatus === "PENDING").length;
+          valA = a.purchases.filter((p) => p.status === "COMPLETED" && p.deliveryStatus === "PENDING").length;
+          valB = b.purchases.filter((p) => p.status === "COMPLETED" && p.deliveryStatus === "PENDING").length;
         }
 
         if (valA < valB) return sortOrder === "asc" ? -1 : 1;
@@ -347,6 +358,13 @@ export default function EmployeeDirectoryDashboard({
         return 0;
       });
   }, [candidates, searchQuery, deliveryFilter, dateFilter, customDateFilter, sortField, sortOrder]);
+
+  const paginatedCandidates = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCandidates, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / itemsPerPage));
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -586,16 +604,17 @@ export default function EmployeeDirectoryDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredCandidates.length === 0 ? (
+                {paginatedCandidates.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-slate-400 font-medium bg-slate-50/50">
                       No matching records found.
                     </td>
                   </tr>
                 ) : (
-                  filteredCandidates.map((candidate) => {
-                    const pendingCount = candidate.purchases.filter((p) => p.deliveryStatus === "PENDING").length;
-                    const totalCount = candidate.purchases.length;
+                  paginatedCandidates.map((candidate) => {
+                    const completedPurchases = candidate.purchases.filter((p) => p.status === "COMPLETED");
+                    const pendingCount = completedPurchases.filter((p) => p.deliveryStatus === "PENDING").length;
+                    const totalCount = completedPurchases.length;
 
                     return (
                       <tr
@@ -611,19 +630,48 @@ export default function EmployeeDirectoryDashboard({
                           {formatDate(candidate.firstSeen)}
                         </td>
                         <td className="px-6 py-4 xl:py-5">
-                          <div className="flex flex-wrap gap-1">
-                            {candidate.purchases.map((p) => (
-                              <span
-                                key={p.id}
-                                className="inline-flex items-center rounded-md bg-slate-50 px-2.5 py-1 text-xs xl:text-sm font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10"
-                              >
-                                {p.serviceName}
-                              </span>
-                            ))}
-                          </div>
+                          {candidate.purchases.length === 0 ? (
+                            <span className="text-xs xl:text-sm text-slate-400 italic">None</span>
+                          ) : (
+                            <div className="flex flex-col gap-1.5">
+                              {candidate.purchases.map((p) => {
+                                const isCompleted = p.status === "COMPLETED";
+                                const failureReason = !isCompleted
+                                  ? p.completionNotes?.startsWith("Payment Failed") || p.completionNotes?.startsWith("Payment Canceled")
+                                    ? p.completionNotes
+                                    : p.status === "FAILED"
+                                    ? "Card declined or authentication failed"
+                                    : p.status === "CANCELLED"
+                                    ? "Payment canceled by user"
+                                    : "Checkout started but payment not completed"
+                                  : null;
+
+                                return (
+                                  <div key={p.id} className="flex flex-col gap-0.5">
+                                    <span
+                                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs xl:text-sm font-semibold ring-1 ring-inset ${
+                                        isCompleted
+                                          ? "bg-slate-50 text-slate-600 ring-slate-500/10"
+                                          : "bg-amber-50 text-amber-800 ring-amber-500/20"
+                                      }`}
+                                    >
+                                      {p.serviceName} {!isCompleted && "(Incomplete Payment)"}
+                                    </span>
+                                    {failureReason && (
+                                      <span className="text-[11px] text-amber-700 font-medium pl-1">
+                                        Reason: {failureReason}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 xl:py-5">
-                          {pendingCount === 0 ? (
+                          {totalCount === 0 ? (
+                            <span className="text-xs xl:text-sm text-slate-400 italic">Not Applicable</span>
+                          ) : pendingCount === 0 ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs xl:text-sm font-bold text-emerald-700 border border-emerald-100">
                               <IoCheckmarkCircle /> All Delivered
                             </span>
@@ -644,6 +692,33 @@ export default function EmployeeDirectoryDashboard({
                 )}
               </tbody>
             </table>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50 text-sm xl:text-base">
+                <span className="text-slate-500">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCandidates.length)} of {filteredCandidates.length} entries
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 transition font-semibold text-slate-700 cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                  <span className="font-medium text-slate-700 px-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 transition font-semibold text-slate-700 cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -698,99 +773,272 @@ export default function EmployeeDirectoryDashboard({
               {/* Deliverables List */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Purchased Services
+                  Purchased Services (Deliverables)
                 </h4>
 
                 <div className="space-y-4">
-                  {selectedCandidate.purchases.map((purchase) => {
-                    const statusInfo = getDeadlineStatus(purchase);
-                    const deadline = getDeliveryDeadline(purchase);
+                  {selectedCandidate.purchases.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">No purchase attempts for this candidate.</p>
+                  ) : (
+                    selectedCandidate.purchases.map((purchase) => {
+                      const isCompleted = purchase.status === "COMPLETED";
+                      const failureReason = !isCompleted
+                        ? purchase.completionNotes?.startsWith("Payment Failed") || purchase.completionNotes?.startsWith("Payment Canceled")
+                          ? purchase.completionNotes
+                          : purchase.status === "FAILED"
+                          ? "Card declined or authentication failed"
+                          : purchase.status === "CANCELLED"
+                          ? "Payment canceled by user"
+                          : "Checkout started, but payment process was not completed"
+                        : null;
 
-                    return (
-                      <div
-                        key={purchase.id}
-                        className="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs space-y-4"
-                      >
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <h5 className="font-semibold text-slate-800 text-sm xl:text-base">{purchase.serviceName}</h5>
-                            <span className="text-[10px] text-slate-400 mt-1 block uppercase font-bold tracking-wider">
-                              Paid: {purchase.amount} {purchase.currency.toUpperCase()} · {formatDate(purchase.createdAt)}
+                      const statusInfo = getDeadlineStatus(purchase);
+                      const deadline = getDeliveryDeadline(purchase);
+
+                      return (
+                        <div
+                          key={purchase.id}
+                          className={`border rounded-3xl p-5 shadow-xs space-y-3 ${
+                            isCompleted ? "bg-white border-slate-100" : "bg-amber-50/60 border-amber-200/80"
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <h5 className="font-semibold text-slate-800 text-sm xl:text-base">{purchase.serviceName}</h5>
+                              <span className="text-[10px] text-slate-400 mt-1 block uppercase font-bold tracking-wider">
+                                Amount: {purchase.amount} {purchase.currency.toUpperCase()} · {formatDate(purchase.createdAt)}
+                              </span>
+                            </div>
+
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                                isCompleted ? statusInfo.classes : "bg-amber-100 text-amber-800 border-amber-300"
+                              }`}
+                            >
+                              {isCompleted ? statusInfo.icon : <IoAlertCircle className="w-3.5 h-3.5" />}
+                              {isCompleted ? statusInfo.label : "Payment Incomplete"}
                             </span>
                           </div>
 
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusInfo.classes}`}
-                          >
-                            {statusInfo.icon}
-                            {statusInfo.label}
-                          </span>
+                          {failureReason && (
+                            <div className="p-2.5 bg-white border border-amber-200/80 rounded-xl text-xs text-amber-800 font-medium">
+                              <strong>Failure Reason:</strong> {failureReason}
+                            </div>
+                          )}
+
+                          {isCompleted && purchase.deliveryStatus === "PENDING" && (
+                            <div className="text-xs text-slate-400 font-medium">
+                              <strong>Deadline:</strong> {deadline.toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          )}
+
+                            {/* Complete delivery Toggle */}
+                            <div className="border-t border-slate-100/70 pt-3 flex justify-between items-center">
+                              <span className="text-xs text-slate-500 font-semibold">
+                                {purchase.deliveryStatus === "COMPLETED" ? "Mark Deliverable Pending:" : "Mark Deliverable Done:"}
+                              </span>
+
+                              <button
+                                onClick={() => handleToggleDelivery(purchase.id, purchase.deliveryStatus)}
+                                disabled={updatingPurchaseId === purchase.id}
+                                className="flex items-center gap-1.5 bg-[#5a58ab]/10 hover:bg-[#5a58ab]/20 text-[#5a58ab] px-3.5 py-1.5 rounded-xl text-xs font-bold transition duration-200 cursor-pointer disabled:opacity-60"
+                              >
+                                {purchase.deliveryStatus === "COMPLETED" ? (
+                                  <>
+                                    <IoCheckbox className="w-4 h-4" /> Reset
+                                  </>
+                                ) : (
+                                  <>
+                                    <IoSquareOutline className="w-4 h-4" /> Done
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            {purchase.deliveryStatus === "COMPLETED" && (
+                              <div className="border-t border-slate-100/50 pt-3 mt-2 space-y-2">
+                                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                  Completion Notes:
+                                </label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    defaultValue={purchase.completionNotes || ""}
+                                    placeholder="Enter completion notes..."
+                                    id={`notes-input-${purchase.id}`}
+                                    className="flex-grow text-xs px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#5a58ab] focus:border-[#5a58ab]"
+                                  />
+                                  <button
+                                    onClick={async () => {
+                                      const inputEl = document.getElementById(`notes-input-${purchase.id}`) as HTMLInputElement;
+                                      const notes = inputEl?.value || "";
+                                      await handleSaveNotes(purchase.id, notes);
+                                    }}
+                                    className="px-3 py-2 bg-[#5a58ab] hover:bg-[#484694] text-white rounded-xl text-xs font-semibold transition"
+                                  >
+                                    Save
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              {/* Interactive Timeline */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h4 className="text-sm font-bold uppercase tracking-[0.16em] text-slate-400 flex items-center gap-1.5">
+                  <IoTime className="w-5 h-5 text-slate-400" /> Activity Timeline
+                </h4>
+
+                <div className="relative border-l-2 border-slate-100 pl-6 space-y-6 ml-3">
+                  {[
+                    ...selectedCandidate.submissions.map((sub) => ({
+                      key: `sub-${sub.id}`,
+                      date: new Date(sub.createdAt),
+                      type: "registration",
+                      title: sub.type === "contact" ? "Contact Form Registration" : "Job Seeker Resume Registration",
+                      icon: <IoWallet className="w-3.5 h-3.5 text-blue-500" />,
+                      color: "bg-blue-50 border-blue-200",
+                      details: (
+                        <div className="text-xs text-slate-500 space-y-1.5 mt-2 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                          <p>
+                            <strong>Phone:</strong> {sub.phone || "Not provided"}
+                          </p>
+                          {sub.type === "contact" ? (
+                            <>
+                              <p>
+                                <strong>Company:</strong> {sub.company || "Not provided"}
+                              </p>
+                              <p>
+                                <strong>Subject:</strong> {sub.subject || "General Inquiry"}
+                              </p>
+                              <p className="whitespace-pre-wrap mt-1 border-t border-slate-200/50 pt-1">
+                                "{sub.message}"
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p>
+                                <strong>Location:</strong> {sub.location || "Not provided"}
+                              </p>
+                              <p>
+                                <strong>Resume:</strong>{" "}
+                                {sub.resumeUrl ? (
+                                  <a
+                                    href={sub.resumeUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[#5a58ab] hover:underline font-semibold"
+                                  >
+                                    {sub.resumeFileName || "View File"}
+                                  </a>
+                                ) : (
+                                  "Not uploaded"
+                                )}
+                              </p>
+                              <p className="whitespace-pre-wrap mt-1 border-t border-slate-200/50 pt-1">
+                                "{sub.description || "No note provided."}"
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      ),
+                    })),
+                    ...selectedCandidate.purchases.map((p) => ({
+                      key: `purchase-${p.id}`,
+                      date: new Date(p.createdAt),
+                      type: "purchase",
+                      title: `Purchased Service: ${p.serviceName}`,
+                      icon: <IoWallet className="w-3.5 h-3.5 text-emerald-500" />,
+                      color: "bg-emerald-50 border-emerald-200",
+                      details: (
+                        <div className="text-xs text-slate-500 space-y-1 mt-2 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                          <p>
+                            <strong>Status:</strong>{" "}
+                            <span
+                              className={`font-semibold ${
+                                p.status === "COMPLETED" ? "text-emerald-600" : "text-amber-600"
+                              }`}
+                            >
+                              {p.status}
+                            </span>
+                          </p>
+                          <p>
+                            <strong>Delivery Status:</strong>{" "}
+                            <span
+                              className={`font-semibold ${
+                                p.deliveryStatus === "COMPLETED" ? "text-emerald-600" : "text-amber-600"
+                              }`}
+                            >
+                              {p.deliveryStatus || "PENDING"}
+                            </span>
+                          </p>
+                          {p.completionNotes && (
+                            <p className="text-[11px] bg-white border border-slate-100 p-2.5 rounded-xl text-slate-600 mt-1 italic leading-relaxed">
+                              <strong>Notes:</strong> {p.completionNotes}
+                            </p>
+                          )}
+                          {p.deliveryDeadline && (
+                            <p className="text-[10px]">
+                              <strong>Deadline:</strong> {new Date(p.deliveryDeadline).toLocaleDateString()}
+                            </p>
+                          )}
+                          <p>
+                            <strong>Amount:</strong> {p.amount} {p.currency.toUpperCase()}
+                          </p>
+                          <p>
+                            <strong>Billing Country:</strong> {p.country || "Not provided"}
+                          </p>
+                          <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
+                            Ref:{" "}
+                            <a
+                              href={`https://dashboard.stripe.com/payments/${p.stripePaymentIntentId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#5a58ab] hover:underline font-semibold"
+                            >
+                              {p.stripePaymentIntentId}
+                            </a>
+                          </p>
+                        </div>
+                      ),
+                    })),
+                  ]
+                    .sort((a, b) => b.date.getTime() - a.date.getTime())
+                    .map((event) => (
+                      <div key={event.key} className="relative">
+                        {/* Dot indicator */}
+                        <div
+                          className={`absolute -left-[35px] top-0.5 w-6 h-6 rounded-full flex items-center justify-center border bg-white shadow-xs`}
+                        >
+                          {event.icon}
                         </div>
 
-                        {purchase.deliveryStatus === "PENDING" && (
-                          <div className="text-xs text-slate-400 font-medium">
-                            <strong>Deadline:</strong> {deadline.toLocaleString("en-US", {
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                            {event.date.toLocaleString("en-US", {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
-                          </div>
-                        )}
-
-                        {/* Complete delivery Toggle */}
-                        <div className="border-t border-slate-100/70 pt-3 flex justify-between items-center">
-                          <span className="text-xs text-slate-500 font-semibold">
-                            {purchase.deliveryStatus === "COMPLETED" ? "Mark Deliverable Pending:" : "Mark Deliverable Done:"}
                           </span>
-
-                          <button
-                            onClick={() => handleToggleDelivery(purchase.id, purchase.deliveryStatus)}
-                            disabled={updatingPurchaseId === purchase.id}
-                            className="flex items-center gap-1.5 bg-[#5a58ab]/10 hover:bg-[#5a58ab]/20 text-[#5a58ab] px-3.5 py-1.5 rounded-xl text-xs font-bold transition duration-200 cursor-pointer disabled:opacity-60"
-                          >
-                            {purchase.deliveryStatus === "COMPLETED" ? (
-                              <>
-                                <IoCheckbox className="w-4 h-4" /> Reset
-                              </>
-                            ) : (
-                              <>
-                                <IoSquareOutline className="w-4 h-4" /> Done
-                              </>
-                            )}
-                          </button>
+                          <h5 className="font-bold text-slate-800 text-xs sm:text-sm mt-0.5">{event.title}</h5>
+                          {event.details}
                         </div>
-
-                        {purchase.deliveryStatus === "COMPLETED" && (
-                          <div className="border-t border-slate-100/50 pt-3 mt-2 space-y-2">
-                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                              Completion Notes:
-                            </label>
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                defaultValue={purchase.completionNotes || ""}
-                                placeholder="Enter completion notes..."
-                                id={`notes-input-${purchase.id}`}
-                                className="flex-grow text-xs px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#5a58ab] focus:border-[#5a58ab]"
-                              />
-                              <button
-                                onClick={async () => {
-                                  const inputEl = document.getElementById(`notes-input-${purchase.id}`) as HTMLInputElement;
-                                  const notes = inputEl?.value || "";
-                                  await handleSaveNotes(purchase.id, notes);
-                                }}
-                                className="px-3 py-2 bg-[#5a58ab] hover:bg-[#484694] text-white rounded-xl text-xs font-semibold transition"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               </div>
             </div>

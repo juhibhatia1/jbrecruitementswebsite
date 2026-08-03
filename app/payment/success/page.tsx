@@ -53,6 +53,7 @@ function SuccessContent() {
   const [aiDetails, setAiDetails] = useState<AiDetails | null>(null);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingUrl, setBookingUrl] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<string>("succeeded");
 
   useEffect(() => {
     if (!paymentIntent) {
@@ -63,7 +64,9 @@ function SuccessContent() {
     fetch(`/api/payment/details?payment_intent=${paymentIntent}`)
       .then((response) => response.json())
       .then((data: PaymentDetailsResponse) => {
-        if (data.isCoach && data.jobRole) {
+        if (data.status && data.status !== "succeeded") {
+          setPaymentStatus(data.status);
+        } else if (data.isCoach && data.jobRole) {
           setCoachDetails({
             candidateName: data.candidateName || "Candidate",
             candidateEmail: data.candidateEmail || "",
@@ -190,7 +193,7 @@ function SuccessContent() {
           Payment Verified!
         </h1>
         <p className="mb-6 text-sm leading-relaxed text-gray-600">
-          Hi <strong>{aiDetails.candidateName}</strong>, your AI Mock Interview is now ready. We have also sent the access details and PDF receipt to <strong>{aiDetails.candidateEmail}</strong>.
+          Hi <strong>{aiDetails.candidateName}</strong>, your AI Mock Interview is now ready. All your interview details, instructions, and payment invoice confirmation have been sent to your email: <strong>{aiDetails.candidateEmail}</strong>.
         </p>
 
         <div className="mb-6 space-y-3">
@@ -234,7 +237,7 @@ function SuccessContent() {
               Book your human interview slot
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Hi {coachDetails.candidateName}, choose a date and time in the calendar below. It shows later dates too.
+              Hi {coachDetails.candidateName}, choose a date and time in the calendar below. It shows later dates too. A confirmation email regarding the service (including your payment invoice and booking link) has been sent to <strong>{coachDetails.candidateEmail}</strong>.
             </p>
           </div>
 
@@ -252,7 +255,7 @@ function SuccessContent() {
                 Slot booked successfully
               </div>
               <p className="mt-3 text-sm text-green-900">
-                Your session has been scheduled. We’ve sent the confirmation email to <strong>{coachDetails.candidateEmail}</strong>.
+                Your session has been scheduled. We’ve sent a confirmation email regarding the service (including your payment invoice and slot details) to <strong>{coachDetails.candidateEmail}</strong>.
               </p>
               {scheduledDate && (
                 <div className="mt-5 rounded-2xl border border-green-200 bg-white p-4">
@@ -306,6 +309,39 @@ function SuccessContent() {
     );
   }
 
+  if (paymentStatus !== "succeeded") {
+    return (
+      <div className="max-w-md w-full mx-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-6 text-center shadow-[0_12px_40px_rgba(223,27,65,0.08)] sm:p-8">
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-inner">
+            <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        </div>
+        <h1 className="mb-3 text-2xl font-bold leading-tight text-[#252e3d] sm:text-3xl" style={{ fontFamily: "Crimson Text, serif" }}>
+          Payment Failed or Canceled
+        </h1>
+        <p className="mb-6 text-sm leading-relaxed text-gray-600 sm:text-base">
+          Unfortunately, your payment could not be completed. If you provided a card that is not supported, please try again with a different card or contact your bank. No charges were made.
+        </p>
+
+        <div className="mb-8 space-y-3">
+          <Link
+            href="/job-seekers"
+            className="group w-full flex items-center justify-center gap-2 rounded-xl bg-[#5a58ab] px-4 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#4a489b] hover:shadow-lg sm:text-base"
+          >
+            <IoArrowBack className="h-5 w-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
+            Go Back and Try Again
+          </Link>
+        </div>
+        <div className="border-t border-gray-100 pt-5 text-xs text-gray-400">
+          If the issue persists, please contact our support team at juhi@jbrecruitments.com or via WhatsApp at +971 58 581 9271.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md w-full mx-4 overflow-hidden rounded-3xl border border-[#e6eefc] bg-white p-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8">
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#e6eefc]/40 via-[#dfe8fb]/30 to-[#f8fafc]/20 blur-2xl" aria-hidden="true" />
@@ -320,7 +356,7 @@ function SuccessContent() {
         Payment Successful!
       </h1>
       <p className="mb-6 text-sm leading-relaxed text-gray-600 sm:text-base">
-        Thank you for your purchase. Your payment has been verified. We've sent a receipt and next-step email to your inbox.
+        Thank you for your purchase. Your payment has been verified. You will receive a confirmation email regarding the service (including your payment invoice and next steps) shortly.
       </p>
 
       {paymentIntent && (

@@ -323,10 +323,14 @@ function CheckoutForm({ totalAmount, clientSecret, currency }: CheckoutFormProps
     });
 
     if (error) {
-      if (error.type === "card_error" || error.type === "validation_error") {
-        setErrorMessage(error.message || "An error occurred.");
+      if (error.type === "card_error") {
+        let msg = error.message || "Your card was declined or could not be processed.";
+        msg += " Please try using a different card or contact your bank. Some regional cards may not be supported by our global processor.";
+        setErrorMessage(msg);
+      } else if (error.type === "validation_error") {
+        setErrorMessage(error.message || "Please check the payment details provided.");
       } else {
-        setErrorMessage("An unexpected error occurred.");
+        setErrorMessage("Payment failed or was canceled. Please try again with a different payment method or check your connection.");
       }
     }
 

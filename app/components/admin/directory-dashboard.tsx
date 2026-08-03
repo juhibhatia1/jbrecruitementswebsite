@@ -158,6 +158,8 @@ export default function DirectoryDashboard({
   const [customDateFilter, setCustomDateFilter] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("firstSeen");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Selected Candidate Drawer state
   const [selectedCandidateEmail, setSelectedCandidateEmail] = useState<string | null>(null);
@@ -165,6 +167,11 @@ export default function DirectoryDashboard({
   // Regional breakdown modal state
   const [showRegionModal, setShowRegionModal] = useState(false);
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
+
+  // Reset to page 1 on filter/sort changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, serviceFilter, interviewFilter, dateFilter, customDateFilter, sortField, sortOrder]);
 
   // Lock body scroll when modals or drawers are open
   React.useEffect(() => {
@@ -326,6 +333,9 @@ export default function DirectoryDashboard({
   const filteredCandidates = useMemo(() => {
     return candidates
       .filter((c) => {
+        // Exclude candidates who have no purchase attempts (e.g. pure Contact Us form submissions)
+        if (c.purchases.length === 0) return false;
+
         // Search
         const query = searchQuery.trim().toLowerCase();
         if (query) {
@@ -367,10 +377,14 @@ export default function DirectoryDashboard({
             if (!matchStatus) return false;
           }
         }
-        // Purchase Date Filter
-        const hasMatchingDate = c.purchases.some((p) =>
-          matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
-        );
+        // Purchase/Registration Date Filter
+        const hasMatchingDate =
+          dateFilter === "all" ||
+          (c.purchases.length === 0
+            ? matchPurchaseDate(c.firstSeen, dateFilter, customDateFilter)
+            : c.purchases.some((p) =>
+                matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
+              ));
         if (!hasMatchingDate) return false;
 
         return true;
@@ -392,6 +406,13 @@ export default function DirectoryDashboard({
         return 0;
       });
   }, [candidates, searchQuery, serviceFilter, interviewFilter, dateFilter, customDateFilter, sortField, sortOrder]);
+
+  const paginatedCandidates = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCandidates, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / itemsPerPage));
 
   // Handle scheduling save
   const handleSaveSchedule = async (purchaseId: string) => {
@@ -731,20 +752,23 @@ export default function DirectoryDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredCandidates.length === 0 ? (
+                {paginatedCandidates.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium bg-slate-50/50">
                       No candidates found matching the active search parameters.
                     </td>
                   </tr>
                 ) : (
-                  filteredCandidates.map((candidate) => {
-                    const activeInterviewPurchases = candidate.purchases.filter(
+                  paginatedCandidates.map((candidate) => {
+                    const completedPurchases = candidate.purchases.filter((p) => p.status === "COMPLETED");
+                    const activeInterviewPurchases = completedPurchases.filter(
                       (p) =>
-                        p.status === "COMPLETED" &&
-                        (p.serviceName.includes("Interview") || p.serviceName.includes("Bundle"))
+                        p.serviceName.includes("Interview") || p.serviceName.includes("Bundle")
                     );
                     const latestInterview = activeInterviewPurchases[0] || null;
+                    const pendingCount = completedPurchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length;
+                    const totalCount = completedPurchases.length;
+                    const displayCurrency = completedPurchases[0]?.currency || "USD";
 
                     return (
                       <tr
@@ -760,20 +784,41 @@ export default function DirectoryDashboard({
                           {formatDate(candidate.firstSeen)}
                         </td>
                         <td className="px-6 py-4 xl:py-5">
-                          {candidate.purchases.filter((p) => p.status === "COMPLETED").length === 0 ? (
+                          {candidate.purchases.length === 0 ? (
                             <span className="text-xs xl:text-sm text-slate-400 italic">None</span>
                           ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {candidate.purchases
-                                .filter((p) => p.status === "COMPLETED")
-                                .map((p) => (
-                                  <span
-                                    key={p.id}
-                                    className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs xl:text-sm font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10"
-                                  >
-                                    {p.serviceName}
-                                  </span>
-                                ))}
+                            <div className="flex flex-col gap-1.5">
+                              {candidate.purchases.map((p) => {
+                                const isCompleted = p.status === "COMPLETED";
+                                const failureReason = !isCompleted
+                                  ? p.completionNotes?.startsWith("Payment Failed") || p.completionNotes?.startsWith("Payment Canceled")
+                                    ? p.completionNotes
+                                    : p.status === "FAILED"
+                                    ? "Card declined or authentication failed"
+                                    : p.status === "CANCELLED"
+                                    ? "Payment canceled by user"
+                                    : "Checkout started but payment not completed"
+                                  : null;
+
+                                return (
+                                  <div key={p.id} className="flex flex-col gap-0.5">
+                                    <span
+                                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs xl:text-sm font-semibold ring-1 ring-inset ${
+                                        isCompleted
+                                          ? "bg-slate-50 text-slate-600 ring-slate-500/10"
+                                          : "bg-amber-50 text-amber-800 ring-amber-500/20"
+                                      }`}
+                                    >
+                                      {p.serviceName} {!isCompleted && "(Incomplete Payment)"}
+                                    </span>
+                                    {failureReason && (
+                                      <span className="text-[11px] text-amber-700 font-medium pl-1">
+                                        Reason: {failureReason}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </td>
@@ -797,20 +842,20 @@ export default function DirectoryDashboard({
                           )}
                         </td>
                         <td className="px-6 py-4 xl:py-5">
-                          {candidate.purchases.length === 0 ? (
+                          {totalCount === 0 ? (
                             <span className="text-xs text-slate-400 italic">Not Applicable</span>
-                          ) : candidate.purchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length === 0 ? (
+                          ) : pendingCount === 0 ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-emerald-700 border border-emerald-100">
                               <IoCheckmarkCircle className="w-3 h-3" /> All Delivered
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-amber-700 border border-amber-100">
-                              <IoHourglass className="w-3 h-3" /> {candidate.purchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length} Pending
+                              <IoHourglass className="w-3 h-3" /> {pendingCount} Pending
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4 xl:py-5 font-bold text-slate-800 xl:text-[15px]">
-                          USD {candidate.totalSpent}
+                          {displayCurrency} {candidate.totalSpent.toLocaleString()}
                         </td>
 
                         <td className="px-6 py-4 xl:py-5 text-right">
@@ -824,6 +869,33 @@ export default function DirectoryDashboard({
                 )}
               </tbody>
             </table>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50 text-sm xl:text-base">
+                <span className="text-slate-500">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCandidates.length)} of {filteredCandidates.length} entries
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 transition font-semibold text-slate-700 cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                  <span className="font-medium text-slate-700 px-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 transition font-semibold text-slate-700 cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -1071,66 +1143,66 @@ export default function DirectoryDashboard({
                         </div>
                       ),
                     })),
-                    ...selectedCandidate.purchases.map((p) => ({
-                      key: `purchase-${p.id}`,
-                      date: new Date(p.createdAt),
-                      type: "purchase",
-                      title: `Purchased Service: ${p.serviceName}`,
-                      icon: <IoWallet className="w-3.5 h-3.5 text-emerald-500" />,
-                      color: "bg-emerald-50 border-emerald-200",
-                      details: (
-                        <div className="text-xs text-slate-500 space-y-1 mt-2 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
-                          <p>
-                            <strong>Status:</strong>{" "}
-                            <span
-                              className={`font-semibold ${
-                                p.status === "COMPLETED" ? "text-emerald-600" : "text-amber-600"
-                              }`}
-                            >
-                              {p.status}
-                            </span>
-                          </p>
-                          <p>
-                            <strong>Delivery Status:</strong>{" "}
-                            <span
-                              className={`font-semibold ${
-                                p.deliveryStatus === "COMPLETED" ? "text-emerald-600" : "text-amber-600"
-                              }`}
-                            >
-                              {p.deliveryStatus || "PENDING"}
-                            </span>
-                          </p>
-                          {p.completionNotes && (
-                            <p className="text-[11px] bg-white border border-slate-100 p-2.5 rounded-xl text-slate-600 mt-1 italic leading-relaxed">
-                              <strong>Notes:</strong> {p.completionNotes}
-                            </p>
-                          )}
-                          {p.deliveryDeadline && (
-                            <p className="text-[10px]">
-                              <strong>Deadline:</strong> {new Date(p.deliveryDeadline).toLocaleDateString()}
-                            </p>
-                          )}
-                          <p>
-                            <strong>Amount:</strong> {p.amount} {p.currency.toUpperCase()}
-                          </p>
-                          <p>
-                            <strong>Billing Country:</strong> {p.country || "Not provided"}
-                          </p>
-                          <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
-                            Ref:{" "}
-                            <a
-                              href={`https://dashboard.stripe.com/payments/${p.stripePaymentIntentId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#5a58ab] hover:underline font-semibold"
-                            >
-                              {p.stripePaymentIntentId}
-                            </a>
-                          </p>
+                    ...selectedCandidate.purchases.map((p) => {
+                      const isCompleted = p.status === "COMPLETED";
+                      const failureReason = !isCompleted
+                        ? p.completionNotes?.startsWith("Payment Failed") || p.completionNotes?.startsWith("Payment Canceled")
+                          ? p.completionNotes
+                          : p.status === "FAILED"
+                          ? "Card declined or authentication failed"
+                          : p.status === "CANCELLED"
+                          ? "Payment canceled by user"
+                          : "Checkout started, but payment process was not completed"
+                        : null;
 
-                        </div>
-                      ),
-                    })),
+                      return {
+                        key: `purchase-${p.id}`,
+                        date: new Date(p.createdAt),
+                        type: "purchase",
+                        title: isCompleted ? `Purchased Service: ${p.serviceName}` : `Incomplete Payment: ${p.serviceName}`,
+                        icon: <IoWallet className={`w-3.5 h-3.5 ${isCompleted ? "text-emerald-500" : "text-amber-500"}`} />,
+                        color: isCompleted ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200",
+                        details: (
+                          <div className={`text-xs space-y-1.5 mt-2 p-3 rounded-2xl border ${
+                            isCompleted ? "bg-slate-50 border-slate-100 text-slate-500" : "bg-amber-50/60 border-amber-200/80 text-amber-900"
+                          }`}>
+                            <p>
+                              <strong>Status:</strong>{" "}
+                              <span className={`font-bold ${isCompleted ? "text-emerald-600" : "text-amber-700"}`}>
+                                {isCompleted ? "COMPLETED" : "INCOMPLETE / PENDING"}
+                              </span>
+                            </p>
+                            {failureReason && (
+                              <p className="p-2 bg-white border border-amber-200 rounded-xl text-amber-800 font-medium">
+                                <strong>Failure Reason:</strong> {failureReason}
+                              </p>
+                            )}
+                            {isCompleted && (
+                              <p>
+                                <strong>Delivery Status:</strong>{" "}
+                                <span className={`font-semibold ${p.deliveryStatus === "COMPLETED" ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {p.deliveryStatus || "PENDING"}
+                                </span>
+                              </p>
+                            )}
+                            {p.deliveryDeadline && isCompleted && (
+                              <p className="text-[10px]">
+                                <strong>Deadline:</strong> {new Date(p.deliveryDeadline).toLocaleDateString()}
+                              </p>
+                            )}
+                            <p>
+                              <strong>Amount:</strong> {p.amount} {p.currency.toUpperCase()}
+                            </p>
+                            <p>
+                              <strong>Billing Country:</strong> {p.country || "Not provided"}
+                            </p>
+                            <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
+                              Ref: {p.stripePaymentIntentId}
+                            </p>
+                          </div>
+                        ),
+                      };
+                    }),
                   ]
                     .sort((a, b) => b.date.getTime() - a.date.getTime())
                     .map((event) => (
