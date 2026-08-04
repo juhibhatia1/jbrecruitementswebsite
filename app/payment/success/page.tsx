@@ -54,6 +54,7 @@ function SuccessContent() {
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingUrl, setBookingUrl] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<string>("succeeded");
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!paymentIntent) {
@@ -64,6 +65,9 @@ function SuccessContent() {
     fetch(`/api/payment/details?payment_intent=${paymentIntent}`)
       .then((response) => response.json())
       .then((data: PaymentDetailsResponse) => {
+        if (data.candidateEmail) {
+          setCustomerEmail(data.candidateEmail);
+        }
         if (data.status && data.status !== "succeeded") {
           setPaymentStatus(data.status);
         } else if (data.isCoach && data.jobRole) {
@@ -356,7 +360,7 @@ function SuccessContent() {
         Payment Successful!
       </h1>
       <p className="mb-6 text-sm leading-relaxed text-gray-600 sm:text-base">
-        Thank you for your purchase. Your payment has been verified. You will receive a confirmation email regarding the service (including your payment invoice and next steps) shortly.
+        Thank you for your purchase. Your payment has been verified. You will receive a confirmation email regarding the service (including your payment invoice and next steps) shortly{customerEmail ? <> at <strong className="text-[#252e3d] font-semibold">{customerEmail}</strong></> : ""}.
       </p>
 
       {paymentIntent && (

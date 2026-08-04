@@ -96,9 +96,14 @@ export default function KnowledgeDashboard() {
     }
   };
 
+  // Loading states for actions
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   // Toggle active status
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     setActionError(null);
+    setTogglingId(id);
     try {
       const res = await fetch(`/api/admin/knowledge/${id}`, {
         method: "PATCH",
@@ -117,12 +122,15 @@ export default function KnowledgeDashboard() {
       }
     } catch (err) {
       setActionError("Failed to update document status.");
+    } finally {
+      setTogglingId(null);
     }
   };
 
   // Delete document
   const handleDeleteDoc = async (id: string) => {
     setActionError(null);
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/admin/knowledge/${id}`, {
         method: "DELETE",
@@ -138,6 +146,8 @@ export default function KnowledgeDashboard() {
     } catch (err) {
       setActionError("Failed to delete document.");
       toast.error("Failed to delete document.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -434,10 +444,10 @@ export default function KnowledgeDashboard() {
                           <div className="flex items-center">
                             <button
                               onClick={() => handleToggleActive(doc.id, doc.isActive)}
-                              disabled={doc.sourceType === "SYSTEM"}
+                              disabled={doc.sourceType === "SYSTEM" || togglingId === doc.id}
                               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab] focus:ring-offset-2 ${
                                 doc.isActive ? "bg-[#5a58ab]" : "bg-slate-200"
-                              } ${doc.sourceType === "SYSTEM" ? "opacity-50 cursor-not-allowed" : ""}`}
+                              } ${doc.sourceType === "SYSTEM" || togglingId === doc.id ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <span
                                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
@@ -445,8 +455,15 @@ export default function KnowledgeDashboard() {
                                 }`}
                               />
                             </button>
-                            <span className="ml-2 text-xs font-medium text-slate-500">
-                              {doc.isActive ? "Active" : "Inactive"}
+                            <span className="ml-2 text-xs font-medium text-slate-500 flex items-center gap-1">
+                              {togglingId === doc.id ? (
+                                <>
+                                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
+                                  <span>Updating...</span>
+                                </>
+                              ) : (
+                                doc.isActive ? "Active" : "Inactive"
+                              )}
                             </span>
                           </div>
                         </td>
@@ -463,11 +480,21 @@ export default function KnowledgeDashboard() {
                           {doc.sourceType !== "SYSTEM" && (
                             <button
                               onClick={() => setDocToDelete(doc.id)}
-                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-semibold cursor-pointer text-xs"
+                              disabled={deletingId === doc.id}
+                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-semibold cursor-pointer text-xs disabled:opacity-50"
                               title="Delete document and chunks"
                             >
-                              <IoTrashOutline className="w-4 h-4" />
-                              <span>Delete</span>
+                              {deletingId === doc.id ? (
+                                <>
+                                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                                  <span>Deleting...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <IoTrashOutline className="w-4 h-4" />
+                                  <span>Delete</span>
+                                </>
+                              )}
                             </button>
                           )}
                         </td>

@@ -50,6 +50,8 @@ interface Purchase {
   deliveryStatus: string; // "PENDING", "COMPLETED"
   deliveryDeadline: string | null;
   completionNotes: string | null;
+  interviewPrepUrl?: string | null;
+  interviewPrepText?: string | null;
   candidatePhone: string | null;
   createdAt: string;
   updatedAt: string;
@@ -151,6 +153,11 @@ export default function EmployeeDirectoryDashboard({
   // Loading states for updating delivery completion
   const [updatingPurchaseId, setUpdatingPurchaseId] = useState<string | null>(null);
 
+  // Upload Prep states
+  const [uploadingPrepId, setUploadingPrepId] = useState<string | null>(null);
+  const [uploadingPrepLoading, setUploadingPrepLoading] = useState(false);
+  const [uploadPrepError, setUploadPrepError] = useState<string | null>(null);
+
   // Reset to page 1 on filter/sort changes
   React.useEffect(() => {
     setCurrentPage(1);
@@ -175,6 +182,40 @@ export default function EmployeeDirectoryDashboard({
     } finally {
       router.replace("/employee");
       router.refresh();
+    }
+  };
+
+  const handleUploadPrep = async (purchaseId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPrepId(purchaseId);
+    setUploadingPrepLoading(true);
+    setUploadPrepError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`/api/employee/purchases/${purchaseId}/upload-prep`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to upload");
+
+      // Update the purchases locally so UI updates immediately
+      setPurchases((prev) =>
+        prev.map((p) =>
+          p.id === purchaseId ? { ...p, interviewPrepUrl: data.fileUrl, interviewPrepText: "AVAILABLE", deliveryStatus: "COMPLETED" } : p
+        )
+      );
+    } catch (err: any) {
+      setUploadPrepError(err.message || "Something went wrong");
+    } finally {
+      setUploadingPrepLoading(false);
+      setUploadingPrepId(null);
+      e.target.value = '';
     }
   };
 
@@ -735,7 +776,7 @@ export default function EmployeeDirectoryDashboard({
           {/* Drawer Panel */}
           <div className="relative bg-white w-full max-w-lg shadow-[0_24px_50px_-12px_rgba(0,0,0,0.25)] border-l border-[#e6eefc] h-full flex flex-col transform transition-all duration-300">
             {/* Drawer Header */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
+            <div className="p-3 px-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
               <div>
                 <h3 className="text-xl font-bold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
                   Delivery Tracking
@@ -751,9 +792,9 @@ export default function EmployeeDirectoryDashboard({
             </div>
 
             {/* Scrollable Content */}
-            <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow space-y-6">
+            <div data-lenis-prevent className="p-3 px-6 overflow-y-auto flex-grow space-y-3">
               {/* Demographics Card */}
-              <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-3">
+              <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 space-y-2">
                 <div>
                   <h4 className="text-lg font-bold text-slate-800">{selectedCandidate.name}</h4>
                   <p className="text-sm text-slate-500 mt-0.5">{selectedCandidate.email}</p>
@@ -771,7 +812,7 @@ export default function EmployeeDirectoryDashboard({
               </div>
 
               {/* Deliverables List */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <h4 className="text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
                   Purchased Services (Deliverables)
                 </h4>
@@ -1010,6 +1051,42 @@ export default function EmployeeDirectoryDashboard({
                               {p.stripePaymentIntentId}
                             </a>
                           </p>
+
+                          {p.status === "COMPLETED" && p.serviceName.toLowerCase().includes("interview prep") && (
+                            <div className="mt-3 pt-3 border-t border-slate-200/50">
+                              <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">Interview Prep Delivery</p>
+                              {p.interviewPrepUrl ? (
+                                <div className="flex items-center gap-2">
+                                  <a href={p.interviewPrepUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#5a58ab] hover:underline flex items-center gap-1">
+                                    View Uploaded Document
+                                  </a>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-50 transition w-fit shadow-xs flex items-center gap-1.5">
+                                    {uploadingPrepId === p.id ? (
+                                      <>
+                                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
+                                        <span>Uploading...</span>
+                                      </>
+                                    ) : (
+                                      "Upload PDF Document"
+                                    )}
+                                    <input 
+                                      type="file" 
+                                      className="hidden" 
+                                      accept=".pdf,.doc,.docx,.txt"
+                                      disabled={uploadingPrepLoading}
+                                      onChange={(e) => handleUploadPrep(p.id, e)}
+                                    />
+                                  </label>
+                                  {uploadPrepError && uploadingPrepId === p.id && (
+                                    <span className="text-red-500 text-[10px] font-medium">{uploadPrepError}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ),
                     })),

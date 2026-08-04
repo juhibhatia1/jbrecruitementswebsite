@@ -54,7 +54,12 @@ export async function GET(request: Request) {
     const isAi = interviewPreference === "AI";
 
     if (!meta.candidateEmail) {
-      return NextResponse.json({ isCoach: false, isAi: false });
+      return NextResponse.json({
+        isCoach: false,
+        isAi: false,
+        candidateName: purchase?.candidateName || null,
+        candidateEmail: purchase?.candidateEmail || null,
+      });
     }
 
     if (isCoach && meta.jobRole && !meta.interviewTemplateId) {
@@ -383,7 +388,12 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json({ isCoach: false, isAi: false });
+    return NextResponse.json({
+      isCoach: false,
+      isAi: false,
+      candidateName: purchase?.candidateName || meta.candidateName || null,
+      candidateEmail: purchase?.candidateEmail || meta.candidateEmail || null,
+    });
   } catch (error: any) {
     console.error("Error retrieving payment details:", error);
     return NextResponse.json({ error: error.message || "Failed to retrieve payment details" }, { status: 500 });

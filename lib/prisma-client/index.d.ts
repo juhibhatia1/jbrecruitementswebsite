@@ -3938,6 +3938,8 @@ export namespace Prisma {
     deliveryStatus: string | null
     deliveryDeadline: Date | null
     completionNotes: string | null
+    interviewPrepUrl: string | null
+    interviewPrepText: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3958,6 +3960,8 @@ export namespace Prisma {
     deliveryStatus: string | null
     deliveryDeadline: Date | null
     completionNotes: string | null
+    interviewPrepUrl: string | null
+    interviewPrepText: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3978,6 +3982,8 @@ export namespace Prisma {
     deliveryStatus: number
     deliveryDeadline: number
     completionNotes: number
+    interviewPrepUrl: number
+    interviewPrepText: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -4008,6 +4014,8 @@ export namespace Prisma {
     deliveryStatus?: true
     deliveryDeadline?: true
     completionNotes?: true
+    interviewPrepUrl?: true
+    interviewPrepText?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4028,6 +4036,8 @@ export namespace Prisma {
     deliveryStatus?: true
     deliveryDeadline?: true
     completionNotes?: true
+    interviewPrepUrl?: true
+    interviewPrepText?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4048,6 +4058,8 @@ export namespace Prisma {
     deliveryStatus?: true
     deliveryDeadline?: true
     completionNotes?: true
+    interviewPrepUrl?: true
+    interviewPrepText?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -4155,6 +4167,8 @@ export namespace Prisma {
     deliveryStatus: string
     deliveryDeadline: Date | null
     completionNotes: string | null
+    interviewPrepUrl: string | null
+    interviewPrepText: string | null
     createdAt: Date
     updatedAt: Date
     _count: PurchaseCountAggregateOutputType | null
@@ -4194,6 +4208,8 @@ export namespace Prisma {
     deliveryStatus?: boolean
     deliveryDeadline?: boolean
     completionNotes?: boolean
+    interviewPrepUrl?: boolean
+    interviewPrepText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     application?: boolean | Purchase$applicationArgs<ExtArgs>
@@ -4215,6 +4231,8 @@ export namespace Prisma {
     deliveryStatus?: boolean
     deliveryDeadline?: boolean
     completionNotes?: boolean
+    interviewPrepUrl?: boolean
+    interviewPrepText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["purchase"]>
@@ -4235,6 +4253,8 @@ export namespace Prisma {
     deliveryStatus?: boolean
     deliveryDeadline?: boolean
     completionNotes?: boolean
+    interviewPrepUrl?: boolean
+    interviewPrepText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -4265,6 +4285,8 @@ export namespace Prisma {
       deliveryStatus: string
       deliveryDeadline: Date | null
       completionNotes: string | null
+      interviewPrepUrl: string | null
+      interviewPrepText: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["purchase"]>
@@ -4676,6 +4698,8 @@ export namespace Prisma {
     readonly deliveryStatus: FieldRef<"Purchase", 'String'>
     readonly deliveryDeadline: FieldRef<"Purchase", 'DateTime'>
     readonly completionNotes: FieldRef<"Purchase", 'String'>
+    readonly interviewPrepUrl: FieldRef<"Purchase", 'String'>
+    readonly interviewPrepText: FieldRef<"Purchase", 'String'>
     readonly createdAt: FieldRef<"Purchase", 'DateTime'>
     readonly updatedAt: FieldRef<"Purchase", 'DateTime'>
   }
@@ -12829,6 +12853,8 @@ export namespace Prisma {
     deliveryStatus: 'deliveryStatus',
     deliveryDeadline: 'deliveryDeadline',
     completionNotes: 'completionNotes',
+    interviewPrepUrl: 'interviewPrepUrl',
+    interviewPrepText: 'interviewPrepText',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -13418,6 +13444,8 @@ export namespace Prisma {
     deliveryStatus?: StringFilter<"Purchase"> | string
     deliveryDeadline?: DateTimeNullableFilter<"Purchase"> | Date | string | null
     completionNotes?: StringNullableFilter<"Purchase"> | string | null
+    interviewPrepUrl?: StringNullableFilter<"Purchase"> | string | null
+    interviewPrepText?: StringNullableFilter<"Purchase"> | string | null
     createdAt?: DateTimeFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeFilter<"Purchase"> | Date | string
     application?: XOR<CandidateApplicationNullableRelationFilter, CandidateApplicationWhereInput> | null
@@ -13439,6 +13467,8 @@ export namespace Prisma {
     deliveryStatus?: SortOrder
     deliveryDeadline?: SortOrderInput | SortOrder
     completionNotes?: SortOrderInput | SortOrder
+    interviewPrepUrl?: SortOrderInput | SortOrder
+    interviewPrepText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     application?: CandidateApplicationOrderByWithRelationInput
@@ -13463,6 +13493,8 @@ export namespace Prisma {
     deliveryStatus?: StringFilter<"Purchase"> | string
     deliveryDeadline?: DateTimeNullableFilter<"Purchase"> | Date | string | null
     completionNotes?: StringNullableFilter<"Purchase"> | string | null
+    interviewPrepUrl?: StringNullableFilter<"Purchase"> | string | null
+    interviewPrepText?: StringNullableFilter<"Purchase"> | string | null
     createdAt?: DateTimeFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeFilter<"Purchase"> | Date | string
     application?: XOR<CandidateApplicationNullableRelationFilter, CandidateApplicationWhereInput> | null
@@ -13484,6 +13516,8 @@ export namespace Prisma {
     deliveryStatus?: SortOrder
     deliveryDeadline?: SortOrderInput | SortOrder
     completionNotes?: SortOrderInput | SortOrder
+    interviewPrepUrl?: SortOrderInput | SortOrder
+    interviewPrepText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PurchaseCountOrderByAggregateInput
@@ -13512,6 +13546,8 @@ export namespace Prisma {
     deliveryStatus?: StringWithAggregatesFilter<"Purchase"> | string
     deliveryDeadline?: DateTimeNullableWithAggregatesFilter<"Purchase"> | Date | string | null
     completionNotes?: StringNullableWithAggregatesFilter<"Purchase"> | string | null
+    interviewPrepUrl?: StringNullableWithAggregatesFilter<"Purchase"> | string | null
+    interviewPrepText?: StringNullableWithAggregatesFilter<"Purchase"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Purchase"> | Date | string
   }
@@ -14474,6 +14510,8 @@ export namespace Prisma {
     deliveryStatus?: string
     deliveryDeadline?: Date | string | null
     completionNotes?: string | null
+    interviewPrepUrl?: string | null
+    interviewPrepText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     application?: CandidateApplicationCreateNestedOneWithoutPurchaseInput
@@ -14495,6 +14533,8 @@ export namespace Prisma {
     deliveryStatus?: string
     deliveryDeadline?: Date | string | null
     completionNotes?: string | null
+    interviewPrepUrl?: string | null
+    interviewPrepText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     application?: CandidateApplicationUncheckedCreateNestedOneWithoutPurchaseInput
@@ -14516,6 +14556,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     application?: CandidateApplicationUpdateOneWithoutPurchaseNestedInput
@@ -14537,6 +14579,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     application?: CandidateApplicationUncheckedUpdateOneWithoutPurchaseNestedInput
@@ -14558,6 +14602,8 @@ export namespace Prisma {
     deliveryStatus?: string
     deliveryDeadline?: Date | string | null
     completionNotes?: string | null
+    interviewPrepUrl?: string | null
+    interviewPrepText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -14578,6 +14624,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14598,6 +14646,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15582,6 +15632,8 @@ export namespace Prisma {
     deliveryStatus?: SortOrder
     deliveryDeadline?: SortOrder
     completionNotes?: SortOrder
+    interviewPrepUrl?: SortOrder
+    interviewPrepText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15606,6 +15658,8 @@ export namespace Prisma {
     deliveryStatus?: SortOrder
     deliveryDeadline?: SortOrder
     completionNotes?: SortOrder
+    interviewPrepUrl?: SortOrder
+    interviewPrepText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15626,6 +15680,8 @@ export namespace Prisma {
     deliveryStatus?: SortOrder
     deliveryDeadline?: SortOrder
     completionNotes?: SortOrder
+    interviewPrepUrl?: SortOrder
+    interviewPrepText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -17211,6 +17267,8 @@ export namespace Prisma {
     deliveryStatus?: string
     deliveryDeadline?: Date | string | null
     completionNotes?: string | null
+    interviewPrepUrl?: string | null
+    interviewPrepText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -17231,6 +17289,8 @@ export namespace Prisma {
     deliveryStatus?: string
     deliveryDeadline?: Date | string | null
     completionNotes?: string | null
+    interviewPrepUrl?: string | null
+    interviewPrepText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -17353,6 +17413,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -17373,6 +17435,8 @@ export namespace Prisma {
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     deliveryDeadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewPrepText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

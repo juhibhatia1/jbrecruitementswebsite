@@ -77,6 +77,8 @@ model Purchase {
   deliveryStatus        String   @default("PENDING") // "PENDING", "COMPLETED"
   deliveryDeadline      DateTime?
   completionNotes       String?
+  interviewPrepUrl      String?
+  interviewPrepText     String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   application           CandidateApplication?

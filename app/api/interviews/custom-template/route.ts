@@ -12,9 +12,10 @@ interface RequestBody {
   durationMinutes?: number;
   jobDescription: string;
   resumeText?: string;
+  interviewPrepPurchaseId?: string;
 }
 
-function buildCustomJdPrompt(params: RequestBody, duration: number): string {
+function buildCustomJdPrompt(params: RequestBody, duration: number, prepText?: string | null): string {
   const introMins = Math.max(2, Math.round(duration * 0.12));
   const outroMins = Math.max(1, Math.round(duration * 0.05));
   const coreMins = duration - introMins - outroMins;
@@ -33,14 +34,17 @@ ${params.jobDescription}
 CANDIDATE RESUME:
 ${params.resumeText?.trim() || "Not provided"}
 
+${prepText ? `INTERVIEW PREP CONTEXT (PRIORITY FOCUS):
+${prepText.trim()}
+` : ""}
 INSTRUCTIONS:
-1. Design 3-4 interview sections tailored specifically to test the core skills, tech stack, and responsibilities outlined in the Job Description.
+1. Design 3-4 interview sections tailored specifically to test the core skills, tech stack, and responsibilities outlined in the Job Description, incorporating the Interview Prep Context heavily if provided.
 2. Extract the key technologies/tools (up to 6) as "techStack".
 3. Extract the key required skills (up to 6) as "requiredSkills".
 4. Generate a warm, professional, candidate-facing description (2-3 sentences) summarizing the interview focus.
 5. Create a complete, detailed set of system instructions for an AI voice interviewer that will conduct this interview.
 6. The experience level and difficulty level are mandatory inputs and must directly shape the question depth, section pacing, and follow-up intensity.
-7. Make the interview purely personalized using the JD, the resume, the selected experience level, and the selected difficulty level. Do not generate a generic interview.
+7. Make the interview purely personalized using the JD, the resume, the selected experience level, the selected difficulty level, and the Interview Prep Context (if provided). Do not generate a generic interview.
 
 The systemInstructions value must contain ALL of these sections in order:
 
@@ -146,7 +150,24 @@ export async function POST(request: NextRequest) {
 
     const openai = new OpenAI({ apiKey });
     const durationMinutes = body.durationMinutes && body.durationMinutes >= 10 && body.durationMinutes <= 120 ? body.durationMinutes : 30;
-    const prompt = buildCustomJdPrompt(body, durationMinutes);
+
+    let prepText: string | null = null;
+    if (body.interviewPrepPurchaseId) {
+      const purchase = await prisma.purchase.findFirst({
+        where: {
+          OR: [
+            { id: body.interviewPrepPurchaseId },
+            { stripePaymentIntentId: body.interviewPrepPurchaseId }
+          ]
+        },
+        select: { interviewPrepText: true }
+      });
+      if (purchase?.interviewPrepText) {
+        prepText = purchase.interviewPrepText;
+      }
+    }
+
+    const prompt = buildCustomJdPrompt(body, durationMinutes, prepText);
 
     console.log(`[CustomJD] Querying OpenAI (${TEMPLATE_MODEL}) to parse JD for role: ${jobRole}`);
     const response = await openai.responses.create({

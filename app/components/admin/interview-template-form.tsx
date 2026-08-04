@@ -541,9 +541,14 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
               type="button"
               onClick={() => void handleSave()}
               disabled={saving || autoGenerating}
-              className="rounded-xl bg-[#252e3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2d3645] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="rounded-xl bg-[#252e3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2d3645] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
-              {autoGenerating ? "Generating AI Instructions…" : saving ? "Saving…" : isEditing ? (autoGenOnSave ? "Save & Re-generate" : "Save Changes") : "Save & Generate"}
+              {(saving || autoGenerating) && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              )}
+              <span>
+                {autoGenerating ? "Generating AI Instructions…" : saving ? "Saving…" : isEditing ? (autoGenOnSave ? "Save & Re-generate" : "Save Changes") : "Save & Generate"}
+              </span>
             </button>
             {isEditing && editMode && (
               <button
@@ -564,9 +569,12 @@ export default function TemplateForm({ apiBase, redirectTo, existingTemplate }: 
               type="button"
               onClick={() => void handleGenerate()}
               disabled={generating}
-              className="rounded-xl bg-[#5a58ab] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4a49a0] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="rounded-xl bg-[#5a58ab] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4a49a0] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
-              {generating ? "Generating…" : "Generate Description & AI Instructions"}
+              {generating && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              )}
+              <span>{generating ? "Generating…" : "Generate Description & AI Instructions"}</span>
             </button>
 
             <button

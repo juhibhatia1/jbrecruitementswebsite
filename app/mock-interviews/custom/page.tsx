@@ -18,6 +18,9 @@ import {
   IoChevronDownOutline,
   IoArrowForwardOutline,
   IoCloseOutline,
+  IoCheckmarkCircle,
+  IoDocumentTextOutline,
+  IoOpenOutline,
 } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 
@@ -224,6 +227,8 @@ export default function CustomJdMockInterviewPage() {
     careerGoal: "",
     focusAreas: "",
     selfIntroNotes: "",
+    hasPurchasedPrep: false,
+    interviewPrepPurchaseId: "",
   });
 
   const [generating, setGenerating] = useState(false);
@@ -239,6 +244,53 @@ export default function CustomJdMockInterviewPage() {
   const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
     null,
   );
+
+  const [prepVerification, setPrepVerification] = useState<{
+    verifying: boolean;
+    result: {
+      found: boolean;
+      isPrepService?: boolean;
+      serviceName?: string;
+      candidateName?: string;
+      interviewPrepUrl?: string | null;
+      hasPrepDoc?: boolean;
+      message?: string;
+    } | null;
+  }>({
+    verifying: false,
+    result: null,
+  });
+
+  useEffect(() => {
+    if (!form.hasPurchasedPrep || !form.interviewPrepPurchaseId.trim()) {
+      setPrepVerification({ verifying: false, result: null });
+      return;
+    }
+
+    const trimmedId = form.interviewPrepPurchaseId.trim();
+    if (trimmedId.length < 5) {
+      setPrepVerification({ verifying: false, result: null });
+      return;
+    }
+
+    setPrepVerification({ verifying: true, result: null });
+
+    const timer = setTimeout(() => {
+      fetch(`/api/interviews/verify-prep-purchase?purchaseId=${encodeURIComponent(trimmedId)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setPrepVerification({ verifying: false, result: data });
+        })
+        .catch(() => {
+          setPrepVerification({
+            verifying: false,
+            result: { found: false, message: "Network error verifying Purchase ID" },
+          });
+        });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [form.hasPurchasedPrep, form.interviewPrepPurchaseId]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -452,6 +504,7 @@ export default function CustomJdMockInterviewPage() {
           durationMinutes: 30,
           jobDescription: form.jobDescription,
           resumeText,
+          interviewPrepPurchaseId: form.hasPurchasedPrep && form.interviewPrepPurchaseId.trim() ? form.interviewPrepPurchaseId.trim() : undefined,
         }),
       });
 
@@ -770,6 +823,98 @@ export default function CustomJdMockInterviewPage() {
                       placeholder="e.g. I have a 2-year gap due to caregiving, I'm pivoting from finance to tech…"
                       className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition resize-none"
                     />
+                  </div>
+
+                  <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200 space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5">
+                        <input
+                          type="checkbox"
+                          name="hasPurchasedPrep"
+                          checked={form.hasPurchasedPrep}
+                          onChange={(e) => setForm(prev => ({ ...prev, hasPurchasedPrep: e.target.checked }))}
+                          className="w-4.5 h-4.5 appearance-none border-2 border-slate-300 rounded cursor-pointer checked:bg-[#5a58ab] checked:border-[#5a58ab] transition-colors peer"
+                        />
+                        <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">I have previously purchased Interview Prep services</span>
+                        <span className="text-xs text-[#5a58ab] font-medium mt-0.5">Checking this box will include your uploaded preparation document into the AI model's context to craft customized interview questions based on your prep material.</span>
+                      </div>
+                    </label>
+
+                    {form.hasPurchasedPrep && (
+                      <div className="pt-2 pl-7 animate-fadeIn space-y-2.5">
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-slate-500 mb-1.5">
+                            Purchase ID <span className="text-[#5a58ab]">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="interviewPrepPurchaseId"
+                            required={form.hasPurchasedPrep}
+                            value={form.interviewPrepPurchaseId}
+                            onChange={handleChange}
+                            placeholder="e.g. cm2x1... or pi_3P..."
+                            className="w-full max-w-sm rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-white text-sm px-4 py-2.5 outline-none transition font-mono"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                            <IoAlertCircle className="w-3.5 h-3.5" />
+                            You can find your Purchase ID in your confirmation email or payment receipt.
+                          </p>
+                        </div>
+
+                        {/* Live verification & Document link */}
+                        {prepVerification.verifying && (
+                          <div className="flex items-center gap-2 text-xs text-[#5a58ab]">
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
+                            <span>Verifying Purchase ID...</span>
+                          </div>
+                        )}
+
+                        {!prepVerification.verifying && prepVerification.result && (
+                          <div className="pt-1">
+                            {prepVerification.result.found && prepVerification.result.isPrepService ? (
+                              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 space-y-2 text-xs text-emerald-900">
+                                <div className="flex items-center gap-1.5 font-bold text-emerald-700">
+                                  <IoCheckmarkCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                                  <span>Verified: {prepVerification.result.serviceName}</span>
+                                </div>
+                                
+                                {prepVerification.result.interviewPrepUrl ? (
+                                  <div className="bg-white rounded-lg p-2.5 border border-emerald-200/80 flex items-center justify-between gap-3 shadow-xs">
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                      <IoDocumentTextOutline className="w-4 h-4 text-[#5a58ab] shrink-0" />
+                                      <span className="font-semibold text-slate-700 truncate">Uploaded Prep Document</span>
+                                    </div>
+                                    <a
+                                      href={prepVerification.result.interviewPrepUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 bg-[#5a58ab] hover:bg-[#4a489b] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0"
+                                    >
+                                      <span>View Document</span>
+                                      <IoOpenOutline className="w-3.5 h-3.5" />
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-emerald-800 italic">
+                                    ℹ️ Purchase ID verified! Your preparation document will be processed and included by the AI when crafting your mock interview.
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 flex items-start gap-2">
+                                <IoAlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <span>{prepVerification.result.message || "Invalid Purchase ID. Please check your payment receipt."}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

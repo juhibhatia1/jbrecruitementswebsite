@@ -68,7 +68,10 @@ Thank you for your purchase of "${formattedServices}"!
 
 We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.
 
-Our team will contact you shortly to coordinate the next steps and get started with your service. You can also reply directly to this email or reach us on WhatsApp at https://wa.me/971585819271 (+971 58 581 9271) if you have any immediate questions.
+Our team will contact you shortly to coordinate the next steps and get started with your service.
+
+Have questions? You can reply directly to this email
+or reach us on WhatsApp at https://wa.me/971585819271 (+971 58 581 9271) if you have any immediate questions.
 
 Best regards,
 Team JB Recruitment Solutions`,
@@ -104,7 +107,7 @@ Team JB Recruitment Solutions`,
           
           <p>Our team will contact you shortly to coordinate the next steps and get started with your service.</p>
           
-          <p style="font-size: 14px; color: #718096; text-align: center;">Have questions? You can reply directly to this email or contact us on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 58 581 9271</a>.</p>
+          <p style="font-size: 14px; color: #718096; text-align: center;">Have questions? You can reply directly to this email<br />or contact us on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
           <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
@@ -243,7 +246,8 @@ Tips before you start:
 - Ensure your microphone is working.
 - Use Chrome or Edge for best compatibility.
 
-If you have any questions, feel free to contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
+If you have any questions, feel free to reply to this email
+or contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
 
 Best of luck!
 Team JB Recruitment Solutions`
@@ -260,7 +264,8 @@ Years of experience: ${data.yearsOfExperience || "Not provided"}
 ${data.applicationLink ? `Application link: ${data.applicationLink}` : ""}
 ${data.interviewBrief ? `\nInterview brief:\n${data.interviewBrief}` : ""}
 
-If you have any questions, feel free to reply to this email or contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
+If you have any questions, feel free to reply to this email
+or contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
 
 Best regards,
 Team JB Recruitment Solutions`;
@@ -295,7 +300,7 @@ Team JB Recruitment Solutions`;
           <div style="text-align: center; margin: 28px 0;">
             <a href="${data.interviewLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Start Your Interview</a>
           </div>
-          <p style="font-size: 13px; color: #718096;">This link expires in <strong>7 days</strong>. Use Chrome or Edge for the best experience. Ensure your microphone is working before starting. For support, contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 58 581 9271</a>.</p>
+          <p style="font-size: 13px; color: #718096;">This link expires in <strong>7 days</strong>. Use Chrome or Edge for the best experience. Ensure your microphone is working before starting.<br />For support, contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
           <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
@@ -324,7 +329,7 @@ Team JB Recruitment Solutions`;
             ${data.applicationLink ? `<p style="margin: 0 0 8px; font-size: 14px; color: #4a5568;"><strong>Application link:</strong> <a href="${escapeHtml(data.applicationLink)}" style="color: #5a58ab;">${escapeHtml(data.applicationLink)}</a></p>` : ""}
             ${data.interviewBrief ? `<p style="margin: 0; font-size: 14px; color: #4a5568;"><strong>Brief:</strong> ${escapeHtml(data.interviewBrief)}</p>` : ""}
           </div>
-          <p style="font-size: 14px; color: #718096;">If you have any questions, feel free to reply to this email or contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 58 581 9271</a>.</p>
+          <p style="font-size: 14px; color: #718096;">If you have any questions, feel free to reply to this email<br />or contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>
         <div style="text-align: center; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
           <p>© ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.</p>
@@ -399,7 +404,7 @@ export async function sendHumanInterviewScheduleConfirmationEmail(data: HumanInt
             ${data.interviewBrief ? `<p style="margin:0;"><strong>Brief:</strong> ${escapeHtml(data.interviewBrief)}</p>` : ""}
           </div>
           <p style="margin:0;color:#718096;font-size:13px;">Reference ID: ${escapeHtml(data.purchaseId)}</p>
-          <p style="margin:8px 0 0;color:#718096;font-size:13px;">Have questions? Contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 58 581 9271</a>.</p>
+          <p style="margin:8px 0 0;color:#718096;font-size:13px;">Have questions? Reply to this email<br />or contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>
       `,
     });
@@ -452,7 +457,8 @@ ${data.resultsPageUrl ? `\nView your full results (improvements, Q&A breakdown, 
 
 Your full performance report is also attached as a PDF.
 
-If you have any questions, feel free to contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
+If you have any questions, feel free to reply to this email
+or contact us via WhatsApp at https://wa.me/971585819271 (+971 58 581 9271).
 
 Best regards,
 Team JB Recruitment Solutions`;
@@ -496,7 +502,7 @@ Team JB Recruitment Solutions`;
           <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.65;">${escapeHtml(data.summary)}</p>
         </div>
         ${resultsButtonHtml}
-        <p style="font-size:12px;color:#a0aec0;margin-top:20px;text-align:center;">Your complete performance report (with full Q&amp;A and transcript) is also attached as a PDF. For questions, reach us on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 58 581 9271</a>.</p>
+        <p style="font-size:12px;color:#a0aec0;margin-top:20px;text-align:center;">Your complete performance report (with full Q&amp;A and transcript) is also attached as a PDF.<br />For questions, reach us on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
       </div>
       <div style="background:#f7fafc;border-top:1px solid #edf2f7;padding:14px 28px;text-align:center;font-size:11px;color:#a0aec0;">
         © ${new Date().getFullYear()} JB Recruitment Solutions. All rights reserved.
