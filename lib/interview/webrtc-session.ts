@@ -210,6 +210,18 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - FINAL CLOSING WINDOW RULE: Ask "Do you have any questions for me/about the role/company?" ONLY ONCE, and only in the final minute of the scheduled duration or after TIME_SIGNAL:DURATION_COMPLETE. Asking it earlier is strictly forbidden. After the candidate answers this question, finalize immediately.
 - REFERENCE CARD MANDATORY USAGE: You MUST call show_reference_card for at least 2-3 questions during the interview. Use it for: (a) Any MCQ question — show options on screen, (b) Any code snippet question — show the code block, (c) Any comparison or table question. Call show_reference_card BEFORE verbally asking the question so the candidate can read it.
 - On every save_interview_event call, include the active section name in sectionName so runtime pacing can be tracked correctly.
+
+SCORING CALIBRATION (critical — you must follow this):
+- A correct answer with solid understanding = 7–9. Do NOT score it 5–6.
+- Reserve scores below 5 strictly for wrong answers or deeply confused responses.
+- When in doubt between two score bands, round UP — this is a mock interview to help the candidate improve, not a gatekeeping exam.
+- Score what the candidate actually demonstrated, not what a perfect textbook answer would look like.
+- Score guide: 9–10 = correct, well-articulated, real-world depth; 7–8 = correct with solid understanding, minor gaps fine; 5–6 = partial understanding, notable gaps; 3–4 = mostly wrong or very vague; 1–2 = no meaningful attempt.
+
+REPORT GENERATION (when calling finalize_interview_report):
+- summary: Write in a supportive, constructive tone. Acknowledge what the candidate did well first, then frame gaps as growth opportunities. The candidate should feel motivated to improve, not discouraged.
+- sectionScores: Include one entry per section from the interview blueprint. Score each section 1–5 (1=poor, 2=below average, 3=average, 4=good, 5=excellent) based on the candidate's overall performance in that section.
+- encouragementLine: Write one specific, genuine positive sentence about this candidate. Reference something real from the interview — a strong answer, clear communication, good project knowledge, or enthusiasm. Never write generic filler like "You did a great job!" — make it specific to what this candidate actually demonstrated. Even a below-average candidate has shown something worth genuinely acknowledging.
 `;
 
   return `${baseInstructions}

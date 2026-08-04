@@ -1171,8 +1171,14 @@ ${systemInstructions}`;
                 question: { type: "string" },
                 sectionName: { type: "string" },
                 answerSummary: { type: "string" },
-                score: { type: "number" },
-                feedback: { type: "string" },
+                score: {
+                  type: "number",
+                  description: "Score 1–10. CALIBRATION (strictly follow this): 9–10 = correct, well-articulated, showed depth or real-world understanding; 7–8 = correct with solid understanding, minor gaps or missing edge cases are acceptable; 5–6 = partially correct, some understanding but notable gaps or vagueness; 3–4 = mostly incorrect or very vague, limited understanding; 1–2 = wrong answer or no meaningful attempt. CRITICAL: Do NOT default to 5–6 for correct answers. A candidate who answers correctly and demonstrates understanding MUST receive 7–9. Reserve scores below 5 strictly for wrong or deeply confused answers. When in doubt between two bands, round UP.",
+                },
+                feedback: {
+                  type: "string",
+                  description: "Constructive and specific. Lead with what the candidate got right before noting gaps. Frame gaps as growth opportunities, not failures. Be encouraging.",
+                },
               },
               required: ["question", "sectionName", "answerSummary", "score", "feedback"],
             },
@@ -1184,11 +1190,28 @@ ${systemInstructions}`;
             parameters: {
               type: "object",
               properties: {
-                summary: { type: "string" },
+                summary: { type: "string", description: "Supportive, constructive summary. Acknowledge what the candidate did well first, then frame areas for growth as learning opportunities. Candidate should feel motivated." },
                 strengths: { type: "array", items: { type: "string" } },
                 weaknesses: { type: "array", items: { type: "string" } },
                 improvements: { type: "array", items: { type: "string" } },
                 finalScore: { type: "number" },
+                sectionScores: {
+                  type: "array",
+                  description: "One entry per interview section from the blueprint. Score each section 1–5 (1=poor, 2=below average, 3=average, 4=good, 5=excellent).",
+                  items: {
+                    type: "object",
+                    properties: {
+                      section: { type: "string", description: "Section name exactly as used during the interview" },
+                      score: { type: "number", description: "1–5 score for this section" },
+                      maxScore: { type: "number", description: "Always 5" },
+                    },
+                    required: ["section", "score", "maxScore"],
+                  },
+                },
+                encouragementLine: {
+                  type: "string",
+                  description: "One genuine, specific positive sentence about this candidate. Reference something real from the interview — a strong answer, clear communication, good project knowledge, or enthusiasm. Never write generic filler like 'You did a great job!' — make it specific to what this candidate actually demonstrated.",
+                },
               },
               required: ["summary", "strengths", "weaknesses", "improvements", "finalScore"],
             },

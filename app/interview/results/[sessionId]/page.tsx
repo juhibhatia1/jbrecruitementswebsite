@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type {
   InterviewEvaluationEvent,
   InterviewFinalReport,
+  InterviewReferenceCard,
   InterviewTranscriptEntry,
 } from "@/lib/interview/types";
 import { TranscriptTimeline } from "@/app/components/interviews/transcript-timeline";
@@ -51,7 +52,8 @@ export default async function InterviewResultsPage({ params }: Props) {
 
   const events = (session.evaluationEvents ?? []) as unknown as InterviewEvaluationEvent[];
   const transcript = (session.transcript ?? []) as unknown as InterviewTranscriptEntry[];
-  const timelineItems = buildTimeline(transcript, []);
+  const referenceCards = (session.referenceCards ?? []) as unknown as InterviewReferenceCard[];
+  const timelineItems = buildTimeline(transcript, referenceCards);
   const averageScore =
     events.length > 0
       ? Math.round(events.reduce((sum, event) => sum + Number(event.score), 0) / events.length)
@@ -68,14 +70,10 @@ export default async function InterviewResultsPage({ params }: Props) {
       })
     : "In progress";
 
-  const scoreColor =
-    finalScore === null ? "#5a58ab" : finalScore >= 8 ? "#16a34a" : finalScore >= 6 ? "#d97706" : "#dc2626";
-
-  const scoreLabel =
-    finalScore === null ? "Pending" : finalScore >= 8 ? "Strong" : finalScore >= 6 ? "Average" : "Needs work";
+  const grade = scoreToGrade(finalScore);
 
   const stats = [
-    { label: "Final score", value: finalScore !== null ? `${finalScore}/10` : "—" },
+    { label: "Overall grade", value: finalScore !== null ? grade.label : "Pending" },
     { label: "Questions", value: events.length.toString() },
     { label: "Strengths", value: report.strengths.length.toString() },
     { label: "Improvements", value: report.improvements.length.toString() },
@@ -110,25 +108,37 @@ export default async function InterviewResultsPage({ params }: Props) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Overall assessment</p>
-                      <h2 className="mt-1 text-xl font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
-                        {scoreLabel}
+                      <h2 className="mt-1 text-2xl font-bold" style={{ fontFamily: "Crimson Text, serif", color: grade.color }}>
+                        {grade.label}
                       </h2>
                     </div>
-                    <div className="inline-flex items-end gap-1 font-bold leading-none" style={{ color: scoreColor }}>
-                      <span className="text-5xl">{finalScore}</span>
-                      <span className="mb-1 text-xl text-slate-400">/10</span>
+                    <div className="text-right">
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-bold ${grade.ring}`}>
+                        {finalScore}/10
+                      </span>
                     </div>
                   </div>
 
                   <div className="mt-4 h-2 rounded-full bg-slate-100">
                     <div
                       className="h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(0, Math.min(100, (finalScore / 10) * 100))}%`, backgroundColor: scoreColor }}
+                      style={{ width: `${Math.max(0, Math.min(100, (finalScore / 10) * 100))}%`, backgroundColor: grade.color }}
                     />
                   </div>
 
                   <p className="mt-4 text-sm leading-relaxed text-slate-600">{report.summary}</p>
+
+                  {report.encouragementLine && (
+                    <div className="mt-3 flex items-start gap-3 rounded-2xl border border-[#5a58ab]/20 bg-[#f0efff] px-4 py-3">
+                      <span className="mt-0.5 text-base">✨</span>
+                      <p className="text-sm italic leading-relaxed text-[#4a489b]">{report.encouragementLine}</p>
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {report.sectionScores && report.sectionScores.length > 0 && (
+                <SectionScoresCard sectionScores={report.sectionScores} />
               )}
 
               {events.length > 0 && (
@@ -216,27 +226,20 @@ export default async function InterviewResultsPage({ params }: Props) {
             <div className="mt-5 space-y-4">
               {events.map((event, index) => {
                 const score = Number(event.score);
-                const band =
-                  score >= 8 ? "good" : score >= 6 ? "mid" : "low";
-                const scoreStyles =
-                  band === "good"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : band === "mid"
-                      ? "border-amber-200 bg-amber-50 text-amber-700"
-                      : "border-red-200 bg-red-50 text-red-700";
+                const qGrade = scoreToGrade(score);
 
                 return (
                   <article key={index} className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="max-w-4xl">
                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                          Question {index + 1}
+                          Question {index + 1}{event.sectionName ? ` · ${event.sectionName}` : ""}
                         </p>
                         <h3 className="mt-2 text-base font-semibold text-[#252e3d]">{event.question}</h3>
                       </div>
 
-                      <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${scoreStyles}`}>
-                        {score}/10
+                      <div className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-bold ${qGrade.ring}`}>
+                        {qGrade.label}
                       </div>
                     </div>
 
@@ -415,6 +418,56 @@ function InfoCard({
             {emptyText}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function scoreToGrade(score: number | null, outOf: 10 | 5 = 10): {
+  label: string;
+  color: string;
+  ring: string;
+} {
+  const n = score === null ? -1 : outOf === 5 ? score * 2 : score;
+  if (n >= 9) return { label: "Excellent",       color: "#15803d", ring: "border-emerald-300 bg-emerald-50 text-emerald-700" };
+  if (n >= 7) return { label: "Good",            color: "#16a34a", ring: "border-green-200 bg-green-50 text-green-700" };
+  if (n >= 5) return { label: "Average",         color: "#d97706", ring: "border-amber-200 bg-amber-50 text-amber-700" };
+  if (n >= 3) return { label: "Below Average",   color: "#dc2626", ring: "border-red-200 bg-red-50 text-red-700" };
+  if (n >= 1) return { label: "Needs Improvement", color: "#991b1b", ring: "border-red-300 bg-red-100 text-red-800" };
+  return              { label: "Pending",        color: "#5a58ab", ring: "border-[#5a58ab]/30 bg-[#f0efff] text-[#5a58ab]" };
+}
+
+function SectionScoresCard({ sectionScores }: { sectionScores: Array<{ section: string; score: number; maxScore: number }> }) {
+  return (
+    <div className="mt-6 rounded-3xl border border-slate-100 bg-[#fbfbfd] p-5">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Section breakdown</p>
+      <h2 className="mt-1 text-xl font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
+        Category-wise performance
+      </h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {sectionScores.map((s) => {
+          const g = scoreToGrade(s.score, 5);
+          const pct = Math.max(0, Math.min(100, (s.score / s.maxScore) * 100));
+          return (
+            <div key={s.section} className="rounded-2xl border border-white bg-white p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-[#252e3d]">{s.section}</p>
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${g.ring}`}>
+                  {g.label}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+                  <div
+                    className="h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: g.color }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400">{s.score}/{s.maxScore}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

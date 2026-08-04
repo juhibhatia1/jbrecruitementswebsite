@@ -671,6 +671,18 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 - TOOL CALL SILENCE: When calling any tool (save_interview_event, show_reference_card, finalize_interview_report), do NOT say anything out loud. Never say phrases like "I'll note that", "I'll generate a follow-up", "Let me get the next question", "I'll save that", "One moment", or any other verbal filler while invoking a tool. Call the tool silently and continue speaking naturally afterwards.
+
+SCORING CALIBRATION (critical — you must follow this):
+- A correct answer with solid understanding = 7–9. Do NOT score it 5–6.
+- Reserve scores below 5 strictly for wrong answers or deeply confused responses.
+- When in doubt between two score bands, round UP — this is a mock interview to help the candidate improve, not a gatekeeping exam.
+- Score what the candidate actually demonstrated, not what a perfect textbook answer would look like.
+- Score guide: 9–10 = correct, well-articulated, real-world depth; 7–8 = correct with solid understanding, minor gaps fine; 5–6 = partial understanding, notable gaps; 3–4 = mostly wrong or very vague; 1–2 = no meaningful attempt.
+
+REPORT GENERATION (when calling finalize_interview_report):
+- summary: Write in a supportive, constructive tone. Acknowledge what the candidate did well first, then frame gaps as growth opportunities. The candidate should feel motivated to improve, not discouraged.
+- sectionScores: Include one entry per section from the interview. Score each section 1–5 (1=poor, 2=below average, 3=average, 4=good, 5=excellent) based on the candidate's overall performance in that section.
+- encouragementLine: Write one specific, genuine positive sentence about this candidate. Reference something real from the interview — a strong answer, clear communication, good project knowledge, or enthusiasm. Never write generic filler like "You did a great job!" — make it specific to what this candidate actually demonstrated.
 `;
 
             let systemInstructions = baseInstructions + dynamicGuidelines;
@@ -898,6 +910,18 @@ ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - MANDATORY CLOSING SEQUENCE: Before concluding the interview, you MUST ask the candidate, "Do you have any questions for me?" or "Do you have any questions about the company or the role?". Wait for their response and answer their questions before delivering your final brief verbal summary and calling finalize_interview_report.
 - show_reference_card tool: Use it whenever structured visual content helps — interview structure at opening (MANDATORY), coding problems (show before asking), comparison tables, cheat sheets. Call it silently without narrating the call.
 - TOOL CALL SILENCE: When calling any tool (save_interview_event, show_reference_card, finalize_interview_report), do NOT say anything out loud. Never say phrases like "I'll note that", "I'll generate a follow-up", "Let me get the next question", "I'll save that", "One moment", or any other verbal filler while invoking a tool. Call the tool silently and continue speaking naturally afterwards.
+
+SCORING CALIBRATION (critical — you must follow this):
+- A correct answer with solid understanding = 7–9. Do NOT score it 5–6.
+- Reserve scores below 5 strictly for wrong answers or deeply confused responses.
+- When in doubt between two score bands, round UP — this is a mock interview to help the candidate improve, not a gatekeeping exam.
+- Score what the candidate actually demonstrated, not what a perfect textbook answer would look like.
+- Score guide: 9–10 = correct, well-articulated, real-world depth; 7–8 = correct with solid understanding, minor gaps fine; 5–6 = partial understanding, notable gaps; 3–4 = mostly wrong or very vague; 1–2 = no meaningful attempt.
+
+REPORT GENERATION (when calling finalize_interview_report):
+- summary: Write in a supportive, constructive tone. Acknowledge what the candidate did well first, then frame gaps as growth opportunities. The candidate should feel motivated to improve, not discouraged.
+- sectionScores: Include one entry per section from the interview. Score each section 1–5 (1=poor, 2=below average, 3=average, 4=good, 5=excellent) based on the candidate's overall performance in that section.
+- encouragementLine: Write one specific, genuine positive sentence about this candidate. Reference something real from the interview — a strong answer, clear communication, good project knowledge, or enthusiasm. Never write generic filler like "You did a great job!" — make it specific to what this candidate actually demonstrated.
 `;
 
           void devProvider.connect({
