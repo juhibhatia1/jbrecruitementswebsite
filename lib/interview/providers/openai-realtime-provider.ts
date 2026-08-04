@@ -466,7 +466,13 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     });
 
     if (needsContinuation) {
-      this.sendJson({ type: "response.create" });
+      // Guard against duplicate response.create: with server_vad active, OpenAI may
+      // auto-trigger a response at the same moment the tool returns. Only send if no
+      // response is already in flight.
+      if (!this.responseInFlight) {
+        this.responseInFlight = true;
+        this.sendJson({ type: "response.create" });
+      }
     }
   }
 

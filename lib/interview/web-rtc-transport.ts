@@ -159,6 +159,9 @@ export class OpenAIWebRtcInterviewTransport {
   // Bug 3 fix: response-in-flight tracking to prevent concurrent response.create
   private responseInFlight = false;
   private pendingResponseCreate = false;
+  // Set to true when handleFunctionCall calls safeResponseCreate so that the subsequent
+  // response.done for the tool-call response does NOT fire a second safeResponseCreate.
+  private toolCallTriggeredResponseCreate = false;
   // Tracks async tool execution (HTTP calls). Blocks nudge timers during long tool calls
   // so response.created doesn't fire mid-tool and clear the Thinking UI state.
   private toolCallInProgress = false;
@@ -169,6 +172,11 @@ export class OpenAIWebRtcInterviewTransport {
   // for save_interview_event: audio responses already asked the next question so no extra
   // response.create needed; tool-call-only responses need one to avoid a 47s stall.
   private currentResponseHadAudio = false;
+
+  // Interruption resume: stores the partial AI utterance text when a genuine interruption
+  // cancels a mid-question response. Injected as a silent context message so the model
+  // re-asks the question instead of jumping to the answer on the next turn.
+  private lastInterruptedUtterance = "";
 
   // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
@@ -332,8 +340,16 @@ export class OpenAIWebRtcInterviewTransport {
         }
       }
 
+      // Accumulate partial transcript delta so we have text to inject if the response
+      // is cancelled mid-sentence (genuine candidate interruption).
+      if (message.type === "response.output_audio_transcript.delta" && message.delta) {
+        this.lastInterruptedUtterance += String(message.delta);
+      }
+
       if (message.type === "response.output_audio_transcript.done" && message.transcript) {
         const interviewerText = String(message.transcript).trim();
+        // Response completed normally — clear the partial accumulator.
+        this.lastInterruptedUtterance = "";
         this.transcriptItemCount += 1;
         this.callbacks.onTranscript({
           role: "interviewer",
@@ -413,7 +429,20 @@ export class OpenAIWebRtcInterviewTransport {
             this.responseInFlight &&
             speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS;
           if (isGenuineInterruption) {
+            // Capture partial utterance before cancelResponse() clears in-flight state.
+            // Trim and store only if there was meaningful partial content.
+            const partial = this.lastInterruptedUtterance.trim();
             this.cancelResponse();
+            // Inject a silent context message so the model knows what it was saying when
+            // interrupted. On the next turn it will re-ask rather than answer the question.
+            if (partial.length > 10) {
+              this.sendSilentContextMessage(
+                `INTERRUPTION_RESUME: You were interrupted mid-response. The partial text you had spoken was: "${partial}". ` +
+                `The candidate may have said a noise/filler word — wait for their actual answer. ` +
+                `If they do not give a substantive answer, re-ask the same question briefly (do NOT start a new question or give the answer yourself). ` +
+                `Do NOT evaluate or answer the question on their behalf.`,
+              );
+            }
           } else {
             // Echo from still-playing AI audio — discard captured buffer so model
             // does not receive its own voice as "candidate speech"
@@ -429,6 +458,8 @@ export class OpenAIWebRtcInterviewTransport {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
+        // Reset partial transcript accumulator for this new response.
+        this.lastInterruptedUtterance = "";
         // Don't clear thinking if a tool HTTP call is still running — the response.created
         // may be a spurious one triggered before the tool completed.
         if (!this.toolCallInProgress) this.callbacks.onThinkingChange?.(false);
@@ -469,10 +500,13 @@ export class OpenAIWebRtcInterviewTransport {
         if (!this.muteTimer && !this.currentResponseHadToolCall) {
           this.scheduleMicUnmute(300, () => this.startCandidateSilenceNudge());
         }
-        if (this.pendingResponseCreate) {
+        // Only flush pendingResponseCreate if handleFunctionCall did NOT already
+        // call safeResponseCreate for this turn — prevents the duplicate response.
+        if (this.pendingResponseCreate && !this.toolCallTriggeredResponseCreate) {
           this.pendingResponseCreate = false;
           this.safeResponseCreate();
         }
+        this.toolCallTriggeredResponseCreate = false;
       }
 
       if (message.type === "response.cancelled") {
@@ -1496,6 +1530,9 @@ ${systemInstructions}`;
     }
 
     if (needsContinuation) {
+      // Mark that this tool call is triggering the next response.create so that the
+      // subsequent response.done for the current turn does NOT fire a second one.
+      this.toolCallTriggeredResponseCreate = true;
       this.safeResponseCreate();
     }
   }
