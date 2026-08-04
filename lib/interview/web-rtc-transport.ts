@@ -836,7 +836,7 @@ export class OpenAIWebRtcInterviewTransport {
         "CANDIDATE_SILENT_CHECK: The candidate has been silent since your last question. Check in naturally — vary your phrasing, never repeat the same check-in twice.",
       );
       this.safeResponseCreate();
-    }, 15000);
+    }, 17000);
   }
 
   // Bug 4 fix: arm absolute kill timer that force-completes after hard stop
@@ -967,6 +967,10 @@ The greeting, showing the reference card, and asking "whenever you're ready, ple
 # Personality and Tone
 
 Senior engineer running a mock interview — you are both evaluating the candidate honestly AND coaching them to improve. Warm but direct. Engaged and curious. Evaluate each answer on its merit — strong answers get genuine acknowledgment, weak or wrong answers get an honest assessment plus the correct explanation. When they miss something, name what they missed and why it matters in real interviews. Your dual goal: give them an accurate sense of where they stand, and leave them knowing more than when they started. React to each answer differently based on quality — over-praising everything equally is both dishonest and unhelpful.
+
+# Speech Delivery
+
+Speak at a measured, unhurried pace — slightly slower than normal conversation speed. Pause naturally between your acknowledgment and your next question. Use short, clearly separated sentences rather than long run-on responses. Never rush through a question; give the candidate time to process each word before they need to respond.
 
 # Language
 
