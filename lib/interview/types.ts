@@ -12,8 +12,18 @@ export interface InterviewEvaluationEvent {
   /** 1–10 */
   score: number;
   feedback: string;
+  /** Section of the interview this question belonged to */
+  sectionName?: string;
   /** Actionable improvement tip — present only for scores ≤ 7 */
   improvementTip?: string;
+}
+
+export interface InterviewSectionScore {
+  section: string;
+  /** 1–5 */
+  score: number;
+  /** Always 5 */
+  maxScore: number;
 }
 
 export interface InterviewFinalReport {
@@ -25,6 +35,10 @@ export interface InterviewFinalReport {
   improvements: string[];
   /** 1–10, average of individual scores */
   finalScore: number;
+  /** Per-section scores derived from the interview blueprint sections */
+  sectionScores?: InterviewSectionScore[];
+  /** One genuine, specific positive sentence about the candidate for encouragement */
+  encouragementLine?: string;
 }
 
 export interface InterviewReferenceCard {

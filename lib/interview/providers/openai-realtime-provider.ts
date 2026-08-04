@@ -412,6 +412,7 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
         answerSummary: String(args.answerSummary || ""),
         score: Number(args.score || 0),
         feedback: String(args.feedback || ""),
+        sectionName: String(args.sectionName || ""),
       };
       this.callbacks.onEvaluationEvent(event);
       result = { ok: true, stored: event };
@@ -424,6 +425,14 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
           ? args.improvements.map(String)
           : [],
         finalScore: Number(args.finalScore || 0),
+        sectionScores: Array.isArray(args.sectionScores)
+          ? args.sectionScores.map((s: Record<string, unknown>) => ({
+              section: String(s.section || ""),
+              score: Number(s.score || 0),
+              maxScore: Number(s.maxScore || 5),
+            }))
+          : [],
+        encouragementLine: args.encouragementLine ? String(args.encouragementLine) : undefined,
       };
       this.callbacks.onFinalReport(report);
       if (!this.completed) {
@@ -457,7 +466,13 @@ export class OpenAiRealtimeProvider implements RealtimeInterviewProvider {
     });
 
     if (needsContinuation) {
-      this.sendJson({ type: "response.create" });
+      // Guard against duplicate response.create: with server_vad active, OpenAI may
+      // auto-trigger a response at the same moment the tool returns. Only send if no
+      // response is already in flight.
+      if (!this.responseInFlight) {
+        this.responseInFlight = true;
+        this.sendJson({ type: "response.create" });
+      }
     }
   }
 
