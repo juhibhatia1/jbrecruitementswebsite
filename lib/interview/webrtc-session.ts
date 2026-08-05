@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 import { hashInterviewAccessToken } from "./access-token";
 import { buildFallbackReport } from "./utils";
@@ -593,10 +593,20 @@ export async function finalizeWebRtcInterviewSession(payload: {
   });
 
   if (payload.status === "COMPLETED") {
-    await prisma.candidateApplication.update({
+    const app = await prisma.candidateApplication.update({
       where: { id: payload.applicationId },
       data: { status: "INTERVIEW_COMPLETED" },
     });
+
+    if (app.purchaseId) {
+      await prisma.purchase.update({
+        where: { id: app.purchaseId },
+        data: {
+          mockInterviewStatus: "COMPLETED",
+          deliveryStatus: "COMPLETED",
+        },
+      }).catch(() => null);
+    }
   }
 
   if (finalReport) {

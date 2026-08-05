@@ -128,6 +128,13 @@ export async function POST(request: NextRequest) {
         where: { id: application.id },
         data: { status: "INTERVIEW_STARTED" },
       });
+
+      if (application.purchaseId) {
+        await prisma.purchase.update({
+          where: { id: application.purchaseId },
+          data: { mockInterviewStatus: "IN_PROGRESS" },
+        }).catch(() => null);
+      }
     }
 
     const apiKey = process.env.OPENAI_API_KEY;

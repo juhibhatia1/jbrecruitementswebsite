@@ -66,7 +66,7 @@ export default function RootLayout({
           />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${crimson.variable} antialiased bg-white text-[#171717]`}
         suppressHydrationWarning
         >
         <GoogleAnalytics />

@@ -437,12 +437,14 @@ export function EmployeeInterviewsDashboard({
                           ? "COMPLETED"
                           : selectedInterview.relatedApplication?.status === "INTERVIEW_STARTED"
                           ? "IN_PROGRESS"
+                          : selectedInterview.relatedApplication?.status === "SCHEDULED"
+                          ? "SCHEDULED"
                           : selectedInterview.relatedApplication?.status === "AI_INVITED"
                           ? "INVITED"
                           : selectedInterview.relatedApplication?.status === "CANCELLED"
                           ? "CANCELLED"
-                          : "PENDING_SCHEDULE")
-                        : (selectedInterview.purchase.mockInterviewStatus || "PENDING")
+                          : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE"))
+                        : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE")
                     }
                     options={selectedInterview.preference === "MANUAL" ? ["PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"] : undefined}
                     purchaseId={selectedInterview.purchase.id}
@@ -459,7 +461,18 @@ export function EmployeeInterviewsDashboard({
                     purchaseId={selectedInterview.purchase.id}
                     field="deliveryStatus"
                   />
-                  <MiniStat label="Booking" value={selectedInterview.purchase.mockInterviewDate ? formatDate(selectedInterview.purchase.mockInterviewDate) : "Not scheduled"} />
+                  <MiniStat
+                    label="Booking"
+                    value={
+                      selectedInterview.purchase.mockInterviewDate
+                        ? formatDate(selectedInterview.purchase.mockInterviewDate)
+                        : selectedInterview.relatedApplication?.scheduledAt
+                        ? formatDate(selectedInterview.relatedApplication.scheduledAt)
+                        : selectedInterview.preference === "AI"
+                        ? "Self-Paced (Instant AI Link)"
+                        : "Not scheduled"
+                    }
+                  />
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-slate-100 bg-[#fbfbfd] p-4">

@@ -198,6 +198,11 @@ export async function POST(request: Request) {
               });
             }
 
+            await prisma.purchase.update({
+              where: { id: purchase.id },
+              data: { mockInterviewStatus: "INVITED" },
+            });
+
             const interviewLink = buildAppUrl(`/interview/${accessToken}`);
 
             // Send invitation email to candidate
