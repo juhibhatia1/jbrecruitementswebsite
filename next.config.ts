@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: [
+      "react-icons",
+      "framer-motion",
+      "pdf-lib",
+      "sonner",
+      "imagekit",
+    ],
+  },
   serverExternalPackages: ["sharp"],
   images: {
     remotePatterns: [
@@ -17,8 +26,8 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://app.cal.com https://cal.com",
       // Stripe payment iframes + same-origin blob: for in-app PDF resume preview
       "frame-src 'self' blob: https://js.stripe.com https://hooks.stripe.com https://m.stripe.network https://app.cal.com https://cal.com",
-      // API calls: Stripe, OpenAI Realtime, self (WebSocket upgrades)
-      "connect-src 'self' https://api.stripe.com https://m.stripe.network wss://api.openai.com https://api.openai.com https://upload.imagekit.io https://app.cal.com https://cal.com *.cal.com",
+      // API calls: Stripe, OpenAI Realtime, self (WebSocket upgrades), ipapi.co
+      "connect-src 'self' https://api.stripe.com https://m.stripe.network wss://api.openai.com https://api.openai.com https://upload.imagekit.io https://app.cal.com https://cal.com *.cal.com https://ipapi.co",
       // Images: Unsplash, ImageKit, data URIs
       "img-src 'self' data: blob: https://images.unsplash.com https://ik.imagekit.io",
       // Fonts: Google Fonts

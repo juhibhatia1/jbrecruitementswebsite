@@ -21,8 +21,11 @@ import {
   IoCheckmarkCircle,
   IoDocumentTextOutline,
   IoOpenOutline,
+  IoCardOutline,
+  IoQrCodeOutline,
 } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -241,6 +244,7 @@ export default function CustomJdMockInterviewPage() {
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
   const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
     null,
   );
@@ -962,7 +966,47 @@ export default function CustomJdMockInterviewPage() {
                     </div>
                   </div>
 
-                  <Elements
+                  {/* Payment Method Selector (Only for Indian users) */}
+                  {displayCurrency === "INR" && (
+                    <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("card")}
+                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          paymentMethod === "card"
+                            ? "bg-white text-[#5a58ab] shadow-xs"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <IoCardOutline className="w-4 h-4" />
+                        <span>Card / International</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("upi")}
+                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          paymentMethod === "upi"
+                            ? "bg-white text-[#5a58ab] shadow-xs"
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <IoQrCodeOutline className="w-4 h-4" />
+                        <span>UPI / QR Code</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {displayCurrency === "INR" && paymentMethod === "upi" ? (
+                    <UpiPaymentBox
+                      amount={totalAmount}
+                      currency={displayCurrency}
+                      serviceName={`Custom AI Mock Interview - ${form.jobRole}`}
+                      candidateName={form.candidateName}
+                      candidateEmail={form.candidateEmail}
+                      candidatePhone={form.candidatePhone}
+                    />
+                  ) : (
+                    <Elements
                     stripe={stripePromise}
                     options={{
                       clientSecret,
@@ -987,6 +1031,7 @@ export default function CustomJdMockInterviewPage() {
                       onCancel={handleCancelCheckout}
                     />
                   </Elements>
+                  )}
                 </div>
               )
             )}

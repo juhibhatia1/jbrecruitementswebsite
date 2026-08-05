@@ -67,59 +67,54 @@ export default function NavigationMenu() {
           {/* Menu Items */}
           <div className="flex-1 flex flex-col justify-center space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8">
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
-              <span
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  router.push("/");
-                }}
+              <Link
+                href="/"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
                 className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
               >
                 HOME
-              </span>
+              </Link>
             </div>
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
-              <span
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  router.push("/companies");
-                }}
+              <Link
+                href="/companies"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
                 className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
               >
                 COMPANIES
-              </span>
+              </Link>
             </div>
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
-              <span
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  router.push("/job-seekers");
-                }}
+              <Link
+                href="/job-seekers"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
                 className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
               >
                 JOB SEEKERS
-              </span>
+              </Link>
             </div>
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
-              <span
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  router.push("/about-us");
-                }}
+              <Link
+                href="/about-us"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
                 className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
               >
                 ABOUT US
-              </span>
+              </Link>
             </div>
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
-              <span
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  router.push("/contact-us");
-                }}
+              <Link
+                href="/contact-us"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
                 className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
               >
                 CONTACT US
-              </span>
+              </Link>
             </div>
 
             {/* Underline */}

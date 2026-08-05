@@ -8,8 +8,9 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { IoClose, IoAlertCircle } from "react-icons/io5";
+import { IoClose, IoAlertCircle, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
+import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 const BUNDLE_DISCOUNT_PERCENT = 10;
@@ -36,8 +37,10 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
   const { lenis } = useLenis();
 
+  const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
   const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
   const subtotalAmount = services.reduce((sum, s) => sum + s.amount, 0);
   const bundleDiscount = bundleEligibleCount >= 4 ? Math.round(subtotalAmount * 0.1) : 0;
@@ -57,6 +60,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
       setClientSecret(null);
       setError(null);
       setLoading(false);
+      setPaymentMethod("card");
     }
   }, [isOpen, services]);
 
@@ -144,7 +148,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
       {/* Modal Container */}
       <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-[0_24px_50px_-12px_rgba(37,55,77,0.15)] border border-[#e6eefc] overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-gray-100 flex justify-between items-start bg-[#fcfdfe]">
+        <div className="p-6 pb-3 border-b border-gray-100 flex justify-between items-start bg-[#fcfdfe]">
           <div>
             <h3
               className="text-xl font-bold text-[#252e3d] mt-1.5"
@@ -168,6 +172,36 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
         {/* Scrollable Content */}
         <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow">
+          {/* Payment Method Selector (Only for Indian users) */}
+          {isIndianUser && (
+            <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("card")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "card"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoCardOutline className="w-4 h-4" />
+                <span>Card / International</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("upi")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "upi"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoQrCodeOutline className="w-4 h-4" />
+                <span>UPI / QR Code</span>
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm flex items-start gap-2.5">
               <IoAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -175,7 +209,16 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
             </div>
           )}
 
-          {!clientSecret ? (
+          {isIndianUser && paymentMethod === "upi" ? (
+            <UpiPaymentBox
+              amount={totalAmount}
+              currency={currency}
+              serviceName={displayTitle}
+              candidateName={candidateName}
+              candidateEmail={candidateEmail}
+              candidatePhone={candidatePhone}
+            />
+          ) : !clientSecret ? (
             // Stage 1: Collect Name & Email
             <form onSubmit={handleInitPayment} className="space-y-4">
               <p className="text-sm text-gray-600 leading-relaxed">

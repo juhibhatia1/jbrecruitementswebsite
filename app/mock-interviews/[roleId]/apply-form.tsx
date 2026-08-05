@@ -10,9 +10,10 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline } from "react-icons/io5";
+import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -142,6 +143,7 @@ export default function ApplyForm({
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR">("USD");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
 
   // Derive prices directly from currency
   const aiPrice = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
@@ -403,8 +405,48 @@ export default function ApplyForm({
             </div>
           </div>
 
-          {/* Stripe form */}
-          <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+          {/* Payment Method Selector (Only for Indian users) */}
+          {currency === "INR" && (
+            <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("card")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "card"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoCardOutline className="w-4 h-4" />
+                <span>Card / International</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("upi")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "upi"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoQrCodeOutline className="w-4 h-4" />
+                <span>UPI / QR Code</span>
+              </button>
+            </div>
+          )}
+
+          {/* Payment Form */}
+          {currency === "INR" && paymentMethod === "upi" ? (
+            <UpiPaymentBox
+              amount={form.interviewPreference === "AI" ? aiPrice : coachPrice}
+              currency={currency}
+              serviceName={`${form.interviewPreference === "AI" ? "AI Mock Interview" : "Coach Mock Interview"} - ${jobRole}`}
+              candidateName={form.candidateName}
+              candidateEmail={form.candidateEmail}
+              candidatePhone={form.candidatePhone}
+            />
+          ) : (
+            <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
             <CheckoutForm
               totalAmount={form.interviewPreference === "AI" ? aiPrice : coachPrice}
               currency={currency}
@@ -429,6 +471,7 @@ export default function ApplyForm({
               }}
             />
           </Elements>
+          )}
         </div>
       </div>
     );

@@ -3,9 +3,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { IoCheckmarkCircle, IoLockClosed } from "react-icons/io5";
+import { IoCheckmarkCircle, IoLockClosed, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
+import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 const SERVICE_NAME = "Coach Mock Interview";
@@ -142,6 +143,7 @@ function Input({
 export default function HumanInterviewBookingForm() {
   const [currency, setCurrency] = useState<Currency>("USD");
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
   const [clientSecret, setClientSecret] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -346,17 +348,58 @@ export default function HumanInterviewBookingForm() {
             </p>
           </div>
 
-          <Elements stripe={stripePromise} options={{ clientSecret, appearance: checkoutAppearance }}>
-            <CheckoutButton
+          {/* Payment Method Selector (Only for Indian users) */}
+          {currency === "INR" && (
+            <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("card")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "card"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoCardOutline className="w-4 h-4" />
+                <span>Card / International</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("upi")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  paymentMethod === "upi"
+                    ? "bg-white text-[#5a58ab] shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <IoQrCodeOutline className="w-4 h-4" />
+                <span>UPI / QR Code</span>
+              </button>
+            </div>
+          )}
+
+          {currency === "INR" && paymentMethod === "upi" ? (
+            <UpiPaymentBox
+              amount={coachPrice}
               currency={currency}
-              price={coachPrice}
-              jobRole={form.jobRole}
-              onCancel={() => {
-                setPaymentStage("form");
-                setClientSecret("");
-              }}
+              serviceName={`Coach Mock Interview - ${form.jobRole}`}
+              candidateName={form.candidateName}
+              candidateEmail={form.candidateEmail}
+              candidatePhone={form.candidatePhone}
             />
-          </Elements>
+          ) : (
+            <Elements stripe={stripePromise} options={{ clientSecret, appearance: checkoutAppearance }}>
+              <CheckoutButton
+                currency={currency}
+                price={coachPrice}
+                jobRole={form.jobRole}
+                onCancel={() => {
+                  setPaymentStage("form");
+                  setClientSecret("");
+                }}
+              />
+            </Elements>
+          )}
         </div>
       )}
     </div>

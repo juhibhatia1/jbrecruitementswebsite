@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import NavigationMenu from "./ui/navbar";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function FloatingNavbar() {
-  const router = useRouter();
   const pathname = usePathname();
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/employee") || pathname.startsWith("/live-interview")) {
@@ -20,9 +20,10 @@ export default function FloatingNavbar() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo (left) */}
-            <button
-              className="bg-white rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 border border-[#bababa] cursor-pointer"
-              onClick={() => router.push("/")}
+            <Link
+              href="/"
+              prefetch={true}
+              className="bg-white rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 border border-[#bababa] cursor-pointer inline-block"
             >
               <Image
                 width={100}
@@ -32,13 +33,14 @@ export default function FloatingNavbar() {
                 className="w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12"
                 priority
               />
-            </button>
+            </Link>
 
             {/* Right side navigation (actions) */}
             <div className="flex items-center gap-3 md:gap-4">
-              <button
-                className="contact-ring relative bg-transparent rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 text-xs sm:text-sm md:text-base font-semibold cursor-pointer"
-                onClick={() => router.push("/contact-us")}
+              <Link
+                href="/contact-us"
+                prefetch={true}
+                className="contact-ring relative bg-transparent rounded-full px-3 py-1 md:py-0.5 lg:py-1 md:px-4 lg:px-5 text-xs sm:text-sm md:text-base font-semibold cursor-pointer block"
               >
                 <span aria-hidden className="contact-ring-outer" />
 
@@ -51,7 +53,7 @@ export default function FloatingNavbar() {
                     <span className="dot dot-3" />
                   </div>
                 </div>
-              </button>
+              </Link>
 
               <NavigationMenu />
             </div>

@@ -114,7 +114,10 @@ ${payload.finalReport.improvements.join("\n") || "N/A"}
   });
 }
 
-function buildGenericDevInstructions(role: string, candidateName: string): string {
+function buildGenericDevInstructions(
+  role: string,
+  candidateName: string,
+): string {
   return `You are an AI mock interviewer for JB Recruitment Solutions conducting a 10-minute mock interview for the role of ${role}. Address the candidate as ${candidateName}.
 
 OPENING: Greet ${candidateName}, introduce yourself, state the role and duration. Call show_reference_card with title="Interview Structure" and a markdown table listing the 3 sections below. Say "I've shared the interview structure on your screen — take a moment to look it over." Then ask: "Whenever you're ready, just say 'ready' or 'let's begin' and we'll kick things off." Wait for their explicit confirmation before proceeding.
@@ -170,7 +173,10 @@ async function generatePostInterviewEvaluation(
   transcript: InterviewTranscriptEntry[],
   context: { role: string; experienceLevel: string; techStack: string[] },
   referenceCards?: InterviewReferenceCard[],
-): Promise<{ events: InterviewEvaluationEvent[]; finalReport: InterviewFinalReport }> {
+): Promise<{
+  events: InterviewEvaluationEvent[];
+  finalReport: InterviewFinalReport;
+}> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY not configured");
 
@@ -178,13 +184,17 @@ async function generatePostInterviewEvaluation(
   const model = process.env.OPENAI_TEMPLATE_MODEL || "gpt-4o";
 
   const transcriptText = transcript
-    .map((e) => `${e.role === "interviewer" ? "INTERVIEWER" : "CANDIDATE"}: ${e.text}`)
+    .map(
+      (e) =>
+        `${e.role === "interviewer" ? "INTERVIEWER" : "CANDIDATE"}: ${e.text}`,
+    )
     .join("\n\n");
 
-  const referenceCardsText = referenceCards && referenceCards.length > 0
-    ? "\n\nREFERENCE CARDS shown to candidate during interview:\n" +
-      referenceCards.map((c) => `[${c.title}]\n${c.content}`).join("\n\n")
-    : "";
+  const referenceCardsText =
+    referenceCards && referenceCards.length > 0
+      ? "\n\nREFERENCE CARDS shown to candidate during interview:\n" +
+        referenceCards.map((c) => `[${c.title}]\n${c.content}`).join("\n\n")
+      : "";
 
   const prompt = `You are evaluating an AI mock interview for: ${context.role} (${context.experienceLevel}).
 Tech stack: ${context.techStack.join(", ") || "General"}.${referenceCardsText}
@@ -258,7 +268,9 @@ WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. 
   };
 
   const now = new Date().toISOString();
-  const events: InterviewEvaluationEvent[] = (parsed.evaluationEvents || []).map((e) => {
+  const events: InterviewEvaluationEvent[] = (
+    parsed.evaluationEvents || []
+  ).map((e) => {
     const score = Math.min(10, Math.max(1, Math.round(Number(e.score) || 5)));
     const event: InterviewEvaluationEvent = {
       at: now,
@@ -278,8 +290,13 @@ WEIGHTS: improvements array MUST have 5-6 items. strengths MUST have 2-3 items. 
     summary: String(fr.summary || ""),
     strengths: Array.isArray(fr.strengths) ? fr.strengths.map(String) : [],
     weaknesses: Array.isArray(fr.weaknesses) ? fr.weaknesses.map(String) : [],
-    improvements: Array.isArray(fr.improvements) ? fr.improvements.map(String) : [],
-    finalScore: Math.min(10, Math.max(1, Math.round(Number(fr.finalScore) || 5))),
+    improvements: Array.isArray(fr.improvements)
+      ? fr.improvements.map(String)
+      : [],
+    finalScore: Math.min(
+      10,
+      Math.max(1, Math.round(Number(fr.finalScore) || 5)),
+    ),
   };
 
   return { events, finalReport };
@@ -364,17 +381,26 @@ nextApp
       };
 
       const authTimeout = setTimeout(() => {
-        sendJson(clientWs, { type: "error", message: "Authentication timed out." });
+        sendJson(clientWs, {
+          type: "error",
+          message: "Authentication timed out.",
+        });
         clientWs.close(4401, "Authentication timeout");
       }, AUTH_TIMEOUT_MS);
 
-      const finalizeSession = async (status: "COMPLETED" | "TERMINATED" | "FAILED") => {
+      const finalizeSession = async (
+        status: "COMPLETED" | "TERMINATED" | "FAILED",
+      ) => {
         if (!interviewSessionId || finalized) {
           return;
         }
         finalized = true;
 
-        if (status === "COMPLETED" && candidateContext && !accumulator.finalReport) {
+        if (
+          status === "COMPLETED" &&
+          candidateContext &&
+          !accumulator.finalReport
+        ) {
           try {
             const evalResult = await generatePostInterviewEvaluation(
               accumulator.transcript,
@@ -387,15 +413,27 @@ nextApp
             );
             accumulator.events = evalResult.events;
             accumulator.finalReport = evalResult.finalReport;
-            sendJson(clientWs, { type: "final_report", data: evalResult.finalReport });
+            sendJson(clientWs, {
+              type: "final_report",
+              data: evalResult.finalReport,
+            });
           } catch (err) {
             console.error("Post-interview evaluation failed:", err);
             // Fall back to utility report so results page still populates
-            accumulator.finalReport = buildFallbackReport(accumulator.events, candidateContext.role);
-            sendJson(clientWs, { type: "final_report", data: accumulator.finalReport });
+            accumulator.finalReport = buildFallbackReport(
+              accumulator.events,
+              candidateContext.role,
+            );
+            sendJson(clientWs, {
+              type: "final_report",
+              data: accumulator.finalReport,
+            });
           }
         } else if (accumulator.finalReport) {
-          sendJson(clientWs, { type: "final_report", data: accumulator.finalReport });
+          sendJson(clientWs, {
+            type: "final_report",
+            data: accumulator.finalReport,
+          });
         }
 
         const finalReport = accumulator.finalReport;
@@ -454,7 +492,9 @@ nextApp
               weaknesses: finalReport.weaknesses ?? [],
               improvements: finalReport.improvements,
               evaluationEvents: accumulator.events,
-              resultsPageUrl: buildAppUrl(`/interview/results/${interviewSessionId}`),
+              resultsPageUrl: buildAppUrl(
+                `/interview/results/${interviewSessionId}`,
+              ),
             }),
           ]);
         }
@@ -463,7 +503,10 @@ nextApp
       clientWs.on("message", async (raw) => {
         const message = parseClientMessage(raw);
         if (!message) {
-          sendJson(clientWs, { type: "error", message: "Invalid JSON message." });
+          sendJson(clientWs, {
+            type: "error",
+            message: "Invalid JSON message.",
+          });
           return;
         }
 
@@ -476,7 +519,8 @@ nextApp
           ) {
             sendJson(clientWs, {
               type: "error",
-              message: "Authenticate first by sending the interview access token.",
+              message:
+                "Authenticate first by sending the interview access token.",
             });
             return;
           }
@@ -489,7 +533,10 @@ nextApp
             });
 
             if (!application) {
-              sendJson(clientWs, { type: "error", message: "Invalid interview token." });
+              sendJson(clientWs, {
+                type: "error",
+                message: "Invalid interview token.",
+              });
               clientWs.close(4403, "Invalid token");
               return;
             }
@@ -497,7 +544,8 @@ nextApp
             if (application.interviewPreference !== "AI") {
               sendJson(clientWs, {
                 type: "error",
-                message: "This application is configured for a manual interview.",
+                message:
+                  "This application is configured for a manual interview.",
               });
               clientWs.close(4403, "Manual interview");
               return;
@@ -508,13 +556,19 @@ nextApp
                 where: { id: application.id },
                 data: { status: "TOKEN_EXPIRED" },
               });
-              sendJson(clientWs, { type: "error", message: "Interview link has expired." });
+              sendJson(clientWs, {
+                type: "error",
+                message: "Interview link has expired.",
+              });
               clientWs.close(4403, "Token expired");
               return;
             }
 
             if (application.status === "INTERVIEW_COMPLETED") {
-              sendJson(clientWs, { type: "error", message: "Interview already completed." });
+              sendJson(clientWs, {
+                type: "error",
+                message: "Interview already completed.",
+              });
               clientWs.close(4403, "Completed");
               return;
             }
@@ -522,29 +576,40 @@ nextApp
             if (!application.template.systemInstructions) {
               sendJson(clientWs, {
                 type: "error",
-                message: "Interview template is not active yet. Contact support.",
+                message:
+                  "Interview template is not active yet. Contact support.",
               });
               clientWs.close(4403, "Template not generated");
               return;
             }
 
-            const defaultProvider = process.env.INTERVIEW_PROVIDER || "gemini-live";
+            const defaultProvider =
+              process.env.INTERVIEW_PROVIDER || "gemini-live";
             let isResuming = false;
 
             if (application.session) {
               if (application.session.status === "COMPLETED") {
-                sendJson(clientWs, { type: "error", message: "Interview already completed." });
+                sendJson(clientWs, {
+                  type: "error",
+                  message: "Interview already completed.",
+                });
                 clientWs.close(4409, "Already completed");
                 return;
               }
               if (application.session.status === "ACTIVE") {
-                sendJson(clientWs, { type: "error", message: "Interview session already in progress." });
+                sendJson(clientWs, {
+                  type: "error",
+                  message: "Interview session already in progress.",
+                });
                 clientWs.close(4409, "Session in progress");
                 return;
               }
               // TERMINATED / FAILED / CONNECTING
-              const previousTranscript = Array.isArray(application.session.transcript)
-                ? (application.session.transcript as unknown as InterviewTranscriptEntry[])
+              const previousTranscript = Array.isArray(
+                application.session.transcript,
+              )
+                ? (application.session
+                    .transcript as unknown as InterviewTranscriptEntry[])
                 : [];
 
               if (previousTranscript.length > 0) {
@@ -557,7 +622,9 @@ nextApp
                 accumulator.transcript = previousTranscript;
                 isResuming = true;
               } else {
-                await prisma.interviewSession.delete({ where: { id: application.session.id } });
+                await prisma.interviewSession.delete({
+                  where: { id: application.session.id },
+                });
               }
             }
 
@@ -597,7 +664,10 @@ nextApp
                 sendJson(clientWs, {
                   type: "ready",
                   audioInputRate: provider?.audioInputRate ?? 16000,
-                  existingTranscript: accumulator.transcript.length > 0 ? accumulator.transcript : undefined,
+                  existingTranscript:
+                    accumulator.transcript.length > 0
+                      ? accumulator.transcript
+                      : undefined,
                 });
               },
               onStatus: (statusMessage: string) => {
@@ -609,13 +679,18 @@ nextApp
               onTranscript: (entry: InterviewTranscriptEntry) => {
                 accumulator.transcript.push(entry);
                 sendJson(clientWs, { type: "transcript", data: entry });
-                if (accumulator.transcript.length % 5 === 0 && interviewSessionId) {
+                if (
+                  accumulator.transcript.length % 5 === 0 &&
+                  interviewSessionId
+                ) {
                   prisma.interviewSession
                     .update({
                       where: { id: interviewSessionId },
                       data: { transcript: accumulator.transcript as any },
                     })
-                    .catch((err) => console.error("Periodic transcript save failed:", err));
+                    .catch((err) =>
+                      console.error("Periodic transcript save failed:", err),
+                    );
                 }
               },
               onAudioChunk: (data: string, mimeType: string) => {
@@ -635,9 +710,15 @@ nextApp
                   ...card,
                   afterTranscriptIndex: accumulator.transcript.length,
                 };
-                console.log("[Server] Sending reference_card to client:", card.title);
+                console.log(
+                  "[Server] Sending reference_card to client:",
+                  card.title,
+                );
                 accumulator.referenceCards.push(cardWithPosition);
-                sendJson(clientWs, { type: "reference_card", data: cardWithPosition });
+                sendJson(clientWs, {
+                  type: "reference_card",
+                  data: cardWithPosition,
+                });
               },
               onComplete: () => {
                 sendJson(clientWs, { type: "interview_complete" });
@@ -648,8 +729,15 @@ nextApp
             };
 
             if (defaultProvider === "openai-realtime") {
-              const advCfg = application.template.advancedConfig as Record<string, string> | null;
-              provider = new OpenAiRealtimeProvider(callbackHandlers, undefined, advCfg?.voiceOption);
+              const advCfg = application.template.advancedConfig as Record<
+                string,
+                string
+              > | null;
+              provider = new OpenAiRealtimeProvider(
+                callbackHandlers,
+                undefined,
+                advCfg?.voiceOption,
+              );
             } else {
               provider = new GeminiLiveInterviewProvider(callbackHandlers);
             }
@@ -657,7 +745,8 @@ nextApp
             clearTimeout(authTimeout);
             authenticated = true;
 
-            const baseInstructions = candidateContext.templateInstructions || "";
+            const baseInstructions =
+              candidateContext.templateInstructions || "";
             const dynamicGuidelines = `
 ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - You are a highly professional, rigorous, and intelligent technical interviewer.
@@ -690,7 +779,10 @@ REPORT GENERATION (when calling finalize_interview_report):
 
             if (isResuming && accumulator.transcript.length > 0) {
               const transcriptText = accumulator.transcript
-                .map((e) => `${e.role === "interviewer" ? "Interviewer" : "Candidate"}: ${e.text}`)
+                .map(
+                  (e) =>
+                    `${e.role === "interviewer" ? "Interviewer" : "Candidate"}: ${e.text}`,
+                )
                 .join("\n");
               systemInstructions += `
 
@@ -725,26 +817,34 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
             // ── Session duration kill-timer ──────────────────────────────────
             // Force-disconnect if the interview exceeds its allotted time.
             // Prevents runaway OpenAI Realtime API costs.
-            const durationMs = ((candidateContext?.durationMinutes ?? 30) + 2) * 60 * 1000; // +2 min grace
+            const durationMs =
+              ((candidateContext?.durationMinutes ?? 30) + 2) * 60 * 1000; // +2 min grace
             durationKillTimer = setTimeout(() => {
               console.warn(
                 `[WS] Session ${interviewSessionId} exceeded duration limit (${candidateContext?.durationMinutes}min). Closing.`,
               );
               sendJson(clientWs, {
                 type: "interview_timeout",
-                message: "Your interview time has ended. Your session is being saved.",
+                message:
+                  "Your interview time has ended. Your session is being saved.",
               });
               endInterviewRequested = true;
               provider?.endInterview();
               setTimeout(() => {
                 void finalizeSession("COMPLETED").catch((err) => {
-                  console.error("Duration kill-timer finalization failed:", err);
+                  console.error(
+                    "Duration kill-timer finalization failed:",
+                    err,
+                  );
                 });
               }, 10000);
             }, durationMs);
           } catch (error) {
             console.error("Interview auth/setup failed:", error);
-            sendJson(clientWs, { type: "error", message: "Failed to start interview." });
+            sendJson(clientWs, {
+              type: "error",
+              message: "Failed to start interview.",
+            });
             if (interviewSessionId) {
               await finalizeSession("FAILED");
             }
@@ -755,7 +855,10 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         }
 
         if (!provider) {
-          sendJson(clientWs, { type: "error", message: "Interview provider unavailable." });
+          sendJson(clientWs, {
+            type: "error",
+            message: "Interview provider unavailable.",
+          });
           return;
         }
 
@@ -793,7 +896,9 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         if (remaining <= 0) connectionsByIp.delete(clientIp);
         else connectionsByIp.set(clientIp, remaining);
         if (authenticated) {
-          const closeStatus = endInterviewRequested ? "COMPLETED" : "TERMINATED";
+          const closeStatus = endInterviewRequested
+            ? "COMPLETED"
+            : "TERMINATED";
           void finalizeSession(closeStatus).catch((error) => {
             console.error("Failed to finalize disconnected session:", error);
           });
@@ -805,11 +910,13 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
     if (wssDev) {
       wssDev.on("connection", async (clientWs, request) => {
         const reqUrl = new URL(request.url || "/", `http://localhost:${PORT}`);
-        const providerParam = reqUrl.searchParams.get("provider") || "gemini-live";
+        const providerParam =
+          reqUrl.searchParams.get("provider") || "gemini-live";
         const modelParam = reqUrl.searchParams.get("model") || undefined;
         const voiceParam = reqUrl.searchParams.get("voice") || undefined;
         const role = reqUrl.searchParams.get("role") || "Software Engineer";
-        const candidateName = reqUrl.searchParams.get("name") || "Test Candidate";
+        const candidateName =
+          reqUrl.searchParams.get("name") || "Test Candidate";
         const templateIdParam = reqUrl.searchParams.get("templateId") || null;
 
         const devAccumulator: InterviewSessionAccumulator = {
@@ -822,9 +929,15 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         let devProvider: any = null;
 
         const devCallbacks = {
-          onReady: () => sendJson(clientWs, { type: "ready", audioInputRate: devProvider?.audioInputRate ?? 16000 }),
-          onStatus: (msg: string) => sendJson(clientWs, { type: "status", message: msg }),
-          onError: (msg: string) => sendJson(clientWs, { type: "error", message: msg }),
+          onReady: () =>
+            sendJson(clientWs, {
+              type: "ready",
+              audioInputRate: devProvider?.audioInputRate ?? 16000,
+            }),
+          onStatus: (msg: string) =>
+            sendJson(clientWs, { type: "status", message: msg }),
+          onError: (msg: string) =>
+            sendJson(clientWs, { type: "error", message: msg }),
           onTranscript: (entry: InterviewTranscriptEntry) => {
             devAccumulator.transcript.push(entry);
             sendJson(clientWs, { type: "transcript", data: entry });
@@ -850,15 +963,28 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
               try {
                 const evalResult = await generatePostInterviewEvaluation(
                   devAccumulator.transcript,
-                  { role: resolvedRole, experienceLevel: "mid-level", techStack: [] },
+                  {
+                    role: resolvedRole,
+                    experienceLevel: "mid-level",
+                    techStack: [],
+                  },
                   devAccumulator.referenceCards,
                 );
-                sendJson(clientWs, { type: "evaluation_events", data: evalResult.events });
-                sendJson(clientWs, { type: "final_report", data: evalResult.finalReport });
+                sendJson(clientWs, {
+                  type: "evaluation_events",
+                  data: evalResult.events,
+                });
+                sendJson(clientWs, {
+                  type: "final_report",
+                  data: evalResult.finalReport,
+                });
               } catch (err) {
                 console.error("[dev] Post-interview evaluation failed:", err);
                 if (devAccumulator.finalReport) {
-                  sendJson(clientWs, { type: "final_report", data: devAccumulator.finalReport });
+                  sendJson(clientWs, {
+                    type: "final_report",
+                    data: devAccumulator.finalReport,
+                  });
                 }
               }
             })();
@@ -881,7 +1007,10 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
               devInstructions = template.systemInstructions;
               resolvedRole = template.jobRole;
             } else {
-              devInstructions = buildGenericDevInstructions(role, candidateName);
+              devInstructions = buildGenericDevInstructions(
+                role,
+                candidateName,
+              );
             }
           } catch {
             devInstructions = buildGenericDevInstructions(role, candidateName);
@@ -892,12 +1021,21 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
 
         try {
           if (providerParam === "openai-realtime") {
-            devProvider = new OpenAiRealtimeProvider(devCallbacks, modelParam, voiceParam);
+            devProvider = new OpenAiRealtimeProvider(
+              devCallbacks,
+              modelParam,
+              voiceParam,
+            );
           } else {
-            devProvider = new GeminiLiveInterviewProvider(devCallbacks, modelParam);
+            devProvider = new GeminiLiveInterviewProvider(
+              devCallbacks,
+              modelParam,
+            );
           }
 
-          const previewInstructions = devInstructions + `
+          const previewInstructions =
+            devInstructions +
+            `
 ADDITIONAL OPERATIONAL BEHAVIORAL INSTRUCTIONS:
 - You are a highly professional, rigorous, and intelligent technical interviewer.
 - Do NOT be overly generous. If the candidate answers poorly, gives a flat out incorrect explanation, or is too vague, do not ignore it. Politely and positively correct them, or guide them with constructive hints to help them perform better and learn.
@@ -924,13 +1062,15 @@ REPORT GENERATION (when calling finalize_interview_report):
 - encouragementLine: Write one specific, genuine positive sentence about this candidate. Reference something real from the interview — a strong answer, clear communication, good project knowledge, or enthusiasm. Never write generic filler like "You did a great job!" — make it specific to what this candidate actually demonstrated.
 `;
 
-          void devProvider.connect({
-            systemInstructions: previewInstructions,
-            openingPrompt: "Start the interview now.",
-            candidateName,
-          }).catch((err: Error) => {
-            sendJson(clientWs, { type: "error", message: err.message });
-          });
+          void devProvider
+            .connect({
+              systemInstructions: previewInstructions,
+              openingPrompt: "Start the interview now.",
+              candidateName,
+            })
+            .catch((err: Error) => {
+              sendJson(clientWs, { type: "error", message: err.message });
+            });
         } catch (err: any) {
           sendJson(clientWs, { type: "error", message: err.message });
         }
@@ -939,7 +1079,8 @@ REPORT GENERATION (when calling finalize_interview_report):
           if (!devProvider) return;
           const msg = parseClientMessage(raw);
           if (!msg) return;
-          if (msg.type === "audio_chunk" && msg.data) devProvider.sendAudioChunk(msg.data);
+          if (msg.type === "audio_chunk" && msg.data)
+            devProvider.sendAudioChunk(msg.data);
           if (msg.type === "end_audio") devProvider.endAudio();
           if (msg.type === "end_interview") devProvider.endInterview();
         });
@@ -951,7 +1092,10 @@ REPORT GENERATION (when calling finalize_interview_report):
     }
 
     server.on("upgrade", (request, socket, head) => {
-      const requestUrl = new URL(request.url || "/", `http://${request.headers.host}`);
+      const requestUrl = new URL(
+        request.url || "/",
+        `http://${request.headers.host}`,
+      );
       if (requestUrl.pathname === "/ws/interview") {
         wss.handleUpgrade(request, socket, head, (ws) => {
           wss.emit("connection", ws, request);
