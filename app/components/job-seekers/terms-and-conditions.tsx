@@ -43,7 +43,7 @@ export default function TermsAndConditions() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-sm text-gray-500 underline underline-offset-4 transition-colors hover:text-[#5a58ab] sm:text-base"
+        className="text-sm text-gray-500 underline underline-offset-4 transition-colors hover:text-[#5a58ab] sm:text-base cursor-pointer"
       >
         Read our Terms & Conditions{" "}
         <span className="font-semibold text-[#5a58ab]">*</span>

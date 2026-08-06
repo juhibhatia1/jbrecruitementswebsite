@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IoArrowForwardOutline, IoChevronDownOutline } from "react-icons/io5";
+import { IoArrowForwardOutline, IoChevronDownOutline, IoAddCircleOutline } from "react-icons/io5";
 import type { CandidateInterviewRecord, CandidateInterviewBooking } from "./page";
 import { PiXCircleDuotone } from "react-icons/pi";
 import { updatePurchaseStatus } from "./actions";
+import CreateCandidateInterviewModal from "@/app/components/admin/create-candidate-interview-modal";
 
 const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
 type Voice = typeof OPENAI_REALTIME_VOICES[number];
@@ -57,6 +58,7 @@ export function EmployeeInterviewsDashboard({
   const [currentPage, setCurrentPage] = useState(1);
   const [bookingPage, setBookingPage] = useState(1);
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
+  const [isCreateCandidateModalOpen, setIsCreateCandidateModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(candidateBookings[0]?.email ?? null);
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
     candidateBookings[0]?.bookings[0]?.purchase.id ?? null,
@@ -142,14 +144,23 @@ export function EmployeeInterviewsDashboard({
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
         <header className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Employee Interview Tracker</p>
-              <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
-                Paid interview bookings
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-500">
-                Quickly scan hundreds of customers, drill into one customer's interviews, and open the full AI report when needed.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Employee Interview Tracker</p>
+                <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
+                  Paid interview bookings
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-slate-500">
+                  Quickly scan hundreds of customers, drill into one customer's interviews, and open the full AI report when needed.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCreateCandidateModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#5a58ab] hover:bg-[#4a489b] text-white rounded-2xl text-sm font-bold transition cursor-pointer shadow-md shadow-[#5a58ab]/20 hover:shadow-lg shrink-0"
+              >
+                <IoAddCircleOutline className="w-5 h-5" />
+                <span>Create Candidate Interview</span>
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
@@ -555,6 +566,11 @@ export function EmployeeInterviewsDashboard({
           </div>
         </div>
       )}
+
+      <CreateCandidateInterviewModal
+        isOpen={isCreateCandidateModalOpen}
+        onClose={() => setIsCreateCandidateModalOpen(false)}
+      />
     </div>
   );
 }

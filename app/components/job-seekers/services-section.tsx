@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -63,7 +63,7 @@ const services = [
     title: "LinkedIn Optimization",
     description:
       "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
-    iconPath: "/icons/job-seekers/linkedin-optimization.svg",
+    iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
     timeline: "5 days",
     features: [
       "Keywords optimized content",
