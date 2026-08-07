@@ -13,7 +13,6 @@ import {
 import { IoAlertCircle, IoLockClosed, IoCheckmarkCircle, IoClose, IoCalendarOutline, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
 import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
-import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -405,48 +404,7 @@ export default function ApplyForm({
             </div>
           </div>
 
-          {/* Payment Method Selector (Only for Indian users) */}
-          {currency === "INR" && (
-            <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("card")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  paymentMethod === "card"
-                    ? "bg-white text-[#5a58ab] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <IoCardOutline className="w-4 h-4" />
-                <span>Card / International</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("upi")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  paymentMethod === "upi"
-                    ? "bg-white text-[#5a58ab] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <IoQrCodeOutline className="w-4 h-4" />
-                <span>UPI / QR Code</span>
-              </button>
-            </div>
-          )}
-
-          {/* Payment Form */}
-          {currency === "INR" && paymentMethod === "upi" ? (
-            <UpiPaymentBox
-              amount={form.interviewPreference === "AI" ? aiPrice : coachPrice}
-              currency={currency}
-              serviceName={`${form.interviewPreference === "AI" ? "AI Mock Interview" : "Coach Mock Interview"} - ${jobRole}`}
-              candidateName={form.candidateName}
-              candidateEmail={form.candidateEmail}
-              candidatePhone={form.candidatePhone}
-            />
-          ) : (
-            <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+          <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
             <CheckoutForm
               totalAmount={form.interviewPreference === "AI" ? aiPrice : coachPrice}
               currency={currency}
@@ -471,7 +429,6 @@ export default function ApplyForm({
               }}
             />
           </Elements>
-          )}
         </div>
       </div>
     );
@@ -690,25 +647,41 @@ export default function ApplyForm({
 
           {/* Payment notice — shown for both AI and MANUAL once selected */}
           {form.interviewPreference !== "" && (
-            <div className="rounded-xl bg-[#f8f7ff] border border-[#e0dfff] px-4 py-3 flex items-start gap-2.5">
+            <div className="rounded-xl bg-[#f8f7ff] border border-[#e0dfff] px-4 py-3.5 flex items-start gap-2.5">
               <IoLockClosed className="w-4 h-4 text-[#5a58ab] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-gray-600 leading-relaxed">
+              <div className="text-xs text-gray-600 leading-relaxed space-y-2">
                 {form.interviewPreference === "AI" ? (
                   <>
-                    A secure Stripe payment of{" "}
-                    <strong>{currency} {aiPrice.toLocaleString()}</strong>{" "}
-                    is required. Your unique interview link will be emailed to you immediately after
-                    payment — valid for 7 days and usable only once.
+                    <p>
+                      A secure Stripe payment of{" "}
+                      <strong>{currency} {aiPrice.toLocaleString()}</strong>{" "}
+                      is required. Your unique interview link will be emailed to you immediately after
+                      payment — valid for 7 days and usable only once.
+                    </p>
+                    {currency === "INR" && (
+                      <p className="pt-2 border-t border-[#e0dfff] text-[#252e3d]">
+                        💡 <strong>Paying via UPI?</strong> Please{" "}
+                        <a
+                          href={process.env.NEXT_PUBLIC_UPI_GOOGLE_FORM_URL || "https://forms.google.com"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-[#5a58ab] underline hover:text-[#4a489b]"
+                        >
+                          fill out this Google Form
+                        </a>
+                        {" "}and scan the QR code inside to pay.
+                      </p>
+                    )}
                   </>
                 ) : (
-                  <>
+                  <p>
                     A secure Stripe payment of{" "}
                     <strong>{currency} {coachPrice.toLocaleString()}</strong>{" "}
                     is required. A Cal.com scheduling link will be emailed to you immediately after
                     payment so you can pick your preferred date and time.
-                  </>
+                  </p>
                 )}
-              </p>
+              </div>
             </div>
           )}
 

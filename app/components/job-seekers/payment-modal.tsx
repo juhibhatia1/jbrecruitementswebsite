@@ -41,6 +41,9 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const { lenis } = useLenis();
 
   const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
+  const hasMockInterview = services.some((s) => s.title.toLowerCase().includes("mock interview"));
+  const showUpi = isIndianUser && !hasMockInterview;
+  
   const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
   const subtotalAmount = services.reduce((sum, s) => sum + s.amount, 0);
   const bundleDiscount = bundleEligibleCount >= 4 ? Math.round(subtotalAmount * 0.1) : 0;
@@ -173,7 +176,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
         {/* Scrollable Content */}
         <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow">
           {/* Payment Method Selector (Only for Indian users) */}
-          {isIndianUser && (
+          {showUpi && (
             <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
               <button
                 type="button"
@@ -209,7 +212,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
             </div>
           )}
 
-          {isIndianUser && paymentMethod === "upi" ? (
+          {showUpi && paymentMethod === "upi" ? (
             <UpiPaymentBox
               amount={totalAmount}
               currency={currency}

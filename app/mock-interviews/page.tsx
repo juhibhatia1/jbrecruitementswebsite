@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { IoArrowForwardOutline, IoSparkles } from "react-icons/io5";
+import { UpiCardNotice } from "./upi-card-notice";
 
 export const metadata: Metadata = {
   title: "Mock Interview Sessions | JB Recruitment Solutions",
@@ -39,6 +40,7 @@ export default function MockInterviewsPage() {
             ctaLabel="Start AI Interview"
             href="/mock-interviews/custom"
             primary
+            upiFormNotice
           />
 
           <OptionCard
@@ -61,6 +63,7 @@ type OptionCardProps = {
   ctaLabel: string;
   href: string;
   primary?: boolean;
+  upiFormNotice?: boolean;
 };
 
 function OptionCard({
@@ -70,6 +73,7 @@ function OptionCard({
   ctaLabel,
   href,
   primary = false,
+  upiFormNotice = false,
 }: OptionCardProps) {
   const cardClass = primary
     ? "border-[#5a58ab]/25 bg-gradient-to-br from-[#ffffff] to-[#f7f6ff]"
@@ -92,9 +96,11 @@ function OptionCard({
       <h2 className="text-2xl sm:text-3xl font-semibold text-[#252e3d] mb-3" style={{ fontFamily: "Crimson Text, serif" }}>
         {title}
       </h2>
-      <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+      <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-4">
         {description}
       </p>
+
+      {upiFormNotice && <UpiCardNotice />}
 
       <div className="mt-auto">
         <span

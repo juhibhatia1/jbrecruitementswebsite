@@ -8,10 +8,10 @@ import type { NextRequest } from "next/server";
  * individual route can accidentally skip the auth check.
  *
  * Full JWT HMAC-SHA256 verification still happens inside each API route handler;
- * this proxy only checks for cookie presence + valid 3-part JWT shape so it
+ * this middleware only checks for cookie presence + valid 3-part JWT shape so it
  * remains edge-compatible (no Node.js crypto needed here).
  */
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Guard all admin paths
@@ -23,6 +23,24 @@ export function proxy(request: NextRequest) {
       pathname === "/api/admin/auth/login"
     ) {
       return NextResponse.next();
+    }
+
+    // For candidate creation, allow both Admin and Employee sessions
+    if (pathname === "/api/admin/interviews/create-for-candidate") {
+      const adminSession = request.cookies.get("jb_admin_session")?.value;
+      const employeeSession = request.cookies.get("jb_employee_session")?.value;
+
+      const hasValidAdmin = adminSession && adminSession.split(".").length === 3;
+      const hasValidEmployee = employeeSession && employeeSession.split(".").length === 3;
+
+      if (hasValidAdmin || hasValidEmployee) {
+        return NextResponse.next();
+      }
+
+      return NextResponse.json(
+        { error: "Unauthorized. Admin or Employee session required." },
+        { status: 401 },
+      );
     }
 
     const session = request.cookies.get("jb_admin_session")?.value;

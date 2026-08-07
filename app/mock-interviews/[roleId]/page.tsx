@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import ApplyForm from "./apply-form";
+import { UpiInlineNotice } from "../upi-inline-notice";
 
 type Props = { params: Promise<{ roleId: string }> };
 
@@ -142,11 +143,14 @@ export default async function RoleDetailPage({ params }: Props) {
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-[#5a58ab]">✦</span>
-                  <span>
-                    <strong>AI Mock Interview:</strong> Conduct your practice session
-                    immediately via voice with our AI interviewer. You'll receive a
-                    secure link by email valid for 7 days.
-                  </span>
+                  <div>
+                    <p>
+                      <strong>AI Mock Interview:</strong> Conduct your practice session
+                      immediately via voice with our AI interviewer. You'll receive a
+                      secure link by email valid for 7 days.
+                    </p>
+                    <UpiInlineNotice />
+                  </div>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-[#5a58ab]">✦</span>

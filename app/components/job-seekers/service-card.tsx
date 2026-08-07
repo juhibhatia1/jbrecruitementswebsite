@@ -51,6 +51,8 @@ export default function ServiceCard({
           "Personalized approach",
         ];
 
+  const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
+
   return (
     <div
       className={`relative w-full h-full bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 group overflow-hidden antialiased ${
@@ -100,6 +102,22 @@ export default function ServiceCard({
             </div>
           ))}
         </div>
+
+        {title === "Mock Interview" && isIndianUser && (
+          <div className="mt-3 p-2.5 rounded-xl bg-[#f0effd] border border-[#dcd9ff] text-[11px] leading-relaxed text-slate-700">
+            <strong>Paying via UPI?</strong> Please{" "}
+            <a
+              href={process.env.NEXT_PUBLIC_UPI_GOOGLE_FORM_URL || "https://forms.google.com"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#5a58ab] underline hover:text-[#4a489b]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              fill out this Google Form
+            </a>
+            {" "}and scan the QR code inside to pay.
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
           {onToggleSelect && (
