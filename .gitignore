@@ -46,6 +46,9 @@ CLAUDE.md
 plan.md
 .idea/
 
+# local Copilot/session config
+.github/
+
 # compiled js artifacts and prisma temp files
 lib/*.js
 lib/prisma-client/*.tmp*

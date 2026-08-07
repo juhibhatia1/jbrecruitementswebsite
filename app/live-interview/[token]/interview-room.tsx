@@ -48,10 +48,11 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [hasStream, setHasStream] = useState(false);
   const [micTestPassed, setMicTestPassed] = useState(false);
   const [micTestBars, setMicTestBars] = useState<number[]>(Array(20).fill(0));
-  const [timingState, setTimingState] = useState({
-    startedAt: 0,
-    durationMs: 15 * 60 * 1000,
-  });
+   const [timingState, setTimingState] = useState({
+     startedAt: 0,
+     durationMs: 15 * 60 * 1000,
+   });
+   const [isAiPreparingQuestions, setIsAiPreparingQuestions] = useState(false);
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +65,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const remotePlaybackSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const remotePlaybackGainRef = useRef<GainNode | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
   const transportRef = useRef<OpenAIWebRtcInterviewTransport | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const sessionTokenRef = useRef<string>(token);
@@ -82,6 +84,12 @@ export default function InterviewRoom({ token }: { token: string }) {
   const hardStopSignalSentRef = useRef(false);
   const interviewStartedAtRef = useRef<number | null>(null);
   const interviewDurationMsRef = useRef(15 * 60 * 1000);
+  // Fresh sessions: the billed clock does not start until the AI actually begins the interview
+  // (first assistant response), so connect + first-response latency is not billed. True while
+  // we are still waiting for that first response.
+  const freshClockPendingRef = useRef(false);
+  const localSpeechMonitorTimerRef = useRef<number | null>(null);
+  const lastLocalSpeechSignalAtRef = useRef(0);
   const micTestCtxRef = useRef<AudioContext | null>(null);
   const micTestAnalyserRef = useRef<AnalyserNode | null>(null);
   const micTestAnimFrameRef = useRef<number | null>(null);
@@ -89,6 +97,11 @@ export default function InterviewRoom({ token }: { token: string }) {
   const micTestPassedRef = useRef(false);
 
   const phaseRef = useRef<Phase>("setup");
+  // NOTE: sessionStorage (not localStorage) — each browser tab gets its own isolated key.
+  // This prevents two tabs from sharing the same session ID and spawning parallel WebRTC
+  // sessions that produce duplicate AI responses and duplicate candidate transcripts.
+  // sessionStorage persists across page refreshes within the same tab (so resume still works)
+  // but is NOT shared with other tabs, so a second tab can never steal the session.
   const sessionTokenKey = `jb-webrtc-session:${token}`;
 
   useEffect(() => {
@@ -106,6 +119,44 @@ export default function InterviewRoom({ token }: { token: string }) {
 
     return () => window.clearInterval(timerId);
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "live" || micLocked) {
+      if (localSpeechMonitorTimerRef.current) {
+        window.clearInterval(localSpeechMonitorTimerRef.current);
+        localSpeechMonitorTimerRef.current = null;
+      }
+      return;
+    }
+
+    const analyser = analyserRef.current;
+    if (!analyser) return;
+
+    const frame = new Uint8Array(analyser.fftSize);
+    localSpeechMonitorTimerRef.current = window.setInterval(() => {
+      analyser.getByteTimeDomainData(frame);
+      let sumSquares = 0;
+      for (let i = 0; i < frame.length; i += 1) {
+        const normalized = (frame[i] - 128) / 128;
+        sumSquares += normalized * normalized;
+      }
+      const rms = Math.sqrt(sumSquares / frame.length);
+      if (rms > 0.02) {
+        const now = Date.now();
+        if (now - lastLocalSpeechSignalAtRef.current > 700) {
+          lastLocalSpeechSignalAtRef.current = now;
+          transportRef.current?.notifyLocalSpeechActivity();
+        }
+      }
+    }, 180);
+
+    return () => {
+      if (localSpeechMonitorTimerRef.current) {
+        window.clearInterval(localSpeechMonitorTimerRef.current);
+        localSpeechMonitorTimerRef.current = null;
+      }
+    };
+  }, [phase, micLocked]);
 
   // Mic test animation loop — runs while setupStep === "mic-test"
   useEffect(() => {
@@ -158,6 +209,36 @@ export default function InterviewRoom({ token }: { token: string }) {
       }
     };
   }, [setupStep]);
+
+  // Attaches the AI's remote audio stream to whichever <audio> element is currently mounted.
+  // Kept independent of phase so audio is not lost when the setup screen unmounts and the live
+  // screen mounts (the stream arrives during connect, before the AI actually starts speaking).
+  // The audio element is muted until the "live" phase so the candidate doesn't hear the AI
+  // speaking through the setup screen (confusing UX before the timer/room is visible).
+  const attachRemoteStream = useCallback(() => {
+    const el = remoteAudioRef.current;
+    const stream = remoteStreamRef.current;
+    if (!el || !stream) return;
+    if (el.srcObject !== stream) el.srcObject = stream;
+    // Unmute only when we are in the live phase — keep muted during setup so the candidate
+    // doesn't hear AI audio before the interview room and timer are visible.
+    el.muted = phaseRef.current !== "live";
+    void el.play().catch(() => {
+      const playbackCtx = micCtxRef.current;
+      if (!playbackCtx || remotePlaybackSourceRef.current) return;
+      try {
+        const remoteSource = playbackCtx.createMediaStreamSource(stream);
+        const remoteGain = playbackCtx.createGain();
+        remoteGain.gain.value = phaseRef.current === "live" ? 1 : 0;
+        remoteSource.connect(remoteGain);
+        remoteGain.connect(playbackCtx.destination);
+        remotePlaybackSourceRef.current = remoteSource;
+        remotePlaybackGainRef.current = remoteGain;
+      } catch (error) {
+        console.error("Failed to attach fallback remote audio playback:", error);
+      }
+    });
+  }, []);
 
   const setMicCaptureEnabled = useCallback((enabled: boolean) => {
     streamRef.current?.getAudioTracks().forEach((track) => {
@@ -318,15 +399,16 @@ export default function InterviewRoom({ token }: { token: string }) {
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }, []);
 
-  const handleConfirmExit = useCallback(async () => {
-    clearInterviewTiming();
-    stopMic();
-    setAiSpeaking(false);
-    setAiThinking(false);
-    transportRef.current?.endInterview();
-    setPhase("results");
-    await finalizeSession("COMPLETED");
-  }, [clearInterviewTiming, stopMic, finalizeSession]);
+   const handleConfirmExit = useCallback(async () => {
+     clearInterviewTiming();
+     stopMic();
+     setAiSpeaking(false);
+     setAiThinking(false);
+     setIsAiPreparingQuestions(false);
+     transportRef.current?.endInterview();
+     setPhase("results");
+     await finalizeSession("COMPLETED");
+   }, [clearInterviewTiming, stopMic, finalizeSession]);
 
   const armInterviewTiming = useCallback(() => {
     if (!interviewStartedAtRef.current || !interviewDurationMsRef.current) {
@@ -421,29 +503,50 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (phaseRef.current !== "live") setSetupStatus(msg.message);
         break;
 
-      case "error":
-        setErrorMsg(msg.message);
-        setAiSpeaking(false);
-        if (phaseRef.current === "live") {
-          // Bug 3 fix: Surface errors during live phase as a toast, not a phase change
-          toast.error(msg.message);
-        } else if (phaseRef.current !== "results") {
-          setPhase("error");
-        }
-        break;
+       case "error":
+         setErrorMsg(msg.message);
+         setAiSpeaking(false);
+         setIsAiPreparingQuestions(false);
+         if (phaseRef.current === "live") {
+           // Bug 3 fix: Surface errors during live phase as a toast, not a phase change
+           toast.error(msg.message);
+         } else if (phaseRef.current !== "results") {
+           setPhase("error");
+         }
+         break;
 
-      case "ready":
-        if (msg.existingTranscript?.length) {
-          transcriptRef.current = msg.existingTranscript;
-          referenceCardsRef.current = msg.existingReferenceCards || [];
-          setTranscriptItems(buildTimeline(msg.existingTranscript, msg.existingReferenceCards || []));
-        }
-        setSetupStep("done");
-        setSetupStatus("Interview starting…");
-        setAiSpeaking(false);
-        setPhase("live");
-        armInterviewTiming();
-        break;
+       case "ready":
+         if (msg.existingTranscript?.length) {
+           transcriptRef.current = msg.existingTranscript;
+           referenceCardsRef.current = msg.existingReferenceCards || [];
+           setTranscriptItems(buildTimeline(msg.existingTranscript, msg.existingReferenceCards || []));
+         }
+         setAiSpeaking(false);
+         if (freshClockPendingRef.current) {
+           // Fresh session: the interview room should become visible as soon as the transport
+           // is ready so the candidate is never stuck on the setup screen waiting for the first
+           // audible response. The timer still starts only when the first assistant audio chunk
+           // arrives in onAssistantAudioStart.
+           setSetupStep("done");
+           setSetupStatus("Interview ready…");
+           setIsAiPreparingQuestions(true);
+           setPhase("live");
+         } else {
+           // Resumed session: the interview is already underway — reveal it and continue the clock.
+           // Unmute audio so the candidate hears the AI pick up from where they left off.
+           if (remoteAudioRef.current) {
+             remoteAudioRef.current.muted = false;
+             void remoteAudioRef.current.play().catch(() => {});
+           }
+           if (remotePlaybackGainRef.current) {
+             remotePlaybackGainRef.current.gain.value = 1;
+           }
+           setSetupStep("done");
+           setSetupStatus("Interview resuming…");
+           setPhase("live");
+           armInterviewTiming();
+         }
+         break;
 
       case "transcript": {
         const isCandidate = msg.data.role === "candidate";
@@ -489,12 +592,13 @@ export default function InterviewRoom({ token }: { token: string }) {
         setAiSpeaking(false);
         break;
 
-      case "interview_complete":
-        clearInterviewTiming();
-        stopMic();
-        setPhase("results");
-        void finalizeSession("COMPLETED");
-        break;
+       case "interview_complete":
+         setIsAiPreparingQuestions(false);
+         clearInterviewTiming();
+         stopMic();
+         setPhase("results");
+         void finalizeSession("COMPLETED");
+         break;
     }
   }, [armInterviewTiming, clearInterviewTiming, finalizeSession, scheduleSync, stopMic]);
 
@@ -594,7 +698,7 @@ export default function InterviewRoom({ token }: { token: string }) {
       setSetupStep("connecting");
       setSetupStatus("Initializing interview session…");
 
-      const storedSessionId = window.localStorage.getItem(sessionTokenKey);
+      const storedSessionId = window.sessionStorage.getItem(sessionTokenKey);
       if (storedSessionId) {
         sessionIdRef.current = storedSessionId;
       }
@@ -610,6 +714,19 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       if (!startRes.ok) {
         const data = (await startRes.json().catch(() => ({}))) as { error?: string };
+        // 409 "already in progress" can happen if a second tab is open with the same token.
+        // Give a clear, actionable message so the candidate knows what to do.
+        if (startRes.status === 409) {
+          const errText = data.error || "";
+          if (errText.toLowerCase().includes("already in progress")) {
+            throw new Error(
+              "Another interview session is already active for this link. Please close any other tabs or windows that may have this interview open, then try again.",
+            );
+          }
+          if (errText.toLowerCase().includes("already completed")) {
+            throw new Error("This interview has already been completed and cannot be restarted.");
+          }
+        }
         throw new Error(data.error || "Failed to initialize interview session.");
       }
 
@@ -622,9 +739,11 @@ export default function InterviewRoom({ token }: { token: string }) {
           sections: Array<{ name: string; minutes: number; objective: string; questionBankTarget: number }>;
         } | null;
         clientSecret: string;
+        speechSpeed?: number;
         voice: string;
         durationMinutes: number;
-        sessionStartedAt: string;
+        sessionStartedAt: string | null;
+        isResuming?: boolean;
         existingTranscript?: InterviewTranscriptEntry[];
         existingReferenceCards?: InterviewReferenceCard[];
         existingEvents?: Array<{ at: string; question: string; answerSummary: string; score: number; feedback: string; improvementTip?: string }>;
@@ -634,7 +753,7 @@ export default function InterviewRoom({ token }: { token: string }) {
 
       sessionIdRef.current = startData.sessionId;
       sessionTokenRef.current = token;
-      window.localStorage.setItem(sessionTokenKey, startData.sessionId);
+      window.sessionStorage.setItem(sessionTokenKey, startData.sessionId);
       transcriptRef.current = startData.existingTranscript || [];
       evaluationEventsRef.current = startData.existingEvents || [];
       referenceCardsRef.current = startData.existingReferenceCards || [];
@@ -648,22 +767,37 @@ export default function InterviewRoom({ token }: { token: string }) {
         ? parsedDuration * 60 * 1000
         : 15 * 60 * 1000;
       interviewDurationMsRef.current = resolvedDurationMs;
-      const parsedStartedAt = Date.parse(startData.sessionStartedAt);
-      const resolvedStartedAt = Number.isFinite(parsedStartedAt)
-        ? parsedStartedAt
-        : Date.now();
-      interviewStartedAtRef.current = resolvedStartedAt;
-      setTimingState({
-        startedAt: resolvedStartedAt,
-        durationMs: resolvedDurationMs,
-      });
-
-      if (startData.existingTranscript?.length) {
-        setTranscriptItems(buildTimeline(startData.existingTranscript, startData.existingReferenceCards || []));
+      const isFreshSession = !startData.sessionStartedAt;
+      const parsedStartedAt = startData.sessionStartedAt ? Date.parse(startData.sessionStartedAt) : NaN;
+      // Provisional anchor passed to the transport. For a fresh session it is re-anchored to the
+      // real moment the AI becomes audibly active (see onAssistantAudioStart below).
+      const provisionalStartedAt = Number.isFinite(parsedStartedAt) ? parsedStartedAt : Date.now();
+      const resolvedStartedAtISO = new Date(provisionalStartedAt).toISOString();
+      if (isFreshSession) {
+        // Do NOT start the billed clock yet. It starts when the AI actually begins the interview,
+        // so the ~20–30s of connect + first-response model latency (the "preparing" wait) is not
+        // billed. The timer stays frozen at the full duration until then.
+        freshClockPendingRef.current = true;
+        interviewStartedAtRef.current = null;
+        setTimingState({ startedAt: 0, durationMs: resolvedDurationMs });
+      } else {
+        // Resumed session — continue the countdown from the persisted real start time.
+        freshClockPendingRef.current = false;
+        interviewStartedAtRef.current = provisionalStartedAt;
+        setTimingState({ startedAt: provisionalStartedAt, durationMs: resolvedDurationMs });
       }
 
       setSetupStep("starting");
       setSetupStatus("Connecting to OpenAI Realtime…");
+
+      // Belt-and-suspenders: explicitly shut down any lingering transport from a previous
+      // beginInterview() invocation (e.g. an interrupted attempt that left a half-open
+      // RTCPeerConnection). Prevents orphaned data-channel handlers from firing callbacks
+      // into the current session and producing duplicate transcripts / AI responses.
+      if (transportRef.current) {
+        transportRef.current.close();
+        transportRef.current = null;
+      }
 
       const ctx = new AudioContext();
       await ctx.resume().catch(() => {});
@@ -679,6 +813,33 @@ export default function InterviewRoom({ token }: { token: string }) {
       source.connect(analyser);
       analyser.connect(silentGain);
       silentGain.connect(ctx.destination);
+
+      // Starts the billed clock exactly once per fresh session — whichever event arrives first:
+      // onAssistantAudioStart (primary, PCM audio delta) or onAssistantSpeakingChange(true)
+      // (fallback, fires on response.created which is more reliable than audio deltas).
+      // The freshClockPendingRef guard makes both callers idempotent.
+      const startFreshSessionClock = () => {
+        if (!freshClockPendingRef.current) return;
+        freshClockPendingRef.current = false;
+        setIsAiPreparingQuestions(false);
+        const now = Date.now();
+        interviewStartedAtRef.current = now;
+        transportRef.current?.markSessionStarted(now);
+        setTimingState({ startedAt: now, durationMs: interviewDurationMsRef.current });
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.muted = false;
+          void remoteAudioRef.current.play().catch(() => {});
+        }
+        if (remotePlaybackGainRef.current) {
+          remotePlaybackGainRef.current.gain.value = 1;
+        }
+        armInterviewTiming();
+        void fetch(`/api/interviews/webrtc/sessions/${sessionIdRef.current}/sync`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, startedAt: new Date(now).toISOString(), status: "ACTIVE" }),
+        }).catch(() => {});
+      };
 
       const transport = new OpenAIWebRtcInterviewTransport({
         onReady: () => {
@@ -702,7 +863,17 @@ export default function InterviewRoom({ token }: { token: string }) {
         onReferenceCard: (card) => handleTransportMessage({ type: "reference_card", data: card }),
         onInterrupted: () => handleTransportMessage({ type: "ai_interrupted" }),
         onComplete: () => handleTransportMessage({ type: "interview_complete" }),
-        onAssistantSpeakingChange: (speaking) => setAiSpeaking(speaking),
+        onAssistantSpeakingChange: (speaking) => {
+          setAiSpeaking(speaking);
+          // Fallback: start the fresh-session clock on the first AI response.created event
+          // (fires before PCM audio deltas, ensuring the timer starts even when
+          // onAssistantAudioStart is delayed or skipped by a tool-only first turn).
+          if (speaking) startFreshSessionClock();
+        },
+         onAssistantAudioStart: () => {
+           // Primary trigger: first non-empty PCM audio delta arrived — start clock now.
+           startFreshSessionClock();
+         },
         onThinkingChange: (thinking, context) => {
           setAiThinking(thinking);
           if (thinking && context) setAiThinkingText(context);
@@ -717,37 +888,23 @@ export default function InterviewRoom({ token }: { token: string }) {
         },
         onMicHealthFailed: () => void handleMicTrackEndedRef.current(),
         onRemoteStream: (remoteStream) => {
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.srcObject = remoteStream;
-            void remoteAudioRef.current.play().catch(() => {
-              const playbackCtx = micCtxRef.current;
-              if (!playbackCtx || remotePlaybackSourceRef.current) return;
-
-              try {
-                const remoteSource = playbackCtx.createMediaStreamSource(remoteStream);
-                const remoteGain = playbackCtx.createGain();
-                remoteGain.gain.value = 1;
-                remoteSource.connect(remoteGain);
-                remoteGain.connect(playbackCtx.destination);
-                remotePlaybackSourceRef.current = remoteSource;
-                remotePlaybackGainRef.current = remoteGain;
-              } catch (error) {
-                console.error("Failed to attach fallback remote audio playback:", error);
-              }
-            });
-          }
+          remoteStreamRef.current = remoteStream;
+          attachRemoteStream();
         },
       });
 
       transportRef.current = transport;
-      if (!cancelledRef.current) {
-        setPhase("live");
-      }
 
-      // Bug 3 fix: add setup timeout — if connect hangs for 30s, fail gracefully
+      // Bug 3 fix: add setup timeout — if the data channel never opens within 30s, fail
+      // gracefully. Keyed off transport readiness (not phase) because a fresh session now stays
+      // on the setup screen until the AI's first response, which can arrive after the handshake.
       const connectTimeout = setTimeout(() => {
-        if (phaseRef.current === "live" && !transport.isReady()) {
-          throw new Error("Connection to AI interviewer timed out. Please try again.");
+        if (!transportRef.current?.isReady() && phaseRef.current !== "live") {
+          if (!cancelledRef.current) {
+            setErrorMsg("Connection to AI interviewer timed out. Please try again.");
+            setPhase("error");
+          }
+          transportRef.current?.close();
         }
       }, 30_000);
 
@@ -761,8 +918,9 @@ export default function InterviewRoom({ token }: { token: string }) {
             openingPrompt: startData.openingPrompt,
             sessionBlueprint: startData.sessionBlueprint ?? null,
             voice: startData.voice,
+            speechSpeed: startData.speechSpeed,
             durationMinutes: startData.durationMinutes,
-            sessionStartedAt: startData.sessionStartedAt,
+            sessionStartedAt: resolvedStartedAtISO,
             playbackAudioContext: ctx,
           },
           stream,
@@ -781,7 +939,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         setIsStarting(false);
       }
     }
-  }, [handleTransportMessage, isStarting, scheduleSync, sessionTokenKey, setMicCaptureEnabled, token]);
+  }, [armInterviewTiming, attachRemoteStream, handleTransportMessage, isStarting, scheduleSync, sessionTokenKey, setMicCaptureEnabled, token]);
 
   useEffect(() => {
     const audioElement = remoteAudioRef.current;
@@ -801,10 +959,31 @@ export default function InterviewRoom({ token }: { token: string }) {
     };
   }, [clearInterviewTiming, stopMic]);
 
+  // Warn the candidate before accidentally closing/navigating away mid-interview.
+  useEffect(() => {
+    if (phase !== "live") return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Modern browsers show a generic "Leave site?" dialog — the custom message is ignored.
+      e.returnValue = "Your interview is in progress. Leaving will end the session.";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [phase]);
+
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcriptItems]);
+
+  // Re-attach the AI audio stream whenever the mounted <audio> element changes (setup ↔ live),
+  // so audio is never dropped when the setup screen unmounts and the live screen mounts.
+  // Also ensures muted state is correct for the current phase.
+  useEffect(() => {
+    if (phase === "setup" || phase === "live") {
+      attachRemoteStream();
+    }
+  }, [phase, attachRemoteStream]);
 
   // ── Error ──────────────────────────────────────────────────────────────────
   if (phase === "error") {
@@ -846,6 +1025,9 @@ export default function InterviewRoom({ token }: { token: string }) {
         className="min-h-screen bg-[#F9F9FB] flex items-center justify-center px-4"
         style={{ fontFamily: "Raleway, sans-serif" }}
       >
+        {/* Hidden audio element so the AI's stream can attach during setup, before we reveal the
+            live screen — prevents the first moment of audio from being lost on phase transition. */}
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
         <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
           {/* Logo / brand */}
           <div className="text-center mb-10">
@@ -1104,7 +1286,7 @@ export default function InterviewRoom({ token }: { token: string }) {
             <div className="hidden sm:flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
               <div className="text-right">
                 <p className={`text-[10px] font-bold uppercase tracking-wider ${timerTone}`}>Time Left</p>
-                <p className={`text-sm font-extrabold tabular-nums ${timerTone}`}>{formatTimer(remainingSeconds)}</p>
+                <p className={`mt-1 text-2xl font-extrabold tabular-nums ${timerTone}`}>{formatTimer(remainingSeconds)}</p>
               </div>
               <div className="h-8 w-px bg-slate-200" />
               <div className="text-right">
@@ -1119,16 +1301,16 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
         </div>
       </div>
-      {phase === "live" && (
-        <div className="h-1.5 w-full bg-slate-100 overflow-hidden">
-          <div
-            className={`h-full transition-all duration-1000 ${remainingSeconds <= 60 ? "bg-red-500" : remainingSeconds <= 5 * 60 ? "bg-amber-500" : "bg-[#5a58ab]"}`}
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      )}
+       {phase === "live" && (
+         <div className="h-1.5 w-full bg-slate-100 overflow-hidden">
+           <div
+             className={`h-full transition-all duration-1000 ${remainingSeconds <= 60 ? "bg-red-500" : remainingSeconds <= 5 * 60 ? "bg-amber-500" : "bg-[#5a58ab]"}`}
+             style={{ width: `${progressPercent}%` }}
+           />
+         </div>
+       )}
 
-      {/* Main content */}
+       {/* Main content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0">
         {/* Left: JB circle logo in the center — fixed size, bg white panel, border right */}
         <div className="flex flex-col items-center justify-center px-6 py-6 shrink-0 lg:w-80 lg:border-r lg:border-slate-200 bg-white h-[260px] lg:h-auto shadow-sm">
@@ -1149,21 +1331,26 @@ export default function InterviewRoom({ token }: { token: string }) {
               JB
             </div>
           </div>
-          <div className="mt-4 text-center">
-            <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
-            <p className="text-xs mt-0.5 font-medium">
-              {aiThinking ? (
-                <span className="text-amber-500 flex items-center justify-center gap-1">
-                  <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                  {aiThinkingText}
-                </span>
-              ) : aiSpeaking ? (
-                <span className="text-[#5a58ab]">Speaking…</span>
-              ) : (
-                <span className="text-slate-500">Listening…</span>
-              )}
-            </p>
-          </div>
+           <div className="mt-4 text-center">
+             <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
+             <p className="text-xs mt-0.5 font-medium">
+               {isAiPreparingQuestions ? (
+                 <span className="text-amber-500 flex items-center justify-center gap-1">
+                   <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
+                   Preparing questions…
+                 </span>
+               ) : aiThinking ? (
+                 <span className="text-amber-500 flex items-center justify-center gap-1">
+                   <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
+                   {aiThinkingText}
+                 </span>
+               ) : aiSpeaking ? (
+                 <span className="text-[#5a58ab]">Speaking…</span>
+               ) : (
+                 <span className="text-slate-500">Listening…</span>
+               )}
+             </p>
+           </div>
           <div className="mt-3 flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
             <span className={`w-1.5 h-1.5 rounded-full ${micLocked ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
             <span className="text-[10px] text-slate-500 font-medium">
