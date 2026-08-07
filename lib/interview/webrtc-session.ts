@@ -26,6 +26,7 @@ const OPENAI_BLUEPRINT_MODEL =
   process.env.OPENAI_INTERVIEW_BLUEPRINT_MODEL ||
   process.env.OPENAI_TEMPLATE_MODEL ||
   "gpt-4o-mini";
+const BLUEPRINT_TIMEOUT_MS = 12_000;
 const DEFAULT_VOICE = process.env.OPENAI_REALTIME_VOICE || "marin";
 
 type InterviewBlueprintSection = {
@@ -289,7 +290,7 @@ export function buildWebRtcOpeningPrompt(payload: {
   isResuming?: boolean;
 }): string {
   if (payload.isResuming) {
-    return `The candidate has reconnected after a brief interruption. Continue the ${payload.role} interview from where you left off — do not repeat questions already asked.`;
+    return `The candidate has reconnected. Do NOT say "Welcome back", do NOT re-introduce yourself, do NOT greet the candidate again. Resume IMMEDIATELY by asking your next planned question — continue as if the conversation never paused.`;
   }
 
   return `The candidate is ready. Please begin the interview for the ${payload.role} role, following your instructions — greet the candidate, introduce the interview structure, then proceed.`;
@@ -371,13 +372,21 @@ Rules:
 ${payload.baseInstructions}
 </base_instructions>`;
 
-  const response = await openai.responses.create({
-    model: OPENAI_BLUEPRINT_MODEL,
-    instructions:
-      "You generate precomputed interview blueprints for runtime. Respond with valid JSON only.",
-    input: prompt,
-    temperature: 0.4,
-  });
+  const response = await Promise.race([
+    openai.responses.create({
+      model: OPENAI_BLUEPRINT_MODEL,
+      instructions:
+        "You generate precomputed interview blueprints for runtime. Respond with valid JSON only.",
+      input: prompt,
+      temperature: 0.4,
+    }),
+    new Promise<never>((_, reject) => {
+      setTimeout(
+        () => reject(new Error(`Blueprint generation timed out after ${BLUEPRINT_TIMEOUT_MS}ms`)),
+        BLUEPRINT_TIMEOUT_MS,
+      );
+    }),
+  ]);
 
   const rawText = response.output_text ?? "";
   const jsonMatch = rawText.match(/\{[\s\S]*\}/);
@@ -443,6 +452,7 @@ export async function createOpenAIRealtimeClientSecret(payload: {
   apiKey: string;
   safetyIdentifier: string;
   voice: OpenAIRealtimeVoice;
+  speed?: number;
 }): Promise<{ value: string; expiresAt?: number | null }> {
   const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
     method: "POST",
@@ -458,6 +468,7 @@ export async function createOpenAIRealtimeClientSecret(payload: {
         audio: {
           output: {
             voice: payload.voice,
+            speed: payload.speed ?? 1.0,
           },
         },
       },

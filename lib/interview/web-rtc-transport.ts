@@ -18,6 +18,9 @@ type WebRtcCallbacks = {
   onInterrupted: () => void;
   onComplete: () => void;
   onAssistantSpeakingChange?: (speaking: boolean) => void;
+  // Fires exactly once on the first assistant audio chunk of a fresh session.
+  // Used by the room to start the billed timer when audible speech actually begins.
+  onAssistantAudioStart?: () => void;
   onThinkingChange?: (thinking: boolean, context?: string) => void;
   // Mute the microphone (true=mute, false=unmute). Called without updating the
   // UI locked state — purely a temporary hardware mute to prevent echo capture.
@@ -39,6 +42,7 @@ type ConnectPayload = {
     sections: Array<{ name: string; minutes: number; objective: string; questionBankTarget: number }>;
   } | null;
   voice: string;
+  speechSpeed?: number;
   durationMinutes: number;
   sessionStartedAt: string;
   playbackAudioContext?: AudioContext;
@@ -100,6 +104,29 @@ function isClosingCue(text: string): boolean {
   );
 }
 
+// Splits an interviewer utterance into its acknowledgment part and its final question part so
+// the transcript can render them as two separate bubbles with a slight gap (matches the audible
+// pause between acknowledgment and question). Returns an empty question when there is no clean
+// split — e.g. the utterance is a single question, or has no trailing question sentence.
+function splitAcknowledgmentAndQuestion(text: string): { ack: string; question: string } {
+  const trimmed = text.trim();
+  const questionIdx = trimmed.lastIndexOf("?");
+  // No question mark, or the question begins almost immediately → nothing meaningful to split.
+  if (questionIdx === -1 || questionIdx < 12) return { ack: trimmed, question: "" };
+  const upToQuestion = trimmed.slice(0, questionIdx + 1);
+  // Find the sentence boundary that starts the final question sentence.
+  let boundary = -1;
+  for (const separator of [". ", "! ", "? "]) {
+    boundary = Math.max(boundary, upToQuestion.lastIndexOf(separator));
+  }
+  if (boundary === -1) return { ack: trimmed, question: "" };
+  const ack = trimmed.slice(0, boundary + 1).trim();
+  const question = trimmed.slice(boundary + 2).trim();
+  // Require both parts to be substantial so we never split off a stray fragment.
+  if (ack.length < 8 || question.length < 8) return { ack: trimmed, question: "" };
+  return { ack, question };
+}
+
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -137,6 +164,7 @@ export class OpenAIWebRtcInterviewTransport {
   private manuallyClosed = false;
   private assistantSpeaking = false;
   private voice = "marin";
+  private speechSpeed = 0.9;
   private token = "";
   private sessionId = "";
   private durationMs = 15 * 60 * 1000;
@@ -172,6 +200,7 @@ export class OpenAIWebRtcInterviewTransport {
   // for save_interview_event: audio responses already asked the next question so no extra
   // response.create needed; tool-call-only responses need one to avoid a 47s stall.
   private currentResponseHadAudio = false;
+  private firstAssistantAudioStarted = false;
 
   // Interruption resume: stores the partial AI utterance text when a genuine interruption
   // cancels a mid-question response. Injected as a silent context message so the model
@@ -181,6 +210,27 @@ export class OpenAIWebRtcInterviewTransport {
   // Interruption debounce: brief noise filter — AEC handles echo so this can be small
   private assistantSpeakingStartedAtMs = 0;
   private static readonly MIN_SPEAKING_BEFORE_INTERRUPT_MS = 500;
+
+  // Interruption confirmation: the candidate mic is muted while the AI speaks, so a
+  // speech_started during AI audio is almost always a brief noise/echo blip — NOT a real
+  // barge-in. Instead of cancelling the AI mid-question immediately, we wait to confirm the
+  // speech is sustained. If speech_stopped arrives before INTERRUPTION_CONFIRM_MS the blip is
+  // discarded and the AI keeps talking uninterrupted. Only sustained speech cancels + resumes.
+  private interruptionConfirmTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly INTERRUPTION_CONFIRM_MS = 700;
+
+  // Transition-only stall guard: if the AI ends a turn on a transition/acknowledgment
+  // sentence WITHOUT an actual question ("Let's start with your background from X."), nothing
+  // triggers the next turn and the interview hangs until the 17s silence nudge. This fires a
+  // short, targeted nudge to make the model ask its next planned question promptly.
+  private transitionStallTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly TRANSITION_STALL_MS = 2500;
+
+  // Duplicate-response safety net: server_vad auto-responses can race a manual response.create
+  // and produce two identical spoken turns. Track the last interviewer utterance to drop an
+  // identical consecutive one from the transcript/pacing path within a short window.
+  private lastInterviewerUtterance = "";
+  private lastInterviewerUtteranceAtMs = 0;
 
   // Audio tail protection: WebRTC audio keeps playing after response.done fires.
   // During this window, VAD speech_started events are echo — clear the buffer.
@@ -232,6 +282,7 @@ export class OpenAIWebRtcInterviewTransport {
 
   async connect(payload: ConnectPayload, localStream: MediaStream): Promise<void> {
     this.voice = payload.voice;
+    this.speechSpeed = payload.speechSpeed ?? 0.9;
     this.token = payload.token;
     this.sessionId = payload.sessionId;
     this.durationMs = Math.max(60_000, Math.floor(payload.durationMinutes * 60_000));
@@ -241,6 +292,7 @@ export class OpenAIWebRtcInterviewTransport {
         : computeMinimumQuestionTarget(payload.durationMinutes);
     this.questionsAsked = 0;
     this.evaluationEvents = [];
+    this.firstAssistantAudioStarted = false;
     this.sectionPlan = Array.isArray(payload.sessionBlueprint?.sections)
       ? payload.sessionBlueprint!.sections
       : [];
@@ -350,12 +402,37 @@ export class OpenAIWebRtcInterviewTransport {
         const interviewerText = String(message.transcript).trim();
         // Response completed normally — clear the partial accumulator.
         this.lastInterruptedUtterance = "";
-        this.transcriptItemCount += 1;
-        this.callbacks.onTranscript({
-          role: "interviewer",
-          text: interviewerText,
-        });
-        this.enforceRealtimePacingGuards(interviewerText);
+        // Duplicate safety net: a server_vad auto-response can race a manual response.create
+        // and produce two identical spoken turns back-to-back. Drop the identical consecutive
+        // utterance from the transcript + pacing path (audio may have already played, but this
+        // keeps the visible/persisted transcript clean and avoids double pacing intervention).
+        const normalizedUtterance = interviewerText.toLowerCase().replace(/\s+/g, " ");
+        const isDuplicateUtterance =
+          normalizedUtterance.length > 0 &&
+          normalizedUtterance === this.lastInterviewerUtterance &&
+          Date.now() - this.lastInterviewerUtteranceAtMs < 8000;
+        this.lastInterviewerUtterance = normalizedUtterance;
+        this.lastInterviewerUtteranceAtMs = Date.now();
+        if (!isDuplicateUtterance) {
+          // Render acknowledgment and question as two separate transcript bubbles with a slight
+          // gap so the transcript matches the audible pause and no longer feels rushed. Falls
+          // back to a single bubble when there is no clean acknowledgment/question split.
+          const { ack, question } = splitAcknowledgmentAndQuestion(interviewerText);
+          this.transcriptItemCount += 1;
+          this.callbacks.onTranscript({
+            role: "interviewer",
+            text: question ? ack : interviewerText,
+          });
+          this.enforceRealtimePacingGuards(interviewerText);
+          if (question) {
+            const deferredQuestion = question;
+            setTimeout(() => {
+              if (this.completed || this.manuallyClosed) return;
+              this.transcriptItemCount += 1;
+              this.callbacks.onTranscript({ role: "interviewer", text: deferredQuestion });
+            }, 1400);
+          }
+        }
         // response.output_audio_transcript.done fires after audio has already played
         // via the WebRTC RTP stream. Only ~500-800ms of buffer tail remains.
         // 500ms: enough for WebRTC buffer tail (~200-400ms). Was 700ms but reducing
@@ -404,6 +481,14 @@ export class OpenAIWebRtcInterviewTransport {
       ) {
         // VAD detected end of candidate speech — clear speaking flag so nudge can run again
         this.candidateSpeaking = false;
+        // If an interruption confirmation was pending, the speech ended quickly → it was a
+        // brief noise/echo blip, not a real barge-in. Cancel the pending cancel and discard
+        // the captured buffer so it is not transcribed as an answer. The AI keeps talking.
+        if (this.interruptionConfirmTimer) {
+          clearTimeout(this.interruptionConfirmTimer);
+          this.interruptionConfirmTimer = null;
+          this.sendJson({ type: "input_audio_buffer.clear" });
+        }
         // Refresh lastCandidateSpeechAtMs on each VAD commit so the 30s guard stays
         // active for the full duration of long answers (not just from speech_started).
         if (message.type === "input_audio_buffer.committed") {
@@ -421,6 +506,8 @@ export class OpenAIWebRtcInterviewTransport {
         this.candidateSpeaking = true;
         this.lastCandidateSpeechAtMs = Date.now();
         if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+        // A new candidate turn is beginning — cancel any pending transition-stall nudge.
+        if (this.transitionStallTimer) { clearTimeout(this.transitionStallTimer); this.transitionStallTimer = null; }
         const inTailWindow = Date.now() < this.audioTailProtectionUntilMs;
         if (this.assistantSpeaking || inTailWindow) {
           const speakingDuration = Date.now() - this.assistantSpeakingStartedAtMs;
@@ -429,19 +516,30 @@ export class OpenAIWebRtcInterviewTransport {
             this.responseInFlight &&
             speakingDuration >= OpenAIWebRtcInterviewTransport.MIN_SPEAKING_BEFORE_INTERRUPT_MS;
           if (isGenuineInterruption) {
-            // Capture partial utterance before cancelResponse() clears in-flight state.
-            // Trim and store only if there was meaningful partial content.
-            const partial = this.lastInterruptedUtterance.trim();
-            this.cancelResponse();
-            // Inject a silent context message so the model knows what it was saying when
-            // interrupted. On the next turn it will re-ask rather than answer the question.
-            if (partial.length > 10) {
-              this.sendSilentContextMessage(
-                `INTERRUPTION_RESUME: You were interrupted mid-response. The partial text you had spoken was: "${partial}". ` +
-                `The candidate may have said a noise/filler word — wait for their actual answer. ` +
-                `If they do not give a substantive answer, re-ask the same question briefly (do NOT start a new question or give the answer yourself). ` +
-                `Do NOT evaluate or answer the question on their behalf.`,
-              );
+            // Do NOT cancel immediately. The candidate mic is muted while the AI speaks, so a
+            // speech_started here is almost always a brief noise/echo blip. Wait to confirm the
+            // speech is sustained: if speech_stopped fires before INTERRUPTION_CONFIRM_MS the
+            // blip is discarded (handled in the speech_stopped branch) and the AI keeps talking.
+            // Only genuinely sustained speech reaches the timer callback and cancels the turn.
+            if (!this.interruptionConfirmTimer) {
+              this.interruptionConfirmTimer = setTimeout(() => {
+                this.interruptionConfirmTimer = null;
+                if (this.completed || !this.assistantSpeaking || !this.responseInFlight) return;
+                // Capture partial utterance before cancelResponse() clears in-flight state.
+                const partial = this.lastInterruptedUtterance.trim();
+                this.cancelResponse();
+                // Inject a silent context message so the model knows what it was saying when
+                // interrupted. On the next turn it will re-ask rather than answer the question.
+                if (partial.length > 10) {
+                  this.sendSilentContextMessage(
+                    `INTERRUPTION_RESUME: You were interrupted mid-response. The partial text you had spoken was: "${partial}". ` +
+                    `The candidate may have said a noise/filler word — wait for their actual answer. ` +
+                    `If they do not give a substantive answer, re-ask the SAME question briefly (do NOT start a new question, do NOT skip ahead, and do NOT assume any answer or introduction was given). ` +
+                    `Do NOT evaluate or answer the question on their behalf.`,
+                  );
+                }
+                this.callbacks.onInterrupted();
+              }, OpenAIWebRtcInterviewTransport.INTERRUPTION_CONFIRM_MS);
             }
           } else {
             // Echo from still-playing AI audio — discard captured buffer so model
@@ -449,7 +547,6 @@ export class OpenAIWebRtcInterviewTransport {
             this.sendJson({ type: "input_audio_buffer.clear" });
           }
         }
-        this.callbacks.onInterrupted();
       }
 
       if (message.type === "response.created") {
@@ -458,6 +555,8 @@ export class OpenAIWebRtcInterviewTransport {
         this.responseInFlight = true;
         this.assistantSpeaking = true;
         this.assistantSpeakingStartedAtMs = Date.now();
+        // A new response is being produced — no transition stall to recover.
+        if (this.transitionStallTimer) { clearTimeout(this.transitionStallTimer); this.transitionStallTimer = null; }
         // Reset partial transcript accumulator for this new response.
         this.lastInterruptedUtterance = "";
         // Don't clear thinking if a tool HTTP call is still running — the response.created
@@ -478,6 +577,10 @@ export class OpenAIWebRtcInterviewTransport {
         this.currentResponseHadAudio = true;
         this.playAudioDelta(readString(message.delta));
         this.assistantSpeaking = true;
+        if (!this.firstAssistantAudioStarted) {
+          this.firstAssistantAudioStarted = true;
+          this.callbacks.onAssistantAudioStart?.();
+        }
         this.callbacks.onAssistantSpeakingChange?.(true);
       }
 
@@ -539,6 +642,28 @@ export class OpenAIWebRtcInterviewTransport {
     const answerSdp = await answerResponse.text();
     await this.pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
     this.callbacks.onStatus("OpenAI WebRTC session established.");
+  }
+
+  // Re-anchor the session clock to the real moment the AI begins the interview. Called by the
+  // room when the first assistant response starts, so connect + first-response latency is not
+  // billed against the candidate. Reschedules section boundary timers from the new start.
+  markSessionStarted(startedAtMs: number): void {
+    if (!Number.isFinite(startedAtMs) || this.completed) return;
+    this.sessionStartedAtMs = startedAtMs;
+    this.scheduleSectionTransitions();
+  }
+
+  // Local mic-energy signal from the room. This is a safety net for cases where server VAD
+  // misses speech_started/speech_stopped edges during long answers; it suppresses silence nudges
+  // while the candidate is audibly speaking locally.
+  notifyLocalSpeechActivity(): void {
+    if (this.completed || this.manuallyClosed) return;
+    this.candidateSpeaking = true;
+    this.lastCandidateSpeechAtMs = Date.now();
+    if (this.saveNudgeTimer) {
+      clearTimeout(this.saveNudgeTimer);
+      this.saveNudgeTimer = null;
+    }
   }
 
   endAudio(): void {
@@ -604,6 +729,7 @@ export class OpenAIWebRtcInterviewTransport {
     this.responseInFlight = false;
     this.assistantSpeaking = false;
     this.audioTailProtectionUntilMs = 0;
+    if (this.interruptionConfirmTimer) { clearTimeout(this.interruptionConfirmTimer); this.interruptionConfirmTimer = null; }
     this.unmuteMicNow();
     this.stopPlayback();
   }
@@ -625,6 +751,8 @@ export class OpenAIWebRtcInterviewTransport {
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
     if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+    if (this.interruptionConfirmTimer) { clearTimeout(this.interruptionConfirmTimer); this.interruptionConfirmTimer = null; }
+    if (this.transitionStallTimer) { clearTimeout(this.transitionStallTimer); this.transitionStallTimer = null; }
     this.unmuteMicNow();
     this.stopPlayback();
     try {
@@ -900,6 +1028,8 @@ export class OpenAIWebRtcInterviewTransport {
     this.clearKillTimer();
     this.clearSectionTransitionTimers();
     if (this.saveNudgeTimer) { clearTimeout(this.saveNudgeTimer); this.saveNudgeTimer = null; }
+    if (this.interruptionConfirmTimer) { clearTimeout(this.interruptionConfirmTimer); this.interruptionConfirmTimer = null; }
+    if (this.transitionStallTimer) { clearTimeout(this.transitionStallTimer); this.transitionStallTimer = null; }
     this.unmuteMicNow();
     this.stopPlayback();
     this.callbacks.onComplete();
@@ -1004,7 +1134,9 @@ Senior engineer running a mock interview — you are both evaluating the candida
 
 # Speech Delivery
 
-Speak at a measured, unhurried pace — slightly slower than normal conversation speed. Pause naturally between your acknowledgment and your next question. Use short, clearly separated sentences rather than long run-on responses. Never rush through a question; give the candidate time to process each word before they need to respond.
+Speak at a measured, unhurried pace — slightly slower than normal conversation speed. Use short, clearly separated sentences rather than long run-on responses. Never rush through a question; give the candidate time to process each word before they need to respond.
+
+Between your acknowledgment and your next question, insert a clear, deliberate pause — a full beat of silence, as if taking a breath — before you begin the question. Do NOT run the acknowledgment straight into the question as one continuous breath. End the acknowledgment, pause, then ask the question at a calm pace. The candidate should clearly hear the acknowledgment and the question as two separate moments, not one rushed sentence.
 
 # Language
 
@@ -1180,16 +1312,22 @@ ${systemInstructions}`;
               type: "server_vad",
               // threshold 0.65: raised from API default 0.5 — keyboard clicks, ambient noise,
               // and breathing no longer trigger speech detection mid-answer. Normal speech volume
-              // still clears this easily. silence_duration_ms: 1000ms prevents fragmentation when
-              // candidate pauses briefly mid-sentence.
+              // still clears this easily.
+              // silence_duration_ms: 2500ms (was 1500). Candidates giving long, unscripted answers
+              // naturally pause 1.5–2.5s to think mid-sentence. At 1500ms those pauses were being
+              // read as end-of-turn, so the AI cut in with an acknowledgment + next question while
+              // the candidate was still answering. 2500ms tolerates natural thinking pauses while
+              // still responding promptly once they are genuinely done. (If long-answer interruption
+              // ever recurs, the stronger fix is turn_detection.type = "semantic_vad", eagerness "low".)
               threshold: 0.65,
-              silence_duration_ms: 1500,
+              silence_duration_ms: 2500,
             },
             transcription: { model: "whisper-1" },
           },
           output: {
             format: { type: "audio/pcm", rate: 24000 },
             voice: this.voice,
+            speed: this.speechSpeed,
           },
         },
         tools: [
@@ -1713,6 +1851,59 @@ ${systemInstructions}`;
         return;
       }
     }
+
+    // Transition-only stall: the AI ended its spoken turn with a transition/acknowledgment
+    // but did NOT include an actual question. Nothing will trigger the next turn, so the
+    // interview hangs until the 17s silence nudge. Arm a short guard to make the model ask
+    // its next planned question promptly — unless a tool continuation is already coming.
+    if (this.isTransitionOnlyWithoutQuestion(interviewerText)) {
+      this.armTransitionStallGuard();
+    }
+  }
+
+  // True when the interviewer's completed utterance contains a transition/acknowledgment cue
+  // but no actual question. Deliberately narrow to avoid false positives on thinking-time
+  // acknowledgments ("Take your time."), check-ins, or the closing phase.
+  private isTransitionOnlyWithoutQuestion(text: string): boolean {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    if (trimmed.includes("?")) return false; // already contains a question
+    if (this.durationCompleteSignaled || this.hardStopSignaled) return false; // closing phase
+    const lower = trimmed.toLowerCase();
+    // Benign short acknowledgments that legitimately end a turn without a question.
+    const benign = ["take your time", "sure, take your time", "of course", "go ahead", "please continue", "no rush"];
+    if (benign.some((b) => lower === b || lower === `${b}.`)) return false;
+    const transitionCues = [
+      "let's start", "lets start", "let's begin", "lets begin", "let's move", "lets move",
+      "let's build", "lets build", "let's look", "lets look", "let's dive", "lets dive",
+      "let's turn to", "let's talk about", "let's continue", "lets continue", "moving on",
+      "let's get into", "let's explore", "let's pivot", "let's switch", "let's jump",
+    ];
+    return transitionCues.some((cue) => lower.includes(cue));
+  }
+
+  // Arm a short one-shot guard. When it fires, if the model has not started a new response,
+  // is not running a tool, and the candidate is not speaking, inject a targeted nudge that
+  // makes it ask the next planned question in one sentence.
+  private armTransitionStallGuard(): void {
+    if (this.transitionStallTimer) return;
+    this.transitionStallTimer = setTimeout(() => {
+      this.transitionStallTimer = null;
+      if (
+        this.completed ||
+        this.manuallyClosed ||
+        this.responseInFlight ||
+        this.assistantSpeaking ||
+        this.candidateSpeaking ||
+        this.toolCallInProgress
+      ) {
+        return;
+      }
+      this.sendSilentContextMessage(
+        "CONTINUE_QUESTION: Your previous turn ended with a transition or acknowledgment but did NOT include an actual question. Ask your next planned question now in one short sentence. Do not repeat the acknowledgment and do not wait.",
+      );
+      this.safeResponseCreate();
+    }, OpenAIWebRtcInterviewTransport.TRANSITION_STALL_MS);
   }
 
   private getCompletionBlockers(): string[] {

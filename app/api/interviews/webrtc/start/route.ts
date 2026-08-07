@@ -15,6 +15,52 @@ type StartRequestBody = {
   sessionIdHint?: string;
 };
 
+function trimForPrompt(value: unknown, maxChars: number): string {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text) return "";
+  return text.length > maxChars ? `${text.slice(0, maxChars)}...` : text;
+}
+
+function buildRealtimeBaseInstructions(payload: {
+  templateSystemInstructions: string;
+  role: string;
+  experienceLevel: string;
+  difficultyLevel: string;
+  techStack: string[];
+  requiredSkills: string[];
+  interviewDescription?: string | null;
+  advancedConfig: Record<string, unknown> | null;
+  resumeText?: string | null;
+}) {
+  const isCustomJd = Boolean(payload.advancedConfig?.isCustomJd);
+  if (!isCustomJd) {
+    return payload.templateSystemInstructions;
+  }
+
+  const jdSummary = trimForPrompt(payload.advancedConfig?.jobDescription, 2200);
+  const resumeSummary = trimForPrompt(payload.resumeText, 1800);
+  const description = trimForPrompt(payload.interviewDescription, 500);
+  const stack = payload.techStack.filter(Boolean).join(", ") || "General";
+  const skills = payload.requiredSkills.filter(Boolean).join(", ") || "General";
+
+  return [
+    "CUSTOM INTERVIEW CONTEXT (role-specific content only):",
+    `Role: ${payload.role}`,
+    `Experience level: ${payload.experienceLevel}`,
+    `Difficulty level: ${payload.difficultyLevel || "standard"}`,
+    `Tech stack to prioritize: ${stack}`,
+    `Required skills to validate: ${skills}`,
+    description ? `Interview focus summary: ${description}` : "",
+    jdSummary ? `Job description summary: ${jdSummary}` : "",
+    resumeSummary ? `Candidate resume summary: ${resumeSummary}` : "",
+    "Keep questions practical and role-aligned. Personalize with resume/JD details when relevant.",
+    "Only include role/skill context here; runtime sequencing/tool behavior is handled separately.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function buildSessionInstructions(payload: {
   role: string;
   experienceLevel: string;
@@ -73,7 +119,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const voice = resolveRealtimeVoice((application.template.advancedConfig as Record<string, unknown> | null)?.voiceOption as string | undefined);
+    const advancedConfig = application.template.advancedConfig as Record<string, unknown> | null;
+    const voice = resolveRealtimeVoice(advancedConfig?.voiceOption as string | undefined);
     const model = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2";
 
     let session = application.session;
@@ -96,7 +143,11 @@ export async function POST(request: NextRequest) {
         }, { status: 409 });
       }
 
-      if (session.status === "ACTIVE" && !isSessionHintMatch) {
+      // Block concurrent connections: ACTIVE or CONNECTING sessions can only be rejoined
+      // by the same tab that started them (matching sessionIdHint from sessionStorage).
+      // This prevents two browser tabs from spawning two parallel WebRTC sessions that
+      // produce duplicate AI responses and duplicate candidate transcripts.
+      if ((session.status === "ACTIVE" || session.status === "CONNECTING") && !isSessionHintMatch) {
         return NextResponse.json({ error: "Interview session already in progress." }, { status: 409 });
       }
 
@@ -134,8 +185,19 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json({ error: "OPENAI_API_KEY not configured." }, { status: 500 });
     }
+    const speechSpeed = parseFloat(process.env.OPENAI_REALTIME_SPEECH_SPEED || "0.9");
 
-    const baseInstructions = application.template.systemInstructions;
+    const baseInstructions = buildRealtimeBaseInstructions({
+      templateSystemInstructions: application.template.systemInstructions,
+      role: application.template.jobRole,
+      experienceLevel: application.template.experienceLevel,
+      difficultyLevel: application.template.difficultyLevel,
+      techStack: application.template.techStack,
+      requiredSkills: application.template.requiredSkills,
+      interviewDescription: application.template.interviewDescription,
+      advancedConfig,
+      resumeText: application.resumeText,
+    });
     let sessionBlueprint: Awaited<ReturnType<typeof createInterviewSessionBlueprint>> = null;
     if (!isResuming) {
       try {
@@ -149,9 +211,7 @@ export async function POST(request: NextRequest) {
           difficultyLevel: application.template.difficultyLevel,
           baseInstructions,
           resumeText: application.resumeText || undefined,
-          jobDescription:
-            ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
-            undefined,
+          jobDescription: (advancedConfig?.jobDescription as string | undefined) || undefined,
           careerGoal: application.careerGoal || undefined,
           focusAreas: application.focusAreas || undefined,
           selfIntroNotes: application.selfIntroNotes || undefined,
@@ -186,9 +246,7 @@ export async function POST(request: NextRequest) {
       referenceCards: normalizedReferenceCards.length > 0 ? normalizedReferenceCards : undefined,
       isResuming,
       resumeText: application.resumeText || undefined,
-      jobDescription:
-        ((application.template.advancedConfig as Record<string, unknown> | null)?.jobDescription as string | undefined) ||
-        undefined,
+      jobDescription: (advancedConfig?.jobDescription as string | undefined) || undefined,
       careerGoal: application.careerGoal || undefined,
       focusAreas: application.focusAreas || undefined,
       selfIntroNotes: application.selfIntroNotes || undefined,
@@ -204,6 +262,7 @@ export async function POST(request: NextRequest) {
       apiKey,
       safetyIdentifier,
       voice,
+      speed: speechSpeed,
     });
 
     return NextResponse.json({
@@ -214,12 +273,17 @@ export async function POST(request: NextRequest) {
       experienceLevel: application.template.experienceLevel,
       techStack: application.template.techStack,
       durationMinutes: application.template.durationMinutes,
-      sessionStartedAt: session.createdAt.toISOString(),
+      // For a resumed session, use the persisted real start time so the countdown continues
+      // correctly. For a fresh session, send null — the client stamps the real start the moment
+      // the AI is actually ready (data channel open), so setup time (blueprint generation,
+      // client-secret creation, WebRTC handshake) is NOT billed against the candidate's clock.
+      sessionStartedAt: isResuming ? session.startedAt.toISOString() : null,
       voice,
       model,
       openingPrompt,
       systemInstructions,
       sessionBlueprint,
+      speechSpeed,
       clientSecret: clientSecret.value,
       existingTranscript: previousTranscript,
       existingEvents: previousEvents,

@@ -29,7 +29,9 @@ function buildDatabaseUrl(): string {
   // pool_timeout — wait up to N seconds for a pooled connection.
   if (!base.includes("connect_timeout")) {
     const sep = base.includes("?") ? "&" : "?";
-    return `${base}${sep}connect_timeout=10&pool_timeout=20`;
+    const connectionTimeout = process.env.DATABASE_CONNECTION_TIMEOUT ? Math.floor(Number(process.env.DATABASE_CONNECTION_TIMEOUT) / 1000) : 30;
+    const poolTimeout = process.env.DATABASE_POOL_TIMEOUT ? Number(process.env.DATABASE_POOL_TIMEOUT) : 45;
+    return `${base}${sep}connect_timeout=${connectionTimeout}&pool_timeout=${poolTimeout}`;
   }
   return base;
 }
@@ -89,7 +91,9 @@ function withRetryMiddleware(client: PrismaClient): PrismaClient {
         msg.includes("Can't reach database server") ||
         msg.includes("Connection refused") ||
         msg.includes("ECONNRESET") ||
-        msg.includes("ETIMEDOUT");
+        msg.includes("ETIMEDOUT") ||
+        msg.includes("connection pool") ||
+        msg.includes("Timed out");
       const isCandidateApplicationSchemaErr =
         msg.includes("CandidateApplication.resumeUrl") ||
         msg.includes("CandidateApplication.scheduledAt") ||

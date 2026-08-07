@@ -41,6 +41,8 @@ npx prisma generate
 
 ## Key repository conventions
 
+- **Session bootstrap for AI interview work:** Before changing the AI mock interview flow, read `context.md` and `recent changes/latest.md` first. Treat them as the fast handoff layer for new Copilot sessions.
+- **Shared change log:** After any meaningful AI mock interview fix, optimization, or behavior change, update `recent changes/latest.md` with a short summary, impacted files, validation performed, and any open follow-ups.
 - **Prisma usage:** Prisma client is generated to `lib/prisma-client/`; application code should import the singleton from `@/lib/prisma` (not directly from generated client files).
 - **Auth model:** Admin and employee auth are cookie-session based (`jb_admin_session`, `jb_employee_session`) with separate helpers in `lib/admin-auth.ts` and `lib/employee-auth.ts`.
 - **Interview token handling:** Raw interview access tokens are only sent to candidates; persistence uses `accessTokenHash` and validation is done against the hash.
