@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   // Fallback: generate on-demand
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "OPENAI_API_KEY not configured" }, { status: 500 });
+    return NextResponse.json({ error: "AI service is not configured on the server." }, { status: 500 });
   }
 
   try {

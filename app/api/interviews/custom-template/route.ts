@@ -143,13 +143,13 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OpenAI integration is not configured on the server." },
+        { error: "AI service is not configured on the server." },
         { status: 500 }
       );
     }
 
     const openai = new OpenAI({ apiKey });
-    const durationMinutes = body.durationMinutes && body.durationMinutes >= 10 && body.durationMinutes <= 120 ? body.durationMinutes : 30;
+    const durationMinutes = body.durationMinutes && body.durationMinutes >= 10 && body.durationMinutes <= 90 ? body.durationMinutes : 30;
 
     let prepText: string | null = null;
     if (body.interviewPrepPurchaseId) {

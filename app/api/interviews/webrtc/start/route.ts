@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "OPENAI_API_KEY not configured." }, { status: 500 });
+      return NextResponse.json({ error: "AI service is not configured on the server." }, { status: 500 });
     }
     const speechSpeed = parseFloat(process.env.OPENAI_REALTIME_SPEECH_SPEED || "0.9");
 
