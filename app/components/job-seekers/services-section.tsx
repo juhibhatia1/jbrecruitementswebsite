@@ -29,10 +29,6 @@ const BUNDLE_DISCOUNT_PERCENT = 10;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
 const BUNDLE_EXCLUDED_TITLES = new Set(["AI Mock Interview"]);
 
-// Temporarily hidden until the AI mock interview flow is ready. Flip to true to
-// show the card and its spotlight slide again.
-const SHOW_MOCK_INTERVIEW_CARD = false;
-
 const services = [
   {
     id: 1,
@@ -197,26 +193,22 @@ const PROMO_SLIDES = [
     iconPath: service.iconPath,
     cta: "Explore this service",
   })),
-  ...(SHOW_MOCK_INTERVIEW_CARD
-    ? [
-        {
-          title: OPPORTUNITIES_SERVICE.title,
-          eyebrow: "AI interview practice",
-          summary: OPPORTUNITIES_SERVICE.description,
-          benefit: [
-            "Practice with an AI interviewer",
-            "Get role-specific questions and feedback",
-          ],
-          metrics: [
-            { value: "80k+", label: "Mock sessions" },
-            { value: "88%", label: "Skill lift" },
-            { value: "30 min", label: "Start time" },
-          ],
-          iconPath: OPPORTUNITIES_SERVICE.iconPath,
-          cta: "Browse interview options",
-        },
-      ]
-    : []),
+  {
+    title: OPPORTUNITIES_SERVICE.title,
+    eyebrow: "AI interview practice",
+    summary: OPPORTUNITIES_SERVICE.description,
+    benefit: [
+      "Practice with an AI interviewer",
+      "Get role-specific questions and feedback",
+    ],
+    metrics: [
+      { value: "80k+", label: "Mock sessions" },
+      { value: "88%", label: "Skill lift" },
+      { value: "30 min", label: "Start time" },
+    ],
+    iconPath: OPPORTUNITIES_SERVICE.iconPath,
+    cta: "Browse interview options",
+  },
   {
     title: "All Career Services Bundle",
     eyebrow: "Best value",
@@ -597,8 +589,7 @@ export default function ServicesSection({
           })}
 
           {/* Opportunities card  navigates to /opportunities */}
-          {SHOW_MOCK_INTERVIEW_CARD &&
-            (() => {
+          {(() => {
             const localAmt =
               MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ??
               39;
@@ -621,7 +612,7 @@ export default function ServicesSection({
                 buyLabel="Book Now"
               />
             );
-            })()}
+          })()}
 
           {/* Bundle Offer positioned at the bottom of all service cards */}
           <div className="col-span-full">
