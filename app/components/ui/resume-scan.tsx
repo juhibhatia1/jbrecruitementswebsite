@@ -12,7 +12,7 @@ export default function ResumeScanner() {
         {/* Replace src with your actual resume image path */}
         <Image
           src="/home/resume.avif"
-          alt="Resume"
+          alt="JB Recruitments AI Resume Scanner Tool"
           width={600}
           height={1000}
           priority

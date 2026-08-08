@@ -14,9 +14,16 @@ export const defaultMetadata: Metadata = {
   description:
     "JB Recruitments is a brand focused on recruitment and talent acquisition, helping companies find the right people, faster.",
   keywords: [
+    "resume review",
+    "resume rewriting",
+    "cover letter writing",
+    "linkedin optimisation",
+    "interview prep",
+    "mock interview prep",
     "JB Recruitments",
-    "JB Recruitment",
+    "JB recruitment",
     "JB Solutions",
+    "Juhi Bhatia recruitment",
     "HR firms",
     "HR consulting",
     "recruitment firm",
@@ -74,7 +81,7 @@ export const defaultMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "JB Recruitments - HR Consulting & Talent Acquisition",
+        alt: "JB Recruitments - HR Consulting & Talent Acquisition by Juhi Bhatia",
       },
     ],
   },
@@ -109,27 +116,28 @@ export const defaultMetadata: Metadata = {
 };
 
 export const contactMetadata: Metadata = {
-  title: "Contact Us - JB Recruitments",
+  title: "Contact Us - JB Recruitments | A recruitment brand by Juhi Bhatia",
   description:
-    "Get in touch with JB Recruitments. Whether you're looking to hire top talent or explore career opportunities, our HR consulting experts are here to help.",
+    "Get in touch with JB Recruitments. Whether you're looking to hire top talent or explore career opportunities, our JB recruitment experts and HR consultants are here to help.",
   keywords: [
     "contact JB Recruitments",
+    "contact JB recruitment",
     "hire recruiters",
     "talk to HR consultants",
     "recruitment services contact",
     "talent acquisition help",
   ],
   openGraph: {
-    title: "Contact Us - JB Recruitments",
+    title: "Contact Us - JB Recruitments | A recruitment brand by Juhi Bhatia",
     description:
-      "Get in touch with our HR consulting experts for talent acquisition and recruitment solutions.",
+      "Get in touch with our JB recruitment experts and HR consultants for talent acquisition and recruitment solutions.",
     url: `${siteUrl}/contact-us`,
     images: [
       {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "Contact JB Recruitments",
+        alt: "Contact JB Recruitments - Top Recruitment Agency",
       },
     ],
   },
@@ -139,18 +147,20 @@ export const contactMetadata: Metadata = {
 };
 
 export const aboutMetadata: Metadata = {
-  title: "About Us - JB Recruitments",
+  title: "About Us - JB Recruitments | A recruitment brand by Juhi Bhatia",
   description:
     "Learn about JB Recruitments, our mission, vision, and the team dedicated to transforming your hiring process. We are committed to connecting businesses with exceptional talent.",
   keywords: [
     "about JB Recruitments",
+    "about JB recruitment",
+    "JB recruitment team",
     "recruitment firm story",
     "talent acquisition team",
     "HR consulting mission",
     "Juhi Bhatia recruiter",
   ],
   openGraph: {
-    title: "About Us - JB Recruitments",
+    title: "About Us - JB Recruitments | A recruitment brand by Juhi Bhatia",
     description:
       "Discover our story, mission, and commitment to people-first recruitment. Meet the team behind JB Recruitments.",
     url: `${siteUrl}/about-us`,
@@ -159,7 +169,7 @@ export const aboutMetadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "About JB Recruitments",
+        alt: "About JB Recruitments - Juhi Bhatia",
       },
     ],
   },
@@ -169,11 +179,12 @@ export const aboutMetadata: Metadata = {
 };
 
 export const companiesMetadata: Metadata = {
-  title: "For Companies - Hire with Confidence | JB Recruitments",
+  title: "For Companies - Hire with Confidence | JB Recruitments - A recruitment brand by Juhi Bhatia",
   description:
-    "Complete recruitment support for businesses. From requirement-led hiring to quality-driven selection, we help you find candidates who fit your role, team, and culture.",
+    "Complete JB recruitment support for businesses. From requirement-led hiring to quality-driven selection, we help you find candidates who fit your role, team, and culture.",
   keywords: [
-    "recruitment for companies",
+    "JB recruitment for companies",
+    "JB Recruitments enterprise hiring",
     "hire with confidence",
     "enterprise hiring partner",
     "outsourced recruiting",
@@ -182,14 +193,14 @@ export const companiesMetadata: Metadata = {
   openGraph: {
     title: "For Companies - Hire with Confidence | JB Recruitments",
     description:
-      "Transform your hiring with our comprehensive recruitment solutions. We find candidates aligned with your goals and culture.",
+      "Transform your hiring with our comprehensive JB recruitment solutions. We find candidates aligned with your goals and culture.",
     url: `${siteUrl}/companies`,
     images: [
       {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "JB Recruitments for Companies",
+        alt: "JB Recruitments Services For Companies",
       },
     ],
   },
@@ -199,11 +210,17 @@ export const companiesMetadata: Metadata = {
 };
 
 export const jobSeekersMetadata: Metadata = {
-  title: "Career Insights & Job Opportunities - JB Recruitments",
+  title: "Career Insights & Job Opportunities - JB Recruitments | A recruitment brand by Juhi Bhatia",
   description:
-    "Explore career advice, industry insights, and job opportunities with JB Recruitments. Connect with top employers and advance your career with expert guidance.",
+    "Explore career advice, resume services, and job opportunities with JB Recruitments. Connect with top employers and advance your career with JB recruitment expert guidance.",
   keywords: [
+    "resume review",
+    "resume rewriting",
+    "cover letter writing",
+    "linkedin optimisation",
+    "interview prep",
     "job seekers JB Recruitments",
+    "JB recruitment jobs",
     "career guidance",
     "resume support",
     "find jobs UAE",
@@ -212,14 +229,14 @@ export const jobSeekersMetadata: Metadata = {
   openGraph: {
     title: "Career Insights & Job Opportunities - JB Recruitments",
     description:
-      "Explore career advice and connect with top employers through our recruitment experts.",
+      "Explore career advice and connect with top employers through JB recruitment experts.",
     url: `${siteUrl}/job-seekers`,
     images: [
       {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: "Career Opportunities - JB Recruitments",
+        alt: "Career Opportunities with JB Recruitments",
       },
     ],
   },

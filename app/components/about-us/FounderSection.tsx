@@ -47,7 +47,7 @@ export default function FounderSection() {
             <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mb-3">
               <Image
                 src="/founder.avif"
-                alt="Juhi Bhatia"
+                alt="Juhi Bhatia - Founder and CEO of JB Recruitments"
                 fill
                 className="object-cover"
               />
@@ -57,7 +57,7 @@ export default function FounderSection() {
             >
               Juhi Bhatia
             </h3>
-            <p className="text-gray-500 text-xs sm:text-sm">Founder of JB</p>
+            <p className="text-gray-500 text-xs sm:text-sm">Founder of JB Recruitments</p>
           </div>
         </ScrollAnimation>
       </div>

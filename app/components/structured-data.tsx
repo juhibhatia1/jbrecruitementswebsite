@@ -4,10 +4,14 @@ export default function StructuredData() {
     "@type": "Organization",
     "@id": "https://jbrecruitments.com/#organization",
     name: "JB Recruitments",
-    alternateName: "JB Solutions",
+    alternateName: ["JB Solutions", "JB Recruitment", "JBrecruitments"],
     url: "https://jbrecruitments.com",
-    image: "https://jbrecruitments.com/logo.avif",
-    description: "A recruitment brand by Juhi Bhatia",
+    logo: "https://jbrecruitments.com/logo.avif",
+    image: [
+      "https://jbrecruitments.com/logo.avif",
+      "https://jbrecruitments.com/home/background-image.avif"
+    ],
+    description: "JB Recruitments is a premier recruitment agency and HR consulting brand by Juhi Bhatia",
     slogan: "Connecting Talent with Opportunity",
     founder: {
       "@type": "Person",
@@ -22,8 +26,15 @@ export default function StructuredData() {
       "Talent Acquisition",
       "Executive Search",
       "Recruitment Services",
+      "JB Recruitment Services",
       "Workforce Solutions",
       "Career Consulting",
+      "Resume Review",
+      "Resume Rewriting",
+      "Cover Letter Writing",
+      "LinkedIn Optimization",
+      "Interview Prep",
+      "Mock Interviews",
     ],
     areaServed: {
       "@type": "Country",
@@ -47,7 +58,7 @@ export default function StructuredData() {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Resume Review & Rewriting",
+            name: "JB Recruitments Resume Review & Rewriting",
             url: "https://jbrecruitments.com/job-seekers",
           },
         },
@@ -55,7 +66,7 @@ export default function StructuredData() {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "LinkedIn Optimization",
+            name: "JB Recruitments Cover Letter Writing",
             url: "https://jbrecruitments.com/job-seekers",
           },
         },
@@ -63,8 +74,24 @@ export default function StructuredData() {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Mock Interview",
+            name: "JB Recruitments LinkedIn Optimization",
+            url: "https://jbrecruitments.com/job-seekers",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "JB Recruitments Mock Interview",
             url: "https://jbrecruitments.com/mock-interview",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "JB Recruitment HR Consulting for Companies",
+            url: "https://jbrecruitments.com/companies",
           },
         },
       ],

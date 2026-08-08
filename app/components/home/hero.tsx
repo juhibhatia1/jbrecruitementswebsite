@@ -13,7 +13,7 @@ export default function HeroSection() {
         {/* Mobile Image */}
         <Image
           src="/home/hero1.avif"
-          alt="Professional recruitment and HR consulting services - JB Recruitments"
+          alt="JB Recruitments - Top Recruitment Agency and HR Consulting Workspace"
           fill
           priority
           sizes="100vw"
@@ -22,7 +22,7 @@ export default function HeroSection() {
         {/* XL+ AVIF Image (visible only on xl and above) */}
         <Image
           src="/home/xl-background.avif"
-          alt="Professional recruitment and HR consulting services - JB Recruitments"
+          alt="JB Recruitments - Top Recruitment Agency and HR Consulting Workspace"
           fill
           priority
           sizes="100vw"

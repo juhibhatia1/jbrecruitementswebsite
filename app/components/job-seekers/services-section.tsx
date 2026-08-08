@@ -534,7 +534,7 @@ export default function ServicesSection({
           <div className="mb-3 flex items-center gap-2 md:absolute md:left-0 md:top-1/2 md:mb-0 md:-translate-y-1/2">
             <Image
               src="/home/icons8-ai-48.avif"
-              alt="Help Icon"
+              alt="JB Recruitment Services Help Icon"
               width={28}
               height={28}
               className="w-6 h-6 md:w-7 md:h-7"
@@ -713,7 +713,7 @@ export default function ServicesSection({
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-[#eae8ff] to-white shadow-sm sm:h-[72px] sm:w-[72px]">
                         <Image
                           src={currentPromo.iconPath}
-                          alt={currentPromo.title}
+                          alt={`JB Recruitments - ${currentPromo.title}`}
                           width={36}
                           height={36}
                           className="h-8 w-8 object-contain sm:h-9 sm:w-9"

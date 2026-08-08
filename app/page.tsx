@@ -9,6 +9,8 @@ const AdvisorTrustSection = dynamic(
   () => import("./components/home/advisor-trust-section"),
 );
 const FAQsSection = dynamic(() => import("./components/home/faq-section"));
+const FAQSchema = dynamic(() => import("./components/home/faq-schema"));
+const TestimonialSchema = dynamic(() => import("./components/home/testimonial-schema"));
 
 export default function Home() {
   return (
@@ -20,6 +22,8 @@ export default function Home() {
       <Testimonials />
       <AdvisorTrustSection />
       <FAQsSection />
+      <FAQSchema />
+      <TestimonialSchema />
     </div>
   );
 }

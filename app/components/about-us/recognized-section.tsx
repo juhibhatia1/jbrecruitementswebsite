@@ -84,7 +84,7 @@ export default function RecognizedSection() {
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
                   <Image
                     src="/founder.avif"
-                    alt="Juhi Bhatia - Founder of JB"
+                    alt="Juhi Bhatia - Founder and CEO of JB Recruitments"
                     fill
                     className="object-cover"
                   />

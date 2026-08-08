@@ -28,7 +28,7 @@ export default function WhyJBSection() {
           >
             <Image
               src="/logo.avif"
-              alt="Professional workspace with laptop and office supplies"
+              alt="JB Recruitments - HR Consulting and Talent Acquisition Services Logo"
               fill
               sizes="(max-width: 1024px) 100vw, 600px"
               className="object-contain"

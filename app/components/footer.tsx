@@ -24,7 +24,7 @@ export default function Footer() {
             {/* Logo */}
             <Image
               src="/logo.avif"
-              alt="JobBoard Logo"
+              alt="JB Recruitments - HR Consulting and Talent Acquisition Agency Logo"
               width={100}
               height={100}
               className="mb-3"
@@ -69,7 +69,7 @@ export default function Footer() {
             >
               <Image
                 src="/footer/linkedin-logo.avif"
-                alt="LinkedIn"
+                alt="JB Recruitments LinkedIn Page"
                 width={20}
                 height={20}
                 className="h-5 w-5"
@@ -87,7 +87,7 @@ export default function Footer() {
             >
               <Image
                 src="/footer/instagram-logo.avif"
-                alt="Instagram"
+                alt="JB Recruitments Instagram Profile"
                 width={20}
                 height={20}
                 className="h-5 w-5"
@@ -105,7 +105,7 @@ export default function Footer() {
             >
               <Image
                 src="/footer/substack-logo.svg"
-                alt="Substack"
+                alt="JB Recruitments Substack Blog"
                 width={20}
                 height={20}
                 className="h-5 w-5"
@@ -121,7 +121,7 @@ export default function Footer() {
             >
               <img
                 src="/footer/facebook-logo.avif"
-                alt="Facebook"
+                alt="JB Recruitments Facebook Page"
                 className="h-5 w-5"
               />
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
@@ -137,7 +137,7 @@ export default function Footer() {
             >
               <img
                 src="/footer/twitter-logo.avif"
-                alt="X"
+                alt="JB Recruitments X Twitter Profile"
                 className="h-5 w-5"
               />
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
