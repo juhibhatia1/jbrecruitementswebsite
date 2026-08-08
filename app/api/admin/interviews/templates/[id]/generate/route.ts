@@ -26,7 +26,7 @@ function buildGenerationPrompt(template: {
   const outroMins = Math.max(1, Math.round(duration * 0.05));
   const coreMins = duration - introMins - outroMins;
 
-  return `You are a senior technical recruiter. Your job: design the interview section plan for the role below, then assemble a complete system prompt for a Gemini Live AI voice interviewer.
+  return `You are a senior recruiter. Your job: design the interview section plan for the role below, then assemble a complete system prompt for an AI voice interviewer.
 
 INTERVIEW CONFIGURATION:
 Role: ${template.jobRole} | Level: ${template.experienceLevel} | Difficulty: ${template.difficultyLevel}
@@ -47,14 +47,14 @@ For this specific role, decide on 3-4 interview sections. For each section deter
 • Section name
 • Exact topics/sub-topics to explore and at what depth (foundational/intermediate/advanced)
 • Whether a practical code snapshot fits. RULE: If the tech stack includes any programming language (Java, Python, JavaScript, TypeScript, C#, etc.), at least ONE section MUST include 1-2 mandatory code snapshot questions. Error handling, concurrency, data structures, OOP patterns, and language-specific pitfalls are ideal — system design and architecture sections typically do NOT use code snapshots.
-RULE: Do NOT decide specific questions. Topics + depth only. Gemini Live improvises questions live from the candidate's intro and responses.
+RULE: Do NOT decide specific questions. Topics + depth only. The AI improvises questions live from the candidate's intro and responses.
 
 STEP 2 — ASSEMBLE THE OUTPUT JSON
 Using the sections you designed in Step 1, output this exact JSON (no markdown, no code fences):
 
 {
   "interviewDescription": "<2-3 sentence candidate-facing description. Warm, professional. Mention duration and key focus areas. No mention of scoring.>",
-  "systemInstructions": "<COMPLETE system prompt — write it in second-person imperative, as operational instructions for a Gemini Live AI voice interviewer. It must contain ALL of the following in order:>"
+  "systemInstructions": "<COMPLETE system prompt — write it in second-person imperative, as operational instructions for an AI voice interviewer. It must contain ALL of the following in order:>"
 }
 
 The systemInstructions value must contain ALL of these sections in order:
@@ -97,7 +97,7 @@ If section questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE, generat
 You may provide short teaching feedback after acknowledgment when answers are weak, but keep it brief and continue questioning.
 
 PERSONALIZATION:
-During the candidate's introduction, note their specific technologies, companies, and projects. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] — with that in mind, how would you approach [topic]?"
+During the candidate's introduction, note their specific tools, technologies, domain expertise, companies, and projects. Reference these explicitly when introducing topics: "You mentioned working with [X] at [company] — with that in mind, how would you approach [topic]?"
 
 ENGAGEMENT RULES — react like a skilled human interviewer:
 • Strong, detailed answer: acknowledge the specific point — "Solid approach, especially the part about [X]."

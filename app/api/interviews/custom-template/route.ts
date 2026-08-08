@@ -85,7 +85,7 @@ If section questions are exhausted before TIME_SIGNAL:DURATION_COMPLETE, generat
 You may provide short teaching feedback after acknowledgment when answers are weak, but keep it brief and continue questioning.
 
 PERSONALIZATION:
-During the candidate's introduction, note their specific technologies, companies, projects, and experience level. Reference these explicitly when introducing topics: "You mentioned working with [tech] at [company] — with that in mind, how would you approach [topic]?"
+During the candidate's introduction, note their specific tools, technologies, domain expertise, companies, projects, and experience level. Reference these explicitly when introducing topics: "You mentioned working with [X] at [company] — with that in mind, how would you approach [topic]?"
 Use the candidate's resume content and the JD to calibrate difficulty, probing depth, and examples.
 
 ENGAGEMENT RULES:
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
     const response = await openai.responses.create({
       model: TEMPLATE_MODEL,
       instructions:
-        "You are a senior technical recruiter. Extract the tech stack, skills, description, and write a complete Gemini Live prompt for the custom JD. Output only valid JSON — no markdown, no code fences.",
+        "You are a senior recruiter. Extract the key tools/skills, description, and write a complete AI interviewer system prompt for the custom JD. Output only valid JSON — no markdown, no code fences.",
       input: prompt,
     });
 

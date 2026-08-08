@@ -13,7 +13,6 @@ import {
   type InterviewSessionAccumulator,
   type InterviewTranscriptEntry,
 } from "./lib/interview/types";
-import { GeminiLiveInterviewProvider } from "./lib/interview/providers/gemini-live-provider";
 import { OpenAiRealtimeProvider } from "./lib/interview/providers/openai-realtime-provider";
 import { getMailerTransporter } from "./lib/mailer";
 import { buildAppUrl } from "./lib/app-url";
@@ -584,7 +583,7 @@ nextApp
             }
 
             const defaultProvider =
-              process.env.INTERVIEW_PROVIDER || "gemini-live";
+              process.env.INTERVIEW_PROVIDER || "openai-realtime";
             let isResuming = false;
 
             if (application.session) {
@@ -728,7 +727,7 @@ nextApp
               },
             };
 
-            if (defaultProvider === "openai-realtime") {
+            {
               const advCfg = application.template.advancedConfig as Record<
                 string,
                 string
@@ -738,8 +737,6 @@ nextApp
                 undefined,
                 advCfg?.voiceOption,
               );
-            } else {
-              provider = new GeminiLiveInterviewProvider(callbackHandlers);
             }
 
             clearTimeout(authTimeout);
@@ -877,7 +874,7 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         if (message.type === "end_interview") {
           endInterviewRequested = true;
           provider.endInterview();
-          // Fallback: guarantee COMPLETED finalization even if Gemini never calls finalize_interview_report
+          // Fallback: guarantee COMPLETED finalization if AI never calls finalize_interview_report
           setTimeout(() => {
             void finalizeSession("COMPLETED").catch((err) => {
               console.error("End-interview fallback finalization failed:", err);
@@ -911,7 +908,7 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
       wssDev.on("connection", async (clientWs, request) => {
         const reqUrl = new URL(request.url || "/", `http://localhost:${PORT}`);
         const providerParam =
-          reqUrl.searchParams.get("provider") || "gemini-live";
+          reqUrl.searchParams.get("provider") || "openai-realtime";
         const modelParam = reqUrl.searchParams.get("model") || undefined;
         const voiceParam = reqUrl.searchParams.get("voice") || undefined;
         const role = reqUrl.searchParams.get("role") || "Software Engineer";
@@ -1020,18 +1017,11 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
         }
 
         try {
-          if (providerParam === "openai-realtime") {
-            devProvider = new OpenAiRealtimeProvider(
-              devCallbacks,
-              modelParam,
-              voiceParam,
-            );
-          } else {
-            devProvider = new GeminiLiveInterviewProvider(
-              devCallbacks,
-              modelParam,
-            );
-          }
+          devProvider = new OpenAiRealtimeProvider(
+            devCallbacks,
+            modelParam,
+            voiceParam,
+          );
 
           const previewInstructions =
             devInstructions +
