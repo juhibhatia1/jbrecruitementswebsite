@@ -790,36 +790,6 @@ export default function ServicesSection({
                   ))}
                 </div>
               </div>
-
-              {/* <div className="grid w-full gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
-                    Best for
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-[#252e3d]">
-                    Candidates who want a flexible way to combine profile help,
-                    application support, and interview prep without a heavy
-                    checkout flow.
-                  </p>
-                  <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    Add the services you need and the bundle discount appears
-                    automatically when you reach four eligible services.
-                  </p>
-                </div>
-                <div className="rounded-[1.5rem] border border-[#e5ebf8] bg-[#fbfcff] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a93a8]">
-                    Fast value
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-[#252e3d]">
-                    One section. One quick scan. Clear reasons to choose the
-                    service that fits you best.
-                  </p>
-                  <p className="mt-3 text-xs leading-5 text-[#6f7b91]">
-                    Compare services quickly, understand the value, and act
-                    immediately with less friction.
-                  </p>
-                </div>
-              </div> */}
             </div>
           </section>
         </div>
