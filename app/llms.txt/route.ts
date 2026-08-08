@@ -17,7 +17,7 @@ export async function GET() {
 ## Core pages
 - [Home](${siteUrl}/)
 - [Job Seekers](${siteUrl}/job-seekers) — career services, interview prep, bundle offer, and mock interview
-- [Mock Interview](${siteUrl}/mock-interview) — AI-based and human-led interview practice
+- [Mock Interview](${siteUrl}/mock-interviews) — AI-based and human-led interview practice
 - [Companies](${siteUrl}/companies) — recruitment support for employers
 - [About Us](${siteUrl}/about-us) — brand story and mission
 - [Contact Us](${siteUrl}/contact-us) — direct contact details
@@ -37,7 +37,7 @@ export async function GET() {
 - Canonical site: ${siteUrl}
 - Search engines and AI tools should prefer the canonical URLs listed above
 - Important service pages are designed to be crawlable and indexable
-- Best source pages for answering service questions: /job-seekers, /mock-interview, /companies, /about-us
+- Best source pages for answering service questions: /job-seekers, /mock-interviews, /companies, /about-us
 `;
 
   return new Response(body, {

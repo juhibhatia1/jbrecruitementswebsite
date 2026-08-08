@@ -83,7 +83,7 @@ export default function StructuredData() {
           itemOffered: {
             "@type": "Service",
             name: "JB Recruitments Mock Interview",
-            url: "https://jbrecruitments.com/mock-interview",
+            url: "https://jbrecruitments.com/mock-interviews",
           },
         },
         {
@@ -130,7 +130,7 @@ export default function StructuredData() {
         "@type": "ListItem",
         position: 3,
         name: "Mock Interview",
-        item: "https://jbrecruitments.com/mock-interview",
+        item: "https://jbrecruitments.com/mock-interviews",
       },
     ],
   };

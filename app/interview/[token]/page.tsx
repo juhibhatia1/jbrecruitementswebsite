@@ -212,10 +212,10 @@ function ErrorView({ message }: { message: string }) {
         </p>
         <p className="text-sm text-gray-600 mb-6">{message}</p>
         <Link
-          href="/mock-interview"
+          href="/job-seekers"
           className="inline-block rounded-xl border border-[#e0e0e0] bg-white px-5 py-2.5 text-sm font-semibold text-[#252e3d] transition hover:bg-gray-50"
         >
-          Browse Sessions
+          Back to Job Seekers
         </Link>
       </div>
     </div>
