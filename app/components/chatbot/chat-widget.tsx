@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   IoChatbubbles,
@@ -288,10 +289,12 @@ export default function ChatWidget() {
           <header className="flex items-center justify-between bg-[#252e3d] px-5 py-4 text-white">
             <div className="flex items-center gap-2.5">
               <div className="relative">
-                <img
+                <Image
                   src="/logo.avif"
                   alt="Juhi Bhatia Logo"
-                  className="h-8 w-8 rounded-full border border-white/20 bg-white"
+                  width={32}
+                  height={32}
+                  className="rounded-full border border-white/20 bg-white"
                 />
               </div>
               <div>

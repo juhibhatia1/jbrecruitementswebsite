@@ -11,21 +11,30 @@ export default function HeroSection() {
       <div className="relative w-full min-h-[100dvh] flex items-center overflow-hidden">
         {/* Background Images - Responsive */}
         {/* Mobile Image */}
-        <img
+        <Image
           src="/home/hero1.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
+          fill
+          priority
+          sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover object-[75%_70%] block sm:hidden"
         />
         {/* XL+ AVIF Image (visible only on xl and above) */}
-        <img
+        <Image
           src="/home/xl-background.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
+          fill
+          priority
+          sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover xl:object-[75%_55%] hidden xl:block"
         />
         {/* Desktop/Tablet Image */}
-        <img
+        <Image
           src="/home/background-image.avif"
           alt="Professional recruitment and HR consulting services - JB Recruitments"
+          fill
+          priority
+          sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[80%_98%] hidden sm:block xl:hidden"
         />
         {/* Dark overlay */}

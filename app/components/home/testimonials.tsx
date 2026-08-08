@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { AiOutlineMessage } from "react-icons/ai";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 
@@ -178,9 +179,11 @@ export default function Testimonials() {
                     : "w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 hover:ring-2 hover:ring-gray-300 opacity-70 hover:opacity-100"
                 }`}
               >
-                <img
+                <Image
                   src={testimonial.image}
                   alt={testimonial.name}
+                  width={64}
+                  height={64}
                   className={`w-full h-full rounded-full object-contain transition-all duration-300 ${
                     activeTestimonial === index
                       ? "grayscale-0"

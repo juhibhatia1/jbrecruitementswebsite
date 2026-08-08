@@ -101,9 +101,12 @@ export default function UpiPaymentBox({
       <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
         <div className="relative w-48 h-48 sm:w-56 sm:h-56 bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center">
           {qrDataUrl ? (
-            <img
+            <Image
               src={qrDataUrl}
               alt={`UPI QR Code for ${displayAmount} - JB Recruitment Solutions`}
+              width={220}
+              height={220}
+              unoptimized
               className="w-full h-full object-contain"
             />
           ) : (

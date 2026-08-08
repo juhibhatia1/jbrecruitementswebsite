@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import ServiceCard from "./service-card";
 import PaymentModal from "./payment-modal";
 import {
@@ -531,9 +532,11 @@ export default function ServicesSection({
         {/* Section Header */}
         <div className="relative mb-0 flex flex-col items-start justify-center md:mb-12 md:flex-row md:items-center md:pl-12">
           <div className="mb-3 flex items-center gap-2 md:absolute md:left-0 md:top-1/2 md:mb-0 md:-translate-y-1/2">
-            <img
+            <Image
               src="/home/icons8-ai-48.avif"
               alt="Help Icon"
+              width={28}
+              height={28}
               className="w-6 h-6 md:w-7 md:h-7"
             />
             <span className="text-sm sm:text-base font-semibold text-[#605dba]">
@@ -708,9 +711,11 @@ export default function ServicesSection({
                   <div>
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-[#eae8ff] to-white shadow-sm sm:h-[72px] sm:w-[72px]">
-                        <img
+                        <Image
                           src={currentPromo.iconPath}
                           alt={currentPromo.title}
+                          width={36}
+                          height={36}
                           className="h-8 w-8 object-contain sm:h-9 sm:w-9"
                         />
                       </div>

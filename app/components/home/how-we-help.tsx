@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
 import ResumeScanner from "../ui/resume-scan";
@@ -15,9 +16,11 @@ export default function HowWeHelpSection() {
           <ScrollAnimation variant="fadeUp">
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="md:mb-8 col-span-1 flex items-center gap-1 lg:gap-2">
-                <img
+                <Image
                   src="/home/icons8-ai-48.avif"
                   alt="Help Icon"
+                  width={28}
+                  height={28}
                   className="w-4 h-4 md:w-4 md:h-4 lg:w-7 lg:h-7"
                 />
                 <p
