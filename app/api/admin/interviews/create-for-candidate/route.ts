@@ -123,7 +123,6 @@ Respond ONLY with valid JSON:
   "requiredSkills": ["skill1", "skill2"],
   "systemInstructions": "Full system prompt for AI interviewer"
 }`;
-
           const response = await openai.chat.completions.create({
             model: TEMPLATE_MODEL,
             messages: [{ role: "user", content: promptText }],
@@ -132,7 +131,21 @@ Respond ONLY with valid JSON:
           const rawContent = response.choices[0]?.message?.content || "";
           const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
+            let jsonStr = jsonMatch[0];
+            let inStr = false, esc = false, sanitized = "";
+            for (const ch of jsonStr) {
+              if (esc) { esc = false; sanitized += ch; continue; }
+              if (ch === "\\" && inStr) { esc = true; sanitized += ch; continue; }
+              if (ch === '"') { inStr = !inStr; sanitized += ch; continue; }
+              if (inStr && ch.charCodeAt(0) < 0x20) {
+                const map: Record<string, string> = { "\n": "\\n", "\r": "\\r", "\t": "\\t", "\b": "\\b", "\f": "\\f" };
+                sanitized += map[ch] ?? `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`;
+              } else {
+                sanitized += ch;
+              }
+            }
+
+            const parsed = JSON.parse(sanitized);
             template = await prisma.interviewTemplate.create({
               data: {
                 ownerRole: isAdmin ? "ADMIN" : "EMPLOYEE",
@@ -153,29 +166,24 @@ Respond ONLY with valid JSON:
         }
       }
 
-      // Fallback active template if AI generation omitted or failed
+      // Fallback active template if AI generation omitted or failed.
+      // Do NOT reuse a random active template (e.g. React Developer) for an unrelated roleName.
+      // Instead, always create a fresh default template for the candidate's target jobRole.
       if (!template) {
-        template = await prisma.interviewTemplate.findFirst({
-          where: { isActive: true },
-          orderBy: { createdAt: "desc" },
+        template = await prisma.interviewTemplate.create({
+          data: {
+            ownerRole: isAdmin ? "ADMIN" : "EMPLOYEE",
+            jobRole: roleName,
+            experienceLevel,
+            techStack: [roleName],
+            requiredSkills: ["Technical Competency"],
+            durationMinutes,
+            difficultyLevel,
+            interviewDescription: `Mock interview for ${roleName}`,
+            systemInstructions: `You are an expert AI interviewer conducting a technical interview for a ${roleName} position.`,
+            isActive: true,
+          },
         });
-
-        if (!template) {
-          template = await prisma.interviewTemplate.create({
-            data: {
-              ownerRole: isAdmin ? "ADMIN" : "EMPLOYEE",
-              jobRole: roleName,
-              experienceLevel,
-              techStack: [roleName],
-              requiredSkills: ["Technical Competency"],
-              durationMinutes,
-              difficultyLevel,
-              interviewDescription: `Mock interview for ${roleName}`,
-              systemInstructions: `You are an expert AI interviewer conducting a technical interview for a ${roleName} position.`,
-              isActive: true,
-            },
-          });
-        }
       }
     }
 

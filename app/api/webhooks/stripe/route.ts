@@ -147,14 +147,30 @@ export async function POST(request: Request) {
                   candidateEmail: meta.candidateEmail.trim().toLowerCase(),
                   interviewPreference: "AI",
                   createdAt: {
-                    gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+                    gte: new Date(purchaseTime.getTime() - 10 * 60000), // 10 min buffer
                   },
                 },
+                orderBy: { createdAt: "desc" }, // take the most recent matching one
                 select: candidateApplicationSafeSelect,
               });
               if (application && application.status !== "APPLIED") {
                 alreadyActivated = true;
               }
+            }
+
+            // 3. Broader fallback: look for APPLIED application (any time) for this template+email
+            //    This covers cases where payment takes longer than the buffer window.
+            if (!application) {
+              application = await prisma.candidateApplication.findFirst({
+                where: {
+                  templateId: template.id,
+                  candidateEmail: meta.candidateEmail.trim().toLowerCase(),
+                  interviewPreference: "AI",
+                  status: "APPLIED",
+                },
+                orderBy: { createdAt: "desc" },
+                select: candidateApplicationSafeSelect,
+              });
             }
 
             if (alreadyActivated && application) {
@@ -198,12 +214,16 @@ export async function POST(request: Request) {
               });
             }
 
+            const interviewLink = buildAppUrl(`/interview/${accessToken}`);
+
             await prisma.purchase.update({
               where: { id: purchase.id },
-              data: { mockInterviewStatus: "INVITED" },
+              data: {
+                mockInterviewStatus: "INVITED",
+                // Store the interview link so payment/details can return it if it loads after the webhook fires
+                completionNotes: JSON.stringify({ interviewLink }),
+              },
             });
-
-            const interviewLink = buildAppUrl(`/interview/${accessToken}`);
 
             // Send invitation email to candidate
             await sendInterviewInvitationEmail({

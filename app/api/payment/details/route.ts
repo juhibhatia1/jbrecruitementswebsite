@@ -257,9 +257,24 @@ export async function GET(request: Request) {
             candidateEmail: candidateEmailLower,
             interviewPreference: "AI",
             createdAt: {
-              gte: new Date(purchaseTime.getTime() - 60000), // 1 min buffer
+              gte: new Date(purchaseTime.getTime() - 10 * 60000), // 10 min buffer
             },
           },
+          orderBy: { createdAt: "desc" },
+          select: candidateApplicationSafeSelect,
+        });
+      }
+
+      // 3. Broader fallback: any APPLIED application for this template+email
+      if (!application) {
+        application = await prisma.candidateApplication.findFirst({
+          where: {
+            templateId: template.id,
+            candidateEmail: candidateEmailLower,
+            interviewPreference: "AI",
+            status: "APPLIED",
+          },
+          orderBy: { createdAt: "desc" },
           select: candidateApplicationSafeSelect,
         });
       }
@@ -275,8 +290,45 @@ export async function GET(request: Request) {
 
       let rawToken = "";
 
-      // Self-healing creation or activation if webhook hasn't fired yet
-      if (!application) {
+      // If webhook already activated the application, retrieve the stored interview link
+      if (application && application.status !== "APPLIED") {
+        // The webhook stores the interview link in purchase.completionNotes as JSON: { interviewLink: "..." }
+        const purchaseRecord = purchase || (application.purchaseId
+          ? await prisma.purchase.findUnique({ where: { id: application.purchaseId } })
+          : null);
+        if (purchaseRecord?.completionNotes) {
+          try {
+            const notes = JSON.parse(purchaseRecord.completionNotes) as { interviewLink?: string };
+            if (notes.interviewLink) {
+              return NextResponse.json({
+                isCoach: false,
+                isAi: true,
+                candidateName: application.candidateName,
+                candidateEmail: application.candidateEmail,
+                applicationId: application.id,
+                interviewLink: notes.interviewLink,
+                purchaseId: purchaseRecord.id,
+              });
+            }
+          } catch {
+            // completionNotes is not JSON or doesn't have interviewLink — fall through to create new token
+          }
+        }
+        // Webhook activated but link not stored (legacy) — generate a new token and update the application
+        const accessToken = generateInterviewAccessToken();
+        rawToken = accessToken;
+        const accessTokenHash = hashInterviewAccessToken(accessToken);
+        const TOKEN_EXPIRY_DAYS = 7;
+        const accessTokenExpiresAt = new Date(
+          Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+        );
+        application = await prisma.candidateApplication.update({
+          where: { id: application.id },
+          data: { accessTokenHash, accessTokenExpiresAt },
+          select: candidateApplicationSafeSelect,
+        });
+      } else if (!application) {
+        // Self-healing: webhook hasn't fired yet — create application now
         const accessToken = generateInterviewAccessToken();
         rawToken = accessToken;
         const accessTokenHash = hashInterviewAccessToken(accessToken);
@@ -327,6 +379,7 @@ export async function GET(request: Request) {
           console.error("Failed to send AI notifications in details route:", emailErr);
         }
       } else if (application.status === "APPLIED") {
+        // Application pre-created by checkout but webhook hasn't fired yet — activate it now
         const accessToken = generateInterviewAccessToken();
         rawToken = accessToken;
         const accessTokenHash = hashInterviewAccessToken(accessToken);
