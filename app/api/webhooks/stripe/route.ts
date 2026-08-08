@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     try {
       // Find the Purchase record first to check status (protect against duplicate webhook deliveries)
       const existingPurchase = await prisma.purchase.findUnique({
-        where: { stripePaymentIntentId: paymentIntent.id },
+        where: { gatewayTransactionId: paymentIntent.id },
       });
 
       if (existingPurchase && existingPurchase.status === "COMPLETED") {
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
       // Update the Purchase record
       const purchase = await prisma.purchase.update({
-        where: { stripePaymentIntentId: paymentIntent.id },
+        where: { gatewayTransactionId: paymentIntent.id },
         data: {
           status: "COMPLETED",
           country: billingCountry,
@@ -341,7 +341,7 @@ export async function POST(request: Request) {
 
     try {
       await prisma.purchase.update({
-        where: { stripePaymentIntentId: paymentIntent.id },
+        where: { gatewayTransactionId: paymentIntent.id },
         data: {
           status: "FAILED",
           completionNotes: `Payment Failed: ${failureMsg}`,
@@ -356,7 +356,7 @@ export async function POST(request: Request) {
 
     try {
       await prisma.purchase.update({
-        where: { stripePaymentIntentId: paymentIntent.id },
+        where: { gatewayTransactionId: paymentIntent.id },
         data: {
           status: "CANCELLED",
           completionNotes: `Payment Canceled: Customer canceled payment process`,

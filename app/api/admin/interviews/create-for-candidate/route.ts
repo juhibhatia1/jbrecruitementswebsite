@@ -201,7 +201,7 @@ Respond ONLY with valid JSON:
         serviceName,
         amount: 0,
         currency: "USD",
-        stripePaymentIntentId: `manual_upi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        gatewayTransactionId: `manual_upi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         status: "COMPLETED",
         mockInterviewStatus: interviewPreference === "AI" ? "INVITED" : "PENDING_SCHEDULE",
         completionNotes: JSON.stringify({
@@ -243,7 +243,7 @@ Respond ONLY with valid JSON:
     });
 
     const interviewLink = buildAppUrl(`/interview/${accessToken}`);
-    const bookingLink = buildAppUrl(`/payment/success?payment_intent=${purchase.stripePaymentIntentId}`);
+    const bookingLink = buildAppUrl(`/payment/success?payment_intent=${purchase.gatewayTransactionId}`);
 
     // Send Invitation Email to Candidate
     let emailSent = false;

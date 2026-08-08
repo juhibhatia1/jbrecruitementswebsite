@@ -55,7 +55,7 @@ interface Purchase {
   serviceName: string;
   amount: number;
   currency: string;
-  stripePaymentIntentId: string;
+  gatewayTransactionId: string;
   status: string;
   country: string | null;
   mockInterviewStatus: string | null; // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
@@ -1246,7 +1246,7 @@ export default function DirectoryDashboard({
                               <strong>Billing Country:</strong> {p.country || "Not provided"}
                             </p>
                             <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
-                              Ref: {p.stripePaymentIntentId}
+                              Ref: {p.gatewayTransactionId}
                             </p>
                             
                             {isCompleted && p.serviceName.toLowerCase().includes("interview prep") && (

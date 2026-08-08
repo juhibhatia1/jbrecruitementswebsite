@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       where: {
         OR: [
           { id: purchaseId },
-          { stripePaymentIntentId: purchaseId }
+          { gatewayTransactionId: purchaseId }
         ]
       },
       select: {

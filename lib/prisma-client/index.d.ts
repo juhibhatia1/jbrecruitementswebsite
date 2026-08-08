@@ -73,7 +73,15 @@ export type InterviewSession = $Result.DefaultSelection<Prisma.$InterviewSession
  * Enums
  */
 export namespace $Enums {
-  export const UserRole: {
+  export const PaymentGateway: {
+  STRIPE: 'STRIPE',
+  PAYU: 'PAYU'
+};
+
+export type PaymentGateway = (typeof PaymentGateway)[keyof typeof PaymentGateway]
+
+
+export const UserRole: {
   ADMIN: 'ADMIN',
   EMPLOYEE: 'EMPLOYEE'
 };
@@ -122,6 +130,10 @@ export const InterviewSessionStatus: {
 export type InterviewSessionStatus = (typeof InterviewSessionStatus)[keyof typeof InterviewSessionStatus]
 
 }
+
+export type PaymentGateway = $Enums.PaymentGateway
+
+export const PaymentGateway: typeof $Enums.PaymentGateway
 
 export type UserRole = $Enums.UserRole
 
@@ -3930,7 +3942,8 @@ export namespace Prisma {
     serviceName: string | null
     amount: number | null
     currency: string | null
-    stripePaymentIntentId: string | null
+    gatewayTransactionId: string | null
+    paymentGateway: $Enums.PaymentGateway | null
     status: string | null
     country: string | null
     mockInterviewStatus: string | null
@@ -3952,7 +3965,8 @@ export namespace Prisma {
     serviceName: string | null
     amount: number | null
     currency: string | null
-    stripePaymentIntentId: string | null
+    gatewayTransactionId: string | null
+    paymentGateway: $Enums.PaymentGateway | null
     status: string | null
     country: string | null
     mockInterviewStatus: string | null
@@ -3974,7 +3988,8 @@ export namespace Prisma {
     serviceName: number
     amount: number
     currency: number
-    stripePaymentIntentId: number
+    gatewayTransactionId: number
+    paymentGateway: number
     status: number
     country: number
     mockInterviewStatus: number
@@ -4006,7 +4021,8 @@ export namespace Prisma {
     serviceName?: true
     amount?: true
     currency?: true
-    stripePaymentIntentId?: true
+    gatewayTransactionId?: true
+    paymentGateway?: true
     status?: true
     country?: true
     mockInterviewStatus?: true
@@ -4028,7 +4044,8 @@ export namespace Prisma {
     serviceName?: true
     amount?: true
     currency?: true
-    stripePaymentIntentId?: true
+    gatewayTransactionId?: true
+    paymentGateway?: true
     status?: true
     country?: true
     mockInterviewStatus?: true
@@ -4050,7 +4067,8 @@ export namespace Prisma {
     serviceName?: true
     amount?: true
     currency?: true
-    stripePaymentIntentId?: true
+    gatewayTransactionId?: true
+    paymentGateway?: true
     status?: true
     country?: true
     mockInterviewStatus?: true
@@ -4159,7 +4177,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway: $Enums.PaymentGateway
     status: string
     country: string | null
     mockInterviewStatus: string | null
@@ -4200,7 +4219,8 @@ export namespace Prisma {
     serviceName?: boolean
     amount?: boolean
     currency?: boolean
-    stripePaymentIntentId?: boolean
+    gatewayTransactionId?: boolean
+    paymentGateway?: boolean
     status?: boolean
     country?: boolean
     mockInterviewStatus?: boolean
@@ -4223,7 +4243,8 @@ export namespace Prisma {
     serviceName?: boolean
     amount?: boolean
     currency?: boolean
-    stripePaymentIntentId?: boolean
+    gatewayTransactionId?: boolean
+    paymentGateway?: boolean
     status?: boolean
     country?: boolean
     mockInterviewStatus?: boolean
@@ -4245,7 +4266,8 @@ export namespace Prisma {
     serviceName?: boolean
     amount?: boolean
     currency?: boolean
-    stripePaymentIntentId?: boolean
+    gatewayTransactionId?: boolean
+    paymentGateway?: boolean
     status?: boolean
     country?: boolean
     mockInterviewStatus?: boolean
@@ -4277,7 +4299,8 @@ export namespace Prisma {
       serviceName: string
       amount: number
       currency: string
-      stripePaymentIntentId: string
+      gatewayTransactionId: string
+      paymentGateway: $Enums.PaymentGateway
       status: string
       country: string | null
       mockInterviewStatus: string | null
@@ -4690,7 +4713,8 @@ export namespace Prisma {
     readonly serviceName: FieldRef<"Purchase", 'String'>
     readonly amount: FieldRef<"Purchase", 'Float'>
     readonly currency: FieldRef<"Purchase", 'String'>
-    readonly stripePaymentIntentId: FieldRef<"Purchase", 'String'>
+    readonly gatewayTransactionId: FieldRef<"Purchase", 'String'>
+    readonly paymentGateway: FieldRef<"Purchase", 'PaymentGateway'>
     readonly status: FieldRef<"Purchase", 'String'>
     readonly country: FieldRef<"Purchase", 'String'>
     readonly mockInterviewStatus: FieldRef<"Purchase", 'String'>
@@ -12845,7 +12869,8 @@ export namespace Prisma {
     serviceName: 'serviceName',
     amount: 'amount',
     currency: 'currency',
-    stripePaymentIntentId: 'stripePaymentIntentId',
+    gatewayTransactionId: 'gatewayTransactionId',
+    paymentGateway: 'paymentGateway',
     status: 'status',
     country: 'country',
     mockInterviewStatus: 'mockInterviewStatus',
@@ -13082,6 +13107,20 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PaymentGateway'
+   */
+  export type EnumPaymentGatewayFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentGateway'>
+    
+
+
+  /**
+   * Reference to a field of type 'PaymentGateway[]'
+   */
+  export type ListEnumPaymentGatewayFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentGateway[]'>
     
 
 
@@ -13436,7 +13475,8 @@ export namespace Prisma {
     serviceName?: StringFilter<"Purchase"> | string
     amount?: FloatFilter<"Purchase"> | number
     currency?: StringFilter<"Purchase"> | string
-    stripePaymentIntentId?: StringFilter<"Purchase"> | string
+    gatewayTransactionId?: StringFilter<"Purchase"> | string
+    paymentGateway?: EnumPaymentGatewayFilter<"Purchase"> | $Enums.PaymentGateway
     status?: StringFilter<"Purchase"> | string
     country?: StringNullableFilter<"Purchase"> | string | null
     mockInterviewStatus?: StringNullableFilter<"Purchase"> | string | null
@@ -13459,7 +13499,8 @@ export namespace Prisma {
     serviceName?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
-    stripePaymentIntentId?: SortOrder
+    gatewayTransactionId?: SortOrder
+    paymentGateway?: SortOrder
     status?: SortOrder
     country?: SortOrderInput | SortOrder
     mockInterviewStatus?: SortOrderInput | SortOrder
@@ -13476,7 +13517,7 @@ export namespace Prisma {
 
   export type PurchaseWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    stripePaymentIntentId?: string
+    gatewayTransactionId?: string
     AND?: PurchaseWhereInput | PurchaseWhereInput[]
     OR?: PurchaseWhereInput[]
     NOT?: PurchaseWhereInput | PurchaseWhereInput[]
@@ -13486,6 +13527,7 @@ export namespace Prisma {
     serviceName?: StringFilter<"Purchase"> | string
     amount?: FloatFilter<"Purchase"> | number
     currency?: StringFilter<"Purchase"> | string
+    paymentGateway?: EnumPaymentGatewayFilter<"Purchase"> | $Enums.PaymentGateway
     status?: StringFilter<"Purchase"> | string
     country?: StringNullableFilter<"Purchase"> | string | null
     mockInterviewStatus?: StringNullableFilter<"Purchase"> | string | null
@@ -13498,7 +13540,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Purchase"> | Date | string
     updatedAt?: DateTimeFilter<"Purchase"> | Date | string
     application?: XOR<CandidateApplicationNullableRelationFilter, CandidateApplicationWhereInput> | null
-  }, "id" | "stripePaymentIntentId">
+  }, "id" | "gatewayTransactionId">
 
   export type PurchaseOrderByWithAggregationInput = {
     id?: SortOrder
@@ -13508,7 +13550,8 @@ export namespace Prisma {
     serviceName?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
-    stripePaymentIntentId?: SortOrder
+    gatewayTransactionId?: SortOrder
+    paymentGateway?: SortOrder
     status?: SortOrder
     country?: SortOrderInput | SortOrder
     mockInterviewStatus?: SortOrderInput | SortOrder
@@ -13538,7 +13581,8 @@ export namespace Prisma {
     serviceName?: StringWithAggregatesFilter<"Purchase"> | string
     amount?: FloatWithAggregatesFilter<"Purchase"> | number
     currency?: StringWithAggregatesFilter<"Purchase"> | string
-    stripePaymentIntentId?: StringWithAggregatesFilter<"Purchase"> | string
+    gatewayTransactionId?: StringWithAggregatesFilter<"Purchase"> | string
+    paymentGateway?: EnumPaymentGatewayWithAggregatesFilter<"Purchase"> | $Enums.PaymentGateway
     status?: StringWithAggregatesFilter<"Purchase"> | string
     country?: StringNullableWithAggregatesFilter<"Purchase"> | string | null
     mockInterviewStatus?: StringNullableWithAggregatesFilter<"Purchase"> | string | null
@@ -14502,7 +14546,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency?: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway?: $Enums.PaymentGateway
     status: string
     country?: string | null
     mockInterviewStatus?: string | null
@@ -14525,7 +14570,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency?: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway?: $Enums.PaymentGateway
     status: string
     country?: string | null
     mockInterviewStatus?: string | null
@@ -14548,7 +14594,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14571,7 +14618,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14594,7 +14642,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency?: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway?: $Enums.PaymentGateway
     status: string
     country?: string | null
     mockInterviewStatus?: string | null
@@ -14616,7 +14665,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14638,7 +14688,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15600,6 +15651,13 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type EnumPaymentGatewayFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentGateway | EnumPaymentGatewayFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentGatewayFilter<$PrismaModel> | $Enums.PaymentGateway
+  }
+
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -15624,7 +15682,8 @@ export namespace Prisma {
     serviceName?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
-    stripePaymentIntentId?: SortOrder
+    gatewayTransactionId?: SortOrder
+    paymentGateway?: SortOrder
     status?: SortOrder
     country?: SortOrder
     mockInterviewStatus?: SortOrder
@@ -15650,7 +15709,8 @@ export namespace Prisma {
     serviceName?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
-    stripePaymentIntentId?: SortOrder
+    gatewayTransactionId?: SortOrder
+    paymentGateway?: SortOrder
     status?: SortOrder
     country?: SortOrder
     mockInterviewStatus?: SortOrder
@@ -15672,7 +15732,8 @@ export namespace Prisma {
     serviceName?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
-    stripePaymentIntentId?: SortOrder
+    gatewayTransactionId?: SortOrder
+    paymentGateway?: SortOrder
     status?: SortOrder
     country?: SortOrder
     mockInterviewStatus?: SortOrder
@@ -15704,6 +15765,16 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type EnumPaymentGatewayWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentGateway | EnumPaymentGatewayFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentGatewayWithAggregatesFilter<$PrismaModel> | $Enums.PaymentGateway
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPaymentGatewayFilter<$PrismaModel>
+    _max?: NestedEnumPaymentGatewayFilter<$PrismaModel>
   }
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -16336,6 +16407,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type EnumPaymentGatewayFieldUpdateOperationsInput = {
+    set?: $Enums.PaymentGateway
+  }
+
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
   }
@@ -16684,6 +16759,13 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedEnumPaymentGatewayFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentGateway | EnumPaymentGatewayFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentGatewayFilter<$PrismaModel> | $Enums.PaymentGateway
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -16709,6 +16791,16 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPaymentGatewayWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentGateway | EnumPaymentGatewayFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentGateway[] | ListEnumPaymentGatewayFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentGatewayWithAggregatesFilter<$PrismaModel> | $Enums.PaymentGateway
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPaymentGatewayFilter<$PrismaModel>
+    _max?: NestedEnumPaymentGatewayFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -17259,7 +17351,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency?: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway?: $Enums.PaymentGateway
     status: string
     country?: string | null
     mockInterviewStatus?: string | null
@@ -17281,7 +17374,8 @@ export namespace Prisma {
     serviceName: string
     amount: number
     currency?: string
-    stripePaymentIntentId: string
+    gatewayTransactionId: string
+    paymentGateway?: $Enums.PaymentGateway
     status: string
     country?: string | null
     mockInterviewStatus?: string | null
@@ -17405,7 +17499,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17427,7 +17522,8 @@ export namespace Prisma {
     serviceName?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
-    stripePaymentIntentId?: StringFieldUpdateOperationsInput | string
+    gatewayTransactionId?: StringFieldUpdateOperationsInput | string
+    paymentGateway?: EnumPaymentGatewayFieldUpdateOperationsInput | $Enums.PaymentGateway
     status?: StringFieldUpdateOperationsInput | string
     country?: NullableStringFieldUpdateOperationsInput | string | null
     mockInterviewStatus?: NullableStringFieldUpdateOperationsInput | string | null

@@ -140,47 +140,14 @@ function SuccessContent() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-7xl rounded-3xl border border-[#e6eefc] bg-white p-6 shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8 animate-pulse">
-        <div className="flex flex-col gap-5 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-slate-200" />
-              <div className="h-3 w-32 rounded-full bg-slate-200" />
-            </div>
-            <div className="h-8 w-72 rounded-xl bg-slate-200" />
-            <div className="h-4 w-[28rem] max-w-full rounded-full bg-slate-100" />
-          </div>
-          <div className="h-20 w-full max-w-sm rounded-2xl bg-slate-100" />
+      <div className="max-w-md w-full mx-4 overflow-hidden rounded-3xl border border-[#e6eefc] bg-white p-6 text-center shadow-[0_12px_40px_rgba(37,55,77,0.06)] sm:p-8 animate-pulse">
+        <div className="mb-6 flex justify-center">
+          <div className="h-20 w-20 rounded-full bg-slate-200" />
         </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_0.75fr]">
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-[#fbfbfd]">
-            <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-4">
-              <div className="h-10 w-10 rounded-xl bg-slate-200" />
-              <div className="space-y-2">
-                <div className="h-4 w-56 rounded-full bg-slate-200" />
-                <div className="h-3 w-64 rounded-full bg-slate-100" />
-              </div>
-            </div>
-            <div className="h-[860px] w-full bg-gradient-to-b from-slate-100 to-slate-200/70" />
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5">
-              <div className="h-5 w-40 rounded-full bg-slate-200" />
-              <div className="mt-4 space-y-3">
-                <div className="h-4 w-full rounded-full bg-slate-100" />
-                <div className="h-4 w-5/6 rounded-full bg-slate-100" />
-                <div className="h-4 w-4/6 rounded-full bg-slate-100" />
-                <div className="h-4 w-3/5 rounded-full bg-slate-100" />
-              </div>
-            </div>
-            <div className="rounded-3xl border border-slate-200 bg-[#fbfbfd] p-5">
-              <div className="h-4 w-56 rounded-full bg-slate-200" />
-              <div className="mt-3 h-12 w-full rounded-xl border border-slate-200 bg-white" />
-            </div>
-          </div>
-        </div>
+        <div className="mx-auto mb-3 h-8 w-3/4 rounded-xl bg-slate-200" />
+        <div className="mx-auto h-4 w-full rounded-full bg-slate-100 mb-2" />
+        <div className="mx-auto h-4 w-5/6 rounded-full bg-slate-100 mb-6" />
+        <div className="mx-auto h-12 w-48 rounded-2xl bg-slate-200" />
       </div>
     );
   }

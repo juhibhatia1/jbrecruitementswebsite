@@ -44,7 +44,7 @@ export default async function AdminAnalyticsPage() {
       serviceName: p.serviceName,
       amount: p.amount,
       currency: p.currency,
-      stripePaymentIntentId: p.stripePaymentIntentId,
+      gatewayTransactionId: p.gatewayTransactionId,
       status: p.status,
       country: p.country,
       mockInterviewStatus: p.mockInterviewStatus,

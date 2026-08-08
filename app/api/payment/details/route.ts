@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
     const purchaseTime = new Date(paymentIntent.created * 1000);
     const purchase = await prisma.purchase.findUnique({
-      where: { stripePaymentIntentId: paymentIntentId },
+      where: { gatewayTransactionId: paymentIntentId },
     });
 
     const meta = paymentIntent.metadata;

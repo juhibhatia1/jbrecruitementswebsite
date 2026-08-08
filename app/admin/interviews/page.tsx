@@ -34,7 +34,7 @@ type PurchaseRow = {
   deliveryDeadline: string | null;
   completionNotes: string | null;
   country: string | null;
-  stripePaymentIntentId: string;
+  gatewayTransactionId: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -175,6 +175,7 @@ export default async function AdminInterviewsPage() {
       deliveryDeadline: purchase.deliveryDeadline?.toISOString() || null,
       createdAt: purchase.createdAt.toISOString(),
       updatedAt: purchase.updatedAt.toISOString(),
+      gatewayTransactionId: purchase.gatewayTransactionId,
     };
 
     const key = purchase.candidateEmail.toLowerCase();

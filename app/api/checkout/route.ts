@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
 import { detectCurrencyFromRequest } from "@/lib/geo-utils";
 import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
-
-let stripe: Stripe | null = null;
-
-// Supported Stripe currency codes for each of our display currencies
-const STRIPE_CURRENCY_MAP: Record<Currency, string> = {
-  USD: "usd",
-  AED: "aed",
-  INR: "inr",
-};
+import { PaymentFactory } from "../../lib/payments/payment-factory";
+import crypto from "crypto";
 
 // Fallback USD-only pricing (legacy safety net)
 const SERVICE_PRICING_USD: Record<string, number> = {
@@ -32,19 +24,6 @@ const BUNDLE_DISCOUNT_PERCENT = 0.1;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
 const BUNDLE_EXCLUDED_SERVICE_NAMES = new Set(["AI Mock Interview"]);
 
-function getStripe() {
-  if (!stripe) {
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) {
-      throw new Error("STRIPE_SECRET_KEY is not configured on the server.");
-    }
-    stripe = new Stripe(key, {
-      apiVersion: "2026-05-27.dahlia" as any,
-    });
-  }
-  return stripe;
-}
-
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
@@ -57,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { candidateName, candidateEmail, candidatePhone } = body;
+    const { candidateName, candidateEmail, candidatePhone, paymentGateway = "STRIPE" } = body;
     // Optional interview metadata — only present when this checkout is for a mock interview
     const interviewMetadata = body.interviewMetadata as {
       templateId?: string;
@@ -133,18 +112,8 @@ export async function POST(request: Request) {
     // For DB storage, join multiple names with " + "
     const combinedServiceName = serviceNames.join(" + ");
 
-    let stripeClient;
-    try {
-      stripeClient = getStripe();
-    } catch (err: any) {
-      console.error(err.message);
-      return NextResponse.json(
-        { error: "Stripe integration is not properly configured on the server." },
-        { status: 500 },
-      );
-    }
-
-    const stripeCurrency = STRIPE_CURRENCY_MAP[currency];
+    const provider = PaymentFactory.getProvider(paymentGateway);
+    const purchaseId = crypto.randomUUID();
 
     let applicationId: string | undefined = undefined;
 
@@ -212,54 +181,56 @@ export async function POST(request: Request) {
       applicationId = application?.id;
     }
 
-    // Create Stripe PaymentIntent with server-computed total in the correct currency
-    const paymentIntent = await stripeClient.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // smallest unit (cents / paise / fils)
-      currency: stripeCurrency,
-      metadata: {
-        candidateName,
-        candidateEmail,
-        serviceName: combinedServiceName,
-        serviceCount: serviceNames.length.toString(),
-        amount: totalAmount.toString(),
-        bundleDiscount: bundleDiscount.toString(),
-        bundleEligibleServiceCount: bundleEligibleCount.toString(),
-        displayCurrency: currency,
-        // Interview-specific metadata (only set for mock interview purchases)
-        ...(interviewMetadata?.templateId && {
-          interviewTemplateId: interviewMetadata.templateId,
-          interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+    const metadataParams = {
+      candidateName,
+      candidateEmail,
+      serviceName: combinedServiceName,
+      serviceCount: serviceNames.length.toString(),
+      amount: totalAmount.toString(),
+      bundleDiscount: bundleDiscount.toString(),
+      bundleEligibleServiceCount: bundleEligibleCount.toString(),
+      displayCurrency: currency,
+      purchaseId,
+      ...(interviewMetadata?.templateId && {
+        interviewTemplateId: interviewMetadata.templateId,
+        interviewPreference: (interviewMetadata as any).interviewPreference || "AI",
+        linkedInUrl: interviewMetadata.linkedInUrl || "",
+        applicationId: applicationId || "",
+      }),
+      ...(!interviewMetadata?.templateId &&
+        interviewMetadata?.interviewPreference === "MANUAL" && {
+          interviewPreference: "MANUAL",
+          jobRole: interviewMetadata.jobRole || "",
+          yearsOfExperience: interviewMetadata.yearsOfExperience || "",
+          applicationLink: interviewMetadata.applicationLink || "",
+          interviewBrief: interviewMetadata.interviewBrief || "",
           linkedInUrl: interviewMetadata.linkedInUrl || "",
-          applicationId: applicationId || "",
         }),
-        ...(!interviewMetadata?.templateId &&
-          interviewMetadata?.interviewPreference === "MANUAL" && {
-            interviewPreference: "MANUAL",
-            jobRole: interviewMetadata.jobRole || "",
-            yearsOfExperience: interviewMetadata.yearsOfExperience || "",
-            applicationLink: interviewMetadata.applicationLink || "",
-            interviewBrief: interviewMetadata.interviewBrief || "",
-            linkedInUrl: interviewMetadata.linkedInUrl || "",
-          }),
-      },
-      payment_method_options: {
-        card: {
-          request_three_d_secure: "any",
-        },
-      },
-      receipt_email: candidateEmail,
+    };
+
+    // Create Order via PaymentFactory
+    const orderResult = await provider.createOrder({
+      amount: totalAmount,
+      currency: currency,
+      candidateName,
+      candidateEmail,
+      candidatePhone,
+      serviceName: combinedServiceName,
+      metadata: metadataParams,
     });
 
     // Save PENDING purchase record
     const purchase = await prisma.purchase.create({
       data: {
+        id: purchaseId,
         candidateName,
         candidateEmail,
         candidatePhone: candidatePhone || null,
         serviceName: combinedServiceName,
         amount: totalAmount,
         currency: currency,
-        stripePaymentIntentId: paymentIntent.id,
+        gatewayTransactionId: orderResult.gatewayTransactionId,
+        paymentGateway: paymentGateway.toUpperCase(),
         status: "PENDING",
       },
     });
@@ -272,11 +243,13 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
+      clientSecret: orderResult.clientSecret,
+      paymentUrl: orderResult.paymentUrl,
+      gatewayMetadata: orderResult.metadata,
       purchaseId: purchase.id,
     });
   } catch (error: any) {
-    console.error("Error creating Stripe PaymentIntent:", error);
+    console.error("Error creating Payment Order:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
       { status: 500 },
