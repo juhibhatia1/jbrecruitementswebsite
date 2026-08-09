@@ -71,7 +71,7 @@ export default function RootLayout({
         >
         <GoogleAnalytics />
         <Suspense fallback={null}>
-          <Analytics />
+          <Analytics mode="production" />
         </Suspense>
         {/* <SmoothScroll /> */}
         <Toaster

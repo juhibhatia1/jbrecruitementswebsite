@@ -1,6 +1,7 @@
 import { getMailerTransporter } from "./mailer";
 import { generateReceiptPdf } from "./pdfGenerator";
 import { escapeHtml } from "./security";
+import { buildAppUrl } from "./app-url";
 import path from "path";
 
 interface PurchaseData {
@@ -57,24 +58,35 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
 
   const formattedAmount = formatCurrency(purchase.amount, purchase.currency);
 
+  const includesMockInterview = purchase.serviceName.toLowerCase().includes("mock interview") ||
+                                purchase.serviceName.toLowerCase().includes("ai mock interview");
+
+  const setupUrl = buildAppUrl(`/payment/success?payment_intent=${purchase.id}`);
+
+  let candidateText = `Hi ${purchase.candidateName},
+
+Thank you for your purchase of "${formattedServices}"!
+
+We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.`;
+
+  if (includesMockInterview) {
+    candidateText += `\n\nSince your purchase includes an AI Mock Interview, please visit the link below to upload your resume and set it up whenever you are ready:\n${setupUrl}`;
+  } else {
+    candidateText += `\n\nOur team will contact you shortly to coordinate the next steps and get started with your service.`;
+  }
+
+  candidateText += `\n\nHave questions? You can reply directly to this email
+or reach us on WhatsApp at https://wa.me/971585819271 (+971 58 581 9271) if you have any immediate questions.
+
+Best regards,
+Team JB Recruitment Solutions`;
+
   // 1. Candidate Email Options
   const candidateMailOptions = {
     from: `"JB Recruitment Solutions" <${user}>`,
     to: purchase.candidateEmail,
     subject: `Your Receipt for ${formattedServices} - JB Recruitment Solutions`,
-    text: `Hi ${purchase.candidateName},
-
-Thank you for your purchase of "${formattedServices}"!
-
-We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.
-
-Our team will contact you shortly to coordinate the next steps and get started with your service.
-
-Have questions? You can reply directly to this email
-or reach us on WhatsApp at https://wa.me/971585819271 (+971 58 581 9271) if you have any immediate questions.
-
-Best regards,
-Team JB Recruitment Solutions`,
+    text: candidateText,
     html: `
       <div style="font-family: 'Raleway', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; color: #2d3748; line-height: 1.6;">
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #edf2f7;">
@@ -105,7 +117,15 @@ Team JB Recruitment Solutions`,
 
           <p>We've attached your official PDF receipt to this email. Please keep it for your records.</p>
           
-          <p>Our team will contact you shortly to coordinate the next steps and get started with your service.</p>
+          ${includesMockInterview ? `
+            <div style="background-color: #f4f3ff; border: 1px solid #dcd9ff; padding: 18px; border-radius: 8px; margin: 20px 0; text-align: center;">
+              <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #5a58ab; font-weight: bold;">Set up your AI Mock Interview</h4>
+              <p style="margin-bottom: 15px; font-size: 13px; color: #4a5568;">You have a pending mock interview slot. Upload your resume and job description to get started:</p>
+              <a href="${setupUrl}" style="display: inline-block; background-color: #5a58ab; color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 14px; box-shadow: 0 4px 10px rgba(90, 88, 171, 0.2);">Configure Interview Now</a>
+            </div>
+          ` : `
+            <p>Our team will contact you shortly to coordinate the next steps and get started with your service.</p>
+          `}
           
           <p style="font-size: 14px; color: #718096; text-align: center;">Have questions? You can reply directly to this email<br />or contact us on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>

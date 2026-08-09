@@ -10,7 +10,6 @@ import {
 } from "@stripe/react-stripe-js";
 import { IoClose, IoAlertCircle, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
-import { PaymentSelector, type PaymentGatewayOption } from "../payments/payment-selector";
 import { PayUCheckout } from "../payments/payu-checkout";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 const BUNDLE_DISCOUNT_PERCENT = 10;
@@ -38,7 +37,8 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const [payuData, setPayuData] = useState<{ paymentUrl: string; metadata: Record<string, string> } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<PaymentGatewayOption>("STRIPE");
+  const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
+  const selectedGateway = isIndianUser ? "PAYU" : "STRIPE";
   const { lenis } = useLenis();
   
   const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
@@ -61,7 +61,6 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
       setPayuData(null);
       setError(null);
       setLoading(false);
-      setSelectedGateway("STRIPE");
     }
   }, [isOpen, services]);
 
@@ -245,11 +244,6 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
               </div>
 
               <div className="pt-2">
-                <PaymentSelector
-                  selectedGateway={selectedGateway}
-                  onChange={setSelectedGateway}
-                  disabled={loading}
-                />
               </div>
 
               {/* Order Summary */}

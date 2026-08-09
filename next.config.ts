@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
+  allowedDevOrigins: ["y7agtgrqaux6diwpwhqdxnr2pi.srv.us"],
   experimental: {
     optimizePackageImports: [
       "react-icons",
@@ -73,7 +74,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config: any) => {
     config.module.exprContextCritical = false;
     return config;
   },

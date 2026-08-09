@@ -9,7 +9,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { PaymentSelector, type PaymentGatewayOption } from "../../components/payments/payment-selector";
 import { PayUCheckout } from "../../components/payments/payu-checkout";
 import {
   IoAlertCircle,
@@ -26,7 +25,7 @@ import {
   IoCardOutline,
   IoQrCodeOutline,
 } from "react-icons/io5";
-import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import { detectCurrencyFromBrowser, getCachedCurrency, setCachedCurrency } from "@/lib/geo-utils";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -245,7 +244,8 @@ export default function CustomJdMockInterviewPage() {
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
-  const [paymentGateway, setPaymentGateway] = useState<PaymentGatewayOption>("PAYU");
+  const isIndianUser = currency === "INR";
+  const paymentGateway = isIndianUser ? "PAYU" : "STRIPE";
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [gatewayMetadata, setGatewayMetadata] = useState<Record<string, string> | null>(null);
   const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
@@ -307,20 +307,21 @@ export default function CustomJdMockInterviewPage() {
 
   // Location currency detection using local /api/geo first, then ipapi.co
   useEffect(() => {
-    const GEO_CACHE_KEY = "jb_currency_v3";
     const browserCurrency = detectCurrencyFromBrowser();
-    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as
-      | "USD"
-      | "AED"
-      | "INR"
-      | null;
+    const cached = getCachedCurrency();
+
+    // Clean up old plain text keys
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("jb_currency_v3");
+    }
+
     if (cached && ["AED", "INR"].includes(cached)) {
       setCurrency(cached);
       return;
     }
     if (browserCurrency !== "USD") {
       setCurrency(browserCurrency);
-      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      setCachedCurrency(browserCurrency);
       return;
     }
 
@@ -341,7 +342,7 @@ export default function CustomJdMockInterviewPage() {
       .then((data) => {
         if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
           setCurrency(data.currency);
-          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+          setCachedCurrency(data.currency);
         } else {
           throw new Error("Invalid currency returned from local API");
         }
@@ -367,7 +368,7 @@ export default function CustomJdMockInterviewPage() {
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
             setCurrency(detected);
-            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+            setCachedCurrency(detected);
           })
           .catch(() => {
             setCurrency("USD");
@@ -927,14 +928,6 @@ export default function CustomJdMockInterviewPage() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-100">
-                  <PaymentSelector
-                    selectedGateway={paymentGateway}
-                    onChange={setPaymentGateway}
-                    disabled={submitting || generating}
-                  />
                 </div>
 
                 {/* Submit button */}

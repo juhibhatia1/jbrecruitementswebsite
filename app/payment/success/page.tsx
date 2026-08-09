@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { IoArrowBack, IoCalendarOutline, IoCheckmarkCircle } from "react-icons/io5";
+import { AiSetupForm } from "./ai-setup-form";
 
 interface AiDetails {
   candidateName: string;
@@ -55,6 +56,9 @@ function SuccessContent() {
   const [bookingUrl, setBookingUrl] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<string>("succeeded");
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
+  const [needsAiSetup, setNeedsAiSetup] = useState(false);
+  const [purchaseId, setPurchaseId] = useState("");
+  const [candidateName, setCandidateName] = useState("");
 
   useEffect(() => {
     if (!paymentIntent) {
@@ -87,11 +91,17 @@ function SuccessContent() {
             setBookingComplete(true);
           }
         } else if (data.isAi) {
-          setAiDetails({
-            candidateName: data.candidateName || "Candidate",
-            candidateEmail: data.candidateEmail || "",
-            interviewLink: data.interviewLink || "",
-          });
+          if (data.interviewLink === null) {
+            setNeedsAiSetup(true);
+            setPurchaseId(data.purchaseId || "");
+            setCandidateName(data.candidateName || "");
+          } else {
+            setAiDetails({
+              candidateName: data.candidateName || "Candidate",
+              candidateEmail: data.candidateEmail || "",
+              interviewLink: data.interviewLink || "",
+            });
+          }
         }
       })
       .catch((err) => console.error("Error fetching details:", err))
@@ -149,6 +159,24 @@ function SuccessContent() {
         <div className="mx-auto h-4 w-5/6 rounded-full bg-slate-100 mb-6" />
         <div className="mx-auto h-12 w-48 rounded-2xl bg-slate-200" />
       </div>
+    );
+  }
+
+  if (needsAiSetup) {
+    return (
+      <AiSetupForm
+        purchaseId={purchaseId}
+        candidateName={candidateName}
+        candidateEmail={customerEmail || ""}
+        onComplete={(link) => {
+          setNeedsAiSetup(false);
+          setAiDetails({
+            candidateName: candidateName || "Candidate",
+            candidateEmail: customerEmail || "",
+            interviewLink: link,
+          });
+        }}
+      />
     );
   }
 
@@ -345,7 +373,7 @@ function SuccessContent() {
           className="group w-full flex items-center justify-center gap-2 rounded-xl bg-[#5a58ab] px-4 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#4a489b] hover:shadow-lg sm:text-base"
         >
           <IoArrowBack className="h-5 w-5 transform transition-transform duration-300 group-hover:-translate-x-1" />
-          Back to Career Guidance Page
+          Back to Job Seekers Page
         </Link>
       </div>
 

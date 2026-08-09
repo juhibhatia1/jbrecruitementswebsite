@@ -230,8 +230,12 @@ export async function POST(request: Request) {
         amount: totalAmount,
         currency: currency,
         gatewayTransactionId: orderResult.gatewayTransactionId,
-        paymentGateway: paymentGateway.toUpperCase(),
+        paymentGateway: paymentGateway.toUpperCase() as any,
         status: "PENDING",
+        // Store metadata in completionNotes for non-Stripe gateways (like PayU) to recover checkout context
+        ...(paymentGateway !== "STRIPE" && {
+          completionNotes: JSON.stringify(metadataParams),
+        }),
       },
     });
 
