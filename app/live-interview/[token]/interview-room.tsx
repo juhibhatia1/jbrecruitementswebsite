@@ -1127,12 +1127,24 @@ export default function InterviewRoom({ token }: { token: string }) {
           </div>
 
           {/* Status text */}
-          <p className="text-center text-xs text-slate-500 min-h-[18px]">{setupStatus}</p>
+          <p className="text-center text-xs text-slate-500 min-h-[18px] mb-4">{setupStatus}</p>
+
+          <div className="rounded-lg bg-blue-50/50 p-3.5 border border-blue-100/50 mb-2">
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-blue-800 mb-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Quick Reminder
+            </h4>
+            <p className="text-[11px] text-blue-700 leading-relaxed">
+              This is a live conversational AI interview. For the best experience, please take the interview on a <strong>laptop or desktop</strong>, use <strong>headphones</strong>, and ensure you are in a <strong>quiet environment</strong> to avoid background noise interruptions.
+            </p>
+          </div>
 
           {setupStep === "mic-test" ? (
             <button
               onClick={() => micTestResolveRef.current?.()}
-              className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645]"
+              className="mt-4 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645]"
             >
               {micTestPassed ? "Continue →" : "Skip test"}
             </button>
@@ -1140,7 +1152,7 @@ export default function InterviewRoom({ token }: { token: string }) {
             <button
               onClick={() => void beginInterview()}
               disabled={isStarting}
-              className="mt-6 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-4 w-full rounded-xl bg-[#252e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d3645] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isStarting ? "Starting…" : "Start Interview"}
             </button>

@@ -262,6 +262,8 @@ Duration: approximately ${data.durationMinutes} minutes
 ${data.interviewDescription ? `\nWhat to expect:\n${data.interviewDescription}` : ""}
 
 Tips before you start:
+- Take the interview on a laptop or desktop computer (mobile devices are not recommended).
+- Use headphones to prevent audio echo.
 - Use a quiet environment with minimal background noise.
 - Ensure your microphone is working.
 - Use Chrome or Edge for best compatibility.
@@ -319,6 +321,14 @@ Team JB Recruitment Solutions`;
           </div>
           <div style="text-align: center; margin: 28px 0;">
             <a href="${data.interviewLink}" style="background-color: #5a58ab; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">Start Your Interview</a>
+          </div>
+          <div style="background-color: #eef2ff; border-left: 4px solid #5a58ab; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <h4 style="margin: 0 0 10px 0; color: #4338ca; font-size: 14px;">Setup Requirements for Best Experience</h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #4f46e5; line-height: 1.5;">
+              <li>Take the interview on a <strong>laptop or desktop computer</strong> (mobile devices are not recommended).</li>
+              <li>Use <strong>headphones</strong> to prevent audio echo.</li>
+              <li>Ensure you are in a <strong>quiet environment</strong> with a stable internet connection.</li>
+            </ul>
           </div>
           <p style="font-size: 13px; color: #718096;">This link expires in <strong>7 days</strong>. Use Chrome or Edge for the best experience. Ensure your microphone is working before starting.<br />For support, contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>

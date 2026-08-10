@@ -235,7 +235,10 @@ export class OpenAIWebRtcInterviewTransport {
   // Audio tail protection: WebRTC audio keeps playing after response.done fires.
   // During this window, VAD speech_started events are echo — clear the buffer.
   private audioTailProtectionUntilMs = 0;
-  private static readonly AUDIO_TAIL_FALLBACK_MS = 3000;
+  // Reduced from 3000ms → 1500ms: semantic_vad handles turn detection at the language
+  // level, so we no longer need 3s of echo protection. 1.5s stops the system from
+  // discarding the candidate's first words when they respond promptly after AI finishes.
+  private static readonly AUDIO_TAIL_FALLBACK_MS = 1500;
 
   // Stall watchdog - detects truly stuck AI (not candidate thinking pauses)
   private lastEventAtMs = 0;
@@ -384,11 +387,13 @@ export class OpenAIWebRtcInterviewTransport {
           readString(message.error?.message) ||
           readString(message.message) ||
           JSON.stringify(message);
-        // Don't treat "Cancellation failed" as fatal — it just means no active response
-        if (!errMsg.toLowerCase().includes("cancellation")) {
+        // Don't treat "Cancellation failed" as fatal — it just means no active response.
+        // Don't treat "is already shorter than" as fatal — it's an internal VAD timing mismatch when clearing buffers.
+        const msgLower = errMsg.toLowerCase();
+        if (!msgLower.includes("cancellation") && !msgLower.includes("is already shorter than")) {
           this.callbacks.onError(errMsg);
         } else {
-          console.info("[WebRTC] Non-fatal cancellation error:", errMsg);
+          console.info("[WebRTC] Non-fatal API error:", errMsg);
         }
       }
 
@@ -442,8 +447,9 @@ export class OpenAIWebRtcInterviewTransport {
         // Previous fixed 500ms was wrong — transcript.done fires while audio still plays
         // 1-3s more. This unmutes AFTER audio actually finishes so AEC has nothing to cancel.
         // transcript.done fires after all RTP audio has been sent; only ~200-400ms of
-        // WebRTC buffer tail remains. Use actual playbackCursor remainder + 500ms tail guard
-        // instead of total-text-length estimate, which was keeping mic muted 10-14s.
+        // WebRTC buffer tail remains. Use actual playbackCursor remainder + 300ms tail guard
+        // (was +500ms). Tightened because semantic_vad won't commit echo as a turn, so we
+        // can let the candidate's mic activate sooner after AI speech ends.
         let unmuteDelayMs: number;
         if (this.playbackCtx) {
           const remainingAudioMs = Math.max(0, (this.playbackCursor - this.playbackCtx.currentTime) * 1000);
@@ -1136,7 +1142,7 @@ Senior engineer running a mock interview — you are both evaluating the candida
 
 Speak at a measured, unhurried pace — slightly slower than normal conversation speed. Use short, clearly separated sentences rather than long run-on responses. Never rush through a question; give the candidate time to process each word before they need to respond.
 
-Between your acknowledgment and your next question, insert a clear, deliberate pause — a full beat of silence, as if taking a breath — before you begin the question. Do NOT run the acknowledgment straight into the question as one continuous breath. End the acknowledgment, pause, then ask the question at a calm pace. The candidate should clearly hear the acknowledgment and the question as two separate moments, not one rushed sentence.
+Between your acknowledgment and your next question, insert a clear, deliberate pause — a full 2-second beat of silence, as if you are taking a breath and collecting your thoughts — before you begin the question. Do NOT run the acknowledgment straight into the question as one continuous breath. End the acknowledgment. Pause for two seconds. Then ask the question at a calm, measured pace. The candidate should clearly hear the acknowledgment and the question as two distinct moments separated by a natural pause, not one rushed sentence. This pause is non-negotiable — every single response must have it.
 
 # Language
 
@@ -1234,13 +1240,17 @@ Never ask a question you have already asked in this interview, even rephrased. E
 Never ask "Do you have any questions for me?" or "Do you have any questions about the role?" until you receive TIME_SIGNAL:DURATION_COMPLETE. If you feel the urge to close early, ask another section question instead.
 
 ## Closing question handling (FINAL_CLOSING_WINDOW only)
-Once you have asked "Do you have any questions for me?" (only after TIME_SIGNAL:DURATION_COMPLETE), handle the candidate's response as a real interviewer would:
+Once TIME_SIGNAL:DURATION_COMPLETE arrives, your ONLY job is to wind down naturally — do NOT ask any more technical or theoretical questions. The closing transition should feel conversational and light, like a real senior engineer ending a coffee chat, not a quiz.
 
-- If they ask a genuine question about the role, company, process, team, or career: answer it properly. Give a thoughtful, relevant response — at least 2–4 sentences. Do NOT deflect with "that's a great question, I'll note that" and move on. Actually answer it. If they ask a follow-up, answer that too.
-- If they say they have no questions or give a short close ("no thanks", "I'm good", "that's all"): acknowledge it warmly and move to closing remarks.
-- After all their questions are answered: thank them, give a brief verbal summary of the topics covered, wish them well, then call finalize_interview_report.
+Sequence:
+1. Finish acknowledging the candidate's most recent answer (1-2 sentences max).
+2. Transition naturally: "That covers our questions for today. Before we wrap up — do you have any questions for me about the role, team, or anything else?" (or natural variations — never use the exact same phrasing twice).
+3. Handle their response as a real interviewer would:
+   - If they ask a genuine question about the role, company, process, team, or career: answer it properly. Give a thoughtful, relevant response — at least 2–4 sentences. Do NOT deflect with "that's a great question, I'll note that" and move on. Actually answer it. If they ask a follow-up, answer that too.
+   - If they say they have no questions or give a short close ("no thanks", "I'm good", "that's all"): acknowledge it warmly and move to closing remarks.
+4. After all their questions are answered: thank them sincerely, give a brief verbal summary of the topics covered (2-3 sentences), wish them well, then call finalize_interview_report.
 
-This is a ONE-WAY gate — do NOT return to technical questions after asking the closing question under any circumstances.
+CRITICAL: The closing question ("do you have any questions for me?") is the LAST thing you ask. Do NOT sneak in a final technical question before it — no "one last quick question" or "before we wrap up, can you explain X". The interview is OVER once duration-complete fires. This is a ONE-WAY gate — do NOT return to technical questions after asking the closing question under any circumstances.
 
 ## Section timing — HARD CONSTRAINT
 
@@ -1309,18 +1319,18 @@ ${systemInstructions}`;
           input: {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
-              type: "server_vad",
-              // threshold 0.65: raised from API default 0.5 — keyboard clicks, ambient noise,
-              // and breathing no longer trigger speech detection mid-answer. Normal speech volume
-              // still clears this easily.
-              // silence_duration_ms: 2500ms (was 1500). Candidates giving long, unscripted answers
-              // naturally pause 1.5–2.5s to think mid-sentence. At 1500ms those pauses were being
-              // read as end-of-turn, so the AI cut in with an acknowledgment + next question while
-              // the candidate was still answering. 2500ms tolerates natural thinking pauses while
-              // still responding promptly once they are genuinely done. (If long-answer interruption
-              // ever recurs, the stronger fix is turn_detection.type = "semantic_vad", eagerness "low".)
-              threshold: 0.65,
-              silence_duration_ms: 2500,
+              // semantic_vad with eagerness "low": understands turn boundaries at the
+              // language/semantic level rather than relying on a fixed silence timer.
+              // Directly addresses three customer complaints:
+              //  1. AI voice cutoff: noise/echo no longer triggers speech_started falsely
+              //  2. Mid-answer interruption: natural 2-3s pauses within long answers are
+              //     not treated as end-of-turn because the semantic model detects the
+              //     sentence isn't complete
+              //  3. Choppy transitions: candidate's first words after AI speech are no
+              //     longer discarded as echo since semantic_vad won't commit echo as a turn
+              // Previously: server_vad with threshold 0.65, silence_duration_ms 2500
+              type: "semantic_vad",
+              eagerness: "low",
             },
             transcription: { model: "whisper-1" },
           },
@@ -1537,7 +1547,7 @@ ${systemInstructions}`;
       // After duration is complete, instruct the AI to wrap up
       let instruction: string;
       if (durationDone) {
-        instruction = "DURATION IS COMPLETE. Ask at most 1-2 more questions, then ask the candidate if they have any questions about the role/company, and call finalize_interview_report. Do NOT continue with new topics.";
+        instruction = "DURATION IS COMPLETE. Do NOT ask any more technical or theoretical questions. Wrap up your current acknowledgment naturally, then transition directly to: 'That covers our questions for today. Before we wrap up — do you have any questions for me about the role, team, or anything else?' Handle their response naturally, then call finalize_interview_report. No more quiz questions — the interview is winding down.";
       } else if (behindPace) {
         instruction = `You are slightly behind question pace — keep your acknowledgment to 1–2 sentences and move to the next question. That said, if the candidate's last answer opened an interesting thread worth one follow-up, pursue it briefly before moving on. Quality and natural flow matter more than hitting a number. REMINDER: Use show_reference_card for code snippets, MCQs, and visual questions.${sectionGuidance?.instruction ? ` ${sectionGuidance.instruction}` : ""}`;
       } else {

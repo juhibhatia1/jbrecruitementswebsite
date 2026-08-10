@@ -182,6 +182,20 @@ export default async function InterviewLobbyPage({ params }: Props) {
           <p className="text-sm text-gray-500 mb-5">
             Hi <strong>{application.candidateName}</strong> — when you're ready, click below to enter the interview room.
           </p>
+          <div className="mx-auto mb-6 max-w-sm rounded-lg bg-blue-50 p-4 text-left border border-blue-100">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-blue-800 mb-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Interview Tips
+            </h4>
+            <ul className="text-xs text-blue-700 space-y-1.5 list-disc list-inside">
+              <li>This is a live, conversational AI interview.</li>
+              <li>Please use a <strong>quiet environment</strong> to avoid background noise interruptions.</li>
+              <li>For the best experience, we strongly recommend using <strong>headphones</strong>.</li>
+              <li>Take the interview on a <strong>laptop or desktop computer</strong> rather than a mobile device.</li>
+            </ul>
+          </div>
           <Link
             href={`/live-interview/${token}`}
             className="inline-block rounded-xl bg-[#5a58ab] px-8 py-3.5 text-base font-semibold text-white transition hover:bg-[#4a49a0]"
