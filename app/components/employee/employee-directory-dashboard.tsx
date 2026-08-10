@@ -44,7 +44,7 @@ interface Purchase {
   serviceName: string;
   amount: number;
   currency: string;
-  stripePaymentIntentId: string;
+  gatewayTransactionId: string;
   status: string;
   country: string | null;
   deliveryStatus: string; // "PENDING", "COMPLETED"
@@ -1043,12 +1043,12 @@ export default function EmployeeDirectoryDashboard({
                           <p className="font-mono text-[10px] text-slate-400 break-all mt-1 border-t border-slate-200/50 pt-1">
                             Ref:{" "}
                             <a
-                              href={`https://dashboard.stripe.com/payments/${p.stripePaymentIntentId}`}
+                              href={`https://dashboard.stripe.com/payments/${p.gatewayTransactionId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[#5a58ab] hover:underline font-semibold"
                             >
-                              {p.stripePaymentIntentId}
+                              {p.gatewayTransactionId}
                             </a>
                           </p>
 

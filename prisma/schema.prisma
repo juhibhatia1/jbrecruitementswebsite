@@ -12,6 +12,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PaymentGateway {
+  STRIPE
+  PAYU
+}
+
 model ContactSubmission {
   id        String   @id @default(cuid())
   name      String
@@ -69,7 +74,8 @@ model Purchase {
   serviceName           String
   amount                Float
   currency              String   @default("USD")
-  stripePaymentIntentId String   @unique
+  gatewayTransactionId  String   @unique @map("stripePaymentIntentId")
+  paymentGateway        PaymentGateway @default(STRIPE)
   status                String   // "PENDING", "COMPLETED", "FAILED"
   country               String?
   mockInterviewStatus   String?  // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"

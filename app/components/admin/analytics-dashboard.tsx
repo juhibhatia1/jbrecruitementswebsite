@@ -35,7 +35,7 @@ interface PurchaseData {
   serviceName: string;
   amount: number;
   currency: string;
-  stripePaymentIntentId: string;
+  gatewayTransactionId: string;
   status: string;
   country: string | null;
   mockInterviewStatus: string | null;
@@ -175,11 +175,11 @@ function DetailModal({ item, metricFamily, onClose }: DetailModalProps) {
             </div>
           )}
 
-          {item.stripePaymentIntentId && (
+          {item.gatewayTransactionId && (
             <div>
               <span className="block text-xs text-slate-400 uppercase font-semibold">Stripe Transaction</span>
               <a
-                href={`https://dashboard.stripe.com/payments/${item.stripePaymentIntentId}`}
+                href={`https://dashboard.stripe.com/payments/${item.gatewayTransactionId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-[#5a58ab] hover:underline font-semibold font-mono text-xs mt-1"
@@ -421,8 +421,8 @@ function DrilldownView({
             valueOrStatus: `$${p.amount.toFixed(2)}`,
             locationOrDetail: p.country || "Unknown",
             date: p.createdAt,
-            subtext: `Intent ID: ${p.stripePaymentIntentId} | Status: ${p.mockInterviewStatus || "No Interview"}`,
-            stripePaymentIntentId: p.stripePaymentIntentId,
+            subtext: `Ref: ${p.gatewayTransactionId} | Status: ${p.mockInterviewStatus || "No Interview"}`,
+            gatewayTransactionId: p.gatewayTransactionId,
           }));
 
       case "conversion":

@@ -36,19 +36,129 @@ export async function GET(request: Request) {
   }
 
   try {
-    const stripeClient = getStripe();
-    const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+    let meta: Record<string, string> = {};
+    let purchaseTime = new Date();
+    let isStripe = true;
 
-    if (paymentIntent.status !== "succeeded") {
-      return NextResponse.json({ isCoach: false, isAi: false, status: paymentIntent.status });
-    }
-
-    const purchaseTime = new Date(paymentIntent.created * 1000);
-    const purchase = await prisma.purchase.findUnique({
-      where: { stripePaymentIntentId: paymentIntentId },
+    // 1. Look up the purchase record first to identify the gateway
+    let purchase = await prisma.purchase.findUnique({
+      where: { gatewayTransactionId: paymentIntentId },
     });
 
-    const meta = paymentIntent.metadata;
+    if (!purchase) {
+      purchase = await prisma.purchase.findUnique({
+        where: { id: paymentIntentId },
+      });
+    }
+
+    // 2. Try looking up any pre-existing candidate application linked to this purchase
+    let linkedApplication = null;
+    if (purchase) {
+      linkedApplication = await prisma.candidateApplication.findFirst({
+        where: { purchaseId: purchase.id },
+      });
+    }
+
+    if (purchase && purchase.paymentGateway === "PAYU") {
+      isStripe = false;
+      if (purchase.status !== "COMPLETED") {
+        return NextResponse.json({ isCoach: false, isAi: false, status: purchase.status.toLowerCase() });
+      }
+      purchaseTime = new Date(purchase.createdAt);
+
+      // Parse checkout metadata stored in completionNotes
+      if (purchase.completionNotes) {
+        try {
+          meta = JSON.parse(purchase.completionNotes);
+        } catch (e) {
+          console.error("Failed to parse completionNotes as metadata JSON:", e);
+        }
+      }
+
+      // If we couldn't parse metadata but there's a pre-created CandidateApplication,
+      // we can heal the meta object from the database application record
+      if (!meta.interviewTemplateId && linkedApplication) {
+        meta = {
+          ...meta,
+          candidateName: linkedApplication.candidateName,
+          candidateEmail: linkedApplication.candidateEmail,
+          interviewTemplateId: linkedApplication.templateId,
+          interviewPreference: linkedApplication.interviewPreference,
+          applicationId: linkedApplication.id,
+          linkedInUrl: linkedApplication.linkedInUrl || "",
+        };
+      }
+    }
+
+    if (isStripe) {
+      try {
+        const stripeClient = getStripe();
+        const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+
+        if (paymentIntent.status !== "succeeded") {
+          return NextResponse.json({ isCoach: false, isAi: false, status: paymentIntent.status });
+        }
+
+        purchaseTime = new Date(paymentIntent.created * 1000);
+        meta = (paymentIntent.metadata as any) || {};
+      } catch (stripeErr) {
+        // If Stripe fails, but we have a valid completed DB purchase, fall back to DB details
+        if (purchase && purchase.status === "COMPLETED") {
+          isStripe = false;
+          purchaseTime = new Date(purchase.createdAt);
+        } else {
+          throw stripeErr;
+        }
+      }
+    }
+
+    // Check if the purchase includes an AI Mock Interview
+    const purchasedMockInterview = purchase && (
+      purchase.serviceName.toLowerCase().includes("ai mock interview") ||
+      purchase.serviceName.toLowerCase().includes("mock interview")
+    );
+
+    // If they purchased a mock interview but haven't activated it (no linked candidate application),
+    // signal to the frontend that setup is required by returning interviewLink: null.
+    if (purchasedMockInterview && !linkedApplication) {
+      return NextResponse.json({
+        isCoach: false,
+        isAi: true,
+        candidateName: purchase?.candidateName || meta.candidateName || null,
+        candidateEmail: purchase?.candidateEmail || meta.candidateEmail || null,
+        purchaseId: purchase?.id || "",
+        interviewLink: null,
+      });
+    }
+
+    // Merge application metadata if it was found
+    if (linkedApplication) {
+      if (!meta.interviewTemplateId) {
+        meta.interviewTemplateId = linkedApplication.templateId;
+      }
+      if (!meta.interviewPreference) {
+        meta.interviewPreference = linkedApplication.interviewPreference;
+      }
+      if (!meta.applicationId) {
+        meta.applicationId = linkedApplication.id;
+      }
+      if (!meta.candidateEmail) {
+        meta.candidateEmail = linkedApplication.candidateEmail;
+      }
+      if (!meta.candidateName) {
+        meta.candidateName = linkedApplication.candidateName;
+      }
+    }
+
+    if (purchase) {
+      if (!meta.candidateEmail && purchase.candidateEmail) {
+        meta.candidateEmail = purchase.candidateEmail;
+      }
+      if (!meta.candidateName && purchase.candidateName) {
+        meta.candidateName = purchase.candidateName;
+      }
+    }
+
     const interviewPreference = meta.interviewPreference || "AI";
     const isCoach = interviewPreference === "MANUAL";
     const isAi = interviewPreference === "AI";
@@ -57,8 +167,8 @@ export async function GET(request: Request) {
       return NextResponse.json({
         isCoach: false,
         isAi: false,
-        candidateName: purchase?.candidateName || null,
-        candidateEmail: purchase?.candidateEmail || null,
+        candidateName: purchase?.candidateName || meta.candidateName || null,
+        candidateEmail: purchase?.candidateEmail || meta.candidateEmail || null,
       });
     }
 
@@ -76,6 +186,16 @@ export async function GET(request: Request) {
         mockInterviewStatus: purchase?.mockInterviewStatus || "PENDING_SCHEDULE",
         mockInterviewDate: purchase?.mockInterviewDate ? purchase.mockInterviewDate.toISOString() : null,
         bookingLink: buildAppUrl(`/payment/success?payment_intent=${paymentIntentId}`),
+      });
+    }
+
+    // Safety fallback: if no template ID is present, treat as general service
+    if (!meta.interviewTemplateId) {
+      return NextResponse.json({
+        isCoach: false,
+        isAi: false,
+        candidateName: purchase?.candidateName || meta.candidateName || null,
+        candidateEmail: purchase?.candidateEmail || meta.candidateEmail || null,
       });
     }
 

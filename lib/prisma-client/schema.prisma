@@ -12,6 +12,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PaymentGateway {
+  STRIPE
+  PAYU
+}
+
 model ContactSubmission {
   id         String   @id @default(cuid())
   name       String
@@ -62,26 +67,27 @@ model JobSeekerSubmission {
 }
 
 model Purchase {
-  id                    String                @id @default(cuid())
-  candidateName         String
-  candidateEmail        String
-  candidatePhone        String?
-  serviceName           String
-  amount                Float
-  currency              String                @default("USD")
-  stripePaymentIntentId String                @unique
-  status                String // "PENDING", "COMPLETED", "FAILED"
-  country               String?
-  mockInterviewStatus   String? // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
-  mockInterviewDate     DateTime?
-  deliveryStatus        String                @default("PENDING") // "PENDING", "COMPLETED"
-  deliveryDeadline      DateTime?
-  completionNotes       String?
-  interviewPrepUrl      String?
-  interviewPrepText     String?
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
-  application           CandidateApplication?
+  id                   String                @id @default(cuid())
+  candidateName        String
+  candidateEmail       String
+  candidatePhone       String?
+  serviceName          String
+  amount               Float
+  currency             String                @default("USD")
+  gatewayTransactionId String                @unique @map("stripePaymentIntentId")
+  paymentGateway       PaymentGateway        @default(STRIPE)
+  status               String // "PENDING", "COMPLETED", "FAILED"
+  country              String?
+  mockInterviewStatus  String? // "PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"
+  mockInterviewDate    DateTime?
+  deliveryStatus       String                @default("PENDING") // "PENDING", "COMPLETED"
+  deliveryDeadline     DateTime?
+  completionNotes      String?
+  interviewPrepUrl     String?
+  interviewPrepText    String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  application          CandidateApplication?
 
   @@index([candidateEmail])
   @@index([createdAt])

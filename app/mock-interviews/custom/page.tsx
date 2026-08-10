@@ -9,6 +9,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { PayUCheckout } from "../../components/payments/payu-checkout";
 import {
   IoAlertCircle,
   IoLockClosed,
@@ -24,7 +25,7 @@ import {
   IoCardOutline,
   IoQrCodeOutline,
 } from "react-icons/io5";
-import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import { detectCurrencyFromBrowser, getCachedCurrency, setCachedCurrency } from "@/lib/geo-utils";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -243,7 +244,10 @@ export default function CustomJdMockInterviewPage() {
   const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
+  const isIndianUser = currency === "INR";
+  const paymentGateway = isIndianUser ? "PAYU" : "STRIPE";
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [gatewayMetadata, setGatewayMetadata] = useState<Record<string, string> | null>(null);
   const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
     null,
   );
@@ -303,20 +307,21 @@ export default function CustomJdMockInterviewPage() {
 
   // Location currency detection using local /api/geo first, then ipapi.co
   useEffect(() => {
-    const GEO_CACHE_KEY = "jb_currency_v3";
     const browserCurrency = detectCurrencyFromBrowser();
-    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as
-      | "USD"
-      | "AED"
-      | "INR"
-      | null;
+    const cached = getCachedCurrency();
+
+    // Clean up old plain text keys
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("jb_currency_v3");
+    }
+
     if (cached && ["AED", "INR"].includes(cached)) {
       setCurrency(cached);
       return;
     }
     if (browserCurrency !== "USD") {
       setCurrency(browserCurrency);
-      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      setCachedCurrency(browserCurrency);
       return;
     }
 
@@ -337,7 +342,7 @@ export default function CustomJdMockInterviewPage() {
       .then((data) => {
         if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
           setCurrency(data.currency);
-          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+          setCachedCurrency(data.currency);
         } else {
           throw new Error("Invalid currency returned from local API");
         }
@@ -363,7 +368,7 @@ export default function CustomJdMockInterviewPage() {
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
             setCurrency(detected);
-            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+            setCachedCurrency(detected);
           })
           .catch(() => {
             setCurrency("USD");
@@ -541,23 +546,25 @@ export default function CustomJdMockInterviewPage() {
             resumeUrl,
             resumeText,
             careerGoal: form.careerGoal || undefined,
-            focusAreas: form.focusAreas || undefined,
             selfIntroNotes: form.selfIntroNotes || undefined,
           },
+          paymentGateway,
         }),
       });
 
       const payData = await payRes.json();
-      if (!payRes.ok || !payData.clientSecret) {
+      if (!payRes.ok || (!payData.clientSecret && !payData.paymentUrl)) {
         toast.error("Checkout Setup Failed", {
-          description: payData.error || "Could not initialize Stripe session.",
+          description: payData.error || "Could not initialize payment session.",
         });
         setSubmitting(false);
         setGenerating(false);
         return;
       }
 
-      setClientSecret(payData.clientSecret);
+      setClientSecret(payData.clientSecret || null);
+      setPaymentUrl(payData.paymentUrl || null);
+      setGatewayMetadata(payData.gatewayMetadata || null);
       setPaymentStage("checkout");
       setTimeout(() => {
         containerRef.current?.scrollIntoView({
@@ -579,6 +586,8 @@ export default function CustomJdMockInterviewPage() {
   const handleCancelCheckout = () => {
     setPaymentStage("form");
     setClientSecret(null);
+    setPaymentUrl(null);
+    setGatewayMetadata(null);
     setTimeout(() => {
       containerRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -940,7 +949,7 @@ export default function CustomJdMockInterviewPage() {
               </form>
             ) : (
               // Checkout stage
-              clientSecret && (
+              (clientSecret || paymentUrl) && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
@@ -965,31 +974,41 @@ export default function CustomJdMockInterviewPage() {
                     </div>
                   </div>
 
-                  <Elements
-                    stripe={stripePromise}
-                    options={{
-                      clientSecret,
-                      appearance: {
-                        theme: "stripe" as const,
-                        variables: {
-                          colorPrimary: "#5a58ab",
-                          colorBackground: "#ffffff",
-                          colorText: "#252e3d",
-                          colorDanger: "#df1b41",
-                          fontFamily: "Raleway, sans-serif",
-                          spacingUnit: "4px",
-                          borderRadius: "12px",
+                  {paymentGateway === "STRIPE" && clientSecret && (
+                    <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe" as const,
+                          variables: {
+                            colorPrimary: "#5a58ab",
+                            colorBackground: "#ffffff",
+                            colorText: "#252e3d",
+                            colorDanger: "#df1b41",
+                            fontFamily: "Raleway, sans-serif",
+                            spacingUnit: "4px",
+                            borderRadius: "12px",
+                          },
                         },
-                      },
-                    }}
-                  >
-                    <CheckoutForm
-                      totalAmount={totalAmount}
-                      currency={displayCurrency}
-                      clientSecret={clientSecret}
+                      }}
+                    >
+                      <CheckoutForm
+                        totalAmount={totalAmount}
+                        currency={displayCurrency}
+                        clientSecret={clientSecret}
+                        onCancel={handleCancelCheckout}
+                      />
+                    </Elements>
+                  )}
+
+                  {paymentGateway === "PAYU" && paymentUrl && gatewayMetadata && (
+                    <PayUCheckout
+                      paymentUrl={paymentUrl}
+                      metadata={gatewayMetadata}
                       onCancel={handleCancelCheckout}
                     />
-                  </Elements>
+                  )}
                 </div>
               )
             )}

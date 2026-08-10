@@ -73,3 +73,28 @@ export function detectCurrencyFromBrowser(): Currency {
 
   return "USD";
 }
+
+const STATE_KEY = "__jb_state";
+
+export function getCachedCurrency(): Currency | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(STATE_KEY);
+    if (!raw) return null;
+    const decoded = atob(raw);
+    const state = JSON.parse(decoded) as { c?: Currency };
+    return state.c || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setCachedCurrency(currency: Currency): void {
+  if (typeof window === "undefined") return;
+  try {
+    const state = { c: currency, t: Date.now() };
+    const raw = JSON.stringify(state);
+    const encoded = btoa(raw);
+    sessionStorage.setItem(STATE_KEY, encoded);
+  } catch (e) {}
+}

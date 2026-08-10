@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { RxArrowTopRight } from "react-icons/rx";
 import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
-import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import { detectCurrencyFromBrowser, getCachedCurrency, setCachedCurrency } from "@/lib/geo-utils";
 
 type Currency = "USD" | "AED" | "INR";
 
@@ -28,7 +28,7 @@ const CURRENCY_SYMBOLS: Record<Currency, string> = {
 
 const BUNDLE_DISCOUNT_PERCENT = 10;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
-const BUNDLE_EXCLUDED_TITLES = new Set(["AI Mock Interview"]);
+const BUNDLE_EXCLUDED_TITLES = new Set<string>([]);
 
 const services = [
   {
@@ -214,10 +214,10 @@ const PROMO_SLIDES = [
     title: "All Career Services Bundle",
     eyebrow: "Best value",
     summary:
-      "Get 10% off when you choose any 4 or more services. AI Mock Interview is excluded from the bundle offer.",
+      "Get 10% off when you choose any 4 or more services, including the AI Mock Interview.",
     benefit: [
       "Build a bundle from the services that fit your needs",
-      "AI Mock Interview is not counted toward the discount",
+      "AI Mock Interview is included in the discount calculation",
     ],
     metrics: [
       { value: "10%", label: "Bundle off" },
@@ -266,14 +266,14 @@ export default function ServicesSection({
 
   // Auto-detect currency from geo on mount using local /api/geo first, then ipapi.co
   useEffect(() => {
-    const GEO_CACHE_KEY = "jb_currency_v3";
     const browserCurrency = detectCurrencyFromBrowser();
 
     // Clean up stale keys from older versions
     sessionStorage.removeItem("jb_currency");
     sessionStorage.removeItem("jb_currency_v2");
+    sessionStorage.removeItem("jb_currency_v3");
 
-    const cached = sessionStorage.getItem(GEO_CACHE_KEY) as Currency | null;
+    const cached = getCachedCurrency();
     if (cached && ["AED", "INR"].includes(cached)) {
       setCurrency(cached);
       return;
@@ -281,7 +281,7 @@ export default function ServicesSection({
 
     if (browserCurrency !== "USD") {
       setCurrency(browserCurrency);
-      sessionStorage.setItem(GEO_CACHE_KEY, browserCurrency);
+      setCachedCurrency(browserCurrency);
       return;
     }
 
@@ -302,14 +302,14 @@ export default function ServicesSection({
       .then((data) => {
         if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
           setCurrency(data.currency as Currency);
-          sessionStorage.setItem(GEO_CACHE_KEY, data.currency);
+          setCachedCurrency(data.currency as Currency);
         } else {
           throw new Error("Invalid currency returned from local API");
         }
       })
       .catch((err) => {
         console.warn(
-          "[geo] Local geo API lookup failed, falling back to ipapi.co:",
+          "[geo-detect] Local geo API lookup failed, falling back to ipapi.co:",
           err,
         );
         // Fallback to client-side ipapi.co (might be blocked by adblockers)
@@ -320,28 +320,18 @@ export default function ServicesSection({
           headers: { Accept: "application/json" },
           signal: controller.signal,
         })
-          .then((r) => {
-            if (!r.ok) throw new Error(`ipapi.co status: ${r.status}`);
-            return r.json();
-          })
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
           .then((data: { country_code?: string; error?: boolean }) => {
-            if (data.error)
-              throw new Error("ipapi.co returned an error response");
+            if (data.error) throw new Error();
             const code = (data.country_code || "").toUpperCase();
             let detected: Currency = "USD";
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
-            console.log(
-              `[geo] Detected country: ${code} → currency: ${detected}`,
-            );
             setCurrency(detected);
-            sessionStorage.setItem(GEO_CACHE_KEY, detected);
+            setCachedCurrency(detected);
           })
-          .catch((fallbackErr) => {
-            console.warn(
-              "[geo] Could not detect location, defaulting to USD:",
-              fallbackErr.message,
-            );
+          .catch(() => {
+            setCurrency("USD");
           })
           .finally(() => clearTimeout(timeout));
       });
@@ -426,7 +416,7 @@ export default function ServicesSection({
   };
 
   // Cart totals (in selected currency)
-  const cartServices = [...services].filter((s) =>
+  const cartServices = [...services, OPPORTUNITIES_SERVICE].filter((s) =>
     selectedTitles.has(s.title),
   );
   const cartEligibleServices = cartServices.filter(
@@ -613,6 +603,8 @@ export default function ServicesSection({
                 shouldFlip={false}
                 onBuyClick={() => router.push("/mock-interviews/custom")}
                 buyLabel="Book Now"
+                isSelected={selectedTitles.has(OPPORTUNITIES_SERVICE.title)}
+                onToggleSelect={() => handleToggleSelect(OPPORTUNITIES_SERVICE.title)}
               />
             );
           })()}
@@ -633,8 +625,7 @@ export default function ServicesSection({
                 </h2>
                 <p className="text-sm leading-relaxed text-[#4b5563]">
                   Pick the services that fit you best. The discount applies
-                  automatically at checkout, and AI Mock Interview does not
-                  count toward the bundle.
+                  automatically at checkout, including the AI Mock Interview.
                 </p>
                 <span className="text-sm text-[#4b5563]">
                   Select{" "}

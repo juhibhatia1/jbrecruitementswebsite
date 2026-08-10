@@ -10,8 +10,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { IoClose, IoAlertCircle, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
-import UpiPaymentBox from "@/app/components/payment/upi-payment-box";
-
+import { PayUCheckout } from "../payments/payu-checkout";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 const BUNDLE_DISCOUNT_PERCENT = 10;
 
@@ -35,14 +34,12 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const [candidateEmail, setCandidateEmail] = useState("");
   const [candidatePhone, setCandidatePhone] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [payuData, setPayuData] = useState<{ paymentUrl: string; metadata: Record<string, string> } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi">("card");
-  const { lenis } = useLenis();
-
   const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
-  const hasMockInterview = services.some((s) => s.title.toLowerCase().includes("mock interview"));
-  const showUpi = isIndianUser && !hasMockInterview;
+  const selectedGateway = isIndianUser ? "PAYU" : "STRIPE";
+  const { lenis } = useLenis();
   
   const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
   const subtotalAmount = services.reduce((sum, s) => sum + s.amount, 0);
@@ -61,9 +58,9 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
       setCandidateEmail("");
       setCandidatePhone("");
       setClientSecret(null);
+      setPayuData(null);
       setError(null);
       setLoading(false);
-      setPaymentMethod("card");
     }
   }, [isOpen, services]);
 
@@ -104,6 +101,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
           candidateEmail,
           candidatePhone,
           currency,
+          paymentGateway: selectedGateway,
         }),
       });
 
@@ -113,7 +111,14 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
         throw new Error(data.error || "Failed to initialize payment session.");
       }
 
-      setClientSecret(data.clientSecret);
+      if (selectedGateway === "PAYU") {
+        setPayuData({
+          paymentUrl: data.paymentUrl,
+          metadata: data.gatewayMetadata,
+        });
+      } else {
+        setClientSecret(data.clientSecret);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong. Please try again.");
@@ -175,36 +180,6 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
         {/* Scrollable Content */}
         <div data-lenis-prevent className="p-6 overflow-y-auto flex-grow">
-          {/* Payment Method Selector (Only for Indian users) */}
-          {showUpi && (
-            <div className="flex rounded-xl bg-slate-100 p-1 mb-5 border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("card")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  paymentMethod === "card"
-                    ? "bg-white text-[#5a58ab] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <IoCardOutline className="w-4 h-4" />
-                <span>Card / International</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("upi")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  paymentMethod === "upi"
-                    ? "bg-white text-[#5a58ab] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <IoQrCodeOutline className="w-4 h-4" />
-                <span>UPI / QR Code</span>
-              </button>
-            </div>
-          )}
-
           {error && (
             <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm flex items-start gap-2.5">
               <IoAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -212,14 +187,11 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
             </div>
           )}
 
-          {showUpi && paymentMethod === "upi" ? (
-            <UpiPaymentBox
-              amount={totalAmount}
-              currency={currency}
-              serviceName={displayTitle}
-              candidateName={candidateName}
-              candidateEmail={candidateEmail}
-              candidatePhone={candidatePhone}
+          {payuData ? (
+            <PayUCheckout
+              paymentUrl={payuData.paymentUrl}
+              metadata={payuData.metadata}
+              onCancel={() => setPayuData(null)}
             />
           ) : !clientSecret ? (
             // Stage 1: Collect Name & Email
@@ -269,6 +241,9 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                   placeholder="e.g. +91 98765 43210"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
                 />
+              </div>
+
+              <div className="pt-2">
               </div>
 
               {/* Order Summary */}

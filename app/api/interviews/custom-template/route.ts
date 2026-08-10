@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
         where: {
           OR: [
             { id: body.interviewPrepPurchaseId },
-            { stripePaymentIntentId: body.interviewPrepPurchaseId }
+            { gatewayTransactionId: body.interviewPrepPurchaseId }
           ]
         },
         select: { interviewPrepText: true }
