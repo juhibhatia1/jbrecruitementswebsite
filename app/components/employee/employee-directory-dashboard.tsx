@@ -19,6 +19,7 @@ import {
   IoCheckbox,
   IoSquareOutline,
   IoLogOut,
+  IoMicOutline,
 } from "react-icons/io5";
 
 interface AdminSubmission {
@@ -774,6 +775,17 @@ export default function EmployeeDirectoryDashboard({
                                     >
                                       {p.serviceName} {!isCompleted && "(Incomplete Payment)"}
                                     </span>
+                                    {/* Interview highlight badge */}
+                                    {isCompleted && p.serviceName.includes("Mock Interview") && !p.serviceName.includes("Coach") && (
+                                      <Link
+                                        href="/employee/interviews"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex items-center gap-1 mt-0.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#f0efff] text-[#5a58ab] ring-1 ring-inset ring-[#5a58ab]/20 hover:bg-[#5a58ab] hover:text-white transition-colors w-fit"
+                                      >
+                                        <IoMicOutline className="w-3 h-3" />
+                                        AI Interview — View in Interviews
+                                      </Link>
+                                    )}
                                     {failureReason && (
                                       <span className="text-[11px] text-amber-700 font-medium pl-1">
                                         Reason: {failureReason}

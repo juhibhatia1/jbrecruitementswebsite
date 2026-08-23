@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IoArrowForwardOutline, IoChevronDownOutline, IoAddCircleOutline } from "react-icons/io5";
+import { IoArrowForwardOutline, IoChevronDownOutline, IoAddCircleOutline, IoArrowBackOutline } from "react-icons/io5";
 import type { CandidateInterviewRecord, CandidateInterviewBooking } from "./page";
 import { PiXCircleDuotone } from "react-icons/pi";
 import { updatePurchaseStatus } from "./actions";
@@ -146,6 +146,13 @@ export function EmployeeInterviewsDashboard({
           <div className="flex flex-col gap-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
+                <Link
+                  href="/employee/directory"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#5a58ab] transition-colors mb-3 group"
+                >
+                  <IoArrowBackOutline className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                  Back to Directory
+                </Link>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Employee Interview Tracker</p>
                 <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
                   Paid interview bookings

@@ -197,7 +197,9 @@ export default async function EmployeeInterviewsPage() {
 
   const candidateBookings: CandidateInterviewRecord[] = Array.from(candidateMap.values()).map((candidate) => {
     const bookings: CandidateInterviewBooking[] = candidate.purchases.map((purchase) => {
-      const preference = purchase.serviceName.includes("AI") ? "AI" : "MANUAL";
+      // "Coach Mock Interview" is the only human (MANUAL) interview service.
+      // All other mock interview purchases default to AI.
+      const preference = purchase.serviceName.includes("Coach") ? "MANUAL" : "AI";
       const relatedApplications = appByEmail.get(candidate.email.toLowerCase()) ?? [];
       const relatedApplication =
         relatedApplications
