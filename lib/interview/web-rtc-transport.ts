@@ -127,6 +127,89 @@ function splitAcknowledgmentAndQuestion(text: string): { ack: string; question: 
   return { ack, question };
 }
 
+/**
+ * Strips bracketed stage directions (e.g. "[PAUSE 2 SECONDS]", "[PAUSE]", "[sighs]", "[clears throat]")
+ * from transcript text so they are never displayed in the UI or stored in session transcripts.
+ */
+export function stripStageDirections(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractKeywords(text: string): Set<string> {
+  const clean = text.toLowerCase().replace(/[^\w\s]/g, " ");
+  const words = clean.split(/\s+/).filter((w) => w.length > 3);
+  return new Set(words);
+}
+
+/**
+ * Evaluates whether two interviewer text passages are identical or rephrased versions
+ * of the exact same question (using normalized text & keyword overlap similarity).
+ */
+export function isFuzzyDuplicate(text1: string, text2: string): boolean {
+  if (!text1 || !text2) return false;
+  const norm1 = text1.toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim();
+  const norm2 = text2.toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim();
+  if (norm1 === norm2) return true;
+
+  const set1 = extractKeywords(text1);
+  const set2 = extractKeywords(text2);
+  if (set1.size < 3 || set2.size < 3) return false;
+
+  let matches = 0;
+  for (const word of set1) {
+    if (set2.has(word)) matches++;
+  }
+
+  const overlap = matches / Math.min(set1.size, set2.size);
+  return overlap >= 0.55;
+}
+
+const WHISPER_HALLUCINATIONS = [
+  "nao", "nao corre", "obrigado", "gracias", "sous-titres", "revisão", "legendas",
+  "amara.org", "subtitles by", "transcribed by", "thank you for watching",
+  "subscribe", "like and subscribe", "mbc", "by amara.org", "by opensubtitles",
+  "continua no próximo vídeo", "inscreva-se", "curta e compartilhe", "regardez",
+  "dankeschön", "todos os direitos", "direitos reservados", "editado por",
+  "legendado por", "tradução", "traducao"
+];
+
+/**
+ * Detects whether a transcribed text string is a known Whisper hallucination
+ * triggered by background audio static or non-English noise.
+ */
+export function isNoiseOrHallucination(text: string): boolean {
+  if (!text) return true;
+
+  // 1. Raw text contains non-English accented words from mic static
+  if (/[ãõçêàáéíóúâ]/i.test(text) && !/café|résumé|naïve/i.test(text)) {
+    return true;
+  }
+
+  const clean = text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean) return true;
+
+  // 2. Matches known Whisper hallucination strings
+  if (WHISPER_HALLUCINATIONS.some((h) => clean.includes(h))) {
+    return true;
+  }
+
+  // 3. Gibberish check: blocks of 5+ consonants
+  if (/^[^aeiouy]{5,}$/i.test(clean)) return true;
+
+  return false;
+}
+
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -226,11 +309,9 @@ export class OpenAIWebRtcInterviewTransport {
   private transitionStallTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly TRANSITION_STALL_MS = 2500;
 
-  // Duplicate-response safety net: server_vad auto-responses can race a manual response.create
-  // and produce two identical spoken turns. Track the last interviewer utterance to drop an
-  // identical consecutive one from the transcript/pacing path within a short window.
-  private lastInterviewerUtterance = "";
-  private lastInterviewerUtteranceAtMs = 0;
+  // Duplicate-response history buffer: tracks recent AI utterances within a 45s window
+  // to drop duplicate spoken turns or racing OpenAI Realtime responses even across intermediate turns.
+  private recentInterviewerUtterances: { text: string; timestamp: number }[] = [];
 
   // Audio tail protection: WebRTC audio keeps playing after response.done fires.
   // During this window, VAD speech_started events are echo — clear the buffer.
@@ -404,21 +485,26 @@ export class OpenAIWebRtcInterviewTransport {
       }
 
       if (message.type === "response.output_audio_transcript.done" && message.transcript) {
-        const interviewerText = String(message.transcript).trim();
+        const rawInterviewerText = String(message.transcript).trim();
+        const interviewerText = stripStageDirections(rawInterviewerText);
+        if (!interviewerText) return;
         // Response completed normally — clear the partial accumulator.
         this.lastInterruptedUtterance = "";
         // Duplicate safety net: a server_vad auto-response can race a manual response.create
-        // and produce two identical spoken turns back-to-back. Drop the identical consecutive
-        // utterance from the transcript + pacing path (audio may have already played, but this
-        // keeps the visible/persisted transcript clean and avoids double pacing intervention).
-        const normalizedUtterance = interviewerText.toLowerCase().replace(/\s+/g, " ");
+        // and produce duplicate or rephrased spoken turns within recent conversation history.
+        const now = Date.now();
+        // Prune history items older than 45 seconds
+        this.recentInterviewerUtterances = this.recentInterviewerUtterances.filter(
+          (item) => now - item.timestamp < 45000
+        );
         const isDuplicateUtterance =
-          normalizedUtterance.length > 0 &&
-          normalizedUtterance === this.lastInterviewerUtterance &&
-          Date.now() - this.lastInterviewerUtteranceAtMs < 8000;
-        this.lastInterviewerUtterance = normalizedUtterance;
-        this.lastInterviewerUtteranceAtMs = Date.now();
-        if (!isDuplicateUtterance) {
+          interviewerText.length > 0 &&
+          this.recentInterviewerUtterances.some((item) => isFuzzyDuplicate(item.text, interviewerText));
+
+        if (isDuplicateUtterance) {
+          console.warn("[WebRTC] Suppressed duplicate/rephrased AI utterance from transcript & pacing:", interviewerText);
+        } else {
+          this.recentInterviewerUtterances.push({ text: interviewerText, timestamp: now });
           // Render acknowledgment and question as two separate transcript bubbles with a slight
           // gap so the transcript matches the audible pause and no longer feels rushed. Falls
           // back to a single bubble when there is no clean acknowledgment/question split.
@@ -466,8 +552,9 @@ export class OpenAIWebRtcInterviewTransport {
           message.type === "conversation.item.audio_transcription.completed") &&
         (message.transcript || message.text)
       ) {
-        const text = String(message.transcript || message.text || "").trim();
-        if (text) {
+        const rawText = String(message.transcript || message.text || "").trim();
+        const text = stripStageDirections(rawText);
+        if (text && !isNoiseOrHallucination(text)) {
           this.transcriptItemCount += 1;
           this.callbacks.onTranscript({ role: "candidate", text });
           // Candidate transcription received — mic is working; reset health streak
@@ -790,8 +877,7 @@ export class OpenAIWebRtcInterviewTransport {
   private safeResponseCreate(): void {
     if (this.completed || !this.dc || this.dc.readyState !== "open") return;
     if (this.responseInFlight) {
-      // Queue the request — it will be sent when current response completes
-      this.pendingResponseCreate = true;
+      console.info("[WebRTC] safeResponseCreate ignored — response is already in flight");
       return;
     }
     this.sendJson({ type: "response.create" });
@@ -1001,7 +1087,7 @@ export class OpenAIWebRtcInterviewTransport {
       this.saveNudgeTimer = null;
       if (this.completed || this.manuallyClosed || this.responseInFlight || this.assistantSpeaking || this.toolCallInProgress || this.candidateSpeaking) return;
       this.sendSilentContextMessage(
-        "CANDIDATE_SILENT_CHECK: The candidate has been silent since your last question. Check in naturally — vary your phrasing, never repeat the same check-in twice.",
+        "CANDIDATE_SILENT_CHECK: The candidate has been silent since your last question. Re-ask or check in on the CURRENT question gently (e.g. 'Whenever you're ready, let me know your answer, or if you'd like to skip, just say skip'). CRITICAL: Do NOT advance to a new question or call save_interview_event unless the candidate explicitly answers or says skip.",
       );
       this.safeResponseCreate();
     }, 17000);
@@ -1144,6 +1230,8 @@ Speak at a measured, unhurried pace — slightly slower than normal conversation
 
 Between your acknowledgment and your next question, insert a clear, deliberate pause — a full 2-second beat of silence, as if you are taking a breath and collecting your thoughts — before you begin the question. Do NOT run the acknowledgment straight into the question as one continuous breath. End the acknowledgment. Pause for two seconds. Then ask the question at a calm, measured pace. The candidate should clearly hear the acknowledgment and the question as two distinct moments separated by a natural pause, not one rushed sentence. This pause is non-negotiable — every single response must have it.
 
+CRITICAL FORMATTING RULE: Never output stage directions, bracketed text, pause annotations, or tags like "[PAUSE]", "[PAUSE 2 SECONDS]", "[sighs]", or "[clears throat]" in your spoken text or transcript. Perform pauses naturally in your speech audio without outputting bracketed text.
+
 # Language
 
 English only. Do not switch languages based on accent, pronunciation, or isolated foreign words.
@@ -1204,26 +1292,51 @@ CRITICAL — NEVER split these into two turns:
 
 If you find yourself about to end a spoken response with only an acknowledgment and no next question, add the question before ending the turn. The acknowledgment and the next question are always ONE response.
 
-## Incomplete answers
-If a technical or behavioral question gets a 1–5 word answer with no explanation: do NOT call save_interview_event. Ask specifically for what's missing: "Can you explain what that looks like in practice?" or "How would that work in a real system?" Wait for a real answer, then respond and save. Do NOT probe MCQ answers — they are closed-choice.
+## Incomplete or Partial Answers & Elaboration Check-in
+If an answer feels incomplete, brief, or partial, OR if the candidate might want to elaborate or add more details:
+- Do NOT call save_interview_event immediately.
+- Do NOT rush to a brand-new question.
+- Instead, acknowledge what they said so far, and explicitly ask if they would like to elaborate or add more details before moving on.
+  Examples:
+  - "That's a good start — is there anything more you'd like to elaborate on for this question, or shall we move on?"
+  - "Good point — would you like to add anything else to your answer before we proceed?"
+  - "Makes sense — do you want to share more about how you implemented that, or are you ready for the next question?"
+Then:
+- If the candidate elaborates: listen to their full addition, acknowledge it, ask the next question, and call save_interview_event.
+- If the candidate says "no", "that's all", "I'm done", "move on", "next question": acknowledge warmly, ask the next question, and call save_interview_event.
 
 ## Transition sentences
 Never end a response with a transition sentence alone ("Let's build on that", "Let's move to the next question", "Let's keep going", "Let's continue with", "Moving on to"). Every response that contains a transition MUST include the actual question in the same response. Transition + question = one single response. Never split across two turns.
 
-## Meta-commentary (expanded)
-When candidate says "why are you pausing", "reply please", "are you stuck", "go on", "move on", "do your response", "I already answered", "I said that", "I did complete my answer" — say "Apologies." and ask your next planned question immediately. Do not generate an empty or silent response.
+## HARD RULE: NO PREMATURE QUESTION SKIPPING
+You are strictly FORBIDDEN from advancing to a new question unless ONE of the following has occurred:
+1. The candidate provided a substantive answer to the current question (which you evaluate and save via save_interview_event).
+2. The candidate explicitly asked to skip, move on, or stated they don't know (e.g., "skip", "next question", "move on", "pass", "I don't know", "skip this one").
+
+If the candidate pauses, remains silent, gives filler words ("uh", "um"), or asks a meta-question:
+- COMPLETELY WAIT AND LISTEN to their answer.
+- Do NOT advance to a new question.
+- Do NOT call save_interview_event.
+- If silence continues or you receive CANDIDATE_SILENT_CHECK, re-ask the current question gently and ask if they'd like to answer or skip it.
+
+## Meta-commentary & Flagged Skipped Questions
+When candidate says "why are you pausing", "reply please", "are you stuck", "I didn't answer", "I haven't answered yet", "why did you skip", "you moved to the next question", "I didn't get to finish" — say "Apologies for moving ahead!" and re-ask the previous question verbatim. Do NOT move to a new question.
 
 ## Silence check-in (CANDIDATE_SILENT_CHECK)
-IMPORTANT: The check-in phrases below are EXCLUSIVELY for use when you receive the explicit CANDIDATE_SILENT_CHECK signal. Never use them in any other context — especially not after save_interview_event returns or after a candidate completes their answer.
-When you receive CANDIDATE_SILENT_CHECK: the candidate has been silent since your last question. Check in briefly and naturally — vary your wording every time, never repeat the same phrasing twice in a row. Examples (use ONLY when triggered by CANDIDATE_SILENT_CHECK):
-- "Take your time — still working through it, or ready to move on?"
-- "No rush — need more time, or shall we continue?"
-- "Still thinking? Whenever you're ready."
-- "Are you ready for the next question, or would you like more time?"
+IMPORTANT: The check-in phrases below are EXCLUSIVELY for use when you receive the explicit CANDIDATE_SILENT_CHECK signal. Never use them in any other context.
+When you receive CANDIDATE_SILENT_CHECK: the candidate has been silent since your last question.
+RULES:
+1. Re-ask or check in on the CURRENT question gently.
+2. NEVER advance to a new question during CANDIDATE_SILENT_CHECK.
+3. NEVER call save_interview_event during CANDIDATE_SILENT_CHECK.
+Examples:
+- "Whenever you're ready, please share your thoughts on the question, or if you'd prefer to skip it, just say 'skip'."
+- "Take your time — would you like to answer this question, or shall we skip to the next one?"
+- "No rush — do you need a moment for this question, or would you prefer to skip it?"
 Then:
-- If they say they need time / are thinking / "yes" / "give me a sec" / any affirmative: say "Of course." or "Sure, take your time." and wait silently. Do NOT ask another question. Do NOT send another check-in.
-- If they say skip / next / move on / "next question": acknowledge briefly and ask your next planned question.
-- If response is unclear: treat it as needing more time and wait silently.
+- If they give an answer: evaluate, ask next question, and call save_interview_event.
+- If they say skip / next / move on / pass / "I don't know": say "No problem at all!" and ask your next planned question.
+- If they say they need time / "wait" / "thinking": say "Of course, take your time." and wait silently. Do NOT ask another question. Do NOT send another check-in.
 
 ## Repeat requests
 When candidate says "repeat", "can you repeat that", "say that again", "ask again", "what was the question", "didn't catch that", "pardon", "come again", "I didn't hear you", "could you repeat" — immediately repeat your last question verbatim, word for word. Rules:
@@ -1319,20 +1432,12 @@ ${systemInstructions}`;
           input: {
             format: { type: "audio/pcm", rate: 24000 },
             turn_detection: {
-              // semantic_vad with eagerness "low": understands turn boundaries at the
-              // language/semantic level rather than relying on a fixed silence timer.
-              // Directly addresses three customer complaints:
-              //  1. AI voice cutoff: noise/echo no longer triggers speech_started falsely
-              //  2. Mid-answer interruption: natural 2-3s pauses within long answers are
-              //     not treated as end-of-turn because the semantic model detects the
-              //     sentence isn't complete
-              //  3. Choppy transitions: candidate's first words after AI speech are no
-              //     longer discarded as echo since semantic_vad won't commit echo as a turn
-              // Previously: server_vad with threshold 0.65, silence_duration_ms 2500
-              type: "semantic_vad",
-              eagerness: "low",
+              type: "server_vad",
+              threshold: 0.65,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 3500,
             },
-            transcription: { model: "whisper-1" },
+            transcription: { model: "whisper-1", language: "en" },
           },
           output: {
             format: { type: "audio/pcm", rate: 24000 },
@@ -1464,15 +1569,27 @@ ${systemInstructions}`;
   private sendOpeningPrompt(openingPrompt: string): void {
     if (this.openingPromptSent || !this.dc || this.dc.readyState !== "open") return;
     this.openingPromptSent = true;
-    this.sendJson({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text: openingPrompt }],
-      },
-    });
-    this.safeResponseCreate();
+    
+    // Give session.update 150ms to register in OpenAI engine before queuing conversation item
+    setTimeout(() => {
+      if (this.completed || !this.dc || this.dc.readyState !== "open") return;
+      this.sendJson({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: openingPrompt }],
+        },
+      });
+      this.safeResponseCreate();
+
+      // Opening Greeting Watchdog: If OpenAI hasn't started speaking within 2.5s, trigger response.create again
+      setTimeout(() => {
+        if (this.completed || !this.dc || this.dc.readyState !== "open" || this.assistantSpeaking || this.firstAssistantAudioStarted) return;
+        console.warn("[WebRTC] Opening greeting watchdog fired — triggering fallback response.create");
+        this.safeResponseCreate();
+      }, 2500);
+    }, 150);
   }
 
   // Returns live session + section timing. Included in every tool result so

@@ -18,3 +18,5 @@ if (dev) {
     path: path.resolve(process.cwd(), ".env"),
   });
 }
+// Suppress Node.js deprecation warnings (e.g. from pdf-parse and other third-party dependencies)
+process.noDeprecation = true;

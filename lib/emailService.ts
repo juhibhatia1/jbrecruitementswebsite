@@ -70,7 +70,7 @@ Thank you for your purchase of "${formattedServices}"!
 We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.`;
 
   if (includesMockInterview) {
-    candidateText += `\n\nSince your purchase includes an AI Mock Interview, please visit the link below to upload your resume and set it up whenever you are ready:\n${setupUrl}`;
+    candidateText += `\n\nSince your purchase includes an AI Mock Interview: if you haven't configured your interview details (uploaded your resume and job description) before payment, please visit the link below to complete the setup. If you have already filled in the details and set up your interview, please ignore this link:\n${setupUrl}`;
   } else {
     candidateText += `\n\nOur team will contact you shortly to coordinate the next steps and get started with your service.`;
   }
@@ -120,7 +120,7 @@ Team JB Recruitment Solutions`;
           ${includesMockInterview ? `
             <div style="background-color: #f4f3ff; border: 1px solid #dcd9ff; padding: 18px; border-radius: 8px; margin: 20px 0; text-align: center;">
               <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #5a58ab; font-weight: bold;">Set up your AI Mock Interview</h4>
-              <p style="margin-bottom: 15px; font-size: 13px; color: #4a5568;">You have a pending mock interview slot. Upload your resume and job description to get started:</p>
+              <p style="margin-bottom: 15px; font-size: 13px; color: #4a5568; line-height: 1.5;">If you haven't configured your interview details (uploaded your resume and job description) before payment, please click below to complete the setup. If you have already filled in the details and set up your interview, please ignore this message.</p>
               <a href="${setupUrl}" style="display: inline-block; background-color: #5a58ab; color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 14px; box-shadow: 0 4px 10px rgba(90, 88, 171, 0.2);">Configure Interview Now</a>
             </div>
           ` : `

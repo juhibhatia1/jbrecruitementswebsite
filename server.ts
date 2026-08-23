@@ -18,6 +18,7 @@ import { getMailerTransporter } from "./lib/mailer";
 import { buildAppUrl } from "./lib/app-url";
 import { escapeHtml } from "./lib/security";
 import { sendInterviewResultsToCandidate } from "./lib/emailService";
+import { isFuzzyDuplicate, isNoiseOrHallucination, stripStageDirections } from "./lib/interview/web-rtc-transport";
 
 type ClientMessage =
   | { type: "auth"; token?: string; accessToken?: string }
@@ -676,8 +677,21 @@ nextApp
                 sendJson(clientWs, { type: "error", message: errorMessage });
               },
               onTranscript: (entry: InterviewTranscriptEntry) => {
-                accumulator.transcript.push(entry);
-                sendJson(clientWs, { type: "transcript", data: entry });
+                const cleanText = stripStageDirections(entry.text);
+                if (!cleanText || (entry.role === "candidate" && isNoiseOrHallucination(cleanText))) return;
+                const cleanEntry = { ...entry, text: cleanText };
+                if (cleanEntry.role === "interviewer") {
+                  const isDuplicateInAcc = accumulator.transcript.slice(-10).some((item) => {
+                    if (item.role !== "interviewer") return false;
+                    return isFuzzyDuplicate(item.text, cleanEntry.text);
+                  });
+                  if (isDuplicateInAcc) {
+                    console.warn("[Server] Dropped fuzzy duplicate AI transcript entry:", cleanEntry.text);
+                    return;
+                  }
+                }
+                accumulator.transcript.push(cleanEntry);
+                sendJson(clientWs, { type: "transcript", data: cleanEntry });
                 if (
                   accumulator.transcript.length % 5 === 0 &&
                   interviewSessionId
@@ -936,8 +950,21 @@ Do NOT repeat any questions or topics already covered. Do NOT re-introduce yours
           onError: (msg: string) =>
             sendJson(clientWs, { type: "error", message: msg }),
           onTranscript: (entry: InterviewTranscriptEntry) => {
-            devAccumulator.transcript.push(entry);
-            sendJson(clientWs, { type: "transcript", data: entry });
+            const cleanText = stripStageDirections(entry.text);
+            if (!cleanText || (entry.role === "candidate" && isNoiseOrHallucination(cleanText))) return;
+            const cleanEntry = { ...entry, text: cleanText };
+            if (cleanEntry.role === "interviewer") {
+              const isDuplicateInAcc = devAccumulator.transcript.slice(-10).some((item) => {
+                if (item.role !== "interviewer") return false;
+                return isFuzzyDuplicate(item.text, cleanEntry.text);
+              });
+              if (isDuplicateInAcc) {
+                console.warn("[Server Dev] Dropped fuzzy duplicate AI transcript entry:", cleanEntry.text);
+                return;
+              }
+            }
+            devAccumulator.transcript.push(cleanEntry);
+            sendJson(clientWs, { type: "transcript", data: cleanEntry });
           },
           onAudioChunk: (data: string, mimeType: string) =>
             sendJson(clientWs, { type: "ai_audio_chunk", data, mimeType }),

@@ -182,7 +182,7 @@ export default async function InterviewLobbyPage({ params }: Props) {
           <p className="text-sm text-gray-500 mb-5">
             Hi <strong>{application.candidateName}</strong> — when you're ready, click below to enter the interview room.
           </p>
-          <div className="mx-auto mb-6 max-w-sm rounded-lg bg-blue-50 p-4 text-left border border-blue-100">
+          <div className="mx-auto mb-6 max-w-lg rounded-lg bg-blue-50 p-4 text-left border border-blue-100">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-blue-800 mb-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

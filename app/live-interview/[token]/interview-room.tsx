@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { IoMic, IoMicOff } from "react-icons/io5";
 import type { InterviewFinalReport, InterviewReferenceCard, InterviewTranscriptEntry } from "@/lib/interview/types";
-import { OpenAIWebRtcInterviewTransport } from "@/lib/interview/web-rtc-transport";
+import { OpenAIWebRtcInterviewTransport, isFuzzyDuplicate, isNoiseOrHallucination } from "@/lib/interview/web-rtc-transport";
 import { buildTimeline } from "@/app/components/interviews/timeline-utils";
 import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 
@@ -549,24 +549,40 @@ export default function InterviewRoom({ token }: { token: string }) {
          break;
 
       case "transcript": {
-        const isCandidate = msg.data.role === "candidate";
-        if (isCandidate && !isEnglishText(msg.data.text)) {
-          console.warn("Ignoring non-English/noise candidate transcript input:", msg.data.text);
+        const cleanText = msg.data.text ? msg.data.text.replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim() : "";
+        if (!cleanText) break;
+        const cleanEntry = { ...msg.data, text: cleanText };
+        const isCandidate = cleanEntry.role === "candidate";
+        if (isCandidate && (isNoiseOrHallucination(cleanEntry.text) || !isEnglishText(cleanEntry.text))) {
+          console.warn("Ignoring non-English/noise candidate transcript input:", cleanEntry.text);
           break;
         }
-        transcriptRef.current = [...transcriptRef.current, msg.data];
-        if (msg.data.role === "interviewer" && pendingCardsRef.current.length > 0) {
+
+        // Timeline deduplication safety net: drop duplicate or rephrased AI entries within recent entries
+        if (cleanEntry.role === "interviewer") {
+          const isDuplicateInTimeline = transcriptRef.current.slice(-10).some((entry) => {
+            if (entry.role !== "interviewer") return false;
+            return isFuzzyDuplicate(entry.text, cleanEntry.text);
+          });
+          if (isDuplicateInTimeline) {
+            console.warn("[InterviewRoom] Dropped fuzzy duplicate AI transcript entry:", cleanEntry.text);
+            break;
+          }
+        }
+
+        transcriptRef.current = [...transcriptRef.current, cleanEntry];
+        if (cleanEntry.role === "interviewer" && pendingCardsRef.current.length > 0) {
           const pending = pendingCardsRef.current.splice(0);
           for (const card of pending) {
             card.afterTranscriptIndex = transcriptRef.current.length;
           }
           setTranscriptItems((prev) => [
             ...prev,
-            { kind: "speech", entry: msg.data },
+            { kind: "speech", entry: cleanEntry },
             ...pending.map((card) => ({ kind: "card" as const, card })),
           ]);
         } else {
-          setTranscriptItems((prev) => [...prev, { kind: "speech", entry: msg.data }]);
+          setTranscriptItems((prev) => [...prev, { kind: "speech", entry: cleanEntry }]);
         }
         scheduleSync();
         break;
@@ -1033,7 +1049,7 @@ export default function InterviewRoom({ token }: { token: string }) {
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-[#5a58ab] flex items-center justify-center">
-                <span className="text-white text-xs font-bold">JB</span>
+                <span className="text-white text-[12px] font-bold leading-none" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>JB</span>
               </div>
               <span className="text-sm font-semibold text-[#252e3d]">JB Recruitment Solutions</span>
             </div>
@@ -1172,7 +1188,7 @@ export default function InterviewRoom({ token }: { token: string }) {
         {/* Top bar */}
         <div className="border-b border-slate-200 bg-white px-6 py-4 flex items-center gap-3">
           <div className="w-7 h-7 rounded-md bg-[#5a58ab] flex items-center justify-center shrink-0">
-            <span className="text-white text-[10px] font-bold">JB</span>
+            <span className="text-white text-[10px] font-bold leading-none" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>JB</span>
           </div>
           <span className="text-sm font-semibold text-[#252e3d]">JB Recruitment Solutions</span>
           <span className="ml-auto rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-700 font-medium">
@@ -1288,10 +1304,10 @@ export default function InterviewRoom({ token }: { token: string }) {
       {/* Top bar */}
       <div className="border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-[#5a58ab] flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">JB</span>
+          <div className="w-8 h-8 rounded-md bg-[#5a58ab] flex items-center justify-center">
+            <span className="mb-1 text-white text-[13px] font-bold leading-none text-center select-none" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>JB</span>
           </div>
-          <span className="text-xs font-semibold text-slate-700">AI Mock Interview</span>
+          <span className="text-sm font-semibold text-slate-700">AI Mock Interview</span>
         </div>
         <div className="flex items-center gap-3">
           {phase === "live" && (
@@ -1346,17 +1362,7 @@ export default function InterviewRoom({ token }: { token: string }) {
            <div className="mt-4 text-center">
              <p className="text-sm font-semibold text-[#252e3d]">AI Interviewer</p>
              <p className="text-xs mt-0.5 font-medium">
-               {isAiPreparingQuestions ? (
-                 <span className="text-amber-500 flex items-center justify-center gap-1">
-                   <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                   Preparing questions…
-                 </span>
-               ) : aiThinking ? (
-                 <span className="text-amber-500 flex items-center justify-center gap-1">
-                   <span className="inline-block w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                   {aiThinkingText}
-                 </span>
-               ) : aiSpeaking ? (
+               {aiSpeaking ? (
                  <span className="text-[#5a58ab]">Speaking…</span>
                ) : (
                  <span className="text-slate-500">Listening…</span>
@@ -1366,9 +1372,17 @@ export default function InterviewRoom({ token }: { token: string }) {
           <div className="mt-3 flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full px-3 py-1">
             <span className={`w-1.5 h-1.5 rounded-full ${micLocked ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
             <span className="text-[10px] text-slate-500 font-medium">
-              {micLocked ? "Mic activates when AI intro is ready" : "Your mic is active"}
+              {micLocked ? "Your mic is muted" : "Your mic is active"}
             </span>
           </div>
+          {transcriptItems.length === 0 && (
+            <div className="mt-2 flex items-center gap-1.5 bg-[#f0efff] border border-[#e0dfff] rounded-full px-3 py-1 text-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5a58ab] animate-pulse shrink-0" />
+              <span className="text-[10px] text-[#5a58ab] font-semibold">
+                Say "Hello" or "Hi" to introduce yourself
+              </span>
+            </div>
+          )}
           <div className="mt-8">
             <button
               onClick={toggleMicCapture}
@@ -1492,6 +1506,8 @@ function ReferenceCard({ card }: { card: InterviewReferenceCard }) {
 
 function TranscriptBubble({ entry }: { entry: InterviewTranscriptEntry }) {
   const isAI = entry.role === "interviewer";
+  const cleanText = entry.text ? entry.text.replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim() : "";
+  if (!cleanText) return null;
   return (
     <div className={`flex gap-2.5 ${isAI ? "" : "flex-row-reverse"}`}>
       <div
@@ -1508,7 +1524,7 @@ function TranscriptBubble({ entry }: { entry: InterviewTranscriptEntry }) {
             : "bg-white border border-slate-200 text-[#252e3d] rounded-tr-sm shadow-sm"
         }`}
       >
-        {entry.text}
+        {cleanText}
       </div>
     </div>
   );
