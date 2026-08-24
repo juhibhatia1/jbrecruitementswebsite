@@ -16,6 +16,7 @@ export default function ResumeScanner() {
           width={600}
           height={1000}
           priority
+          quality={90}
           className="w-full h-auto block select-none"
         />
       </div>

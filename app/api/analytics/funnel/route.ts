@@ -13,14 +13,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid eventType" }, { status: 400 });
     }
 
-    const event = await prisma.funnelEvent.create({
+    await prisma.funnelEvent.create({
       data: {
         serviceName,
         eventType,
       },
     });
 
-    return NextResponse.json(event);
+    return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("Error logging funnel event:", err);
     // Return 200 to the client even if DB logging fails, to prevent client-side impact

@@ -32,6 +32,7 @@ export default function FloatingNavbar() {
                 alt="JB Recruitments - HR Consulting & Talent Acquisition Agency Logo"
                 className="w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12"
                 priority
+                quality={90}
               />
             </Link>
 

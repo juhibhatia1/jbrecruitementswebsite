@@ -49,6 +49,7 @@ export default function FounderSection() {
                 src="/founder.avif"
                 alt="Juhi Bhatia - Founder and CEO of JB Recruitments"
                 fill
+                sizes="(max-width: 768px) 80px, 96px"
                 className="object-cover"
               />
             </div>

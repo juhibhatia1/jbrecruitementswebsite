@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { RxArrowTopRight } from "react-icons/rx";
 import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
-import { detectCurrencyFromBrowser, getCachedCurrency, setCachedCurrency } from "@/lib/geo-utils";
+import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
 
 type Currency = "USD" | "AED" | "INR";
 
@@ -247,8 +247,8 @@ export default function ServicesSection({
   const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [isPromoPaused, setIsPromoPaused] = useState(false);
 
-  //  Currency state
-  const [currency, setCurrency] = useState<Currency>("USD");
+  // Currency — auto-detected from geo (cache → browser hints → /api/geo → ipapi.co)
+  const currency = useDetectCurrency();
 
   // Multi-select cart state
   const [selectedTitles, setSelectedTitles] = useState<Set<string>>(new Set());
@@ -264,78 +264,8 @@ export default function ServicesSection({
 
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-detect currency from geo on mount using local /api/geo first, then ipapi.co
-  useEffect(() => {
-    const browserCurrency = detectCurrencyFromBrowser();
 
-    // Clean up stale keys from older versions
-    sessionStorage.removeItem("jb_currency");
-    sessionStorage.removeItem("jb_currency_v2");
-    sessionStorage.removeItem("jb_currency_v3");
 
-    const cached = getCachedCurrency();
-    if (cached && ["AED", "INR"].includes(cached)) {
-      setCurrency(cached);
-      return;
-    }
-
-    if (browserCurrency !== "USD") {
-      setCurrency(browserCurrency);
-      setCachedCurrency(browserCurrency);
-      return;
-    }
-
-    if (cached === "USD") {
-      setCurrency(cached);
-      return;
-    }
-
-    const AED_COUNTRIES = new Set(["AE"]);
-    const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
-
-    // First try the local geo API which runs server-side and has edge header support
-    fetch("/api/geo")
-      .then((r) => {
-        if (!r.ok) throw new Error("Local geo API failed");
-        return r.json();
-      })
-      .then((data) => {
-        if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
-          setCurrency(data.currency as Currency);
-          setCachedCurrency(data.currency as Currency);
-        } else {
-          throw new Error("Invalid currency returned from local API");
-        }
-      })
-      .catch((err) => {
-        console.warn(
-          "[geo-detect] Local geo API lookup failed, falling back to ipapi.co:",
-          err,
-        );
-        // Fallback to client-side ipapi.co (might be blocked by adblockers)
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-
-        fetch("https://ipapi.co/json/", {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        })
-          .then((r) => (r.ok ? r.json() : Promise.reject()))
-          .then((data: { country_code?: string; error?: boolean }) => {
-            if (data.error) throw new Error();
-            const code = (data.country_code || "").toUpperCase();
-            let detected: Currency = "USD";
-            if (AED_COUNTRIES.has(code)) detected = "AED";
-            else if (INR_COUNTRIES.has(code)) detected = "INR";
-            setCurrency(detected);
-            setCachedCurrency(detected);
-          })
-          .catch(() => {
-            setCurrency("USD");
-          })
-          .finally(() => clearTimeout(timeout));
-      });
-  }, []);
 
   // Helpers to get the local amount for a service in the selected currency
   const getLocalAmount = (title: string): number => {
@@ -448,15 +378,10 @@ export default function ServicesSection({
   }, [bundleBannerDismissed, cartEligibleServices.length]);
 
   // Open payment modal for a single service (Buy Now)
+  // Note: CLICK_BUY analytics are already fired by ServiceCard's Buy Now button,
+  // so no duplicate fetch is needed here.
   const handleBuyClick = (title: string, description: string) => {
     const localAmt = getLocalAmount(title);
-    if (title === "All Career Services Bundle") {
-      fetch("/api/analytics/funnel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceName: title, eventType: "CLICK_BUY" }),
-      }).catch((e) => console.error("Telemetry failed:", e));
-    }
     setCheckoutServices([{ title, amount: localAmt, description }]);
     setIsModalOpen(true);
   };

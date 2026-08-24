@@ -17,6 +17,7 @@ export default function MissionVision() {
               src="/about-us/card-bg.avif" // Note: Need to make sure this image exists or use placeholder
               alt="Team collaborating in a modern office"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-contain"
             />
           </ScrollAnimation>

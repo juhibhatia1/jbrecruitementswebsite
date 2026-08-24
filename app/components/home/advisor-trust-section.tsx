@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { PiPlugsConnectedBold } from "react-icons/pi";
@@ -165,6 +165,7 @@ export default function AdvisorTrustSection() {
                 height={640}
                 className="h-full w-full object-cover"
                 priority
+                quality={90}
               />
             </div>
           </ScrollAnimation>

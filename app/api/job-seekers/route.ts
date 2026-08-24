@@ -287,10 +287,7 @@ export async function POST(request: Request) {
       // If DB was saved, return success with warning
       if (dbSaved) {
         return NextResponse.json(
-          {
-            success: true,
-            message: "Application saved, but email service unavailable.",
-          },
+          { success: true },
           { status: 200 },
         );
       }
@@ -441,12 +438,7 @@ Instagram: instagram.com/juhibhatia_globalrecruiter
         outcome: emailSent ? "success" : "saved_with_email_pending",
         fileUrl: fileUrl || null,
       });
-      return NextResponse.json({
-        success: true,
-        message: emailSent
-          ? "Application submitted successfully!"
-          : "Application saved (email pending).",
-      });
+      return NextResponse.json({ success: true });
     }
 
     // If DB save failed and email also failed
@@ -467,10 +459,7 @@ Instagram: instagram.com/juhibhatia_globalrecruiter
       outcome: "success_without_db_save",
       fileUrl: fileUrl || null,
     });
-    return NextResponse.json({
-      success: true,
-      message: "Application submitted successfully!",
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
     logJobSeekerError(requestId, "request.unhandled_error", error);
     return NextResponse.json(

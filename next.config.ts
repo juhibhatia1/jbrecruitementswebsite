@@ -13,6 +13,7 @@ const nextConfig: any = {
   },
   serverExternalPackages: ["sharp"],
   images: {
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: "https",

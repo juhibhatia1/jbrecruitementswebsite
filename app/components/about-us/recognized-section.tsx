@@ -86,6 +86,7 @@ export default function RecognizedSection() {
                     src="/founder.avif"
                     alt="Juhi Bhatia - Founder and CEO of JB Recruitments"
                     fill
+                    sizes="80px"
                     className="object-cover"
                   />
                 </div>

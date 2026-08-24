@@ -25,7 +25,7 @@ import {
   IoCardOutline,
   IoQrCodeOutline,
 } from "react-icons/io5";
-import { detectCurrencyFromBrowser, getCachedCurrency, setCachedCurrency } from "@/lib/geo-utils";
+import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -241,7 +241,7 @@ export default function CustomJdMockInterviewPage() {
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
-  const [currency, setCurrency] = useState<"USD" | "AED" | "INR" | "">("");
+  const currency = useDetectCurrency();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
   const isIndianUser = currency === "INR";
@@ -303,79 +303,9 @@ export default function CustomJdMockInterviewPage() {
 
   // Price calculations
   const totalAmount = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
-  const displayCurrency = currency || "USD";
+  const displayCurrency = currency;
 
-  // Location currency detection using local /api/geo first, then ipapi.co
-  useEffect(() => {
-    const browserCurrency = detectCurrencyFromBrowser();
-    const cached = getCachedCurrency();
 
-    // Clean up old plain text keys
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("jb_currency_v3");
-    }
-
-    if (cached && ["AED", "INR"].includes(cached)) {
-      setCurrency(cached);
-      return;
-    }
-    if (browserCurrency !== "USD") {
-      setCurrency(browserCurrency);
-      setCachedCurrency(browserCurrency);
-      return;
-    }
-
-    if (cached === "USD") {
-      setCurrency(cached);
-      return;
-    }
-
-    const AED_COUNTRIES = new Set(["AE"]);
-    const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
-
-    // First try the local geo API which runs server-side and has edge header support
-    fetch("/api/geo")
-      .then((r) => {
-        if (!r.ok) throw new Error("Local geo API failed");
-        return r.json();
-      })
-      .then((data) => {
-        if (data.currency && ["USD", "AED", "INR"].includes(data.currency)) {
-          setCurrency(data.currency);
-          setCachedCurrency(data.currency);
-        } else {
-          throw new Error("Invalid currency returned from local API");
-        }
-      })
-      .catch((err) => {
-        console.warn(
-          "[geo-detect] Local geo API lookup failed, falling back to ipapi.co:",
-          err,
-        );
-        // Fallback to client-side ipapi.co (might be blocked by adblockers)
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-
-        fetch("https://ipapi.co/json/", {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        })
-          .then((r) => (r.ok ? r.json() : Promise.reject()))
-          .then((data: { country_code?: string; error?: boolean }) => {
-            if (data.error) throw new Error();
-            const code = (data.country_code || "").toUpperCase();
-            let detected: "USD" | "AED" | "INR" = "USD";
-            if (AED_COUNTRIES.has(code)) detected = "AED";
-            else if (INR_COUNTRIES.has(code)) detected = "INR";
-            setCurrency(detected);
-            setCachedCurrency(detected);
-          })
-          .catch(() => {
-            setCurrency("USD");
-          })
-          .finally(() => clearTimeout(timeout));
-      });
-  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<

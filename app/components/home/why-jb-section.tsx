@@ -33,6 +33,7 @@ export default function WhyJBSection() {
               sizes="(max-width: 1024px) 100vw, 600px"
               className="object-contain"
               priority
+              quality={90}
             />
           </ScrollAnimation>
 

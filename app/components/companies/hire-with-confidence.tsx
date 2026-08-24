@@ -162,6 +162,7 @@ export default function HireWithConfidence() {
                   src="/companies/card-2.avif"
                   alt="Industry-aware Screening"
                   fill
+                  sizes="(max-width: 768px) 100vw, 450px"
                   className="object-contain"
                 />
               </div>

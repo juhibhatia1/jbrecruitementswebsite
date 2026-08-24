@@ -16,6 +16,7 @@ export default function HeroSection() {
           alt="JB Recruitments - Top Recruitment Agency and HR Consulting Workspace"
           fill
           priority
+          quality={90}
           sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover object-[75%_70%] block sm:hidden"
         />
@@ -25,6 +26,7 @@ export default function HeroSection() {
           alt="JB Recruitments - Top Recruitment Agency and HR Consulting Workspace"
           fill
           priority
+          quality={90}
           sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover xl:object-[75%_55%] hidden xl:block"
         />
@@ -34,6 +36,7 @@ export default function HeroSection() {
           alt="Professional recruitment and HR consulting services - JB Recruitments"
           fill
           priority
+          quality={90}
           sizes="100vw"
           className="absolute inset-0 w-full h-full object-cover object-[80%_100%] sm:object-[85%_90%] md:object-[80%_90%] lg:object-[80%_100%] xl:object-[80%_98%] hidden sm:block xl:hidden"
         />
