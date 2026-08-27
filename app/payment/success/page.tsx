@@ -302,7 +302,7 @@ function SuccessContent() {
         )}
 
         <div className="mt-6 border-t border-gray-100 pt-5 text-xs text-gray-400">
-          Have questions? Reply to your confirmation email or contact us at juhi@jbrecruitments.com.
+          Have questions? Reply to your confirmation email or contact us at contact@jbrecruitments.com.
         </div>
       </div>
     );
@@ -359,8 +359,8 @@ function SuccessContent() {
       </p>
 
       {paymentIntent && (
-        <div className="mb-6 rounded-xl border border-gray-100 bg-[#f8fafc] p-3 text-left">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <div className="mb-6 rounded-xl border border-gray-100 bg-[#f8fafc] p-3 text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
             Transaction Reference:
           </span>
           <code className="break-all font-mono text-xs text-gray-700">{paymentIntent}</code>
@@ -378,7 +378,7 @@ function SuccessContent() {
       </div>
 
       <div className="border-t border-gray-100 pt-5 text-xs text-gray-400">
-        Have questions? Reply to your confirmation email or contact us at juhi@jbrecruitments.com.
+        Have questions? Reply to your confirmation email or contact us at contact@jbrecruitments.com.
       </div>
     </div>
   );

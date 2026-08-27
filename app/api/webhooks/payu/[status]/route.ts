@@ -16,7 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
 
     if (!isValid) {
       console.error("PayU hash verification failed");
-      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=verification_failed`));
+      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=verification_failed`), 303);
     }
 
     const { txnid, status, udf1, error_Message } = payload;
@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
 
     if (!purchaseId) {
       console.error("Missing purchaseId in udf1");
-      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=missing_purchase_id`));
+      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=missing_purchase_id`), 303);
     }
 
     const existingPurchase = await prisma.purchase.findUnique({
@@ -32,11 +32,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
     });
 
     if (!existingPurchase) {
-      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=purchase_not_found`));
+      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=purchase_not_found`), 303);
     }
 
     if (existingPurchase.status === "COMPLETED") {
-      return NextResponse.redirect(buildAppUrl(`/payment/success?payment_intent=${txnid}`));
+      return NextResponse.redirect(buildAppUrl(`/payment/success?payment_intent=${txnid}`), 303);
     }
 
     if (status === "success" && routeStatus === "success") {
@@ -56,19 +56,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
         },
       });
 
-      // Handle funnel event and emails just like Stripe
+      // Handle funnel event and emails safely
       try {
         await prisma.funnelEvent.create({
           data: { serviceName: purchase.serviceName, eventType: "COMPLETED" },
         });
       } catch (e) {}
 
-      await sendPurchaseEmails(purchase);
+      try {
+        await sendPurchaseEmails(purchase);
+      } catch (emailErr) {
+        console.error("Failed to send purchase emails in PayU webhook:", emailErr);
+      }
 
-      // (If there's an interview workflow, we would trigger it here, but PayU might be used mostly for services. 
-      // For simplicity, we just mark it completed and redirect.)
-      
-      return NextResponse.redirect(buildAppUrl(`/payment/success?payment_intent=${txnid}`));
+      return NextResponse.redirect(buildAppUrl(`/payment/success?payment_intent=${txnid}`), 303);
     } else {
       // Failure
       await prisma.purchase.update({
@@ -79,10 +80,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
           gatewayTransactionId: txnid as string,
         },
       });
-      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=${error_Message || "declined"}`));
+      return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=${error_Message || "declined"}`), 303);
     }
   } catch (err: any) {
     console.error("PayU Webhook error:", err);
-    return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=server_error`));
+    return NextResponse.redirect(buildAppUrl(`/payment/failed?reason=server_error`), 303);
   }
 }
