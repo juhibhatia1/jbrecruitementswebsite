@@ -24,6 +24,11 @@ export class StripeProvider implements PaymentProvider {
             await stripe.customers.update(customer.id, {
               name: params.candidateName.trim(),
               ...(params.candidatePhone && { phone: params.candidatePhone.trim() }),
+              description: "JB Recruitment Solutions Candidate",
+              metadata: {
+                source: "JB Recruitment Solutions",
+                site: "jbrecruitments.com",
+              },
             });
           }
         } else {
@@ -31,6 +36,11 @@ export class StripeProvider implements PaymentProvider {
             email: emailClean,
             name: params.candidateName.trim(),
             ...(params.candidatePhone && { phone: params.candidatePhone.trim() }),
+            description: "JB Recruitment Solutions Candidate",
+            metadata: {
+              source: "JB Recruitment Solutions",
+              site: "jbrecruitments.com",
+            },
           });
           customerId = newCustomer.id;
         }
@@ -42,10 +52,14 @@ export class StripeProvider implements PaymentProvider {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(params.amount * 100), // Stripe expects amounts in cents
       currency: params.currency.toLowerCase(),
-      description: params.serviceName,
+      description: `JB Recruitment Solutions - ${params.serviceName}`,
       receipt_email: params.candidateEmail,
       customer: customerId,
-      metadata: params.metadata || {},
+      metadata: {
+        source: "JB Recruitment Solutions",
+        site: "jbrecruitments.com",
+        ...(params.metadata || {}),
+      },
     });
 
     return {
