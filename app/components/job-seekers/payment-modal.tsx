@@ -203,7 +203,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Your Name
+                  Your Full Name <span className="text-sm font-bold ml-0.5">*</span>
                 </label>
                 <input
                   type="text"
@@ -217,7 +217,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Email Address
+                  Email Address <span className="text-sm font-bold ml-0.5">*</span>
                 </label>
                 <input
                   type="email"
@@ -231,7 +231,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  WhatsApp Number
+                  WhatsApp Number <span className="text-sm font-bold ml-0.5">*</span>
                 </label>
                 <input
                   type="tel"
