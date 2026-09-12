@@ -8,6 +8,7 @@ import type { CandidateInterviewRecord, CandidateInterviewBooking } from "./page
 import { PiXCircleDuotone } from "react-icons/pi";
 import { updatePurchaseStatus } from "./actions";
 import CreateCandidateInterviewModal from "@/app/components/admin/create-candidate-interview-modal";
+import InfoTooltip from "@/app/components/ui/info-tooltip";
 
 const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
 type Voice = typeof OPENAI_REALTIME_VOICES[number];
@@ -161,21 +162,24 @@ export function EmployeeInterviewsDashboard({
                   Quickly scan hundreds of customers, drill into one customer's interviews, and open the full AI report when needed.
                 </p>
               </div>
-              <button
-                onClick={() => setIsCreateCandidateModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#5a58ab] hover:bg-[#4a489b] text-white rounded-2xl text-sm font-bold transition cursor-pointer shadow-md shadow-[#5a58ab]/20 hover:shadow-lg shrink-0"
-              >
-                <IoAddCircleOutline className="w-5 h-5" />
-                <span>Create Candidate Interview</span>
-              </button>
+              <div className="inline-flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsCreateCandidateModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#5a58ab] hover:bg-[#4a489b] text-white rounded-2xl text-sm font-bold transition cursor-pointer shadow-md shadow-[#5a58ab]/20 hover:shadow-lg"
+                >
+                  <IoAddCircleOutline className="w-5 h-5" />
+                  <span>Create Candidate Interview</span>
+                </button>
+                <InfoTooltip text="Generate a unique candidate interview invitation link." title="Create Interview" position="bottom" align="end" />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-              <StatCard label="Candidates" value={stats.totalCandidates} />
-              <StatCard label="Paid" value={stats.totalPaidBookings} />
-              <StatCard label="AI" value={stats.aiCount} />
-              <StatCard label="Human" value={stats.humanCount} />
-              <StatCard label="Done" value={stats.completedCount} />
+              <StatCard label="Candidates" value={stats.totalCandidates} info="Total unique candidates with recorded mock interview bookings." />
+              <StatCard label="Paid" value={stats.totalPaidBookings} info="Total verified paid interview sessions across all candidates." />
+              <StatCard label="AI" value={stats.aiCount} info="Mock interviews conducted with the AI Realtime Voice interviewer." />
+              <StatCard label="Human" value={stats.humanCount} info="Mock interviews conducted with senior expert recruiters." />
+              <StatCard label="Done" value={stats.completedCount} info="Completed interview sessions with candidate performance reports filed." />
             </div>
           </div>
         </header>
@@ -207,11 +211,36 @@ export function EmployeeInterviewsDashboard({
                 <table className="min-w-full divide-y divide-slate-100">
                   <thead className="bg-[#fbfbfd] text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                     <tr>
-                      <th className="px-5 py-3">Customer</th>
-                      <th className="px-5 py-3">Bookings</th>
-                      <th className="px-5 py-3">Latest type</th>
-                      <th className="px-5 py-3">Latest status</th>
-                      <th className="px-5 py-3">Last activity</th>
+                      <th className="px-5 py-3">
+                        <div className="flex items-center gap-1">
+                          <span>Customer</span>
+                          <InfoTooltip text="Candidate full name, contact email, and registered country." title="Candidate" position="top" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-3">
+                        <div className="flex items-center gap-1">
+                          <span>Bookings</span>
+                          <InfoTooltip text="Number of mock interview sessions booked by this candidate." title="Bookings" position="top" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-3">
+                        <div className="flex items-center gap-1">
+                          <span>Latest type</span>
+                          <InfoTooltip text="The format of the most recent interview (AI or Human Recruiter)." title="Latest Type" position="top" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-3">
+                        <div className="flex items-center gap-1">
+                          <span>Latest status</span>
+                          <InfoTooltip text="Current scheduling and evaluation report status for the latest booking." title="Status" position="top" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-3">
+                        <div className="flex items-center gap-1">
+                          <span>Last activity</span>
+                          <InfoTooltip text="Date of the most recent purchase or interview session update." title="Last Activity" position="top" />
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -661,7 +690,10 @@ function InterviewConfigSection() {
     <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Configuration</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">Configuration</p>
+            <InfoTooltip text="Global settings applied to AI mock interviews, including default session duration and voice persona." title="Interview Configuration" position="bottom" />
+          </div>
           <h2 className="mt-1 text-2xl font-semibold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
             Interview Configuration
           </h2>
@@ -918,10 +950,13 @@ function isBookingCompleted(booking: CandidateInterviewRecord["bookings"][number
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, info }: { label: string; value: number; info?: string }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-4 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <div className="flex items-center justify-between gap-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+        {info && <InfoTooltip text={info} title={label} position="top" />}
+      </div>
       <p className="mt-1 text-xl font-semibold text-[#252e3d]">{value}</p>
     </div>
   );
@@ -935,10 +970,13 @@ function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) 
   return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{children}</span>;
 }
 
-function MiniStat({ label, value }: { label: string; value: number | string }) {
+function MiniStat({ label, value, info }: { label: string; value: number | string; info?: string }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-3 py-2 text-center">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <div className="flex items-center justify-center gap-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+        {info && <InfoTooltip text={info} title={label} position="top" />}
+      </div>
       <p className="mt-1 text-sm font-semibold text-[#252e3d]">{value}</p>
     </div>
   );

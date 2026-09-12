@@ -25,8 +25,20 @@ import {
   IoBarChartOutline,
   IoOpenOutline,
   IoArrowForward,
+  IoCartOutline,
+  IoTrendingUp,
+  IoDocumentTextOutline,
+  IoCalendarOutline,
+  IoFlashOutline,
+  IoAddOutline,
+  IoCheckmarkCircleOutline,
+  IoPersonOutline,
+  IoPeopleOutline,
+  IoTimeOutline,
 } from "react-icons/io5";
 import { FaArrowRight, FaArrowRightLong } from "react-icons/fa6";
+import CreateCandidateInterviewModal from "@/app/components/admin/create-candidate-interview-modal";
+import InfoTooltip from "@/app/components/ui/info-tooltip";
 
 interface PurchaseData {
   id: string;
@@ -47,22 +59,23 @@ interface PurchaseData {
 interface FunnelEventData {
   id: string;
   serviceName: string;
-  eventType: string;
+  eventType: "VIEW" | "CLICK_BUY" | "PAGE_VIEW" | "BUY_BUTTON_CLICK" | "CHECKOUT_COMPLETED" | string;
   createdAt: string;
 }
 
 interface AnalyticsDashboardProps {
   submissions: AdminSubmission[];
-  purchases?: PurchaseData[];
+  purchases: PurchaseData[];
   funnelEvents?: FunnelEventData[];
+  totalInterviewsCount?: number;
   dbError?: string | null;
 }
 
 type RangeFilter = "7d" | "30d" | "all";
-type TabValue = "submissions" | "services";
+type TabValue = "pipeline" | "funnels" | "demographics";
 
 function percent(part: number, total: number): string {
-  if (total === 0) {
+  if (!total || total <= 0) {
     return "0%";
   }
 
@@ -71,18 +84,30 @@ function percent(part: number, total: number): string {
 
 function BarList({
   title,
+  subtitle,
+  info,
   items,
 }: {
   title: string;
+  subtitle?: string;
+  info?: string;
   items: AnalyticsBucket[];
 }) {
   const maxValue = items[0]?.count || 1;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-        {title}
-      </h3>
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700">
+            {title}
+          </h3>
+          {info && <InfoTooltip text={info} title={title} position="bottom" align="start" />}
+        </div>
+      </div>
+      {subtitle && (
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-600 font-medium">{subtitle}</p>
+      )}
 
       <div className="mt-4 space-y-3">
         {items.length === 0 ? (
@@ -268,6 +293,10 @@ function DrilldownView({
       if (lenis) lenis.start();
     };
   }, [lenis]);
+
+  useEffect(() => {
+    setPillFilter("all");
+  }, [metric]);
 
   const metricFamily = useMemo(() => {
     if (
@@ -461,13 +490,33 @@ function DrilldownView({
       rawItems.forEach((i) => {
         serviceCounts[i.typeOrService] = (serviceCounts[i.typeOrService] || 0) + 1;
       });
-      Object.entries(serviceCounts).forEach(([svc, count]) => {
+
+      // Sort services by count descending (most popular first), then alphabetically
+      const sortedServices = Object.entries(serviceCounts).sort((a, b) => {
+        if (b[1] !== a[1]) {
+          return b[1] - a[1];
+        }
+        return a[0].localeCompare(b[0]);
+      });
+
+      // Show top 5 services only
+      const top5Services = sortedServices.slice(0, 5);
+      top5Services.forEach(([svc, count]) => {
         options.push({ key: svc, label: `${svc} (${count})` });
       });
+
+      // If active filter is outside top 5, keep it visible so selection is preserved
+      if (
+        pillFilter !== "all" &&
+        !top5Services.some(([svc]) => svc === pillFilter) &&
+        serviceCounts[pillFilter]
+      ) {
+        options.push({ key: pillFilter, label: `${pillFilter} (${serviceCounts[pillFilter]})` });
+      }
     }
 
     return options;
-  }, [rawItems, metricFamily]);
+  }, [rawItems, metricFamily, pillFilter]);
 
   // Apply Search & Pill Filters
   const filteredItems = useMemo(() => {
@@ -893,15 +942,17 @@ export default function AnalyticsDashboard({
   submissions,
   purchases = [],
   funnelEvents = [],
+  totalInterviewsCount = 0,
   dbError = null,
 }: AnalyticsDashboardProps) {
   const router = useRouter();
   const [range, setRange] = useState<RangeFilter>("30d");
-  const [activeTab, setActiveTab] = useState<TabValue>("submissions");
+  const [activeTab, setActiveTab] = useState<TabValue>("pipeline");
   const [chartInterval, setChartInterval] = useState<"weekly" | "monthly">("weekly");
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<string | null>(null);
+  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
 
   // 1. Date Range Filtering
   const rangeFilteredSubmissions = useMemo(() => {
@@ -1077,6 +1128,35 @@ export default function AnalyticsDashboard({
     return alerts;
   }, [serviceStats]);
 
+  // Unique Candidates in Directory
+  const uniqueDirectoryCount = useMemo(() => {
+    const emails = new Set<string>();
+    submissions.forEach((s) => {
+      if (s.email) emails.add(s.email.toLowerCase().trim());
+    });
+    purchases.forEach((p) => {
+      if (p.candidateEmail) emails.add(p.candidateEmail.toLowerCase().trim());
+    });
+    return emails.size;
+  }, [submissions, purchases]);
+
+  // Operational items needing attention
+  const pendingResumesCount = useMemo(() => {
+    return submissions.filter((s) => s.type === "job-seeker" && s.resumeUrl).length;
+  }, [submissions]);
+
+  const pendingInterviewsCount = useMemo(() => {
+    return purchases.filter((p) => p.mockInterviewStatus === "PENDING_SCHEDULE").length;
+  }, [purchases]);
+
+  // Top 5 Services by Revenue
+  const top5Services = useMemo(() => {
+    return Object.entries(serviceStats)
+      .map(([name, s]) => ({ name, ...s }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+  }, [serviceStats]);
+
   // 6. Chart Revenue Grouping Data
   const revenueTrend = useMemo(() => {
     if (chartInterval === "monthly") {
@@ -1179,52 +1259,61 @@ export default function AnalyticsDashboard({
         <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#605dba]">
-                Admin Dashboard
-              </p>
               <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl">
-                Analytics Suite
+                Analytics & Overview
               </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Monitor submissions, candidate conversion funnels, and revenue metrics in real time.
+              <p className="mt-1 text-sm text-slate-500">
+                Real-time executive performance, recruitment pipeline & financial activity.
               </p>
             </div>
 
+            {/* Navigation Buttons with Live Counters */}
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/admin/dashboard"
-                className="rounded-xl bg-[#252e3d] px-4 py-2 text-sm font-semibold text-white transition"
+                className="rounded-xl bg-[#252e3d] px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs"
               >
                 Analytics
               </Link>
               <Link
                 href="/admin/submissions"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
-                Submissions
+                <span>Submissions</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">
+                  {submissions.length}
+                </span>
               </Link>
               <Link
                 href="/admin/directory"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
-                User Directory
+                <span>User Directory</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">
+                  {uniqueDirectoryCount}
+                </span>
               </Link>
               <Link
                 href="/admin/knowledge"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
                 Chatbot & KB
               </Link>
               <Link
                 href="/admin/interviews"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
               >
-                Interviews
+                <span>Interviews</span>
+                {totalInterviewsCount > 0 && (
+                  <span className="rounded-full bg-[#f0efff] px-2 py-0.5 text-[10px] font-bold text-[#5a58ab] border border-[#5a58ab]/20">
+                    {totalInterviewsCount}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoggingOut ? "Logging out..." : "Logout"}
               </button>
@@ -1232,41 +1321,22 @@ export default function AnalyticsDashboard({
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-between border-t border-slate-100 pt-5 gap-3">
-            {/* Tabs Selector */}
-            <div className="flex bg-slate-100 rounded-xl p-1">
-              <button
-                onClick={() => setActiveTab("submissions")}
-                className={`rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold transition ${
-                  activeTab === "submissions"
-                    ? "bg-white text-[#252e3d] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                Form Submissions
-              </button>
-              <button
-                onClick={() => setActiveTab("services")}
-                className={`rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold transition ${
-                  activeTab === "services"
-                    ? "bg-white text-[#252e3d] shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                Premium Services & Revenue
-              </button>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <IoCalendarOutline className="w-4 h-4 text-slate-400" />
+              <span>Reporting Horizon:</span>
             </div>
 
             {/* Range Selector */}
             <div className="flex gap-1 bg-white border border-slate-200 rounded-full p-0.5 shadow-2xs">
               {[
-                { key: "7d", label: "7D" },
-                { key: "30d", label: "30D" },
-                { key: "all", label: "ALL" },
+                { key: "7d", label: "Last 7 Days" },
+                { key: "30d", label: "Last 30 Days" },
+                { key: "all", label: "All Time" },
               ].map((item) => (
                 <button
                   key={item.key}
                   onClick={() => setRange(item.key as RangeFilter)}
-                  className={`rounded-full px-4 py-1 text-xs font-semibold uppercase ${
+                  className={`rounded-full px-3.5 py-1 text-xs font-semibold transition cursor-pointer ${
                     range === item.key
                       ? "bg-[#252e3d] text-white shadow-2xs"
                       : "bg-transparent text-slate-600 hover:text-slate-900"
@@ -1297,470 +1367,704 @@ export default function AnalyticsDashboard({
           </div>
         )}
 
-        {/* Tab content 1: Submissions */}
-        {activeTab === "submissions" && (
-          <div className="space-y-6">
-            {/* Submission KPIs (Wrap each card in a button with click handler to set activeDrilldown) */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <button
-                onClick={() => setActiveDrilldown("total_submissions")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Total
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.total}</p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("contacts")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Contact Form
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.contact}</p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("job_seekers")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Job Seekers
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">
-                  {submissionAnalytics.jobSeekers}
-                </p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("last_24h")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Last 24h
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">
-                  {submissionAnalytics.last24Hours}
-                </p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("unique_emails")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Unique Emails
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">
-                  {submissionAnalytics.uniqueEmails}
-                </p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("unique_ips")}
-                className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Unique IPs
-                </p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.uniqueIps}</p>
-                <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">
-                  View Detail &rarr;
-                </span>
-              </button>
-            </section>
-
-            {/* Submission Conversion & Trends */}
-            <section className="grid gap-4 lg:grid-cols-2">
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Conversion Signals
-                </h3>
-                <div className="mt-4 space-y-3 text-sm text-slate-700">
-                  <div className="flex justify-between border-b border-slate-50 pb-2">
-                    <span>With phone:</span>
-                    <span className="font-semibold">
-                      {submissionAnalytics.conversionSignals.withPhone} (
-                      {percent(
-                        submissionAnalytics.conversionSignals.withPhone,
-                        submissionAnalytics.total,
-                      )}
-                      )
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-50 pb-2">
-                    <span>Company provided:</span>
-                    <span className="font-semibold">
-                      {submissionAnalytics.conversionSignals.withCompany} (
-                      {percent(
-                        submissionAnalytics.conversionSignals.withCompany,
-                        submissionAnalytics.contact,
-                      )}
-                      )
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-50 pb-2">
-                    <span>Candidate note provided:</span>
-                    <span className="font-semibold">
-                      {submissionAnalytics.conversionSignals.withDescription} (
-                      {percent(
-                        submissionAnalytics.conversionSignals.withDescription,
-                        submissionAnalytics.jobSeekers,
-                      )}
-                      )
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-50 pb-2">
-                    <span>Resume uploaded:</span>
-                    <span className="font-semibold">
-                      {submissionAnalytics.withResume} (
-                      {percent(submissionAnalytics.withResume, submissionAnalytics.jobSeekers)})
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-50 pb-2">
-                    <span>Repeat submitters:</span>
-                    <span className="font-semibold">{submissionAnalytics.repeatSubmitters}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Submissions in last 7 days:</span>
-                    <span className="font-semibold">{submissionAnalytics.last7Days}</span>
-                  </div>
+        {/* Zone 1: Executive Pulse Hero Cards */}
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Revenue */}
+          <button
+            onClick={() => setActiveDrilldown("revenue")}
+            className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-[#5a58ab]/60 hover:shadow-md hover:z-20 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f0efff] text-[#5a58ab] group-hover:scale-105 transition-transform">
+                  <IoWalletOutline className="w-5 h-5" />
                 </div>
-              </section>
-
-              <BarList title="Daily Trend (14 Days)" items={submissionAnalytics.dailyTrend} />
-            </section>
-
-            {/* Demographics & Technical Details */}
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <BarList title="Top Source Paths" items={submissionAnalytics.topSources} />
-              <BarList title="Top Referrers" items={submissionAnalytics.topReferrers} />
-              <BarList title="Top Countries" items={submissionAnalytics.topCountries} />
-              <BarList title="Device Breakdown" items={submissionAnalytics.deviceBreakdown} />
-              <BarList title="Browser Breakdown" items={submissionAnalytics.browserBreakdown} />
-              <BarList title="OS Breakdown" items={submissionAnalytics.osBreakdown} />
-            </section>
-          </div>
-        )}
-
-        {/* Tab content 2: Services & Sales Funnels */}
-        {activeTab === "services" && (
-          <div className="space-y-6">
-
-
-            {/* Services KPIs (Wrapped in buttons with activeDrilldown handlers) */}
-            <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <button
-                onClick={() => setActiveDrilldown("revenue")}
-                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Gross Revenue
-                </p>
-                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-[#5a58ab]">
-                  ${grossRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("orders")}
-                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Completed Purchases
-                </p>
-                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-800">
-                  {totalOrders}
-                </p>
-                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("aov")}
-                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Avg. Order Value (AOV)
-                </p>
-                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-800">
-                  ${aov.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <span className="text-[10px] text-slate-450 font-semibold uppercase tracking-wider mt-2 block">
-                  View Detail &rarr;
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveDrilldown("conversion")}
-                className="text-left rounded-2xl bg-white p-5 border border-slate-200/60 shadow-sm hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">
-                  Overall Conversion Rate
-                </p>
-                <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-600">
-                  {overallConversionRate.toFixed(2)}%
-                </p>
-                <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider mt-2 block">
-                  View Detail &rarr;
-                </span>
-              </button>
-            </section>
-
-            {/* Revenue Trends & Distribution Charts */}
-            <section className="grid gap-6 lg:grid-cols-3">
-              {/* Gross Revenue Chart */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Revenue Performance Metrics
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Gross revenue trends grouped by {chartInterval}.
-                    </p>
-                  </div>
-                  <div className="flex bg-slate-100 rounded-lg p-0.5">
-                    <button
-                      onClick={() => setChartInterval("weekly")}
-                      className={`rounded-md px-3 py-1 text-xs font-bold transition ${
-                        chartInterval === "weekly"
-                          ? "bg-white text-slate-800 shadow-2xs"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      Weekly
-                    </button>
-                    <button
-                      onClick={() => setChartInterval("monthly")}
-                      className={`rounded-md px-3 py-1 text-xs font-bold transition ${
-                        chartInterval === "monthly"
-                          ? "bg-white text-slate-800 shadow-2xs"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      Monthly
-                    </button>
-                  </div>
-                </div>
-
-                {chartParams ? (
-                  <div className="relative pt-2">
-                    <svg
-                      viewBox={`0 0 ${chartParams.chartWidth} ${chartParams.chartHeight}`}
-                      className="w-full h-auto overflow-visible"
-                    >
-                      <defs>
-                        <linearGradient id="glow-grad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#5a58ab" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#5a58ab" stopOpacity="0.00" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Y-axis grid lines & ticks */}
-                      {chartParams.yGridLines.map((line, idx) => (
-                        <g key={idx}>
-                          <line
-                            x1={chartParams.padding.left}
-                            y1={line.y}
-                            x2={chartParams.chartWidth - chartParams.padding.right}
-                            y2={line.y}
-                            stroke="#e2e8f0"
-                            strokeWidth="1"
-                            strokeDasharray="4 4"
-                          />
-                          <text
-                            x={chartParams.padding.left - 10}
-                            y={line.y + 4}
-                            textAnchor="end"
-                            className="text-[10px] font-semibold fill-slate-400"
-                          >
-                            ${line.val.toFixed(0)}
-                          </text>
-                        </g>
-                      ))}
-
-                      {/* Guide indicator line */}
-                      {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
-                        <line
-                          x1={chartParams.points[hoveredPointIndex].x}
-                          y1={chartParams.padding.top}
-                          x2={chartParams.points[hoveredPointIndex].x}
-                          y2={chartParams.chartHeight - chartParams.padding.bottom}
-                          stroke="#cbd5e1"
-                          strokeWidth="1.5"
-                          strokeDasharray="2 2"
-                        />
-                      )}
-
-                      {/* Gradient glow shape */}
-                      {chartParams.areaPath && (
-                        <path d={chartParams.areaPath} fill="url(#glow-grad)" />
-                      )}
-
-                      {/* Trend line */}
-                      {chartParams.linePath && (
-                        <path
-                          d={chartParams.linePath}
-                          fill="none"
-                          stroke="#5a58ab"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      )}
-
-                      {/* Point triggers */}
-                      {chartParams.points.map((p, idx) => (
-                        <g key={idx}>
-                          {/* Circle target */}
-                          <circle
-                            cx={p.x}
-                            cy={p.y}
-                            r="14"
-                            fill="transparent"
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredPointIndex(idx)}
-                            onMouseLeave={() => setHoveredPointIndex(null)}
-                          />
-                          {/* Inner visible dot */}
-                          <circle
-                            cx={p.x}
-                            cy={p.y}
-                            r={hoveredPointIndex === idx ? "6" : "4"}
-                            fill="#ffffff"
-                            stroke="#5a58ab"
-                            strokeWidth="2.5"
-                            className="pointer-events-none transition-all duration-200"
-                          />
-                        </g>
-                      ))}
-
-                      {/* X-axis labels */}
-                      {chartParams.points.map((p, idx) => {
-                        const step = Math.max(Math.ceil(chartParams.points.length / 5), 1);
-                        if (idx % step !== 0 && idx !== chartParams.points.length - 1) return null;
-                        return (
-                          <text
-                            key={idx}
-                            x={p.x}
-                            y={chartParams.chartHeight - 12}
-                            textAnchor="middle"
-                            className="text-[10px] font-semibold fill-slate-400"
-                          >
-                            {p.label}
-                          </text>
-                        );
-                      })}
-                    </svg>
-
-                    {/* Chart Tooltip box overlay */}
-                    {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
-                      <div
-                        className="absolute z-10 pointer-events-none rounded-xl bg-[#252e3d] p-3 text-xs text-white shadow-lg border border-slate-700/50 transition-all duration-150"
-                        style={{
-                          left: `${(chartParams.points[hoveredPointIndex].x / chartParams.chartWidth) * 100}%`,
-                          top: `${(chartParams.points[hoveredPointIndex].y / chartParams.chartHeight) * 100 - 15}%`,
-                          transform: "translate(-50%, -100%)",
-                        }}
-                      >
-                        <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                          {chartParams.points[hoveredPointIndex].label}
-                        </div>
-                        <div className="mt-1 font-bold text-sm text-[#a8a6f3]">
-                          ${chartParams.points[hoveredPointIndex].amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
-                    No sales recorded within this range filter.
-                  </div>
-                )}
-              </div>
-
-              {/* Service Distribution breakdown */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Service Revenue Breakdown
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Revenue distributions by product.
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Gross Revenue
+                    </p>
+                    <InfoTooltip
+                      text="Total monetary value of all verified customer transactions processed via Stripe & PayU within the selected date range."
+                      title="Gross Revenue"
+                      position="bottom"
+                      align="start"
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">
+                    {range === "7d" ? "Past 7 days" : range === "30d" ? "Past 30 days" : "All time"}
                   </p>
                 </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#f0efff] text-[#5a58ab] px-2.5 py-0.5">
+                Sales
+              </span>
+            </div>
+            <div className="mt-4">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+                ${grossRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>Avg Order: <strong className="text-slate-700">${aov.toFixed(0)}</strong></span>
+                <span className="font-semibold text-[#5a58ab] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  Detail &rarr;
+                </span>
+              </div>
+            </div>
+          </button>
 
-                <div className="mt-6 space-y-4">
-                  {totalOrders === 0 ? (
-                    <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
-                      No sales distributions to map.
-                    </div>
-                  ) : (
-                    Object.entries(serviceStats)
-                      .map(([name, s]) => ({ name, ...s }))
-                      .sort((a, b) => b.revenue - a.revenue)
-                      .map((service) => {
-                        const share = grossRevenue > 0 ? (service.revenue / grossRevenue) * 100 : 0;
-                        if (service.revenue === 0) return null;
-                        return (
-                          <div key={service.name} className="flex flex-col">
-                            <div className="flex justify-between items-center text-sm mb-1">
-                              <span className="font-semibold text-slate-700 truncate max-w-[70%]" title={service.name}>
-                                {service.name}
-                              </span>
-                              <span className="font-bold text-slate-900">
-                                ${service.revenue.toFixed(0)}{" "}
-                                <span className="text-[10px] font-normal text-slate-400">({service.purchases} sales)</span>
-                              </span>
-                            </div>
-                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-[#5a58ab] to-[#8c8ae6] transition-all duration-500"
-                                style={{ width: `${Math.max(share, 3)}%` }}
-                              />
-                            </div>
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                              <span>Share of total: {share.toFixed(1)}%</span>
-                              <span>Price: ${service.price}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                  )}
+          {/* Paid Purchases */}
+          <button
+            onClick={() => setActiveDrilldown("orders")}
+            className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-500/60 hover:shadow-md hover:z-20 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform">
+                  <IoCartOutline className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Completed Orders
+                    </p>
+                    <InfoTooltip
+                      text="Total count of successfully paid candidate service purchases that have passed payment gateway verification."
+                      title="Completed Orders"
+                      position="bottom"
+                      align="start"
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">Verified purchases</p>
                 </div>
               </div>
-            </section>
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-0.5">
+                Orders
+              </span>
+            </div>
+            <div className="mt-4">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {totalOrders}
+              </p>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>{completedPurchases.length > 0 ? "Stripe & PayU verified" : "No orders in range"}</span>
+                <span className="font-semibold text-emerald-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  Detail &rarr;
+                </span>
+              </div>
+            </div>
+          </button>
 
-            {/* Sales Funnel Conversions per Service */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#5a58ab]">
-                  Sales Funnel Conversions
+          {/* Inquiries */}
+          <button
+            onClick={() => setActiveDrilldown("total_submissions")}
+            className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-blue-500/60 hover:shadow-md hover:z-20 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
+                  <IoMailOutline className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Candidate Inquiries
+                    </p>
+                    <InfoTooltip
+                      text="Total inbound candidate submissions received across job applications and contact inquiries within the selected filter window."
+                      title="Candidate Inquiries"
+                      position="bottom"
+                      align="start"
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">Total pipeline</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 px-2.5 py-0.5">
+                Leads
+              </span>
+            </div>
+            <div className="mt-4">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {submissionAnalytics.total}
+              </p>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>
+                  <strong className="text-slate-700">{submissionAnalytics.jobSeekers}</strong> Job Seekers &bull; <strong className="text-slate-700">{submissionAnalytics.contact}</strong> Contact
+                </span>
+                <span className="font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  Detail &rarr;
+                </span>
+              </div>
+            </div>
+          </button>
+
+          {/* Conversion Rate */}
+          <button
+            onClick={() => setActiveDrilldown("conversion")}
+            className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-amber-500/60 hover:shadow-md hover:z-20 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-105 transition-transform">
+                  <IoTrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Funnel Conversion
+                    </p>
+                    <InfoTooltip
+                      text="Percentage of total service catalog page views that converted into completed paid purchases."
+                      title="Funnel Conversion Rate"
+                      position="bottom"
+                      align="end"
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">Views to purchase</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-50 text-amber-700 px-2.5 py-0.5">
+                Funnel
+              </span>
+            </div>
+            <div className="mt-4">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {overallConversionRate.toFixed(1)}%
+              </p>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>From <strong className="text-slate-700">{totalViews}</strong> service views</span>
+                <span className="font-semibold text-amber-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  Detail &rarr;
+                </span>
+              </div>
+            </div>
+          </button>
+        </section>
+
+        {/* Zone 2: Action Center ("Needs Your Attention") */}
+        <section className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-[#f8f9ff] via-[#ffffff] to-[#f6f8ff] p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-amber-500" />
+                <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-[#5a58ab]">
+                  Operational Hub &bull; Action Items
                 </h3>
+                <InfoTooltip
+                  text="Real-time administrative alerts for unreviewed resumes and mock interview appointments requiring action."
+                  title="Operational Hub"
+                  position="top"
+                />
+              </div>
+              <p className="text-sm font-semibold text-slate-800">
+                Tasks requiring administrative review or follow-up
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Pending Resumes */}
+              <Link
+                href="/admin/directory"
+                className="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-[#5a58ab]/40 hover:bg-slate-50 transition"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <IoDocumentTextOutline className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span><span className="font-bold text-slate-900">{pendingResumesCount}</span> Candidate Resumes</span>
+                    <InfoTooltip text="Candidate profiles with uploaded resumes awaiting recruiter review." title="Candidate Resumes" position="top" />
+                  </div>
+                  <span className="block text-[10px] text-slate-400 font-normal">Review in Directory &rarr;</span>
+                </div>
+              </Link>
+
+              {/* Pending Interviews */}
+              <Link
+                href="/admin/interviews"
+                className="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-[#5a58ab]/40 hover:bg-slate-50 transition"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                  <IoCalendarOutline className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span><span className="font-bold text-slate-900">{pendingInterviewsCount}</span> Mock Bookings</span>
+                    <InfoTooltip text="Paid or requested mock interviews awaiting interview slot confirmation." title="Mock Bookings" position="top" />
+                  </div>
+                  <span className="block text-[10px] text-slate-400 font-normal">Awaiting scheduling &rarr;</span>
+                </div>
+              </Link>
+
+              {/* Quick Action Button */}
+              <div className="inline-flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsInterviewModalOpen(true)}
+                  className="flex items-center gap-2 rounded-2xl bg-[#5a58ab] hover:bg-[#4d4a96] px-4 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
+                >
+                  <IoAddOutline className="w-4 h-4 stroke-[3]" />
+                  <span>Create Candidate Interview</span>
+                </button>
+                <InfoTooltip
+                  text="Generate a unique, tokenized interview invitation link for an individual candidate to take an AI or human mock interview."
+                  title="Create Interview Link"
+                  position="bottom"
+                  align="end"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Zone 3: Two-Column Performance Engine (60 / 40 Split) */}
+        <section className="grid gap-6 lg:grid-cols-5">
+          {/* Revenue Chart (3 cols = 60%) */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3 flex flex-col justify-between">
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Gross Revenue Trajectory
+                    </h3>
+                    <InfoTooltip
+                      text="Visual plot of sales trends aggregated by weekly or monthly intervals to analyze revenue momentum and peak purchase periods."
+                      title="Revenue Trajectory"
+                      position="top"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Performance trends grouped by {chartInterval} timeline.
+                  </p>
+                </div>
+                <div className="flex bg-slate-100 rounded-xl p-0.5">
+                  <button
+                    onClick={() => setChartInterval("weekly")}
+                    className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                      chartInterval === "weekly"
+                        ? "bg-white text-slate-800 shadow-2xs"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                  <button
+                    onClick={() => setChartInterval("monthly")}
+                    className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                      chartInterval === "monthly"
+                        ? "bg-white text-slate-800 shadow-2xs"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                </div>
+              </div>
+
+              {chartParams ? (
+                <div className="relative pt-2">
+                  <svg
+                    viewBox={`0 0 ${chartParams.chartWidth} ${chartParams.chartHeight}`}
+                    className="w-full h-auto overflow-visible"
+                  >
+                    <defs>
+                      <linearGradient id="glow-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5a58ab" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#5a58ab" stopOpacity="0.00" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Y-axis grid lines & ticks */}
+                    {chartParams.yGridLines.map((line, idx) => (
+                      <g key={idx}>
+                        <line
+                          x1={chartParams.padding.left}
+                          y1={line.y}
+                          x2={chartParams.chartWidth - chartParams.padding.right}
+                          y2={line.y}
+                          stroke="#e2e8f0"
+                          strokeWidth="1"
+                          strokeDasharray="4 4"
+                        />
+                        <text
+                          x={chartParams.padding.left - 10}
+                          y={line.y + 4}
+                          textAnchor="end"
+                          className="text-[10px] font-semibold fill-slate-400"
+                        >
+                          ${line.val.toFixed(0)}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* Guide indicator line */}
+                    {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
+                      <line
+                        x1={chartParams.points[hoveredPointIndex].x}
+                        y1={chartParams.padding.top}
+                        x2={chartParams.points[hoveredPointIndex].x}
+                        y2={chartParams.chartHeight - chartParams.padding.bottom}
+                        stroke="#cbd5e1"
+                        strokeWidth="1.5"
+                        strokeDasharray="2 2"
+                      />
+                    )}
+
+                    {/* Gradient glow shape */}
+                    {chartParams.areaPath && (
+                      <path d={chartParams.areaPath} fill="url(#glow-grad)" />
+                    )}
+
+                    {/* Trend line */}
+                    {chartParams.linePath && (
+                      <path
+                        d={chartParams.linePath}
+                        fill="none"
+                        stroke="#5a58ab"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    )}
+
+                    {/* Point triggers */}
+                    {chartParams.points.map((p, idx) => (
+                      <g key={idx}>
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r="14"
+                          fill="transparent"
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredPointIndex(idx)}
+                          onMouseLeave={() => setHoveredPointIndex(null)}
+                        />
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={hoveredPointIndex === idx ? "6" : "4"}
+                          fill="#ffffff"
+                          stroke="#5a58ab"
+                          strokeWidth="2.5"
+                          className="pointer-events-none transition-all duration-200"
+                        />
+                      </g>
+                    ))}
+
+                    {/* X-axis labels */}
+                    {chartParams.points.map((p, idx) => {
+                      const step = Math.max(Math.ceil(chartParams.points.length / 5), 1);
+                      if (idx % step !== 0 && idx !== chartParams.points.length - 1) return null;
+                      return (
+                        <text
+                          key={idx}
+                          x={p.x}
+                          y={chartParams.chartHeight - 12}
+                          textAnchor="middle"
+                          className="text-[10px] font-semibold fill-slate-400"
+                        >
+                          {p.label}
+                        </text>
+                      );
+                    })}
+                  </svg>
+
+                  {/* Tooltip */}
+                  {hoveredPointIndex !== null && chartParams.points[hoveredPointIndex] && (
+                    <div
+                      className="absolute z-10 pointer-events-none rounded-xl bg-[#252e3d] p-3 text-xs text-white shadow-lg border border-slate-700/50 transition-all duration-150"
+                      style={{
+                        left: `${(chartParams.points[hoveredPointIndex].x / chartParams.chartWidth) * 100}%`,
+                        top: `${(chartParams.points[hoveredPointIndex].y / chartParams.chartHeight) * 100 - 15}%`,
+                        transform: "translate(-50%, -100%)",
+                      }}
+                    >
+                      <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                        {chartParams.points[hoveredPointIndex].label}
+                      </div>
+                      <div className="mt-1 font-bold text-sm text-[#a8a6f3]">
+                        ${chartParams.points[hoveredPointIndex].amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                  No sales recorded within this range filter.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Top 5 Services (2 cols = 40%) */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Top 5 Revenue Drivers
+                    </h3>
+                    <InfoTooltip
+                      text="The top 5 best-performing service offerings ranked by total dollar sales generated within the selected timeframe."
+                      title="Top Revenue Drivers"
+                      position="top"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Highest generating premium packages
+                  </p>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5a58ab] bg-[#f0efff] px-2.5 py-1 rounded-full">
+                  Ranked
+                </span>
+              </div>
+
+              {top5Services.length === 0 ? (
+                <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                  No service revenue to rank yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {top5Services.map((service, index) => {
+                    const share = grossRevenue > 0 ? (service.revenue / grossRevenue) * 100 : 0;
+                    return (
+                      <div key={service.name} className="flex flex-col">
+                        <div className="flex justify-between items-center text-sm mb-1.5">
+                          <div className="flex items-center gap-2 max-w-[65%]">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
+                              #{index + 1}
+                            </span>
+                            <span className="font-semibold text-slate-800 text-xs truncate" title={service.name}>
+                              {service.name}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-extrabold text-slate-900 text-xs">
+                              ${service.revenue.toFixed(0)}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-400 ml-1">
+                              ({service.purchases})
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[#5a58ab] to-[#8c8ae6] transition-all duration-500"
+                            style={{ width: `${Math.max(share, 4)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-medium">
+                          <span>{share.toFixed(1)}% of total revenue</span>
+                          <span>Price: ${service.price}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>View all service metrics:</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("funnels")}
+                className="font-bold text-[#5a58ab] hover:underline cursor-pointer"
+              >
+                Inspect Funnels &rarr;
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Zone 4: Tabbed Detailed Analysis */}
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
+              <button
+                onClick={() => setActiveTab("pipeline")}
+                className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  activeTab === "pipeline"
+                    ? "bg-white text-[#252e3d] shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Candidate Pipeline & Signals
+              </button>
+              <button
+                onClick={() => setActiveTab("funnels")}
+                className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  activeTab === "funnels"
+                    ? "bg-white text-[#252e3d] shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Service Funnels & Drop-off
+              </button>
+              <button
+                onClick={() => setActiveTab("demographics")}
+                className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  activeTab === "demographics"
+                    ? "bg-white text-[#252e3d] shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Audience & Demographics
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-tab 1: Pipeline */}
+          {activeTab === "pipeline" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Micro KPI Row */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <button
+                  onClick={() => setActiveDrilldown("total_submissions")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Total</p>
+                    <InfoTooltip text="Aggregated submissions across all candidate inquiries and job applications." title="Total Inquiries" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.total}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+                <button
+                  onClick={() => setActiveDrilldown("contacts")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Contact Form</p>
+                    <InfoTooltip text="Employer and visitor queries submitted via the Contact Us form." title="Contact Form Inquiries" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.contact}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+                <button
+                  onClick={() => setActiveDrilldown("job_seekers")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Job Seekers</p>
+                    <InfoTooltip text="Candidate profiles and resume submissions applying for job placement." title="Job Seekers" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.jobSeekers}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+                <button
+                  onClick={() => setActiveDrilldown("last_24h")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Last 24h</p>
+                    <InfoTooltip text="Submissions logged within the rolling last 24 hours to monitor real-time intake." title="Last 24h Inquiries" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.last24Hours}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+                <button
+                  onClick={() => setActiveDrilldown("unique_emails")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Unique Emails</p>
+                    <InfoTooltip text="Distinct individual candidate email addresses excluding repeated submissions." title="Unique Emails" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.uniqueEmails}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+                <button
+                  onClick={() => setActiveDrilldown("unique_ips")}
+                  className="text-left rounded-2xl bg-white p-4 shadow-sm border border-slate-200/60 hover:border-[#605dba]/50 hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-[#605dba]">Unique IPs</p>
+                    <InfoTooltip text="Distinct visitor network addresses to verify geographic and organic reach." title="Unique IPs" position="top" />
+                  </div>
+                  <p className="mt-1 text-2xl font-extrabold text-slate-800">{submissionAnalytics.uniqueIps}</p>
+                  <span className="text-[9px] text-slate-400 mt-2 block uppercase font-bold tracking-wider">Detail &rarr;</span>
+                </button>
+              </div>
+
+              {/* Signals & 7 Day Trend */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Lead Quality & Intent Signals
+                    </h3>
+                    <InfoTooltip
+                      text="High-intent indicators provided by candidates, showing how many included phone numbers, company names, descriptions, or resumes."
+                      title="Intent Signals"
+                      position="top"
+                    />
+                  </div>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span>Phone number provided:</span>
+                      <span className="font-semibold">
+                        {submissionAnalytics.conversionSignals.withPhone} ({percent(submissionAnalytics.conversionSignals.withPhone, submissionAnalytics.total)})
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span>Company name provided:</span>
+                      <span className="font-semibold">
+                        {submissionAnalytics.conversionSignals.withCompany} ({percent(submissionAnalytics.conversionSignals.withCompany, submissionAnalytics.contact)})
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span>Candidate description provided:</span>
+                      <span className="font-semibold">
+                        {submissionAnalytics.conversionSignals.withDescription} ({percent(submissionAnalytics.conversionSignals.withDescription, submissionAnalytics.jobSeekers)})
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span>Resume file uploaded:</span>
+                      <span className="font-semibold">
+                        {submissionAnalytics.withResume} ({percent(submissionAnalytics.withResume, submissionAnalytics.jobSeekers)})
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span>Repeat submitters:</span>
+                      <span className="font-semibold">{submissionAnalytics.repeatSubmitters}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Submissions in last 7 days:</span>
+                      <span className="font-semibold">{submissionAnalytics.last7Days}</span>
+                    </div>
+                  </div>
+                </section>
+
+                <BarList
+                  title="Daily Inquiries (Last 7 Days)"
+                  subtitle="Daily inquiries count total inbound candidate interactions — measuring contact form requests and job applications received each day over the past week to track immediate recruitment acquisition momentum."
+                  info="Day-by-day volume of inbound candidate applications and contact requests over the last 7 calendar days to monitor lead velocity."
+                  items={submissionAnalytics.dailyTrend}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 2: Funnels */}
+          {activeTab === "funnels" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="mb-2">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#5a58ab]">
+                    Service Sales Funnels
+                  </h3>
+                  <InfoTooltip
+                    text="Conversion funnel tracking candidate drop-off across each stage: Page Views -> Buy Button Clicks -> Completed Purchases."
+                    title="Service Sales Funnels"
+                    position="top"
+                  />
+                </div>
                 <p className="text-xs text-slate-400 mt-1">
-                  Track drop-off friction and conversion efficiency across Views &rarr; Buy Clicks &rarr; Completed Checkouts.
+                  Track drop-off friction across Views &rarr; Buy Clicks &rarr; Completed Checkouts.
                 </p>
               </div>
 
@@ -1771,7 +2075,6 @@ export default function AnalyticsDashboard({
                   const overallConv = stats.views > 0 ? (stats.purchases / stats.views) * 100 : 0;
                   const overallDropoff = 100 - overallConv;
 
-                  // Determine performance tier & badge colors
                   let statusColor = "bg-slate-50 text-slate-600 border-slate-200";
                   let statusText = "No Traffic";
                   if (stats.views > 0) {
@@ -1793,7 +2096,6 @@ export default function AnalyticsDashboard({
                       className="rounded-3xl border border-gray-300 p-6 bg-slate-50/20 hover:bg-white hover:shadow-xl hover:border-[#5a58ab]/30 transition-all duration-300 flex flex-col justify-between"
                     >
                       <div>
-                        {/* Header Details */}
                         <div className="flex justify-between items-start border-b border-slate-100 pb-3.5 mb-4 gap-2">
                           <div className="max-w-[70%]">
                             <h4 className="font-extrabold text-slate-800 text-sm truncate" title={name}>
@@ -1808,12 +2110,10 @@ export default function AnalyticsDashboard({
                           </span>
                         </div>
 
-                        {/* Interactive narrowing visual funnel layout */}
                         <div className="relative mt-5 flex flex-col items-center">
-                          {/* Central vertical connecting line behind cards */}
                           <div className="absolute top-4 bottom-4 w-0.5 border-l-2 border-dashed border-slate-200" />
 
-                          {/* Step 1: Views (Widest block, dark tone) */}
+                          {/* Step 1: Views */}
                           <div className="w-full bg-[#252e3d] text-white rounded-2xl p-3 flex items-center justify-between shadow-xs border border-slate-800 transition-all duration-200 hover:bg-slate-800 z-10">
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-xl bg-white/10 text-slate-300">
@@ -1823,7 +2123,10 @@ export default function AnalyticsDashboard({
                                 </svg>
                               </div>
                               <div className="text-left">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">1. Views</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">1. Views</span>
+                                  <InfoTooltip text="Total candidate visits and page impressions recorded for this service." title="Service Views" position="top" />
+                                </div>
                                 <span className="font-extrabold text-base tracking-tight leading-none block mt-0.5">{stats.views}</span>
                               </div>
                             </div>
@@ -1831,7 +2134,7 @@ export default function AnalyticsDashboard({
                           </div>
 
                           {/* CTR Indicator Badge */}
-                          <div className="my-1.5 z-10">
+                          <div className="my-1.5 z-10 flex items-center gap-1">
                             <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full shadow-2xs border ${
                               ctr >= 15 
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
@@ -1841,9 +2144,10 @@ export default function AnalyticsDashboard({
                             }`}>
                               {ctr.toFixed(1)}% CTR
                             </span>
+                            <InfoTooltip text="Click-Through Rate: percentage of page viewers who clicked 'Buy Now'." title="Click-Through Rate" position="top" />
                           </div>
 
-                          {/* Step 2: Clicks (Medium width, Brand white panel) */}
+                          {/* Step 2: Clicks */}
                           <div className="w-[92%] bg-white border border-slate-200 hover:border-[#5a58ab]/40 rounded-2xl p-3 flex items-center justify-between shadow-2xs transition-all duration-200 z-10 group">
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-xl bg-[#5a58ab]/10 text-[#5a58ab] group-hover:bg-[#5a58ab]/20 transition-all">
@@ -1852,15 +2156,18 @@ export default function AnalyticsDashboard({
                                 </svg>
                               </div>
                               <div className="text-left">
-                                <span className="text-[9px] font-bold text-[#5a58ab] uppercase tracking-wider block">2. Buy Clicks</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] font-bold text-[#5a58ab] uppercase tracking-wider block">2. Buy Clicks</span>
+                                  <InfoTooltip text="Candidate clicks on the purchase CTA button to launch checkout." title="Buy Button Clicks" position="top" />
+                                </div>
                                 <span className="font-extrabold text-slate-800 text-base tracking-tight leading-none block mt-0.5">{stats.clicks}</span>
                               </div>
                             </div>
                             <span className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded">{ctr.toFixed(0)}%</span>
                           </div>
 
-                          {/* Checkout Complete Indicator Badge */}
-                          <div className="my-1.5 z-10">
+                          {/* Checkout Indicator Badge */}
+                          <div className="my-1.5 z-10 flex items-center gap-1">
                             <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full shadow-2xs border ${
                               checkoutRate >= 50 
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
@@ -1870,9 +2177,10 @@ export default function AnalyticsDashboard({
                             }`}>
                               {checkoutRate.toFixed(1)}% Checkout Completion
                             </span>
+                            <InfoTooltip text="Percentage of candidates who clicked buy and completed the payment transaction." title="Checkout Completion Rate" position="top" />
                           </div>
 
-                          {/* Step 3: Purchases (Narrowest, success green) */}
+                          {/* Step 3: Purchases */}
                           <div className="w-[84%] bg-emerald-600 text-white rounded-2xl p-3 flex items-center justify-between shadow-md border border-emerald-500/20 transition-all duration-200 hover:bg-emerald-700 z-10">
                             <div className="flex items-center gap-3">
                               <div className="p-2 rounded-xl bg-white/20 text-white">
@@ -1881,7 +2189,10 @@ export default function AnalyticsDashboard({
                                 </svg>
                               </div>
                               <div className="text-left">
-                                <span className="text-[9px] font-bold text-emerald-200 uppercase tracking-wider block">3. Completed Sales</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] font-bold text-emerald-200 uppercase tracking-wider block">3. Completed Sales</span>
+                                  <InfoTooltip text="Verified paid transactions successfully processed." title="Completed Orders" position="top" />
+                                </div>
                                 <span className="font-extrabold text-base tracking-tight leading-none block mt-0.5">{stats.purchases}</span>
                               </div>
                             </div>
@@ -1889,7 +2200,7 @@ export default function AnalyticsDashboard({
                           </div>
                         </div>
 
-                        {/* Conversions / Abandonment insights summary */}
+                        {/* Conversion Insights */}
                         <div className="mt-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500 space-y-1.5 font-medium leading-relaxed">
                           <div className="flex items-center gap-1.5 text-slate-700 font-bold mb-1">
                             <span className="text-xs">💡</span>
@@ -1900,26 +2211,28 @@ export default function AnalyticsDashboard({
                           ) : (
                             <>
                               <p>
-                                • <strong className="text-slate-800">{(100 - ctr).toFixed(1)}%</strong> of visitors drop off without clicking "Buy Now".
+                                &bull; <strong className="text-slate-800">{(100 - ctr).toFixed(1)}%</strong> of visitors drop off without clicking "Buy Now".
                               </p>
                               {stats.clicks > 0 && (
                                 <p>
-                                  • <strong className="text-slate-800">{(100 - checkoutRate).toFixed(1)}%</strong> of buyers abandon the checkout page.
+                                  &bull; <strong className="text-slate-800">{(100 - checkoutRate).toFixed(1)}%</strong> of buyers abandon checkout.
                                 </p>
                               )}
                               <p>
-                                • Overall conversion success rate is <strong className="text-emerald-600">{overallConv.toFixed(1)}%</strong> ({stats.purchases} {stats.purchases === 1 ? "sale" : "sales"} from {stats.views} views).
+                                &bull; Overall conversion is <strong className="text-emerald-600">{overallConv.toFixed(1)}%</strong> ({stats.purchases} {stats.purchases === 1 ? "sale" : "sales"} from {stats.views} views).
                               </p>
                             </>
                           )}
                         </div>
                       </div>
 
-                      {/* Performance indicators at bottom */}
                       <div className="mt-5 border-t border-slate-100 pt-4 flex flex-col gap-2.5">
                         <div>
                           <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            <span>Total Funnel Drop-off</span>
+                            <div className="flex items-center gap-1">
+                              <span>Total Drop-off</span>
+                              <InfoTooltip text="Percentage of visitors who left without completing an order." title="Drop-off Rate" position="top" />
+                            </div>
                             <span className="text-rose-600 font-extrabold">{overallDropoff.toFixed(1)}%</span>
                           </div>
                           <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -1929,7 +2242,10 @@ export default function AnalyticsDashboard({
 
                         <div>
                           <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            <span>Overall Conversion</span>
+                            <div className="flex items-center gap-1">
+                              <span>Conversion Rate</span>
+                              <InfoTooltip text="Percentage of total visitors who converted into paying customers." title="Conversion Rate" position="top" />
+                            </div>
                             <span className="text-emerald-600 font-extrabold">{overallConv.toFixed(1)}%</span>
                           </div>
                           <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -1941,10 +2257,57 @@ export default function AnalyticsDashboard({
                   );
                 })}
               </div>
-            </section>
-          </div>
-        )}
+            </div>
+          )}
+
+          {/* Sub-tab 3: Demographics & Tech */}
+          {activeTab === "demographics" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <BarList
+                  title="Top Source Paths"
+                  info="The initial URL paths where candidates first entered your website."
+                  items={submissionAnalytics.topSources}
+                />
+                <BarList
+                  title="Top Referrers"
+                  info="External sites, search engines, or social platforms that referred traffic."
+                  items={submissionAnalytics.topReferrers}
+                />
+                <BarList
+                  title="Top Countries"
+                  info="Geographic breakdown of candidate and visitor IP addresses."
+                  items={submissionAnalytics.topCountries}
+                />
+                <BarList
+                  title="Device Breakdown"
+                  info="Visitor client hardware categories (Desktop, Mobile, Tablet)."
+                  items={submissionAnalytics.deviceBreakdown}
+                />
+                <BarList
+                  title="Browser Breakdown"
+                  info="Web browsers used to access the platform (Chrome, Safari, Firefox, Edge, etc.)."
+                  items={submissionAnalytics.browserBreakdown}
+                />
+                <BarList
+                  title="OS Breakdown"
+                  info="Operating systems of visitor devices (Windows, iOS, macOS, Android, Linux)."
+                  items={submissionAnalytics.osBreakdown}
+                />
+              </div>
+            </div>
+          )}
+        </section>
       </div>
+
+      {/* Candidate Interview Quick Action Modal */}
+      <CreateCandidateInterviewModal
+        isOpen={isInterviewModalOpen}
+        onClose={() => {
+          setIsInterviewModalOpen(false);
+          router.refresh();
+        }}
+      />
 
       {/* Render Drilldown Popup Overlay */}
       {activeDrilldown && (

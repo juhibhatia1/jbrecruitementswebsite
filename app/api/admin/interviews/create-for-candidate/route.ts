@@ -87,9 +87,27 @@ export async function POST(request: NextRequest) {
       paymentUtr = String(body.paymentUtr || "").trim();
     }
 
-    if (!candidateName || !candidateEmail) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+    const phoneDigits = candidatePhone.replace(/\D/g, "");
+
+    if (!candidateName || candidateName.length < 2 || !/\p{L}/u.test(candidateName)) {
       return NextResponse.json(
-        { error: "Candidate Name and Candidate Email are required." },
+        { error: "Please enter a valid candidate full name (at least 2 letters)." },
+        { status: 400 }
+      );
+    }
+
+    if (!candidateEmail || !emailRegex.test(candidateEmail)) {
+      return NextResponse.json(
+        { error: "Please enter a valid candidate email address." },
+        { status: 400 }
+      );
+    }
+
+    if (candidatePhone && (!phoneRegex.test(candidatePhone) || phoneDigits.length < 6 || phoneDigits.length > 15)) {
+      return NextResponse.json(
+        { error: "Please enter a valid candidate phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456)." },
         { status: 400 }
       );
     }

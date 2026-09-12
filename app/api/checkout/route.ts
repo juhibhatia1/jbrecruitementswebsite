@@ -54,9 +54,30 @@ export async function POST(request: Request) {
       interviewBrief?: string;
     } | undefined;
 
-    if (!candidateName || !candidateEmail) {
+    const nameClean = (candidateName || "").trim();
+    const emailClean = (candidateEmail || "").trim();
+    const phoneClean = (candidatePhone || "").trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+
+    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
       return NextResponse.json(
-        { error: "Missing required fields: candidateName, candidateEmail" },
+        { error: "Please enter a valid full name (at least 2 letters)." },
+        { status: 400 },
+      );
+    }
+
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address (e.g. name@example.com)." },
+        { status: 400 },
+      );
+    }
+
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      return NextResponse.json(
+        { error: "Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456)." },
         { status: 400 },
       );
     }

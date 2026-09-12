@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import ConfirmationModal from "@/app/components/ui/confirmation-modal";
 import {
@@ -198,17 +198,41 @@ export default function KnowledgeDashboard() {
     }
   };
 
+  const [docsPage, setDocsPage] = useState(1);
+  const [logsPage, setLogsPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset page when search or tab changes
+  useEffect(() => {
+    setDocsPage(1);
+    setLogsPage(1);
+  }, [searchQuery, activeTab]);
+
   // Filter docs based on search
   const filteredDocs = docs.filter((doc) =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (doc.fileName && doc.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const totalDocsPages = Math.max(1, Math.ceil(filteredDocs.length / itemsPerPage));
+  const safeDocsPage = Math.min(docsPage, totalDocsPages);
+  const paginatedDocs = useMemo(() => {
+    const start = (safeDocsPage - 1) * itemsPerPage;
+    return filteredDocs.slice(start, start + itemsPerPage);
+  }, [filteredDocs, safeDocsPage, itemsPerPage]);
+
   // Filter sessions based on search
   const filteredSessions = sessions.filter((s) =>
     s.sessionId.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (s.ipAddress && s.ipAddress.includes(searchQuery))
   );
+
+  const totalLogsPages = Math.max(1, Math.ceil(filteredSessions.length / itemsPerPage));
+  const safeLogsPage = Math.min(logsPage, totalLogsPages);
+  const paginatedSessions = useMemo(() => {
+    const start = (safeLogsPage - 1) * itemsPerPage;
+    return filteredSessions.slice(start, start + itemsPerPage);
+  }, [filteredSessions, safeLogsPage, itemsPerPage]);
 
   const getSourceBadgeColor = (type: string) => {
     switch (type) {
@@ -417,7 +441,7 @@ export default function KnowledgeDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
-                    {filteredDocs.map((doc) => (
+                    {paginatedDocs.map((doc) => (
                       <tr key={doc.id} className="hover:bg-slate-50/30 transition-colors">
                         <td className="py-4 px-6">
                           <span className="font-semibold text-slate-800 block truncate max-w-[250px]" title={doc.title}>
@@ -502,6 +526,37 @@ export default function KnowledgeDashboard() {
                     ))}
                   </tbody>
                 </table>
+
+                {totalDocsPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/50 text-xs sm:text-sm">
+                    <span className="text-slate-500 font-medium">
+                      Showing {(safeDocsPage - 1) * itemsPerPage + 1} to{" "}
+                      {Math.min(safeDocsPage * itemsPerPage, filteredDocs.length)} of{" "}
+                      {filteredDocs.length} documents
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDocsPage((p) => Math.max(1, p - 1))}
+                        disabled={safeDocsPage === 1}
+                        className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer shadow-2xs"
+                      >
+                        Previous
+                      </button>
+                      <span className="font-semibold text-slate-700 px-2 text-xs">
+                        Page {safeDocsPage} of {totalDocsPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDocsPage((p) => Math.min(totalDocsPages, p + 1))}
+                        disabled={safeDocsPage === totalDocsPages}
+                        className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer shadow-2xs"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -528,7 +583,7 @@ export default function KnowledgeDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
-                    {filteredSessions.map((session) => {
+                    {paginatedSessions.map((session) => {
                       const userMsgs = session.messages.filter((m) => m.role === "user");
                       const latestMsg = userMsgs[userMsgs.length - 1]?.content || "No user messages yet.";
                       
@@ -565,6 +620,37 @@ export default function KnowledgeDashboard() {
                     })}
                   </tbody>
                 </table>
+
+                {totalLogsPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/50 text-xs sm:text-sm">
+                    <span className="text-slate-500 font-medium">
+                      Showing {(safeLogsPage - 1) * itemsPerPage + 1} to{" "}
+                      {Math.min(safeLogsPage * itemsPerPage, filteredSessions.length)} of{" "}
+                      {filteredSessions.length} chat sessions
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLogsPage((p) => Math.max(1, p - 1))}
+                        disabled={safeLogsPage === 1}
+                        className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer shadow-2xs"
+                      >
+                        Previous
+                      </button>
+                      <span className="font-semibold text-slate-700 px-2 text-xs">
+                        Page {safeLogsPage} of {totalLogsPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setLogsPage((p) => Math.min(totalLogsPages, p + 1))}
+                        disabled={safeLogsPage === totalLogsPages}
+                        className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer shadow-2xs"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

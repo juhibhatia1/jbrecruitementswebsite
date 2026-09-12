@@ -86,18 +86,48 @@ export default function JobSeekersForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAlertMessage(null);
+
+    const nameClean = formData.name.trim();
+    const emailClean = formData.email.trim();
+    const phoneClean = formData.phone.trim();
+    const locationClean = formData.location.trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+
     if (!resume) {
       setAlertMessage("Please upload your resume before submitting.");
       return;
     }
 
+    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
+      setAlertMessage("Please enter a valid full name (at least 2 letters).");
+      return;
+    }
+
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      setAlertMessage("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
+    if (!locationClean || locationClean.length < 2) {
+      setAlertMessage("Please enter your current location.");
+      return;
+    }
+
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      setAlertMessage("Please enter a valid phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).");
+      return;
+    }
+
     setStatus("loading");
     const data = new FormData();
-    data.append("name", formData.name);
-    data.append("email", formData.email);
-    data.append("location", formData.location);
-    data.append("phone", formData.phone);
-    data.append("description", formData.description);
+    data.append("name", nameClean);
+    data.append("email", emailClean);
+    data.append("location", locationClean);
+    data.append("phone", phoneClean);
+    data.append("description", formData.description.trim());
     data.append("resume", resume);
 
     try {
@@ -109,8 +139,10 @@ export default function JobSeekersForm() {
         body: data,
       });
 
+      const resData = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error("Job seeker submission failed");
+        throw new Error(resData.error || "Job seeker submission failed");
       }
 
       setStatus("success");
@@ -122,9 +154,10 @@ export default function JobSeekersForm() {
         description: "",
       });
       setResume(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       setStatus("error");
+      setAlertMessage(error.message || "Failed to submit application. Please try again.");
     }
   };
 
@@ -174,6 +207,7 @@ export default function JobSeekersForm() {
             value={formData.name}
             onChange={handleChange}
             name="name"
+            minLength={2}
             required
             className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
           />
@@ -207,6 +241,7 @@ export default function JobSeekersForm() {
               value={formData.location}
               onChange={handleChange}
               name="location"
+              minLength={2}
               required
               className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
             />
@@ -220,11 +255,13 @@ export default function JobSeekersForm() {
           </label>
           <div className="relative">
             <input
-              type="text"
-              placeholder="Phone Number"
+              type="tel"
+              placeholder="+1 555 123 4567"
               value={formData.phone}
               onChange={handleChange}
               name="phone"
+              pattern="^\+?[0-9\s\-\(\)\.]{6,20}$"
+              title="Please enter a valid phone number with digits and country code (e.g. +1 555 123 4567 or +44 7911 123456)"
               required
               className="w-full rounded-lg bg-[#eeeff1] border-none px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#282828] placeholder-[#979797] text-[#282828]"
             />

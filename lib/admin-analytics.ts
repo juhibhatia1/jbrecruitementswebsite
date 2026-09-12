@@ -132,7 +132,7 @@ export function buildSubmissionAnalytics(
 
   const sortedDays = [...dailyMap.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-14)
+    .slice(-7)
     .map(([date, count]) => ({ label: date, count }));
 
   return {

@@ -171,6 +171,29 @@ export default function HumanInterviewBookingForm() {
 
   const handleStartPayment = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    const nameClean = form.candidateName.trim();
+    const emailClean = form.candidateEmail.trim();
+    const phoneClean = (form.candidatePhone || "").trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+
+    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
+      setError("Please enter a valid full name (at least 2 letters).");
+      return;
+    }
+
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      setError("Please enter a valid phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -240,6 +263,7 @@ export default function HumanInterviewBookingForm() {
               <Input
                 label="Full Name *"
                 name="candidateName"
+                minLength={2}
                 value={form.candidateName}
                 onChange={handleChange}
                 placeholder="Jane Smith"
@@ -258,11 +282,15 @@ export default function HumanInterviewBookingForm() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
-                label="Phone Number"
+                label="Phone Number *"
                 name="candidatePhone"
+                type="tel"
+                pattern="^\+?[0-9\s\-\(\)\.]{6,20}$"
+                title="Please enter a valid phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456)"
                 value={form.candidatePhone}
                 onChange={handleChange}
-                placeholder="+91 98765 43210"
+                placeholder="+1 555 123 4567"
+                required
               />
               <Input
                 label="Years of Experience *"

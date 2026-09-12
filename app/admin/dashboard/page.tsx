@@ -21,10 +21,11 @@ export default async function AdminAnalyticsPage() {
   let submissions: AdminSubmission[] = [];
   let purchases: any[] = [];
   let funnelEvents: any[] = [];
+  let totalInterviewsCount = 0;
   let dbError: string | null = null;
 
   try {
-    const [fetchedSubmissions, fetchedPurchases, fetchedFunnelEvents] = await Promise.all([
+    const [fetchedSubmissions, fetchedPurchases, fetchedFunnelEvents, fetchedInterviewsCount] = await Promise.all([
       getAllSubmissions(),
       prisma.purchase.findMany({
         orderBy: { createdAt: "desc" },
@@ -32,9 +33,11 @@ export default async function AdminAnalyticsPage() {
       prisma.funnelEvent.findMany({
         orderBy: { createdAt: "desc" },
       }),
+      prisma.candidateApplication.count().catch(() => 0),
     ]);
 
     submissions = fetchedSubmissions;
+    totalInterviewsCount = fetchedInterviewsCount || 0;
 
     // Serialize Dates to strings for Client Component compatibility
     purchases = fetchedPurchases.map((p) => ({
@@ -69,6 +72,7 @@ export default async function AdminAnalyticsPage() {
       submissions={submissions}
       purchases={purchases}
       funnelEvents={funnelEvents}
+      totalInterviewsCount={totalInterviewsCount}
       dbError={dbError}
     />
   );

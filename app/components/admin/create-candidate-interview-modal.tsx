@@ -4,12 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   IoCloseOutline,
-  IoMailOutline,
-  IoSparkles,
-  IoPersonOutline,
-  IoBriefcaseOutline,
-  IoCallOutline,
-  IoLogoLinkedin,
   IoCopyOutline,
   IoCheckmarkOutline,
   IoSendOutline,
@@ -216,8 +210,21 @@ export default function CreateCandidateInterviewModal({ isOpen, onClose }: Props
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.candidateName.trim() || !form.candidateEmail.trim()) {
-      setError("Candidate Name and Email are required.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+    const phoneClean = form.candidatePhone.trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+
+    if (!form.candidateName.trim() || form.candidateName.trim().length < 2 || !/\p{L}/u.test(form.candidateName)) {
+      setError("Please enter a valid candidate full name (at least 2 letters).");
+      return;
+    }
+    if (!form.candidateEmail.trim() || !emailRegex.test(form.candidateEmail.trim())) {
+      setError("Please enter a valid candidate email address.");
+      return;
+    }
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      setError("Please enter a valid candidate phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).");
       return;
     }
     if (!form.jobRole.trim()) { setError("Job Title / Target Role is required."); return; }
@@ -377,6 +384,7 @@ export default function CreateCandidateInterviewModal({ isOpen, onClose }: Props
                     type="text"
                     name="candidateName"
                     required
+                    minLength={2}
                     value={form.candidateName}
                     onChange={handleChange}
                     placeholder="e.g. John Doe"
@@ -408,9 +416,11 @@ export default function CreateCandidateInterviewModal({ isOpen, onClose }: Props
                     type="tel"
                     name="candidatePhone"
                     required
+                    pattern="^\+?[0-9\s\-\(\)\.]{6,20}$"
+                    title="Please enter a valid phone number with digits and country code (e.g. +1 555 123 4567 or +44 7911 123456)"
                     value={form.candidatePhone}
                     onChange={handleChange}
-                    placeholder="e.g. +91 99999 99999"
+                    placeholder="e.g. +1 555 123 4567"
                     className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm text-[#252e3d] px-4 py-3 outline-none transition"
                   />
                 </div>

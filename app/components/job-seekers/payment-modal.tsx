@@ -83,8 +83,26 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
   const handleInitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!candidateName.trim() || !candidateEmail.trim()) {
-      setError("Please fill in all fields.");
+
+    const nameClean = candidateName.trim();
+    const emailClean = candidateEmail.trim();
+    const phoneClean = candidatePhone.trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+
+    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
+      setError("Please enter a valid full name (at least 2 letters).");
+      return;
+    }
+
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      setError("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      setError("Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).");
       return;
     }
 
@@ -208,6 +226,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                 <input
                   type="text"
                   required
+                  minLength={2}
                   value={candidateName}
                   onChange={(e) => setCandidateName(e.target.value)}
                   placeholder="e.g. Jane Doe"
@@ -236,9 +255,11 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                 <input
                   type="tel"
                   required
+                  pattern="^\+?[0-9\s\-\(\)\.]{6,20}$"
+                  title="Please enter a valid phone number with digits and country code (e.g. +1 555 123 4567 or +44 7911 123456)"
                   value={candidatePhone}
                   onChange={(e) => setCandidatePhone(e.target.value)}
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="e.g. +1 555 123 4567"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
                 />
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminSubmission } from "@/lib/submission-types";
@@ -44,6 +44,13 @@ export default function SubmissionsDashboard({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterValue>("all");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset to page 1 when query or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, filter]);
 
   const filteredSubmissions = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -71,6 +78,14 @@ export default function SubmissionsDashboard({
       return searchField.includes(normalized);
     });
   }, [filter, query, submissions]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedSubmissions = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredSubmissions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredSubmissions, safeCurrentPage, itemsPerPage]);
 
   const stats = useMemo(() => {
     const total = submissions.length;
@@ -251,7 +266,7 @@ export default function SubmissionsDashboard({
               </div>
             ) : null}
 
-            {filteredSubmissions.map((item) => (
+            {paginatedSubmissions.map((item) => (
               <article
                 key={item.id}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -386,6 +401,37 @@ export default function SubmissionsDashboard({
               </article>
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm text-sm">
+              <span className="text-slate-500 font-medium">
+                Showing {(safeCurrentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(safeCurrentPage * itemsPerPage, filteredSubmissions.length)} of{" "}
+                {filteredSubmissions.length} submissions
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="px-3.5 py-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer"
+                >
+                  Previous
+                </button>
+                <span className="font-semibold text-slate-700 px-2 text-xs sm:text-sm">
+                  Page {safeCurrentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="px-3.5 py-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold text-slate-700 rounded-xl cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </main>

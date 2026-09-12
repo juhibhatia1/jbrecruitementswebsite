@@ -21,6 +21,7 @@ import {
   IoLogOut,
   IoMicOutline,
 } from "react-icons/io5";
+import InfoTooltip from "@/app/components/ui/info-tooltip";
 
 interface AdminSubmission {
   id: string;
@@ -492,9 +493,12 @@ export default function EmployeeDirectoryDashboard({
         <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
-                JB Recruitment solutions
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5a58ab]">
+                  JB Recruitment solutions
+                </p>
+                <InfoTooltip text="Staff operational workspace to process candidate paid services and verify delivery." title="Employee Portal" position="bottom" />
+              </div>
               <h1 className="mt-2 text-3xl font-semibold text-[#252e3d] sm:text-4xl" style={{ fontFamily: "Crimson Text, serif" }}>
                 Employee Portal
               </h1>
@@ -547,97 +551,104 @@ export default function EmployeeDirectoryDashboard({
         <section className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search */}
-            <div className="relative w-full lg:max-w-md">
-              <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                type="text"
-                placeholder="Search candidates, services..."
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none transition focus:border-[#5a58ab] focus:bg-white text-[#252e3d]"
-              />
+            <div className="flex items-center gap-2 w-full lg:max-w-md">
+              <div className="relative flex-grow">
+                <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  type="text"
+                  placeholder="Search candidates, services..."
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none transition focus:border-[#5a58ab] focus:bg-white text-[#252e3d]"
+                />
+              </div>
+              <InfoTooltip text="Quick search across candidate names, emails, and purchased service titles." title="Candidate Search" position="top" />
             </div>
 
             {/* Filter Dropdown */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Payment Status Filter */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPaymentFilterOpen(!paymentFilterOpen);
-                    setDeliveryFilterOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[180px] justify-between"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
-                    {paymentFilter === "completed"
-                      ? "Successful Payments"
-                      : paymentFilter === "incomplete"
-                      ? "Incomplete Payments"
-                      : "All Payments"}
-                  </span>
-                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
-                </button>
-                {paymentFilterOpen && (
-                  <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
-                    {[
-                      { val: "completed", label: "Successful Payments (Default)", badge: "bg-emerald-50 text-emerald-700" },
-                      { val: "incomplete", label: "Incomplete / Failed (Follow-up)", badge: "bg-amber-50 text-amber-800" },
-                      { val: "all", label: "All Payments", badge: "bg-slate-50 text-slate-700" },
-                    ].map((item) => (
-                      <button
-                        key={item.val}
-                        type="button"
-                        onClick={() => {
-                          setPaymentFilter(item.val as any);
-                          setPaymentFilterOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold flex items-center justify-between ${
-                          paymentFilter === item.val
-                            ? "text-[#5a58ab] bg-[#5a58ab]/5"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPaymentFilterOpen(!paymentFilterOpen);
+                      setDeliveryFilterOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[180px] justify-between"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
+                      {paymentFilter === "completed"
+                        ? "Successful Payments"
+                        : paymentFilter === "incomplete"
+                        ? "Incomplete Payments"
+                        : "All Payments"}
+                    </span>
+                    <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                  </button>
+                  {paymentFilterOpen && (
+                    <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                      {[
+                        { val: "completed", label: "Successful Payments (Default)", badge: "bg-emerald-50 text-emerald-700" },
+                        { val: "incomplete", label: "Incomplete / Failed (Follow-up)", badge: "bg-amber-50 text-amber-800" },
+                        { val: "all", label: "All Payments", badge: "bg-slate-50 text-slate-700" },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
+                          type="button"
+                          onClick={() => {
+                            setPaymentFilter(item.val as any);
+                            setPaymentFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold flex items-center justify-between ${
+                            paymentFilter === item.val
+                              ? "text-[#5a58ab] bg-[#5a58ab]/5"
+                              : "text-slate-700"
+                          }`}
+                        >
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <InfoTooltip text="Filter candidates by verified completed payments vs incomplete checkout attempts." title="Payment Filter" position="bottom" />
               </div>
 
               {/* Delivery Filter */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeliveryFilterOpen(!deliveryFilterOpen);
-                    setPaymentFilterOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[170px] justify-between"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
-                    {deliveryFilter === "all"
-                      ? "All Deliveries"
-                      : deliveryFilter === "pending"
-                      ? "Pending Delivery"
-                      : "Completed Delivery"}
-                  </span>
-                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
-                </button>
-                {deliveryFilterOpen && (
-                  <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
-                    {[
-                      { val: "all", label: "All Deliveries" },
-                      { val: "pending", label: "Pending Delivery" },
-                      { val: "completed", label: "Completed Delivery" },
-                    ].map((item) => (
-                      <button
-                        key={item.val}
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeliveryFilterOpen(!deliveryFilterOpen);
+                      setPaymentFilterOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[170px] justify-between"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
+                      {deliveryFilter === "all"
+                        ? "All Deliveries"
+                        : deliveryFilter === "pending"
+                        ? "Pending Delivery"
+                        : "Completed Delivery"}
+                    </span>
+                    <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                  </button>
+                  {deliveryFilterOpen && (
+                    <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                      {[
+                        { val: "all", label: "All Deliveries" },
+                        { val: "pending", label: "Pending Delivery" },
+                        { val: "completed", label: "Completed Delivery" },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
                         type="button"
                         onClick={() => {
                           setDeliveryFilter(item.val as any);
@@ -654,6 +665,8 @@ export default function EmployeeDirectoryDashboard({
                     ))}
                   </div>
                 )}
+                </div>
+                <InfoTooltip text="Filter candidates by order fulfillment status (Pending Delivery vs Completed Delivery)." title="Delivery Filter" position="bottom" />
               </div>
 
               {/* Date Filter */}

@@ -21,10 +21,38 @@ export async function POST(request: Request) {
     const { name, email, message, phone, subject, company } =
       await request.json();
 
-    // Basic validation
-    if (!name || !email || !message) {
+    const nameClean = String(name || "").trim();
+    const emailClean = String(email || "").trim().toLowerCase();
+    const phoneClean = String(phone || "").trim();
+    const messageClean = String(message || "").trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+
+    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
       return NextResponse.json(
-        { error: "Name, email, and message are required fields." },
+        { error: "Please enter a valid name (at least 2 letters)." },
+        { status: 400 },
+      );
+    }
+
+    if (!emailClean || !emailRegex.test(emailClean)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
+        { status: 400 },
+      );
+    }
+
+    if (phoneClean && (!phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15)) {
+      return NextResponse.json(
+        { error: "Please enter a valid phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456)." },
+        { status: 400 },
+      );
+    }
+
+    if (!messageClean || messageClean.length < 5) {
+      return NextResponse.json(
+        { error: "Message must be at least 5 characters long." },
         { status: 400 },
       );
     }

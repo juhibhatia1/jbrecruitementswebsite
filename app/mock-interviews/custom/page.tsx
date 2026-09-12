@@ -369,9 +369,33 @@ export default function CustomJdMockInterviewPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneClean = (form.candidatePhone || "").trim();
+    const phoneDigits = phoneClean.replace(/\D/g, "");
+    const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
+
+    if (!form.candidateName.trim() || form.candidateName.trim().length < 2 || !/\p{L}/u.test(form.candidateName)) {
+      toast.error("Invalid Full Name", {
+        description: "Please enter your valid full name (at least 2 letters).",
+      });
+      return;
+    }
+
+    if (!form.candidateEmail.trim() || !emailRegex.test(form.candidateEmail.trim())) {
+      toast.error("Invalid Email", {
+        description: "Please enter a valid email address (e.g. name@example.com).",
+      });
+      return;
+    }
+
+    if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
+      toast.error("Invalid Phone Number", {
+        description: "Please enter a valid phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).",
+      });
+      return;
+    }
+
     if (
-      !form.candidateName.trim() ||
-      !form.candidateEmail.trim() ||
       !form.jobRole.trim() ||
       !form.experienceLevel.trim() ||
       !form.difficultyLevel.trim() ||
@@ -590,6 +614,7 @@ export default function CustomJdMockInterviewPage() {
                       type="text"
                       name="candidateName"
                       required
+                      minLength={2}
                       value={form.candidateName}
                       onChange={handleChange}
                       placeholder="e.g. John Doe"
@@ -621,9 +646,11 @@ export default function CustomJdMockInterviewPage() {
                       type="tel"
                       name="candidatePhone"
                       required
+                      pattern="^\+?[0-9\s\-\(\)\.]{6,20}$"
+                      title="Please enter a valid phone number with digits and country code (e.g. +1 555 123 4567 or +44 7911 123456)"
                       value={form.candidatePhone}
                       onChange={handleChange}
-                      placeholder="e.g. +91 99999 99999"
+                      placeholder="e.g. +1 555 123 4567"
                       className="w-full rounded-xl border border-slate-200 focus:border-[#5a58ab] focus:ring-1 focus:ring-[#5a58ab] bg-slate-50/50 text-sm px-4 py-3 outline-none transition"
                     />
                   </div>

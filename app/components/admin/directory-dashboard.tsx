@@ -19,6 +19,7 @@ import {
   IoChevronDown,
   IoChevronUp,
 } from "react-icons/io5";
+import InfoTooltip from "@/app/components/ui/info-tooltip";
 
 interface AdminSubmission {
   id: string;
@@ -569,7 +570,10 @@ export default function DirectoryDashboard({
                   <IoMap className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Users</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Users</span>
+                    <InfoTooltip text="Total unique registered candidates across all services and applications. Click to open regional breakdown." title="Total Users" position="top" />
+                  </div>
                   <span className="text-2xl font-extrabold text-[#252e3d] group-hover:text-[#5a58ab] transition-colors">{candidates.length}</span>
                   <span className="text-[10px] text-slate-400 block mt-0.5 group-hover:text-slate-500 transition-colors">Click for regional stats</span>
                 </div>
@@ -637,155 +641,165 @@ export default function DirectoryDashboard({
         <section className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Search */}
-            <div className="relative w-full lg:max-w-md">
-              <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                type="text"
-                placeholder="Search candidates by name, email, services..."
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none transition focus:border-[#5a58ab] focus:bg-white text-[#252e3d]"
-              />
+            <div className="flex items-center gap-2 w-full lg:max-w-md">
+              <div className="relative flex-grow">
+                <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  type="text"
+                  placeholder="Search candidates by name, email, services..."
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none transition focus:border-[#5a58ab] focus:bg-white text-[#252e3d]"
+                />
+              </div>
+              <InfoTooltip text="Filter candidates instantly by name, email address, phone number, or purchased service title." title="Candidate Search" position="top" />
             </div>
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Payment Status Filter Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const nextVal = paymentFilterOpen ? false : true;
-                    setPaymentFilterOpen(nextVal);
-                    setServiceFilterOpen(false);
-                    setInterviewFilterOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[180px] justify-between"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
-                    {paymentFilter === "completed"
-                      ? "Successful Payments"
-                      : paymentFilter === "incomplete"
-                      ? "Incomplete Payments"
-                      : "All Payments"}
-                  </span>
-                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
-                </button>
-                {paymentFilterOpen && (
-                  <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
-                    {[
-                      { val: "completed", label: "Successful Payments (Default)" },
-                      { val: "incomplete", label: "Incomplete / Failed (Follow-up)" },
-                      { val: "all", label: "All Payments" },
-                    ].map((item) => (
-                      <button
-                        key={item.val}
-                        type="button"
-                        onClick={() => {
-                          setPaymentFilter(item.val as any);
-                          setPaymentFilterOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${
-                          paymentFilter === item.val
-                            ? "text-[#5a58ab] bg-[#5a58ab]/5"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextVal = paymentFilterOpen ? false : true;
+                      setPaymentFilterOpen(nextVal);
+                      setServiceFilterOpen(false);
+                      setInterviewFilterOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[180px] justify-between"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
+                      {paymentFilter === "completed"
+                        ? "Successful Payments"
+                        : paymentFilter === "incomplete"
+                        ? "Incomplete Payments"
+                        : "All Payments"}
+                    </span>
+                    <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                  </button>
+                  {paymentFilterOpen && (
+                    <div className="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                      {[
+                        { val: "completed", label: "Successful Payments (Default)" },
+                        { val: "incomplete", label: "Incomplete / Failed (Follow-up)" },
+                        { val: "all", label: "All Payments" },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
+                          type="button"
+                          onClick={() => {
+                            setPaymentFilter(item.val as any);
+                            setPaymentFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${
+                            paymentFilter === item.val
+                              ? "text-[#5a58ab] bg-[#5a58ab]/5"
+                              : "text-slate-700"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <InfoTooltip text="Filter candidates by verified completed payments vs incomplete checkout attempts." title="Payment Status Filter" position="bottom" />
               </div>
 
               {/* Custom Service Filter Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const nextVal = serviceFilterOpen ? null : "service";
-                    setServiceFilterOpen(nextVal === "service");
-                    setInterviewFilterOpen(false);
-                    setPaymentFilterOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[130px] justify-between"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
-                    {serviceFilter === "all" ? "All Services" : serviceFilter === "none" ? "No Purchase" : serviceFilter}
-                  </span>
-                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
-                </button>
-                {serviceFilterOpen && (
-                  <div className="absolute left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setServiceFilter("all");
-                        setServiceFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "all" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
-                    >
-                      All Services
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setServiceFilter("none");
-                        setServiceFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "none" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
-                    >
-                      No Purchase
-                    </button>
-                    {uniqueServices.map((srv) => (
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextVal = serviceFilterOpen ? null : "service";
+                      setServiceFilterOpen(nextVal === "service");
+                      setInterviewFilterOpen(false);
+                      setPaymentFilterOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[130px] justify-between"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <IoFilter className="text-[#5a58ab] w-3.5 h-3.5" />
+                      {serviceFilter === "all" ? "All Services" : serviceFilter === "none" ? "No Purchase" : serviceFilter}
+                    </span>
+                    <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                  </button>
+                  {serviceFilterOpen && (
+                    <div className="absolute left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
                       <button
-                        key={srv}
                         type="button"
                         onClick={() => {
-                          setServiceFilter(srv);
+                          setServiceFilter("all");
                           setServiceFilterOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === srv ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "all" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
                       >
-                        {srv}
+                        All Services
                       </button>
-                    ))}
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setServiceFilter("none");
+                          setServiceFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === "none" ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                      >
+                        No Purchase
+                      </button>
+                      {uniqueServices.map((srv) => (
+                        <button
+                          key={srv}
+                          type="button"
+                          onClick={() => {
+                            setServiceFilter(srv);
+                            setServiceFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 hover:bg-slate-50 transition-colors font-semibold ${serviceFilter === srv ? "text-[#5a58ab] bg-[#5a58ab]/5" : "text-slate-700"}`}
+                        >
+                          {srv}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <InfoTooltip text="Filter candidates by specific service package purchased." title="Service Filter" position="bottom" />
               </div>
 
               {/* Custom Interview Filter Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const nextVal = interviewFilterOpen ? null : "interview";
-                    setInterviewFilterOpen(nextVal === "interview");
-                    setServiceFilterOpen(false);
-                    setPaymentFilterOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[170px] justify-between"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <IoCalendar className="text-[#5a58ab] w-3.5 h-3.5" />
-                    {interviewFilter === "all" ? "All Interview Statuses" : interviewFilter === "none" ? "Not Applicable" : interviewFilter === "PENDING_SCHEDULE" ? "Pending Schedule" : interviewFilter === "SCHEDULED" ? "Scheduled" : "Completed"}
-                  </span>
-                  <span className="text-slate-400 text-[8px] ml-2">▼</span>
-                </button>
-                {interviewFilterOpen && (
-                  <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
-                    {[
-                      { val: "all", label: "All Interview Statuses" },
-                      { val: "none", label: "Not Applicable" },
-                      { val: "PENDING_SCHEDULE", label: "Pending Schedule" },
-                      { val: "SCHEDULED", label: "Scheduled" },
-                      { val: "COMPLETED", label: "Completed" }
-                    ].map((item) => (
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextVal = interviewFilterOpen ? null : "interview";
+                      setInterviewFilterOpen(nextVal === "interview");
+                      setServiceFilterOpen(false);
+                      setPaymentFilterOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/50 hover:border-[#5a58ab]/40 transition-all shadow-2xs text-xs font-semibold text-slate-700 cursor-pointer min-w-[170px] justify-between"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <IoCalendar className="text-[#5a58ab] w-3.5 h-3.5" />
+                      {interviewFilter === "all" ? "All Interview Statuses" : interviewFilter === "none" ? "Not Applicable" : interviewFilter === "PENDING_SCHEDULE" ? "Pending Schedule" : interviewFilter === "SCHEDULED" ? "Scheduled" : "Completed"}
+                    </span>
+                    <span className="text-slate-400 text-[8px] ml-2">▼</span>
+                  </button>
+                  {interviewFilterOpen && (
+                    <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 text-xs">
+                      {[
+                        { val: "all", label: "All Interview Statuses" },
+                        { val: "none", label: "Not Applicable" },
+                        { val: "PENDING_SCHEDULE", label: "Pending Schedule" },
+                        { val: "SCHEDULED", label: "Scheduled" },
+                        { val: "COMPLETED", label: "Completed" }
+                      ].map((item) => (
                       <button
                         key={item.val}
                         type="button"
@@ -800,6 +814,8 @@ export default function DirectoryDashboard({
                     ))}
                   </div>
                 )}
+                </div>
+                <InfoTooltip text="Filter candidates by interview pipeline status (Pending Schedule, Scheduled, Completed, or Not Applicable)." title="Interview Filter" position="bottom" />
               </div>
 
               {/* Date Filter */}
