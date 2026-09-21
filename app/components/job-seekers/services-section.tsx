@@ -8,6 +8,7 @@ import PaymentModal from "./payment-modal";
 import {
   IoCart,
   IoSparkles,
+  IoFlash,
   IoClose,
   IoArrowForward,
   IoChevronBack,
@@ -26,7 +27,7 @@ const CURRENCY_SYMBOLS: Record<Currency, string> = {
   INR: "INR",
 };
 
-const BUNDLE_DISCOUNT_PERCENT = 10;
+const BUNDLE_DISCOUNT_PERCENT = 20;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
 const BUNDLE_EXCLUDED_TITLES = new Set<string>([]);
 
@@ -212,15 +213,15 @@ const PROMO_SLIDES = [
   },
   {
     title: "All Career Services Bundle",
-    eyebrow: "Best value",
+    eyebrow: "Limited Time Offer • Best value",
     summary:
-      "Get 10% off when you choose any 4 or more services, including the AI Mock Interview.",
+      "Limited Time Offer: Get 20% off when you choose any 4 or more services, including the AI Mock Interview.",
     benefit: [
       "Build a bundle from the services that fit your needs",
       "AI Mock Interview is included in the discount calculation",
     ],
     metrics: [
-      { value: "10%", label: "Bundle off" },
+      { value: "20%", label: "Limited Time Off" },
       { value: "4+", label: "Services needed" },
       { value: "7", label: "Service options" },
     ],
@@ -542,14 +543,15 @@ export default function ServicesSection({
                 aria-hidden="true"
               />
               <div className="mx-auto flex max-w-2xl flex-col items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#e8e3ff] bg-white/80 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-[#5a58ab] shadow-sm">
-                  Limited Bundle
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-amber-900 shadow-sm animate-pulse">
+                  <IoFlash className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Limited Time Offer</span>
                 </span>
-                <h2 className="text-lg font-bold leading-tight text-[#252e3d] sm:text-2xl">
-                  Get 10% off when you choose any 4 or more services.
+                <h2 className="text-lg font-bold leading-tight text-[#252e3d] sm:text-2xl text-center">
+                  Get 20% off when you choose any 4 or more services!
                 </h2>
-                <p className="text-sm leading-relaxed text-[#4b5563]">
-                  Pick the services that fit you best. The discount applies
+                <p className="text-sm leading-relaxed text-[#4b5563] text-center">
+                  Special Limited Time Offer: Pick the services that fit you best. A generous 20% discount applies
                   automatically at checkout, including the AI Mock Interview.
                 </p>
                 <span className="text-sm text-[#4b5563]">
@@ -736,14 +738,19 @@ export default function ServicesSection({
                 <div className="flex items-start gap-3 min-w-0">
                   <IoSparkles className="text-yellow-300 w-5 h-5 shrink-0 mt-0.5" />
                   <div className="min-w-0">
-                    <p className="text-white text-sm font-semibold leading-snug">
-                      You’ve unlocked the bundle discount!
-                    </p>
-                    <p className="text-white/70 text-xs mt-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white text-sm font-semibold leading-snug">
+                        You’ve unlocked the bundle discount!
+                      </p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 border border-amber-300">
+                        Limited Time Offer
+                      </span>
+                    </div>
+                    <p className="text-white/70 text-xs mt-1">
                       You have {cartEligibleServices.length} eligible services
                       in your cart, so the{" "}
                       <span className="text-yellow-300 font-semibold">
-                        {BUNDLE_DISCOUNT_PERCENT}% bundle discount
+                        {BUNDLE_DISCOUNT_PERCENT}% Limited Time bundle discount
                       </span>{" "}
                       now applies automatically.
                     </p>
@@ -793,12 +800,12 @@ export default function ServicesSection({
                       {discountedCartTotal.toLocaleString()}
                     </p>
                     {bundleDiscount > 0 && (
-                      <p className="text-[10px] text-emerald-300 mt-1">
-                        Bundle discount applied ( {CURRENCY_SYMBOLS[currency]}{" "}
+                      <p className="text-[10px] text-emerald-300 mt-1 font-medium">
+                        Limited Time: 20% bundle discount applied ({CURRENCY_SYMBOLS[currency]}{" "}
                         {bundleDiscount.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}{" "}
-                        off )
+                        off)
                       </p>
                     )}
                   </div>

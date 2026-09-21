@@ -12,7 +12,7 @@ import { IoClose, IoAlertCircle, IoCardOutline, IoQrCodeOutline } from "react-ic
 import { useLenis } from "@/app/providers/lenis-provider";
 import { PayUCheckout } from "../payments/payu-checkout";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
-const BUNDLE_DISCOUNT_PERCENT = 10;
+const BUNDLE_DISCOUNT_PERCENT = 20;
 
 interface ServiceItem {
   title: string;
@@ -43,7 +43,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   
   const bundleEligibleCount = services.filter((service) => service.title !== "AI Mock Interview").length;
   const subtotalAmount = services.reduce((sum, s) => sum + s.amount, 0);
-  const bundleDiscount = bundleEligibleCount >= 4 ? Math.round(subtotalAmount * 0.1) : 0;
+  const bundleDiscount = bundleEligibleCount >= 4 ? Math.round(subtotalAmount * (BUNDLE_DISCOUNT_PERCENT / 100)) : 0;
   const totalAmount = subtotalAmount - bundleDiscount;
   const isMulti = services.length > 1;
   const displayTitle =
@@ -97,12 +97,16 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
     }
 
     if (!emailClean || !emailRegex.test(emailClean)) {
-      setError("Please enter a valid email address (e.g. name@example.com).");
+      if (emailClean.includes("@") && !emailClean.split("@")[1]?.includes(".")) {
+        setError("Your email appears to be missing a dot/extension in the domain (e.g. @gmail.com instead of @gmailcom).");
+      } else {
+        setError("Please enter a valid email address (e.g. name@example.com).");
+      }
       return;
     }
 
     if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
-      setError("Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456).");
+      setError("Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +91 93811 50341).");
       return;
     }
 
@@ -287,7 +291,12 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
 
                       {bundleDiscount > 0 && (
                         <div className="flex justify-between items-center pt-1">
-                          <span className="text-sm text-emerald-700">Bundle discount ({BUNDLE_DISCOUNT_PERCENT}%)</span>
+                          <span className="text-sm text-emerald-700 font-medium flex items-center gap-1.5">
+                            <span>Bundle discount ({BUNDLE_DISCOUNT_PERCENT}%)</span>
+                            <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                              Limited Time
+                            </span>
+                          </span>
                           <span className="text-sm font-semibold text-emerald-700 shrink-0">
                             - {currency} {bundleDiscount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                           </span>

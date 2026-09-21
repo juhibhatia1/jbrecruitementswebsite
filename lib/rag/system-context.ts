@@ -162,7 +162,7 @@ A:
 - Interview Prep answers: Varies, but delivered via email before your interview.
 
 Q: Can I get a discount?
-A: Yes! You can get 10% off when you choose any 4 or more services. The AI Mock Interview is excluded from the bundle offer, but all other services can count toward it.
+A: Yes! As a limited time offer, you get 20% off when you choose any 4 or more services. The discount applies automatically at checkout when building your bundle.
 
 Q: What is the AI Mock Interview and how does it work?
 A: The AI Mock Interview is an interactive, voice-based practice session with our advanced AI interviewer. The AI conducts a realistic interview tailored to your target job role, experience level, and resume. Once completed, a detailed performance scorecard with a score out of 10, a summary of strengths/weaknesses, and a full question-by-question improvement report is instantly generated and emailed to you.

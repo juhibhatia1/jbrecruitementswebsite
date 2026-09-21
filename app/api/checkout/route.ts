@@ -20,7 +20,7 @@ const SERVICE_PRICING_USD: Record<string, number> = {
   "All Career Services Bundle": 480,
 };
 
-const BUNDLE_DISCOUNT_PERCENT = 0.1;
+const BUNDLE_DISCOUNT_PERCENT = 0.2;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
 const BUNDLE_EXCLUDED_SERVICE_NAMES = new Set(["AI Mock Interview"]);
 
@@ -69,6 +69,12 @@ export async function POST(request: Request) {
     }
 
     if (!emailClean || !emailRegex.test(emailClean)) {
+      if (emailClean.includes("@") && !emailClean.split("@")[1]?.includes(".")) {
+        return NextResponse.json(
+          { error: "Your email appears to be missing a dot/extension in the domain (e.g. @gmail.com instead of @gmailcom)." },
+          { status: 400 },
+        );
+      }
       return NextResponse.json(
         { error: "Please enter a valid email address (e.g. name@example.com)." },
         { status: 400 },
@@ -77,7 +83,7 @@ export async function POST(request: Request) {
 
     if (!phoneClean || !phoneRegex.test(phoneClean) || phoneDigits.length < 6 || phoneDigits.length > 15) {
       return NextResponse.json(
-        { error: "Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +44 7911 123456)." },
+        { error: "Please enter a valid WhatsApp phone number with country code (e.g. +1 555 123 4567 or +91 93811 50341)." },
         { status: 400 },
       );
     }
