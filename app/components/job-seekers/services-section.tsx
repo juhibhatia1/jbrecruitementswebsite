@@ -64,13 +64,14 @@ const services = [
     id: 3,
     title: "LinkedIn Optimization",
     description:
-      "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
+      "Strategic LinkedIn optimization designed to strengthen your positioning and improve recruiter visibility.",
     iconPath: "/icons/job-seekers/linkedin-optimisation.svg",
     timeline: "5 days",
     features: [
-      "Keywords optimized content",
-      "Skills-based profile structuring",
-      "LinkedIn banner optimization for stronger personal branding",
+      "Strategic headline & About section positioning",
+      "Recruiter-focused keywords & profile SEO",
+      "Achievement-driven experience & skills optimization",
+      "Personal branding & profile visibility enhancement"
     ],
   },
   {

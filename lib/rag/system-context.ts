@@ -52,11 +52,12 @@ export const SYSTEM_SERVICES: SystemService[] = [
     title: "LinkedIn Optimization",
     amount: 79,
     timeline: "5 days",
-    description: "Strategic LinkedIn profiles designed to improve recruiter discovery and search ranking.",
+    description: "Strategic LinkedIn optimization designed to strengthen your positioning and improve recruiter visibility.",
     features: [
-      "Keywords optimized content",
-      "Skills-based profile structuring",
-      "LinkedIn banner optimization for stronger personal branding"
+      "Strategic headline & About section positioning",
+      "Recruiter-focused keywords & profile SEO",
+      "Achievement-driven experience & skills optimization",
+      "Personal branding & profile visibility enhancement"
     ]
   },
   {
