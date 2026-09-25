@@ -1027,7 +1027,7 @@ export default function AnalyticsDashboard({
       "Superstar Shout-Out": { price: 159 },
       "Ask Me Anything": { price: 39 },
       "Interview Prep": { price: 99 },
-      "Ready-to-Apply Job Pack": { price: 99 },
+      "Ready-to-Apply Job Pack": { price: 129 },
       "Mock Interview": { price: 39 },
       "AI Mock Interview": { price: 39 },
     };
