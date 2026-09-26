@@ -45,9 +45,13 @@ export function useDetectCurrency(): Currency | null {
       return;
     }
 
-    // Step 3: server-side geo API (edge headers on Vercel/CF)
-    fetch("/api/geo")
+    // Step 3: server-side geo API (edge headers on Vercel/CF) — 4s timeout
+    const geoController = new AbortController();
+    const geoTimeout = setTimeout(() => geoController.abort(), 4000);
+
+    fetch("/api/geo", { signal: geoController.signal })
       .then((r) => {
+        clearTimeout(geoTimeout);
         if (!r.ok) throw new Error("Local geo API failed");
         return r.json();
       })
@@ -61,6 +65,7 @@ export function useDetectCurrency(): Currency | null {
         }
       })
       .catch((err) => {
+        clearTimeout(geoTimeout);
         console.warn(
           "[useDetectCurrency] /api/geo failed, falling back to ipapi.co:",
           err,
