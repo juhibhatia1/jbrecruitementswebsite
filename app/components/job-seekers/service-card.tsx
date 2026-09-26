@@ -7,8 +7,8 @@ import { IoCheckmark } from "react-icons/io5";
 type ServiceCardProps = {
   title: string;
   amount: number; // base USD amount (kept for legacy use)
-  localAmount: number; // amount in selected currency
-  currency: string; // e.g. "USD", "AED", "INR"
+  localAmount: number | null; // amount in selected currency (null while detecting)
+  currency: string | null; // e.g. "USD", "AED", "INR" (null while detecting)
   description?: string;
   iconPath: string;
   features?: string[];
@@ -51,7 +51,7 @@ export default function ServiceCard({
           "Personalized approach",
         ];
 
-  const isIndianUser = currency.toUpperCase() === "INR" || currency === "₹";
+  const isIndianUser = currency !== null && (currency.toUpperCase() === "INR" || currency === "₹");
 
   return (
     <div
@@ -80,9 +80,14 @@ export default function ServiceCard({
                 {title}
               </h3>
 
-              <span className="shrink-0 text-xs font-semibold text-[#5a58ab] bg-[#f0effd] px-2.5 py-1 rounded-full">
-                {currency} {localAmount.toLocaleString()}
-              </span>
+              {currency === null || localAmount === null ? (
+                // Skeleton — shown while geo-detection is in-flight
+                <span className="shrink-0 h-6 w-20 rounded-full bg-gray-200 animate-pulse" />
+              ) : (
+                <span className="shrink-0 text-xs font-semibold text-[#5a58ab] bg-[#f0effd] px-2.5 py-1 rounded-full">
+                  {currency} {localAmount.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
         </div>

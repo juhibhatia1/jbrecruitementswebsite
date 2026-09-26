@@ -270,7 +270,8 @@ export default function ServicesSection({
 
 
   // Helpers to get the local amount for a service in the selected currency
-  const getLocalAmount = (title: string): number => {
+  const getLocalAmount = (title: string): number | null => {
+    if (!currency) return null;
     return MULTI_CURRENCY_PRICING[title]?.[currency] ?? 0;
   };
 
@@ -355,13 +356,13 @@ export default function ServicesSection({
     (service) => !BUNDLE_EXCLUDED_TITLES.has(service.title),
   );
   const cartTotal = cartServices.reduce(
-    (sum, s) => sum + getLocalAmount(s.title),
+    (sum, s) => sum + (getLocalAmount(s.title) ?? 0),
     0,
   );
   const bundleDiscount =
     cartEligibleServices.length >= BUNDLE_MIN_SERVICE_COUNT
       ? cartEligibleServices.reduce(
-          (sum, service) => sum + getLocalAmount(service.title),
+          (sum, service) => sum + (getLocalAmount(service.title) ?? 0),
           0,
         ) *
         (BUNDLE_DISCOUNT_PERCENT / 100)
@@ -383,7 +384,7 @@ export default function ServicesSection({
   // Note: CLICK_BUY analytics are already fired by ServiceCard's Buy Now button,
   // so no duplicate fetch is needed here.
   const handleBuyClick = (title: string, description: string) => {
-    const localAmt = getLocalAmount(title);
+    const localAmt = getLocalAmount(title) ?? 0;
     setCheckoutServices([{ title, amount: localAmt, description }]);
     setIsModalOpen(true);
   };
@@ -394,7 +395,7 @@ export default function ServicesSection({
     setCheckoutServices(
       cartServices.map((s) => ({
         title: s.title,
-        amount: getLocalAmount(s.title),
+        amount: getLocalAmount(s.title) ?? 0,
         description: s.description,
       })),
     );
@@ -442,9 +443,36 @@ export default function ServicesSection({
     setActivePromoSlide(boundedIndex);
   };
 
+  // Auto-scroll to services section if URL contains #services, ?services, or ?section=services
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkAndScroll = () => {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      const params = new URLSearchParams(search);
+      if (
+        hash === "#services" ||
+        params.has("services") ||
+        params.get("section") === "services"
+      ) {
+        const el = document.getElementById("services");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    };
+
+    const timer = setTimeout(checkAndScroll, 150);
+    window.addEventListener("hashchange", checkAndScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", checkAndScroll);
+    };
+  }, []);
+
   const currentPromo = PROMO_SLIDES[activePromoSlide];
   return (
-    <section className="py-10 sm:py-12 md:py-16">
+    <section id="services" className="scroll-mt-24 md:scroll-mt-28 py-10 sm:py-12 md:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-0">
         {/* Section Header */}
         <div className="relative mb-0 flex flex-col items-start justify-center md:mb-12 md:flex-row md:items-center md:pl-12">
@@ -482,8 +510,11 @@ export default function ServicesSection({
         >
           {services.map((s, index) => {
             const localAmt = getLocalAmount(s.title);
-            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`;
-            const dynamicFeatures = [...s.features, dynamicPriceBullet];
+            // Only add the price bullet once currency is resolved — prevents USD flash
+            const dynamicFeatures =
+              currency && localAmt !== null
+                ? [...s.features, `${currency} ${localAmt.toLocaleString()} | ${s.timeline}`]
+                : s.features;
 
             return (
               <ServiceCard
@@ -491,7 +522,7 @@ export default function ServicesSection({
                 title={s.title}
                 amount={MULTI_CURRENCY_PRICING[s.title]?.USD ?? 0}
                 localAmount={localAmt}
-                currency={CURRENCY_SYMBOLS[currency]}
+                currency={currency ? CURRENCY_SYMBOLS[currency] : null}
                 description={s.description}
                 iconPath={s.iconPath}
                 features={dynamicFeatures}
@@ -508,25 +539,28 @@ export default function ServicesSection({
             );
           })}
 
-          {/* Opportunities card  navigates to /opportunities */}
+          {/* Opportunities card — navigates to /mock-interviews */}
           {(() => {
-            const localAmt =
-              MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ??
-              39;
-            const dynamicPriceBullet = `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`;
+            const localAmt = currency
+              ? (MULTI_CURRENCY_PRICING[OPPORTUNITIES_SERVICE.title]?.[currency] ?? 39)
+              : null;
+            const opportunityFeatures =
+              currency && localAmt !== null
+                ? [
+                    ...OPPORTUNITIES_SERVICE.features,
+                    `${currency} ${localAmt.toLocaleString()} | ${OPPORTUNITIES_SERVICE.timeline}`,
+                  ]
+                : OPPORTUNITIES_SERVICE.features;
             return (
               <ServiceCard
                 key={OPPORTUNITIES_SERVICE.id}
                 title={OPPORTUNITIES_SERVICE.title}
-              amount={39}
+                amount={39}
                 localAmount={localAmt}
-                currency={CURRENCY_SYMBOLS[currency]}
+                currency={currency ? CURRENCY_SYMBOLS[currency] : null}
                 description={OPPORTUNITIES_SERVICE.description}
                 iconPath={OPPORTUNITIES_SERVICE.iconPath}
-                features={[
-                  ...OPPORTUNITIES_SERVICE.features,
-                  dynamicPriceBullet,
-                ]}
+                features={opportunityFeatures}
                 shouldFlip={false}
                 onBuyClick={() => router.push("/mock-interviews/custom")}
                 buyLabel="Book Now"
@@ -795,14 +829,14 @@ export default function ServicesSection({
                   </div>
                   <div>
                     <p className="text-white/60 text-[10px] font-medium leading-none mb-0.5">
-                      {CURRENCY_SYMBOLS[currency]}
+                      {CURRENCY_SYMBOLS[currency ?? "USD"]}
                     </p>
                     <p className="text-white text-base md:text-lg font-bold leading-none">
                       {discountedCartTotal.toLocaleString()}
                     </p>
                     {bundleDiscount > 0 && (
                       <p className="text-[10px] text-emerald-300 mt-1 font-medium">
-                        Limited Time: 20% bundle discount applied ({CURRENCY_SYMBOLS[currency]}{" "}
+                        Limited Time: 20% bundle discount applied ({CURRENCY_SYMBOLS[currency ?? "USD"]}{" "}
                         {bundleDiscount.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}{" "}
@@ -847,7 +881,7 @@ export default function ServicesSection({
           setCheckoutServices([]);
         }}
         services={checkoutServices}
-        currency={CURRENCY_SYMBOLS[currency]}
+        currency={CURRENCY_SYMBOLS[currency ?? "USD"]}
       />
     </section>
   );

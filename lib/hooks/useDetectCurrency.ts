@@ -22,15 +22,17 @@ const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
  *     headers; accurate on production with no external dependency.
  *  4. `ipapi.co` — external fallback for local dev / adblocker scenarios.
  *
- * Returns "USD" as a safe default if all detection methods fail.
+ * Returns `null` while detection is in-flight (caller should show skeleton).
+ * Returns a Currency string once resolved (falls back to "USD" if all methods fail).
  */
-export function useDetectCurrency(): Currency {
-  const [currency, setCurrency] = useState<Currency>("USD");
+export function useDetectCurrency(): Currency | null {
+  // Start as null — meaning "not yet resolved". Never default to USD on first render.
+  const [currency, setCurrency] = useState<Currency | null>(null);
 
   useEffect(() => {
     // Step 1: sessionStorage cache (avoids duplicate network calls)
     const cached = getCachedCurrency();
-    if (cached && ["AED", "INR"].includes(cached)) {
+    if (cached) {
       setCurrency(cached);
       return;
     }
@@ -40,12 +42,6 @@ export function useDetectCurrency(): Currency {
     if (browserCurrency !== "USD") {
       setCurrency(browserCurrency);
       setCachedCurrency(browserCurrency);
-      return;
-    }
-
-    // USD was previously confirmed by a geo-lookup — honour the cache
-    if (cached === "USD") {
-      setCurrency("USD");
       return;
     }
 
@@ -89,8 +85,9 @@ export function useDetectCurrency(): Currency {
             setCachedCurrency(detected);
           })
           .catch(() => {
-            // All detection failed — stay on USD default
+            // All detection failed — fall back to USD as last resort
             setCurrency("USD");
+            setCachedCurrency("USD");
           })
           .finally(() => clearTimeout(timeout));
       });

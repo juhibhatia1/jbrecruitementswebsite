@@ -244,7 +244,9 @@ export default function CustomJdMockInterviewPage() {
   const currency = useDetectCurrency();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStage, setPaymentStage] = useState<"form" | "checkout">("form");
-  const isIndianUser = currency === "INR";
+  // Resolve to "USD" only for payment gateway logic — never display this on screen
+  const resolvedCurrency = currency ?? "USD";
+  const isIndianUser = resolvedCurrency === "INR";
   const paymentGateway = isIndianUser ? "PAYU" : "STRIPE";
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [gatewayMetadata, setGatewayMetadata] = useState<Record<string, string> | null>(null);
@@ -301,11 +303,10 @@ export default function CustomJdMockInterviewPage() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Price calculations
-  const totalAmount = currency === "AED" ? 99 : currency === "INR" ? 499 : 39;
+  // Price calculations — use resolvedCurrency (never null) for amounts
+  const totalAmount = resolvedCurrency === "AED" ? 99 : resolvedCurrency === "INR" ? 499 : 39;
+  // displayCurrency stays as null while detecting — UI shows skeleton until resolved
   const displayCurrency = currency;
-
-
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -492,7 +493,7 @@ export default function CustomJdMockInterviewPage() {
           candidateName: form.candidateName,
           candidateEmail: form.candidateEmail,
           candidatePhone: form.candidatePhone,
-          currency: displayCurrency,
+          currency: resolvedCurrency,
           interviewMetadata: {
             templateId: genData.templateId,
             linkedInUrl: form.linkedInUrl,
@@ -891,9 +892,13 @@ export default function CustomJdMockInterviewPage() {
                 <div className="pt-4 flex items-center justify-between gap-4 border-t border-slate-100">
                   <div className="text-left">
                     <p className="text-xs text-slate-400">Total Price:</p>
-                    <p className="text-lg font-bold text-[#252e3d]">
-                      {displayCurrency} {totalAmount.toLocaleString()}
-                    </p>
+                    {displayCurrency === null ? (
+                      <div className="h-7 w-24 rounded-md bg-gray-200 animate-pulse mt-1" />
+                    ) : (
+                      <p className="text-lg font-bold text-[#252e3d]">
+                        {displayCurrency} {totalAmount.toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="submit"
@@ -926,7 +931,7 @@ export default function CustomJdMockInterviewPage() {
                         Amount
                       </p>
                       <p className="text-xl font-bold text-[#5a58ab]">
-                        {displayCurrency} {totalAmount.toLocaleString()}
+                        {resolvedCurrency} {totalAmount.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -952,7 +957,7 @@ export default function CustomJdMockInterviewPage() {
                     >
                       <CheckoutForm
                         totalAmount={totalAmount}
-                        currency={displayCurrency}
+                       currency={resolvedCurrency}
                         clientSecret={clientSecret}
                         onCancel={handleCancelCheckout}
                       />

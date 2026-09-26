@@ -12,6 +12,7 @@ import { defaultMetadata, siteUrl } from "./lib/metadata";
 import { Analytics } from "@vercel/analytics/next";
 import LenisProvider from "./providers/lenis-provider";
 import { Toaster } from "sonner";
+import GeoPreloader from "./components/geo-preloader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -88,6 +89,7 @@ export default function RootLayout({
           }}
         />
         <LenisProvider>
+          <GeoPreloader />
           <FloatingNavbar />
           {children}
           <Footer />
