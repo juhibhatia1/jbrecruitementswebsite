@@ -15,7 +15,7 @@ const SERVICE_PRICING_USD: Record<string, number> = {
   "Superstar Shout-Out": 159,
   "Ask Me Anything": 39,
   "Interview Prep": 99,
-  "Ready-to-Apply Job Pack": 129,
+  "Ready-to-Apply Job Pack": 119,
   "Mock Interview": 39,
   "All Career Services Bundle": 480,
 };
