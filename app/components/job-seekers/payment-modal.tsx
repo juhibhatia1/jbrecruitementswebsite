@@ -30,7 +30,8 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ isOpen, onClose, services, currency }: PaymentModalProps) {
-  const [candidateName, setCandidateName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [candidatePhone, setCandidatePhone] = useState("");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -54,7 +55,8 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   // Reset states when modal closes or services change
   useEffect(() => {
     if (!isOpen) {
-      setCandidateName("");
+      setFirstName("");
+      setLastName("");
       setCandidateEmail("");
       setCandidatePhone("");
       setClientSecret(null);
@@ -84,6 +86,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
   const handleInitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const candidateName = `${firstName.trim()} ${lastName.trim()}`;
     const nameClean = candidateName.trim();
     const emailClean = candidateEmail.trim();
     const phoneClean = candidatePhone.trim();
@@ -91,8 +94,16 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\+?[0-9\s\-\(\)\.]{6,20}$/;
 
-    if (!nameClean || nameClean.length < 2 || !/\p{L}/u.test(nameClean)) {
-      setError("Please enter a valid full name (at least 2 letters).");
+    if (!firstName.trim()) {
+      setError("Please enter your first name.");
+      return;
+    }
+    if (!lastName.trim()) {
+      setError("Please enter your last name (surname).");
+      return;
+    }
+    if (nameClean.length < 3 || !/\p{L}/u.test(nameClean)) {
+      setError("Please enter a valid full name.");
       return;
     }
 
@@ -119,7 +130,7 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceNames: services.map((s) => s.title),
-          candidateName,
+          candidateName: `${firstName.trim()} ${lastName.trim()}`,
           candidateEmail,
           candidatePhone,
           currency,
@@ -223,19 +234,33 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
                 details to associate your payment.
               </p>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Your Full Name <span className="text-sm font-bold ml-0.5">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  minLength={2}
-                  value={candidateName}
-                  onChange={(e) => setCandidateName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
-                />
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    First Name <span className="text-sm font-bold ml-0.5">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="e.g. Jane"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Last Name <span className="text-sm font-bold ml-0.5">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="e.g. Doe"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5a58ab]/20 focus:border-[#5a58ab] transition-all placeholder:text-gray-300 text-sm text-[#252e3d]"
+                  />
+                </div>
               </div>
 
               <div>

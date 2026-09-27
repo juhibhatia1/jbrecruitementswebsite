@@ -89,8 +89,27 @@ interface Candidate {
   purchases: Purchase[];
 }
 
-type SortField = "name" | "firstSeen" | "totalSpent";
+type SortField = "candidateName" | "createdAt" | "amount" | "age";
 type SortOrder = "asc" | "desc";
+
+// Helper to format service age for undelivered orders
+function formatAge(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  if (diffMs <= 0) return "Just now";
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
 
 // Map ISO country codes to global regions
 function getRegionCategory(countryCode: string | null): string {
@@ -161,7 +180,7 @@ export default function DirectoryDashboard({
   const [interviewFilterOpen, setInterviewFilterOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [customDateFilter, setCustomDateFilter] = useState<string>("");
-  const [sortField, setSortField] = useState<SortField>("firstSeen");
+  const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -374,100 +393,82 @@ export default function DirectoryDashboard({
     return Array.from(services);
   }, [purchases]);
 
-  // 3. Search, Filter, Sort Candidates
-  const filteredCandidates = useMemo(() => {
-    return candidates
-      .filter((c) => {
-        // Exclude candidates who have no purchase attempts (e.g. pure Contact Us form submissions)
-        if (c.purchases.length === 0) return false;
-
-        // Payment Status Filter (default = "completed" -> hides incomplete payments on main screen)
-        if (paymentFilter === "completed") {
-          const hasCompleted = c.purchases.some((p) => p.status === "COMPLETED");
-          if (!hasCompleted) return false;
-        } else if (paymentFilter === "incomplete") {
-          const hasIncomplete = c.purchases.some((p) => p.status !== "COMPLETED");
-          if (!hasIncomplete) return false;
-        }
+  // 3. Search, Filter, Sort — one row per Purchase/transaction
+  const filteredPurchases = useMemo(() => {
+    return purchases
+      .filter((p) => {
+        // Payment Status Filter
+        if (paymentFilter === "completed" && p.status !== "COMPLETED") return false;
+        if (paymentFilter === "incomplete" && p.status === "COMPLETED") return false;
 
         // Search
         const query = searchQuery.trim().toLowerCase();
         if (query) {
-          const matchName = c.name.toLowerCase().includes(query);
-          const matchEmail = c.email.toLowerCase().includes(query);
-          const matchPhone = c.phone?.toLowerCase().includes(query);
-          const matchService = c.purchases.some((p) =>
-            p.serviceName.toLowerCase().includes(query)
-          );
+          const matchName = p.candidateName.toLowerCase().includes(query);
+          const matchEmail = p.candidateEmail.toLowerCase().includes(query);
+          const matchPhone = p.candidatePhone?.toLowerCase().includes(query);
+          const matchService = p.serviceName.toLowerCase().includes(query);
           if (!matchName && !matchEmail && !matchPhone && !matchService) return false;
         }
 
         // Service Filter
-        if (serviceFilter !== "all") {
-          if (serviceFilter === "none") {
-            if (c.purchases.filter((p) => p.status === "COMPLETED").length > 0) return false;
-          } else {
-            const hasService = c.purchases.some(
-              (p) => p.status === "COMPLETED" && p.serviceName === serviceFilter
-            );
-            if (!hasService) return false;
-          }
+        if (serviceFilter !== "all" && serviceFilter !== "none") {
+          if (p.serviceName !== serviceFilter) return false;
         }
 
         // Interview Filter
         if (interviewFilter !== "all") {
-          // Find if candidate has mock interview eligible purchases
-          const interviewPurchases = c.purchases.filter(
-            (p) =>
-              p.status === "COMPLETED" &&
-              (p.serviceName.includes("Interview") || p.serviceName.includes("Bundle"))
-          );
-
+          const isInterview =
+            p.serviceName.includes("Interview") || p.serviceName.includes("Bundle");
           if (interviewFilter === "none") {
-            if (interviewPurchases.length > 0) return false;
+            if (isInterview && p.status === "COMPLETED") return false;
           } else {
-            const matchStatus = interviewPurchases.some(
-              (p) => (p.mockInterviewStatus || "PENDING_SCHEDULE") === interviewFilter
-            );
-            if (!matchStatus) return false;
+            if (!isInterview || p.status !== "COMPLETED") return false;
+            if ((p.mockInterviewStatus || "PENDING_SCHEDULE") !== interviewFilter) return false;
           }
         }
-        // Purchase/Registration Date Filter
-        const hasMatchingDate =
-          dateFilter === "all" ||
-          (c.purchases.length === 0
-            ? matchPurchaseDate(c.firstSeen, dateFilter, customDateFilter)
-            : c.purchases.some((p) =>
-                matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)
-              ));
-        if (!hasMatchingDate) return false;
+
+        // Date Filter — applied directly to this transaction's date
+        if (!matchPurchaseDate(p.createdAt, dateFilter, customDateFilter)) return false;
 
         return true;
       })
       .sort((a, b) => {
-        let valA: any = a[sortField];
-        let valB: any = b[sortField];
+        let valA: any, valB: any;
+        if (sortField === "candidateName") {
+          valA = a.candidateName.toLowerCase();
+          valB = b.candidateName.toLowerCase();
+        } else if (sortField === "createdAt") {
+          valA = new Date(a.createdAt).getTime();
+          valB = new Date(b.createdAt).getTime();
+        } else if (sortField === "amount") {
+          valA = a.amount;
+          valB = b.amount;
+        } else if (sortField === "age") {
+          // Age applies only to completed orders that are pending delivery
+          const isPendingA = a.status === "COMPLETED" && (a.deliveryStatus || "PENDING") === "PENDING";
+          const isPendingB = b.status === "COMPLETED" && (b.deliveryStatus || "PENDING") === "PENDING";
 
-        if (sortField === "name") {
-          valA = a.name.toLowerCase();
-          valB = b.name.toLowerCase();
-        } else if (sortField === "firstSeen") {
-          valA = new Date(a.firstSeen).getTime();
-          valB = new Date(b.firstSeen).getTime();
+          valA = isPendingA ? Date.now() - new Date(a.createdAt).getTime() : -1;
+          valB = isPendingB ? Date.now() - new Date(b.createdAt).getTime() : -1;
+
+          // Push non-pending orders to the bottom regardless of sort order
+          if (valA === -1 && valB !== -1) return 1;
+          if (valB === -1 && valA !== -1) return -1;
+          if (valA === -1 && valB === -1) return 0;
         }
-
         if (valA < valB) return sortOrder === "asc" ? -1 : 1;
         if (valA > valB) return sortOrder === "asc" ? 1 : -1;
         return 0;
       });
-  }, [candidates, searchQuery, paymentFilter, serviceFilter, interviewFilter, dateFilter, customDateFilter, sortField, sortOrder]);
+  }, [purchases, searchQuery, paymentFilter, serviceFilter, interviewFilter, dateFilter, customDateFilter, sortField, sortOrder]);
 
-  const paginatedCandidates = useMemo(() => {
+  const paginatedPurchases = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredCandidates, currentPage]);
+    return filteredPurchases.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPurchases, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredPurchases.length / itemsPerPage));
 
   // Handle scheduling save
   const handleSaveSchedule = async (purchaseId: string) => {
@@ -519,6 +520,17 @@ export default function DirectoryDashboard({
       month: "short",
       day: "numeric",
       year: "numeric",
+    });
+  };
+
+  // Helper to format date + time
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -851,145 +863,141 @@ export default function DirectoryDashboard({
               <thead className="bg-slate-50 text-xs xl:text-sm font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
                   <th
-                    onClick={() => handleSort("name")}
+                    onClick={() => handleSort("candidateName")}
                     className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
                   >
-                    Candidate {sortField === "name" && (sortOrder === "asc" ? "▲" : "▼")}
+                    Candidate {sortField === "candidateName" && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
                   <th
-                    onClick={() => handleSort("firstSeen")}
+                    onClick={() => handleSort("createdAt")}
                     className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
                   >
-                    Order Date {sortField === "firstSeen" && (sortOrder === "asc" ? "▲" : "▼")}
+                    Date &amp; Time {sortField === "createdAt" && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
-                  <th className="px-6 py-4 xl:py-5">Paid Services</th>
-                  <th className="px-6 py-4 xl:py-5">Mock Interview</th>
-                  <th className="px-6 py-4 xl:py-5 text-right">Actions</th>
+                  <th className="px-6 py-4 xl:py-5">Service(s) Purchased</th>
+                  <th className="px-6 py-4 xl:py-5">Delivery</th>
+                  <th
+                    onClick={() => handleSort("amount")}
+                    className="px-6 py-4 xl:py-5 cursor-pointer hover:bg-slate-100 transition-colors"
+                  >
+                    Amount {sortField === "amount" && (sortOrder === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("age")}
+                    className="px-6 py-4 xl:py-5 text-right cursor-pointer hover:bg-slate-100 transition-colors whitespace-nowrap"
+                  >
+                    Age {sortField === "age" && (sortOrder === "asc" ? "▲" : "▼")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {paginatedCandidates.length === 0 ? (
+                {paginatedPurchases.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400 font-medium bg-slate-50/50">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400 font-medium bg-slate-50/50">
                       No matching records found.
                     </td>
                   </tr>
                 ) : (
-                  paginatedCandidates.map((candidate) => {
-                    const completedPurchases = candidate.purchases.filter((p) => p.status === "COMPLETED");
-                    const pendingCount = completedPurchases.filter((p) => (p.deliveryStatus || "PENDING") === "PENDING").length;
-                    const totalCount = completedPurchases.length;
-                    const displayCurrency = completedPurchases[0]?.currency || "USD";
-
-                    const latestInterview = candidate.purchases.find(
-                      (p) =>
-                        p.status === "COMPLETED" &&
-                        (p.serviceName.includes("Interview") || p.serviceName.includes("Bundle"))
-                    );
-
-                    const displayedPurchases = candidate.purchases.filter((p) => {
-                      if (paymentFilter === "completed") return p.status === "COMPLETED";
-                      if (paymentFilter === "incomplete") return p.status !== "COMPLETED";
-                      return true;
-                    });
+                  paginatedPurchases.map((p) => {
+                    const isCompleted = p.status === "COMPLETED";
+                    const isInterview =
+                      p.serviceName.includes("Interview") || p.serviceName.includes("Bundle");
+                    const isDeliveryPending =
+                      isCompleted && (p.deliveryStatus || "PENDING") === "PENDING";
+                    const failureReason = !isCompleted
+                      ? p.completionNotes?.startsWith("Payment Failed") ||
+                        p.completionNotes?.startsWith("Payment Canceled")
+                        ? p.completionNotes
+                        : p.status === "FAILED"
+                        ? "Card declined or authentication failed"
+                        : p.status === "CANCELLED"
+                        ? "Payment canceled by user"
+                        : "Checkout started but payment not completed"
+                      : null;
 
                     return (
                       <tr
-                        key={candidate.email}
+                        key={p.id}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                        onClick={() => setSelectedCandidateEmail(candidate.email)}
+                        onClick={() => setSelectedCandidateEmail(p.candidateEmail)}
                       >
+                        {/* Candidate */}
                         <td className="px-6 py-4 xl:py-5">
-                          <div className="font-semibold text-slate-800 xl:text-[15px]">{candidate.name}</div>
-                          <div className="text-xs xl:text-sm text-slate-400 mt-0.5">{candidate.email}</div>
-                          {candidate.phone && (
+                          <div className="font-semibold text-slate-800 xl:text-[15px]">
+                            {p.candidateName}
+                          </div>
+                          <div className="text-xs xl:text-sm text-slate-400 mt-0.5">
+                            {p.candidateEmail}
+                          </div>
+                          {p.candidatePhone && (
                             <div className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1">
-                              📞 {candidate.phone}
+                              📞 {p.candidatePhone}
                             </div>
                           )}
                         </td>
+
+                        {/* Transaction Date & Time */}
                         <td className="px-6 py-4 xl:py-5 text-slate-600 xl:text-[15px]">
-                          {formatDate(candidate.firstSeen)}
+                          <div>{formatDate(p.createdAt)}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            {new Date(p.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 xl:py-5">
-                          {displayedPurchases.length === 0 ? (
-                            <span className="text-xs xl:text-sm text-slate-400 italic">None</span>
-                          ) : (
-                            <div className="flex flex-col gap-1.5">
-                              {displayedPurchases.map((p) => {
-                                const isCompleted = p.status === "COMPLETED";
-                                const failureReason = !isCompleted
-                                  ? p.completionNotes?.startsWith("Payment Failed") || p.completionNotes?.startsWith("Payment Canceled")
-                                    ? p.completionNotes
-                                    : p.status === "FAILED"
-                                    ? "Card declined or authentication failed"
-                                    : p.status === "CANCELLED"
-                                    ? "Payment canceled by user"
-                                    : "Checkout started but payment not completed"
-                                  : null;
 
-                                return (
-                                  <div key={p.id} className="flex flex-col gap-0.5">
-                                    <span
-                                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs xl:text-sm font-semibold ring-1 ring-inset ${
-                                        isCompleted
-                                          ? "bg-slate-50 text-slate-600 ring-slate-500/10"
-                                          : "bg-amber-50 text-amber-800 ring-amber-500/20"
-                                      }`}
-                                    >
-                                      {p.serviceName} {!isCompleted && "(Incomplete Payment)"}
-                                    </span>
-                                    {failureReason && (
-                                      <span className="text-[11px] text-amber-700 font-medium pl-1">
-                                        Reason: {failureReason}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </td>
+                        {/* Service(s) */}
                         <td className="px-6 py-4 xl:py-5">
-                          {!latestInterview ? (
-                            <span className="text-xs xl:text-sm text-slate-400 italic">Not Applicable</span>
-                          ) : (
+                          <div className="flex flex-col gap-0.5">
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs xl:text-sm font-bold border ${getInterviewBadgeColor(
-                                latestInterview.mockInterviewStatus
-                              )}`}
+                              className={`inline-flex items-center rounded-md px-2 py-1 text-xs xl:text-sm font-semibold ring-1 ring-inset ${
+                                isCompleted
+                                  ? "bg-slate-50 text-slate-600 ring-slate-500/10"
+                                  : "bg-amber-50 text-amber-800 ring-amber-500/20"
+                              }`}
                             >
-                               {latestInterview.mockInterviewStatus === "COMPLETED" && <IoCheckmarkCircle />}
-                               {latestInterview.mockInterviewStatus === "SCHEDULED" && <IoCalendar />}
-                               {(latestInterview.mockInterviewStatus || "PENDING_SCHEDULE") ===
-                                 "PENDING_SCHEDULE" && <IoHourglass />}
-                               {latestInterview.mockInterviewStatus === "SCHEDULED" && latestInterview.mockInterviewDate
-                                 ? `${formatDate(latestInterview.mockInterviewDate)}`
-                                 : latestInterview.mockInterviewStatus || "PENDING_SCHEDULE"}
+                              {p.serviceName}
+                              {!isCompleted && " (Incomplete)"}
                             </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 xl:py-5">
-                          {totalCount === 0 ? (
-                            <span className="text-xs text-slate-400 italic">Not Applicable</span>
-                          ) : pendingCount === 0 ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-emerald-700 border border-emerald-100">
-                              <IoCheckmarkCircle className="w-3 h-3" /> All Delivered
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-amber-700 border border-amber-100">
-                              <IoHourglass className="w-3 h-3" /> {pendingCount} Pending
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 xl:py-5 font-bold text-slate-800 xl:text-[15px]">
-                          {displayCurrency} {candidate.totalSpent.toLocaleString()}
+                            {failureReason && (
+                              <span className="text-[11px] text-amber-700 font-medium pl-1">
+                                {failureReason}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
-                        <td className="px-6 py-4 xl:py-5 text-right">
-                          <button className="text-slate-400 group-hover:text-[#5a58ab] p-1.5 rounded-full hover:bg-slate-100 transition-colors">
-                            <IoChevronForward className="w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" />
-                          </button>
+
+                        {/* Delivery */}
+                        <td className="px-6 py-4 xl:py-5">
+                          {!isCompleted ? (
+                            <span className="text-xs text-slate-400 italic">—</span>
+                          ) : isDeliveryPending ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-amber-700 border border-amber-100">
+                              <IoHourglass className="w-3 h-3" /> Pending
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs xl:text-sm font-bold text-emerald-700 border border-emerald-100">
+                              <IoCheckmarkCircle className="w-3 h-3" /> Delivered
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Amount */}
+                        <td className="px-6 py-4 xl:py-5 font-bold text-slate-800 xl:text-[15px]">
+                          {isCompleted
+                            ? `${p.currency} ${p.amount.toLocaleString()}`
+                            : "—"}
+                        </td>
+
+                        {/* Age */}
+                        <td className="px-6 py-4 xl:py-5 text-right font-semibold whitespace-nowrap">
+                          {isDeliveryPending ? (
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs xl:text-sm font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/80">
+                              <IoTime className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                              <span>{formatAge(p.createdAt)}</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-normal">—</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -1001,7 +1009,7 @@ export default function DirectoryDashboard({
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50 text-sm xl:text-base">
                 <span className="text-slate-500">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCandidates.length)} of {filteredCandidates.length} entries
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredPurchases.length)} of {filteredPurchases.length} transactions
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -1029,17 +1037,17 @@ export default function DirectoryDashboard({
       </div>
 
       {/* Candidate Activity Timeline & Scheduler Drawer */}
-      {selectedCandidate && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-            onClick={() => setSelectedCandidateEmail(null)}
-          />
+      <div className={`fixed inset-0 z-50 overflow-hidden flex justify-end ${selectedCandidateEmail ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        {/* Backdrop */}
+        <div
+          className={`absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ${selectedCandidateEmail ? 'opacity-100' : 'opacity-0'}`}
+          onClick={() => setSelectedCandidateEmail(null)}
+        />
 
-          {/* Drawer Panel */}
-          <div className="relative bg-white w-full max-w-lg shadow-[0_24px_50px_-12px_rgba(0,0,0,0.25)] border-l border-[#e6eefc] h-full flex flex-col transform transition-transform">
-            {/* Drawer Header */}
+        {/* Drawer Panel */}
+        <div className={`relative bg-white w-full max-w-lg shadow-[0_24px_50px_-12px_rgba(0,0,0,0.25)] border-l border-[#e6eefc] h-full flex flex-col transition-transform duration-300 ease-out ${selectedCandidateEmail ? 'translate-x-0' : 'translate-x-full'}`}>
+          {selectedCandidate && (<>
+          {/* Drawer Header */}
             <div className="p-3 px-6 border-b border-gray-100 flex justify-between items-center bg-[#fcfdfe]">
               <div>
                 <h3 className="text-xl font-bold text-[#252e3d]" style={{ fontFamily: "Crimson Text, serif" }}>
@@ -1403,9 +1411,9 @@ export default function DirectoryDashboard({
                 </div>
               </div>
             </div>
-          </div>
+          </>)}
         </div>
-      )}
+      </div>
 
       {/* Regional Contribution Drilldown Modal */}
       {showRegionModal && (
