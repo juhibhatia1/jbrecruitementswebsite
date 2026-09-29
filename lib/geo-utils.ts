@@ -1,12 +1,10 @@
 import { Currency } from "./rag/system-context";
 
 const AED_COUNTRIES = new Set(["AE"]);
-const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
+const INR_COUNTRIES = new Set(["IN"]);
 const INR_TIMEZONES = new Set([
   "Asia/Kolkata",
   "Asia/Calcutta",
-  "Asia/Colombo",
-  "Asia/Karachi",
 ]);
 
 /**

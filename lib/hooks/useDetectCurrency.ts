@@ -9,7 +9,7 @@ import {
 import type { Currency } from "@/lib/rag/system-context";
 
 const AED_COUNTRIES = new Set(["AE"]);
-const INR_COUNTRIES = new Set(["IN", "PK", "LK"]);
+const INR_COUNTRIES = new Set(["IN"]);
 
 /**
  * Detects the user's currency on the client side.
