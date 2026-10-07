@@ -30,26 +30,22 @@ export function useDetectCurrency(): Currency | null {
   const [currency, setCurrency] = useState<Currency | null>(null);
 
   useEffect(() => {
-    // Step 1: sessionStorage cache (avoids duplicate network calls)
+    // Step 1: sessionStorage cache (avoids duplicate network calls within session)
     const cached = getCachedCurrency();
     if (cached) {
       setCurrency(cached);
       return;
     }
 
-    // Step 2: browser timezone / locale heuristics (zero-latency)
-    const browserCurrency = detectCurrencyFromBrowser();
-    if (browserCurrency !== "USD") {
-      setCurrency(browserCurrency);
-      setCachedCurrency(browserCurrency);
-      return;
-    }
-
-    // Step 3: server-side geo API (edge headers on Vercel/CF) — 4s timeout
+    // Step 2: Primary detection via server-side geo API (/api/geo reads edge headers: Vercel / Cloudflare)
     const geoController = new AbortController();
-    const geoTimeout = setTimeout(() => geoController.abort(), 4000);
+    const geoTimeout = setTimeout(() => geoController.abort(), 3500);
 
-    fetch("/api/geo", { signal: geoController.signal })
+    fetch("/api/geo", {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+      signal: geoController.signal,
+    })
       .then((r) => {
         clearTimeout(geoTimeout);
         if (!r.ok) throw new Error("Local geo API failed");
@@ -67,13 +63,13 @@ export function useDetectCurrency(): Currency | null {
       .catch((err) => {
         clearTimeout(geoTimeout);
         console.warn(
-          "[useDetectCurrency] /api/geo failed, falling back to ipapi.co:",
+          "[useDetectCurrency] /api/geo failed, attempting external IP lookup:",
           err,
         );
 
-        // Step 4: external ipapi.co fallback (adblocker-sensitive, 5s timeout)
+        // Step 3: External client IP lookup fallback (3.5s timeout)
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+        const timeout = setTimeout(() => controller.abort(), 3500);
 
         fetch("https://ipapi.co/json/", {
           headers: { Accept: "application/json" },
@@ -82,7 +78,7 @@ export function useDetectCurrency(): Currency | null {
           .then((r) => (r.ok ? r.json() : Promise.reject()))
           .then((data: { country_code?: string; error?: boolean }) => {
             if (data.error) throw new Error();
-            const code = (data.country_code || "").toUpperCase();
+            const code = (data.country_code || "").toUpperCase().trim();
             let detected: Currency = "USD";
             if (AED_COUNTRIES.has(code)) detected = "AED";
             else if (INR_COUNTRIES.has(code)) detected = "INR";
@@ -90,9 +86,10 @@ export function useDetectCurrency(): Currency | null {
             setCachedCurrency(detected);
           })
           .catch(() => {
-            // All detection failed — fall back to USD as last resort
-            setCurrency("USD");
-            setCachedCurrency("USD");
+            // Step 4: Browser timezone fallback (offline or network blocked)
+            const browserCurrency = detectCurrencyFromBrowser();
+            setCurrency(browserCurrency);
+            setCachedCurrency(browserCurrency);
           })
           .finally(() => clearTimeout(timeout));
       });

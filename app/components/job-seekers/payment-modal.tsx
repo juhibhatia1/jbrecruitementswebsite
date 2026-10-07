@@ -11,6 +11,7 @@ import {
 import { IoClose, IoAlertCircle, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
 import { useLenis } from "@/app/providers/lenis-provider";
 import { PayUCheckout } from "../payments/payu-checkout";
+import { clearCachedCurrency } from "@/lib/geo-utils";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 const BUNDLE_DISCOUNT_PERCENT = 20;
 
@@ -141,6 +142,14 @@ export default function PaymentModal({ isOpen, onClose, services, currency }: Pa
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.code === "CURRENCY_MISMATCH") {
+          clearCachedCurrency();
+          setError(data.error || "Currency mismatch detected. Refreshing updated pricing...");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1800);
+          return;
+        }
         throw new Error(data.error || "Failed to initialize payment session.");
       }
 

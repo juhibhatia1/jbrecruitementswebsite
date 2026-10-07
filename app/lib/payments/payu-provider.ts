@@ -15,6 +15,12 @@ export class PayUProvider implements PaymentProvider {
   }
 
   async createOrder(params: CreateOrderParams): Promise<CreateOrderResult> {
+    if (params.currency && params.currency.toUpperCase() !== "INR") {
+      throw new Error(
+        `PayU provider only supports INR transactions. Received currency: ${params.currency}`
+      );
+    }
+
     // Generate a unique transaction ID for PayU
     const txnid = `txn_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 

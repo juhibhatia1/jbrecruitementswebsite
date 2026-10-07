@@ -26,6 +26,7 @@ import {
   IoQrCodeOutline,
 } from "react-icons/io5";
 import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
+import { clearCachedCurrency } from "@/lib/geo-utils";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -509,6 +510,16 @@ export default function CustomJdMockInterviewPage() {
 
       const payData = await payRes.json();
       if (!payRes.ok || (!payData.clientSecret && !payData.paymentUrl)) {
+        if (payData.code === "CURRENCY_MISMATCH") {
+          clearCachedCurrency();
+          toast.error("Currency Updated", {
+            description: payData.error || "Currency mismatch detected. Refreshing updated pricing...",
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1800);
+          return;
+        }
         toast.error("Checkout Setup Failed", {
           description: payData.error || "Could not initialize payment session.",
         });

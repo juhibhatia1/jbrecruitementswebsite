@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { IoCheckmarkCircle, IoLockClosed, IoCardOutline, IoQrCodeOutline } from "react-icons/io5";
-import { detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
+import { clearCachedCurrency } from "@/lib/geo-utils";
 import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
@@ -156,9 +157,13 @@ export default function HumanInterviewBookingForm() {
     applicationLink: "",
   });
 
+  const detectedCurrency = useDetectCurrency();
+
   useEffect(() => {
-    setCurrency(detectCurrencyFromBrowser());
-  }, []);
+    if (detectedCurrency) {
+      setCurrency(detectedCurrency);
+    }
+  }, [detectedCurrency]);
 
   const coachPrice = useMemo(
     () => MULTI_CURRENCY_PRICING[SERVICE_NAME]?.[currency] ?? 499,
@@ -207,6 +212,7 @@ export default function HumanInterviewBookingForm() {
           candidateEmail: form.candidateEmail,
           candidatePhone: form.candidatePhone,
           currency,
+          paymentGateway: "STRIPE",
           interviewMetadata: {
             interviewPreference: "MANUAL",
             jobRole: form.jobRole,
@@ -217,8 +223,14 @@ export default function HumanInterviewBookingForm() {
         }),
       });
 
-      const data = (await response.json()) as { clientSecret?: string; error?: string };
+      const data = (await response.json()) as { clientSecret?: string; error?: string; code?: string };
       if (!response.ok || !data.clientSecret) {
+        if (data.code === "CURRENCY_MISMATCH") {
+          clearCachedCurrency();
+          setError(data.error || "Currency mismatch detected. Refreshing updated pricing...");
+          setTimeout(() => window.location.reload(), 1800);
+          return;
+        }
         throw new Error(data.error || "Could not initialise payment.");
       }
 

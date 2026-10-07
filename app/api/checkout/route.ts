@@ -88,8 +88,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Resolve currency strictly from location ──────────────────────────────
-    const currency = await detectCurrencyFromRequest(request, ip);
+    // ── Resolve authoritative currency strictly from location ──────────────
+    const authoritativeCurrency = await detectCurrencyFromRequest(request, ip);
+
+    // ── Protect against currency mismatch (e.g. stale client cache vs real location) ──
+    let requestedCurrency =
+      typeof body.currency === "string" ? body.currency.trim().toUpperCase() : null;
+    if (requestedCurrency === "₹") requestedCurrency = "INR";
+    if (requestedCurrency === "$") requestedCurrency = "USD";
+    if (requestedCurrency && requestedCurrency !== authoritativeCurrency) {
+      return NextResponse.json(
+        {
+          error: `Currency mismatch detected. Your location indicates ${authoritativeCurrency}, but the order was submitted in ${requestedCurrency}. Please refresh the page to view current pricing.`,
+          code: "CURRENCY_MISMATCH",
+          expectedCurrency: authoritativeCurrency,
+        },
+        { status: 400 },
+      );
+    }
+    const currency = authoritativeCurrency;
+
+    // ── Resolve & validate payment gateway against currency ───────────────────
+    let effectiveGateway =
+      typeof paymentGateway === "string" ? paymentGateway.trim().toUpperCase() : "STRIPE";
+
+    // PayU strictly supports INR only. International orders (USD/AED) MUST use Stripe.
+    if (currency !== "INR") {
+      effectiveGateway = "STRIPE";
+    } else if (!body.paymentGateway) {
+      effectiveGateway = "PAYU";
+    }
+
+    if (effectiveGateway === "PAYU" && currency !== "INR") {
+      return NextResponse.json(
+        { error: "PayU is only available for payments in INR." },
+        { status: 400 },
+      );
+    }
 
     // ── Resolve service names & total price ─────────────────────────────────
     // Support both legacy single `serviceName` and new multi `serviceNames[]`
@@ -139,7 +174,7 @@ export async function POST(request: Request) {
     // For DB storage, join multiple names with " + "
     const combinedServiceName = serviceNames.join(" + ");
 
-    const provider = PaymentFactory.getProvider(paymentGateway);
+    const provider = PaymentFactory.getProvider(effectiveGateway);
     const purchaseId = crypto.randomUUID();
 
     let applicationId: string | undefined = undefined;
@@ -257,10 +292,10 @@ export async function POST(request: Request) {
         amount: totalAmount,
         currency: currency,
         gatewayTransactionId: orderResult.gatewayTransactionId,
-        paymentGateway: paymentGateway.toUpperCase() as any,
+        paymentGateway: effectiveGateway as any,
         status: "PENDING",
         // Store metadata in completionNotes for non-Stripe gateways (like PayU) to recover checkout context
-        ...(paymentGateway !== "STRIPE" && {
+        ...(effectiveGateway !== "STRIPE" && {
           completionNotes: JSON.stringify(metadataParams),
         }),
       },
