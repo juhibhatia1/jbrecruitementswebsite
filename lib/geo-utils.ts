@@ -10,7 +10,7 @@ const INR_TIMEZONES = new Set([
 /**
  * Checks whether an IP address is a local or private address.
  */
-function isPrivateOrLoopbackIp(ip: string): boolean {
+export function isPrivateOrLoopbackIp(ip: string): boolean {
   if (!ip) return true;
   const trimmed = ip.trim();
   return (

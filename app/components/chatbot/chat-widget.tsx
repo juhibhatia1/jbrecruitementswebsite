@@ -13,6 +13,7 @@ import {
 } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import { getCachedCurrency, detectCurrencyFromBrowser } from "@/lib/geo-utils";
+import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,6 +25,7 @@ interface Message {
 
 export default function ChatWidget() {
   const pathname = usePathname();
+  const detectedGeoCurrency = useDetectCurrency();
 
   // Hide ChatWidget on admin and employee portals
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/employee")) {
@@ -84,9 +86,9 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
-      // Retrieve the cached geo-detected currency from sessionStorage, with a browser fallback.
+      // Retrieve the geo-detected currency with local fallback
       const detectedCurrency =
-        getCachedCurrency() || detectCurrencyFromBrowser() || "USD";
+        detectedGeoCurrency || getCachedCurrency() || detectCurrencyFromBrowser() || "USD";
 
       const response = await fetch("/api/chat", {
         method: "POST",

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limiter";
 import { handleChatMessageStream } from "@/lib/rag/chat-engine";
 import { prisma } from "@/lib/prisma";
-import { detectCurrencyFromRequest } from "@/lib/geo-utils";
+import { detectCurrencyFromRequest, isPrivateOrLoopbackIp } from "@/lib/geo-utils";
+import { type Currency } from "@/lib/rag/system-context";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +39,19 @@ export async function POST(request: NextRequest) {
 
     const userAgent = request.headers.get("user-agent") || "unknown";
     
-    // Resolve user currency: trust client payload if valid, otherwise fallback to IP detection
+    // Resolve user currency authoritatively from edge headers / IP geolocation
+    const authoritativeCurrency = await detectCurrencyFromRequest(request, ip);
+    const isLocal = isPrivateOrLoopbackIp(ip);
     const bodyCurrency = (body.currency as string | undefined)?.toUpperCase();
-    const currency =
+    const validBodyCurrency =
       bodyCurrency === "USD" || bodyCurrency === "AED" || bodyCurrency === "INR"
-        ? (bodyCurrency as any)
-        : await detectCurrencyFromRequest(request, ip);
+        ? (bodyCurrency as Currency)
+      : null;
+
+    // In production, use authoritative currency to prevent stale cache spoofing (e.g. INR in Israel).
+    // In local development loopback, honor client-selected currency.
+    const currency: Currency =
+      isLocal && validBodyCurrency ? validBodyCurrency : authoritativeCurrency;
 
     // Call streaming helper
     const { stream: openAIStream, history } = await handleChatMessageStream(sessionId, message, {

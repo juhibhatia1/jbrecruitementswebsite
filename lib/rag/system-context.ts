@@ -13,8 +13,8 @@ export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = 
   "Resume Review & Rewriting":   { USD: 79,  AED: 299,  INR: 5999  },
   "Cover Letter Writing":        { USD: 49,  AED: 199,  INR: 2999  },
   "LinkedIn Optimization":       { USD: 79,  AED: 299,  INR: 5999  },
-  "Superstar Shout-Out":         { USD: 159, AED: 599,  INR: 9999  },
-  "Ask Me Anything":             { USD: 39,  AED: 149,  INR: 2549  },
+  "Superstar Shout-Out":         { USD: 179, AED: 699,  INR: 11999 },
+  "Ask Me Anything":             { USD: 49,  AED: 169,  INR: 2699  },
   "Interview Prep":              { USD: 99,  AED: 299,  INR: 6999  },
   "Ready-to-Apply Job Pack":     { USD: 119, AED: 399,  INR: 8999  },
   "All Career Services Bundle":  { USD: 480, AED: 1600, INR: 30000 },
@@ -62,7 +62,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Superstar Shout-Out",
-    amount: 159,
+    amount: 179,
     timeline: "5 days",
     description: "Targeted LinkedIn announcement to decision-makers, published via Juhi Bhatia's personal LinkedIn profile.",
     features: [
@@ -74,7 +74,7 @@ export const SYSTEM_SERVICES: SystemService[] = [
   },
   {
     title: "Ask Me Anything",
-    amount: 39,
+    amount: 49,
     timeline: "48 hours",
     description: "Direct, practical guidance over email for real-world career challenges and decisions.",
     features: [
@@ -219,10 +219,41 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   text += SYSTEM_FAQ.trim() + "\n";
 
   text += `\n=== CURRENCY INFORMATION ===\n`;
-  text += `The user is visiting from a region where pricing is strictly set to ${currency}. `;
-  text += `You MUST answer all pricing, rates, package, and cost questions ONLY in ${currency}. Do not display or list prices in other currencies (like USD, AED, or INR) unless the user explicitly requests a comparison. `;
-  text += `The exact price for each service in ${currency} is specified above. Always format the currency symbol clearly.\n`;
-  
+  text += `The visitor's primary detected currency is ${currency}. `;
+  text += `By default, answer pricing and package questions in ${currency}. Always format the currency symbol or code clearly.\n\n`;
+
+  text += `=== COMPLETE REGIONAL PRICING REFERENCE ===\n`;
+  text += `JB Recruitment Solutions uses region-based dynamic pricing across 3 regions:\n\n`;
+  text += `1. INDIA (INR ₹):\n`;
+  text += `   - Superstar Shout-Out: INR 11,999\n`;
+  text += `   - Ask Me Anything: INR 2,699\n`;
+  text += `   - Resume Review & Rewriting: INR 5,999\n`;
+  text += `   - Cover Letter Writing: INR 2,999\n`;
+  text += `   - LinkedIn Optimization: INR 5,999\n`;
+  text += `   - Interview Prep: INR 6,999\n`;
+  text += `   - Ready-to-Apply Job Pack: INR 8,999\n`;
+  text += `   - AI Mock Interview: INR 499\n\n`;
+  text += `2. UNITED ARAB EMIRATES (AED):\n`;
+  text += `   - Superstar Shout-Out: AED 699\n`;
+  text += `   - Ask Me Anything: AED 169\n`;
+  text += `   - Resume Review & Rewriting: AED 299\n`;
+  text += `   - Cover Letter Writing: AED 199\n`;
+  text += `   - LinkedIn Optimization: AED 299\n`;
+  text += `   - Interview Prep: AED 299\n`;
+  text += `   - Ready-to-Apply Job Pack: AED 399\n`;
+  text += `   - AI Mock Interview: AED 99\n\n`;
+  text += `3. ALL REMAINING COUNTRIES / INTERNATIONAL (USD $ - e.g. USA, UK, Israel, Europe, Canada, etc.):\n`;
+  text += `   - Superstar Shout-Out: USD 179\n`;
+  text += `   - Ask Me Anything: USD 49\n`;
+  text += `   - Resume Review & Rewriting: USD 79\n`;
+  text += `   - Cover Letter Writing: USD 49\n`;
+  text += `   - LinkedIn Optimization: USD 79\n`;
+  text += `   - Interview Prep: USD 99\n`;
+  text += `   - Ready-to-Apply Job Pack: USD 119\n`;
+  text += `   - AI Mock Interview: USD 39\n\n`;
+  text += `If a visitor asks about pricing in India, UAE, or International (USD), or requests a currency comparison, quote the exact figures from this regional reference table.\n`;
+
   return text;
 }
+
 
