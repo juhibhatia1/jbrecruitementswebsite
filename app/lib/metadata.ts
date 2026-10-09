@@ -274,3 +274,38 @@ export const privacyMetadata: Metadata = {
     canonical: `${siteUrl}/privacy-policy`,
   },
 };
+
+export const personalBrandingMetadata: Metadata = {
+  title: "Personal Branding on LinkedIn - JB Recruitment Solutions",
+  description:
+    "Build your influence and grow your visibility on LinkedIn. Fully managed personal branding, ghostwriting, profile optimization, and audience growth by Juhi Bhatia (400,000+ followers).",
+  keywords: [
+    "LinkedIn personal branding",
+    "LinkedIn ghostwriting",
+    "LinkedIn profile optimisation",
+    "executive personal branding",
+    "founder personal branding",
+    "LinkedIn content management",
+    "Juhi Bhatia personal branding",
+    "JB Recruitment Solutions",
+    "LinkedIn influence growth",
+    "LinkedIn monetization",
+  ],
+  openGraph: {
+    title: "Authentic LinkedIn Branding & Monetization - JB Recruitments",
+    description:
+      "Build credibility, increase visibility, and create opportunities with a fully managed LinkedIn personal branding service by Juhi Bhatia.",
+    url: `${siteUrl}/personal-branding`,
+    images: [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Personal Branding on LinkedIn - JB Recruitment Solutions",
+      },
+    ],
+  },
+  alternates: {
+    canonical: `${siteUrl}/personal-branding`,
+  },
+};

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       yearsOfExperience: details.yearsOfExperience,
       applicationLink: details.applicationLink,
       interviewBrief: details.interviewBrief,
-      purchaseId: purchase.id,
+      purchaseId: purchase.gatewayTransactionId || purchase.id,
     });
 
     return NextResponse.json({

@@ -41,6 +41,9 @@ export default function Footer() {
               <Link href="/job-seekers" className="hover:underline">
                 Job Seekers
               </Link>
+              <Link href="/personal-branding" className="hover:underline">
+                Personal Branding
+              </Link>
 
               {/* Force line break on mobile only */}
               <div className="w-full md:hidden"></div>

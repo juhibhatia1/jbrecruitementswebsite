@@ -9,6 +9,8 @@ import {
 import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 import { buildAppUrl } from "@/lib/app-url";
 
+export const maxDuration = 60;
+
 let stripe: Stripe | null = null;
 
 function getStripe() {

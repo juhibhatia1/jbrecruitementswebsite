@@ -18,6 +18,7 @@ export async function generateReceiptPdf(purchase: {
   amount: number;
   currency: string;
   createdAt: Date;
+  gatewayTransactionId?: string | null;
 }) {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595, 842]); // A4 portrait
@@ -138,7 +139,8 @@ export async function generateReceiptPdf(purchase: {
   const receiptDate = new Date(purchase.createdAt).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   });
-  const receiptNo  = `#${purchase.id.slice(0, 14).toUpperCase()}`;
+  const receiptReference = (purchase.gatewayTransactionId || purchase.id).toUpperCase();
+  const receiptNo  = `#${receiptReference}`;
   const rightInfoText = `${receiptNo}   ·   ${receiptDate}`;
   const rightInfoSize = 8;
   const rightInfoW    = font.widthOfTextAtSize(rightInfoText, rightInfoSize);

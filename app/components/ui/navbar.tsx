@@ -98,6 +98,16 @@ export default function NavigationMenu() {
             </div>
             <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
               <Link
+                href="/personal-branding"
+                prefetch={true}
+                onClick={() => setIsMenuOpen(false)}
+                className="hover:bg-linear-to-r hover:bg-clip-text hover:text-transparent hover:from-[#605DBA] hover:to-[#3F78E0] cursor-pointer inline-block"
+              >
+                LINKEDIN BRANDING
+              </Link>
+            </div>
+            <div className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-colors">
+              <Link
                 href="/about-us"
                 prefetch={true}
                 onClick={() => setIsMenuOpen(false)}

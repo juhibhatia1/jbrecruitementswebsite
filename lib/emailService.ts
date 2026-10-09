@@ -1,10 +1,31 @@
-import { getMailerTransporter } from "./mailer";
+import { getMailerTransporter, createFreshMailerTransporter } from "./mailer";
 import { generateReceiptPdf } from "./pdfGenerator";
 import { escapeHtml } from "./security";
 import { buildAppUrl } from "./app-url";
 import path from "path";
 
-interface PurchaseData {
+/**
+ * Sends an email using the pooled transporter, falling back to a fresh direct connection on transient errors (e.g. greeting timeout, dropped socket).
+ */
+async function sendMailWithRetry(mailOptions: any, description: string): Promise<any> {
+  const transporter = getMailerTransporter();
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (err: any) {
+    console.warn(
+      `Transient error sending ${description} (${err?.message || err}). Retrying with a fresh direct connection...`
+    );
+    try {
+      const freshTransporter = createFreshMailerTransporter();
+      return await freshTransporter.sendMail(mailOptions);
+    } catch (retryErr) {
+      console.error(`Retry failed for ${description}:`, retryErr);
+      throw retryErr;
+    }
+  }
+}
+
+export interface PurchaseData {
   id: string;
   candidateName: string;
   candidateEmail: string;
@@ -13,6 +34,7 @@ interface PurchaseData {
   currency: string;
   country: string | null;
   createdAt: Date;
+  gatewayTransactionId?: string | null;
 }
 
 export async function sendPurchaseEmails(purchase: PurchaseData) {
@@ -27,13 +49,15 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
 
   const transporter = getMailerTransporter();
 
-  // Generate PDF receipt
-  let pdfBuffer: Buffer;
+  // Receipt reference identifier: prioritize payment gateway reference (PayU txnid / Stripe payment_intent), fallback to DB ID
+  const receiptId = purchase.gatewayTransactionId || purchase.id;
+
+  // Generate PDF receipt (non-blocking fallback to ensure emails always send)
+  let pdfBuffer: Buffer | null = null;
   try {
     pdfBuffer = await generateReceiptPdf(purchase);
   } catch (pdfError) {
-    console.error("Failed to generate PDF receipt:", pdfError);
-    return { success: false, error: "PDF generation failed" };
+    console.warn("Non-fatal: Failed to generate PDF receipt, sending confirmation without attachment:", pdfError);
   }
 
   const formatServicesList = (rawName: string) => {
@@ -61,13 +85,16 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
   const includesMockInterview = purchase.serviceName.toLowerCase().includes("mock interview") ||
                                 purchase.serviceName.toLowerCase().includes("ai mock interview");
 
-  const setupUrl = buildAppUrl(`/payment/success?payment_intent=${purchase.id}`);
+  const setupUrl = buildAppUrl(`/payment/success?payment_intent=${receiptId}`);
 
   let candidateText = `Hi ${purchase.candidateName},
 
 Thank you for your purchase of "${formattedServices}"!
 
-We have received your payment of ${formattedAmount}. Your receipt is attached to this email as a PDF.`;
+We have received your payment of ${formattedAmount}.
+Receipt ID / Transaction Reference: ${receiptId}
+
+Your receipt is attached to this email as a PDF.`;
 
   if (includesMockInterview) {
     candidateText += `\n\nSince your purchase includes an AI Mock Interview: if you haven't configured your interview details (uploaded your resume and job description) before payment, please visit the link below to complete the setup. If you have already filled in the details and set up your interview, please ignore this link:\n${setupUrl}`;
@@ -110,7 +137,7 @@ Team JB Recruitment Solutions`;
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #718096;">Receipt ID:</td>
-                <td style="padding: 6px 0; font-family: monospace; font-size: 13px; text-align: right;">${purchase.id}</td>
+                <td style="padding: 6px 0; font-family: monospace; font-size: 13px; text-align: right;">${receiptId}</td>
               </tr>
             </table>
           </div>
@@ -135,10 +162,14 @@ Team JB Recruitment Solutions`;
       </div>
     `,
     attachments: [
-      {
-        filename: `Receipt-${purchase.id}.pdf`,
-        content: pdfBuffer,
-      },
+      ...(pdfBuffer
+        ? [
+            {
+              filename: `Receipt-${receiptId}.pdf`,
+              content: pdfBuffer,
+            },
+          ]
+        : []),
       {
         filename: "logo.avif",
         path: path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "logo.avif"),
@@ -159,6 +190,7 @@ Service Name: ${purchase.serviceName}
 Amount: ${formattedAmount}
 Billing Country: ${purchase.country || "Not provided"}
 Transaction Date: ${purchase.createdAt.toLocaleString()}
+Receipt / Transaction Reference: ${receiptId}
 Purchase ID: ${purchase.id}`,
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #5a58ab; border-radius: 8px; max-width: 600px; margin: 0 auto; color: #333;">
@@ -188,8 +220,12 @@ Purchase ID: ${purchase.id}`,
               <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7;">${purchase.country || "Not provided"}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Purchase ID:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-family: monospace;">${purchase.id}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Receipt / Ref ID:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-family: monospace;">${receiptId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #edf2f7;">Database ID:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-family: monospace; color: #718096;">${purchase.id}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Date:</td>
@@ -204,17 +240,217 @@ Purchase ID: ${purchase.id}`,
   };
 
   try {
-    // Send to candidate
-    console.log(`Sending purchase confirmation email to candidate: ${purchase.candidateEmail}`);
-    await transporter.sendMail(candidateMailOptions);
+    // 1. FIRST PRIORITY: Candidate Receipt Email
+    console.log(`[Email Priority 1] Sending candidate receipt email to: ${purchase.candidateEmail} (Receipt ID: ${receiptId})`);
+    let candidateReceiptSent = false;
+    try {
+      await sendMailWithRetry(candidateMailOptions, "candidate receipt");
+      candidateReceiptSent = true;
+      console.log(`[Email Priority 1 Success] Candidate receipt email sent successfully to ${purchase.candidateEmail}`);
+    } catch (receiptErr) {
+      console.error("[Email Priority 1 Error] Failed to send candidate receipt email:", receiptErr);
+    }
 
-    // Send to admin
-    console.log(`Sending alert email to admin: ${adminEmail}`);
-    await transporter.sendMail(adminMailOptions);
+    // 2. SECOND PRIORITY: Candidate Service Confirmation Email (only after receipt email is processed)
+    console.log(`[Email Priority 2] Sending candidate service confirmation email to: ${purchase.candidateEmail}`);
+    let serviceConfirmationSent = false;
+    try {
+      const confirmationResult = await sendCandidateServiceConfirmationEmail(purchase);
+      if (confirmationResult?.success) {
+        serviceConfirmationSent = true;
+        console.log(`[Email Priority 2 Success] Candidate service confirmation email sent successfully to ${purchase.candidateEmail}`);
+      } else {
+        console.error("[Email Priority 2 Error] Failed to send candidate service confirmation email:", confirmationResult?.error);
+      }
+    } catch (confErr) {
+      console.error("[Email Priority 2 Error] Failed to send candidate service confirmation email:", confErr);
+    }
 
+    // 3. THIRD PRIORITY: Admin Alert Email
+    console.log(`[Email Priority 3] Sending admin alert email to: ${adminEmail}`);
+    let adminAlertSent = false;
+    try {
+      await sendMailWithRetry(adminMailOptions, "admin alert");
+      adminAlertSent = true;
+      console.log(`[Email Priority 3 Success] Admin alert email sent successfully to ${adminEmail}`);
+    } catch (adminErr) {
+      console.error("[Email Priority 3 Error] Failed to send admin alert email:", adminErr);
+    }
+
+    const anySent = candidateReceiptSent || serviceConfirmationSent || adminAlertSent;
+    return {
+      success: anySent,
+      candidateReceiptSent,
+      adminAlertSent,
+      serviceConfirmationSent,
+    };
+  } catch (err) {
+    console.error("Unexpected error in sendPurchaseEmails:", err);
+    return { success: false, error: err };
+  }
+}
+
+export async function sendCandidateServiceConfirmationEmail(purchase: PurchaseData) {
+  const user = process.env.NEXT_NODEMAILER_USER;
+  if (!user) {
+    console.error("Mailer credentials missing. Cannot send candidate service confirmation email.");
+    return { success: false, error: "Mailer credentials missing" };
+  }
+
+  const transporter = getMailerTransporter();
+  const candidateName = purchase.candidateName.trim();
+
+  // Split services if multiple
+  const serviceList = purchase.serviceName
+    .split(" + ")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const isAMAOnly =
+    serviceList.length === 1 &&
+    serviceList[0].toLowerCase().includes("ask me anything");
+
+  const isAIInterviewOnly =
+    serviceList.length === 1 &&
+    (serviceList[0].toLowerCase().includes("ai mock interview") ||
+      serviceList[0].toLowerCase() === "mock interview");
+
+  // Time in IST (Asia/Kolkata)
+  const purchaseDate = purchase.createdAt ? new Date(purchase.createdAt) : new Date();
+  const hourString = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  }).format(purchaseDate);
+  const hour = parseInt(hourString, 10);
+  const isAfter7PM = hour >= 19;
+
+  let subject = "";
+  let textBody = "";
+  let htmlBody = "";
+
+  if (isAMAOnly || isAIInterviewOnly) {
+    // Template 1: For AMA & AI Mock Interview
+    const serviceTitle = isAMAOnly ? "Ask Me Anything" : "AI Mock Interview";
+    subject = `Confirmation for ${serviceTitle}`;
+
+    textBody = `Hi ${candidateName},
+
+Your ${serviceTitle} service is now confirmed.
+
+Please share all your questions along with your latest resume at juhi@jbrecruitments.com. Once I receive them, I’ll review everything carefully and get back to you within 48 hours.
+
+Looking forward to supporting you!
+
+Best,
+Juhi Bhatia
+Founder & CEO | JB`;
+
+    htmlBody = `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #2d3748; line-height: 1.6; font-size: 15px;">
+        <p>Hi ${escapeHtml(candidateName)},</p>
+        <p>Your <strong>${escapeHtml(serviceTitle)}</strong> service is now confirmed.</p>
+        <p>Please share all your questions along with your latest resume at <a href="mailto:juhi@jbrecruitments.com" style="color: #5a58ab; font-weight: bold; text-decoration: underline;">juhi@jbrecruitments.com</a>. Once I receive them, I’ll review everything carefully and get back to you within 48 hours.</p>
+        <p>Looking forward to supporting you!</p>
+        <p style="margin-top: 24px; line-height: 1.4;">
+          Best,<br />
+          <strong>Juhi Bhatia</strong><br />
+          <span style="color: #718096; font-size: 14px;">Founder &amp; CEO | JB</span>
+        </p>
+      </div>
+    `;
+  } else {
+    // Template 2 (After 7 PM IST) or Template 3 (Standard Hours)
+    const bulletListText = serviceList.map((s) => `* ${s}`).join("\n");
+    const bulletListHtml = serviceList
+      .map((s) => `<li style="margin-bottom: 6px;">${escapeHtml(s)}</li>`)
+      .join("");
+
+    const displayTitle = serviceList.length === 1 ? serviceList[0] : "Your Services";
+    subject = `Confirmation for ${displayTitle}`;
+
+    if (isAfter7PM) {
+      // Template 2: After 7 PM IST
+      textBody = `Hi ${candidateName},
+
+This is to confirm that the following services you have selected are now confirmed:
+
+${bulletListText}
+
+Please feel free to reach out to me anytime tomorrow on WhatsApp at +971 585 819 271 so we can coordinate the next steps and get started.
+
+Thank you for choosing JB. I look forward to working with you and supporting you in your career journey.
+
+Best,
+Juhi Bhatia
+Founder & CEO | JB`;
+
+      htmlBody = `
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #2d3748; line-height: 1.6; font-size: 15px;">
+          <p>Hi ${escapeHtml(candidateName)},</p>
+          <p>This is to confirm that the following services you have selected are now confirmed:</p>
+          <ul style="padding-left: 20px; margin: 16px 0;">
+            ${bulletListHtml}
+          </ul>
+          <p>Please feel free to reach out to me anytime tomorrow on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 585 819 271</a> so we can coordinate the next steps and get started.</p>
+          <p>Thank you for choosing JB. I look forward to working with you and supporting you in your career journey.</p>
+          <p style="margin-top: 24px; line-height: 1.4;">
+            Best,<br />
+            <strong>Juhi Bhatia</strong><br />
+            <span style="color: #718096; font-size: 14px;">Founder &amp; CEO | JB</span>
+          </p>
+        </div>
+      `;
+    } else {
+      // Template 3: Before 7 PM IST
+      textBody = `Hi ${candidateName},
+
+This is to confirm that the following services you have selected are now confirmed:
+
+${bulletListText}
+
+Please feel free to reach out to me on WhatsApp at +971 585 819 271 so we can coordinate the next steps and get started.
+
+I look forward to working with you and supporting you in your career journey.
+
+Best,
+Juhi Bhatia
+Founder & CEO | JB`;
+
+      htmlBody = `
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #2d3748; line-height: 1.6; font-size: 15px;">
+          <p>Hi ${escapeHtml(candidateName)},</p>
+          <p>This is to confirm that the following services you have selected are now confirmed:</p>
+          <ul style="padding-left: 20px; margin: 16px 0;">
+            ${bulletListHtml}
+          </ul>
+          <p>Please feel free to reach out to me on WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none;">+971 585 819 271</a> so we can coordinate the next steps and get started.</p>
+          <p>I look forward to working with you and supporting you in your career journey.</p>
+          <p style="margin-top: 24px; line-height: 1.4;">
+            Best,<br />
+            <strong>Juhi Bhatia</strong><br />
+            <span style="color: #718096; font-size: 14px;">Founder &amp; CEO | JB</span>
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  const mailOptions = {
+    from: `"Juhi Bhatia" <${user}>`,
+    replyTo: "juhi@jbrecruitments.com",
+    to: purchase.candidateEmail,
+    subject,
+    text: textBody,
+    html: htmlBody,
+  };
+
+  try {
+    console.log(`Sending service confirmation email to candidate: ${purchase.candidateEmail}`);
+    await sendMailWithRetry(mailOptions, "candidate service confirmation");
     return { success: true };
   } catch (err) {
-    console.error("Error sending purchase confirmation/alert emails:", err);
+    console.error("Error sending candidate service confirmation email:", err);
     return { success: false, error: err };
   }
 }

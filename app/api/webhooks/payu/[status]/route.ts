@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PaymentFactory } from "../../../../lib/payments/payment-factory";
 import { sendPurchaseEmails, sendInterviewInvitationEmail, sendNewApplicationAlertEmail } from "@/lib/emailService";
 import { buildAppUrl } from "@/lib/app-url";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request, { params }: { params: Promise<{ status: string }> }) {
   const { status: routeStatus } = await params; // 'success' or 'failure'
@@ -63,11 +65,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ sta
         });
       } catch (e) {}
 
-      try {
-        await sendPurchaseEmails(purchase);
-      } catch (emailErr) {
-        console.error("Failed to send purchase emails in PayU webhook:", emailErr);
-      }
+      // Dispatch purchase emails (Priority 1: Candidate Receipt, Priority 2: Service Confirmation, Priority 3: Admin Alert)
+      // Use after() so the candidate's browser redirects to /payment/success instantly without waiting on remote SMTP handshake
+      after(async () => {
+        try {
+          await sendPurchaseEmails(purchase);
+        } catch (emailErr) {
+          console.error("Failed to send purchase emails in PayU webhook:", emailErr);
+        }
+      });
 
       return NextResponse.redirect(buildAppUrl(`/payment/success?payment_intent=${txnid}`), 303);
     } else {
