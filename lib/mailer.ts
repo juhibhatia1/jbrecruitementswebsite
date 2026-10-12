@@ -71,7 +71,6 @@ export async function appendMailToSentFolder(mailOptions: any): Promise<boolean>
   const port = Number(process.env.IMAP_PORT || 993);
 
   try {
-    // @ts-expect-error nodemailer deep export does not provide type declarations
     const MailComposer = (await import("nodemailer/lib/mail-composer")).default;
     const composer = new MailComposer(mailOptions);
     const rawBuffer: Buffer = await new Promise((resolve, reject) => {
