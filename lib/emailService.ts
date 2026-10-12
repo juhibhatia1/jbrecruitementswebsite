@@ -1,4 +1,4 @@
-import { getMailerTransporter, createFreshMailerTransporter } from "./mailer";
+import { getMailerTransporter, createFreshMailerTransporter, appendMailToSentFolder } from "./mailer";
 import { generateReceiptPdf } from "./pdfGenerator";
 import { escapeHtml } from "./security";
 import { buildAppUrl } from "./app-url";
@@ -6,23 +6,32 @@ import path from "path";
 
 /**
  * Sends an email using the pooled transporter, falling back to a fresh direct connection on transient errors (e.g. greeting timeout, dropped socket).
+ * Automatically mirrors the outgoing email to the IMAP "Sent" folder for administrative transparency.
  */
 async function sendMailWithRetry(mailOptions: any, description: string): Promise<any> {
   const transporter = getMailerTransporter();
+  let result;
   try {
-    return await transporter.sendMail(mailOptions);
+    result = await transporter.sendMail(mailOptions);
   } catch (err: any) {
     console.warn(
       `Transient error sending ${description} (${err?.message || err}). Retrying with a fresh direct connection...`
     );
     try {
       const freshTransporter = createFreshMailerTransporter();
-      return await freshTransporter.sendMail(mailOptions);
+      result = await freshTransporter.sendMail(mailOptions);
     } catch (retryErr) {
       console.error(`Retry failed for ${description}:`, retryErr);
       throw retryErr;
     }
   }
+
+  // Non-blocking auto-sync to IMAP Sent folder
+  appendMailToSentFolder(mailOptions).catch((syncErr) => {
+    console.warn(`Non-fatal: Failed to mirror ${description} to Sent folder:`, syncErr);
+  });
+
+  return result;
 }
 
 export interface PurchaseData {
@@ -112,6 +121,7 @@ Team JB Recruitment Solutions`;
   const candidateMailOptions = {
     from: `"JB Recruitment Solutions" <${user}>`,
     to: purchase.candidateEmail,
+    bcc: user,
     subject: `Your Receipt for ${formattedServices} - JB Recruitment Solutions`,
     text: candidateText,
     html: `
@@ -440,6 +450,7 @@ Founder & CEO | JB`;
     from: `"Juhi Bhatia" <${user}>`,
     replyTo: "juhi@jbrecruitments.com",
     to: purchase.candidateEmail,
+    bcc: user,
     subject,
     text: textBody,
     html: htmlBody,
