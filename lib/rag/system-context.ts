@@ -11,7 +11,7 @@ export interface SystemService {
 /** Per-currency pricing for all services */
 export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = {
   "Resume Review & Rewriting":   { USD: 79,  AED: 299,  INR: 5999  },
-  "Cover Letter Writing":        { USD: 49,  AED: 199,  INR: 2999  },
+  "Cover Letter Writing":        { USD: 49,  AED: 159,  INR: 2999  },
   "LinkedIn Optimization":       { USD: 79,  AED: 299,  INR: 5999  },
   "Superstar Shout-Out":         { USD: 179, AED: 699,  INR: 11999 },
   "Ask Me Anything":             { USD: 49,  AED: 169,  INR: 2699  },
@@ -21,6 +21,11 @@ export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = 
   "Mock Interview":             { USD: 39,  AED: 99,   INR: 499   },
   "AI Mock Interview":           { USD: 39,  AED: 99,   INR: 499   },
   "Coach Mock Interview":        { USD: 39,  AED: 99,   INR: 499   },
+  "Personal Branding Consultation":      { USD: 300,  AED: 1100,  INR: 25000 },
+  "LinkedIn Brand Launch":               { USD: 3000, AED: 11000, INR: 265000 },
+  "LinkedIn Brand Launch (3 Months)":    { USD: 3000, AED: 11000, INR: 265000 },
+  "LinkedIn Brand Authority":            { USD: 5000, AED: 18000, INR: 485000 },
+  "LinkedIn Brand Authority (6 Months)": { USD: 5000, AED: 18000, INR: 485000 },
 };
 
 export const SYSTEM_SERVICES: SystemService[] = [
@@ -232,16 +237,22 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   text += `   - LinkedIn Optimization: INR 5,999\n`;
   text += `   - Interview Prep: INR 6,999\n`;
   text += `   - Ready-to-Apply Job Pack: INR 8,999\n`;
-  text += `   - AI Mock Interview: INR 499\n\n`;
+  text += `   - AI Mock Interview: INR 499\n`;
+  text += `   - Personal Branding Consultation: INR 25,000 (100% credited toward 3 or 6-month plan)\n`;
+  text += `   - Personal Branding (3-Month Launch): INR 2,65,000\n`;
+  text += `   - Personal Branding (6-Month Authority): INR 4,85,000\n\n`;
   text += `2. UNITED ARAB EMIRATES (AED):\n`;
   text += `   - Superstar Shout-Out: AED 699\n`;
   text += `   - Ask Me Anything: AED 169\n`;
   text += `   - Resume Review & Rewriting: AED 299\n`;
-  text += `   - Cover Letter Writing: AED 199\n`;
+  text += `   - Cover Letter Writing: AED 159\n`;
   text += `   - LinkedIn Optimization: AED 299\n`;
   text += `   - Interview Prep: AED 299\n`;
   text += `   - Ready-to-Apply Job Pack: AED 399\n`;
-  text += `   - AI Mock Interview: AED 99\n\n`;
+  text += `   - AI Mock Interview: AED 99\n`;
+  text += `   - Personal Branding Consultation: AED 1,100 (100% credited toward 3 or 6-month plan)\n`;
+  text += `   - Personal Branding (3-Month Launch): AED 11,000\n`;
+  text += `   - Personal Branding (6-Month Authority): AED 18,000\n\n`;
   text += `3. ALL REMAINING COUNTRIES / INTERNATIONAL (USD $ - e.g. USA, UK, Israel, Europe, Canada, etc.):\n`;
   text += `   - Superstar Shout-Out: USD 179\n`;
   text += `   - Ask Me Anything: USD 49\n`;
@@ -250,7 +261,10 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   text += `   - LinkedIn Optimization: USD 79\n`;
   text += `   - Interview Prep: USD 99\n`;
   text += `   - Ready-to-Apply Job Pack: USD 119\n`;
-  text += `   - AI Mock Interview: USD 39\n\n`;
+  text += `   - AI Mock Interview: USD 39\n`;
+  text += `   - Personal Branding Consultation: USD 300 (100% credited toward 3 or 6-month plan)\n`;
+  text += `   - Personal Branding (3-Month Launch): USD 3,000\n`;
+  text += `   - Personal Branding (6-Month Authority): USD 5,000\n\n`;
   text += `If a visitor asks about pricing in India, UAE, or International (USD), or requests a currency comparison, quote the exact figures from this regional reference table.\n`;
 
   return text;

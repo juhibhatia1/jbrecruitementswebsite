@@ -2,8 +2,13 @@
 
 import React, { useState } from "react";
 import BrandingHero from "../components/personal-branding/branding-hero";
-import PricingPackages from "../components/personal-branding/pricing-packages";
+import FounderNote from "../components/personal-branding/founder-note";
+import WhoIsThisFor from "../components/personal-branding/who-is-this-for";
+import BrandingPillars from "../components/personal-branding/branding-pillars";
 import OutcomesSection from "../components/personal-branding/outcomes-section";
+import PricingPackages from "../components/personal-branding/pricing-packages";
+import NotForSection from "../components/personal-branding/not-for-section";
+import ReadyCtaSection from "../components/personal-branding/ready-cta-section";
 import BrandingFaq from "../components/personal-branding/branding-faq";
 import InquiryModal from "../components/personal-branding/inquiry-modal";
 
@@ -26,20 +31,35 @@ export default function PersonalBrandingPage() {
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
       <main className="flex-grow">
-        {/* Hero Section */}
+        {/* 1. Hero Section */}
         <BrandingHero onOpenInquiry={handleOpenInquiry} />
 
-        {/* Pricing / Packages Section */}
+        {/* 2. A Note from Juhi Bhatia */}
+        <FounderNote />
+
+        {/* 3. Who Is This Service For? */}
+        <WhoIsThisFor />
+
+        {/* 4. What's Included in Our LinkedIn Personal Branding Service? */}
+        <BrandingPillars />
+
+        {/* 5. What Can You Expect From This Service? */}
+        <OutcomesSection />
+
+        {/* 6. Choose Your Personal Branding Package */}
         <PricingPackages onOpenInquiry={handleOpenInquiry} />
 
-        {/* Outcomes & Founder Message */}
-        <OutcomesSection onOpenInquiry={handleOpenInquiry} />
+        {/* 7. Who This Service Is NOT For */}
+        <NotForSection />
 
-        {/* Frequently Asked Questions */}
+        {/* 8. Ready to Build Your Personal Brand? */}
+        <ReadyCtaSection onOpenInquiry={handleOpenInquiry} />
+
+        {/* 9. Frequently Asked Questions */}
         <BrandingFaq onOpenInquiry={handleOpenInquiry} />
       </main>
 
-      {/* Inquiry & Consultation Modal */}
+      {/* 10. Inquiry & Consultation Modal */}
       <InquiryModal
         isOpen={isModalOpen}
         onClose={handleCloseInquiry}

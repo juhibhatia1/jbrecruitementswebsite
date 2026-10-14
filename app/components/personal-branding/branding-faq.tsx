@@ -6,6 +6,7 @@ import { RxArrowTopRight } from "react-icons/rx";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import ScrollAnimation from "../ui/scroll-animation";
 import Link from "next/link";
+import { useDetectCurrency } from "@/lib/hooks/useDetectCurrency";
 
 type FAQ = {
   question: string;
@@ -36,7 +37,12 @@ const faqs: FAQ[] = [
   {
     question: "What is the difference between the 3-Month and 6-Month plans?",
     answer:
-      "The 3-Month Launch ($3,000) builds your core presence and voice. The 6-Month Authority ($5,000) scales reach with continuous optimization and proactive executive network growth.",
+      "The 3-Month Launch builds your core presence and voice ($3,000 USD / ₹2,65,000 INR). The 6-Month Authority scales reach with continuous optimization and proactive executive network growth ($5,000 USD / ₹4,85,000 INR). Both plans are eligible for your consultation credit deduction.",
+  },
+  {
+    question: "How does the initial consultation fee and credit policy work?",
+    answer:
+      "A 1-on-1 strategy consultation with Juhi Bhatia is $300 USD (or ₹25,000 INR). If you decide to proceed with either our 3-Month or 6-Month retainer package, your entire consultation fee is credited and decremented directly from your package price.",
   },
   {
     question: "What results can I realistically expect?",
@@ -60,7 +66,9 @@ interface BrandingFaqProps {
 }
 
 export default function BrandingFaq({ onOpenInquiry }: BrandingFaqProps) {
-  const [openIndex, setOpenIndex] = useState<number[]>([0]);
+  const currency = useDetectCurrency();
+  const isIndianUser = currency === "INR";
+  const [openIndex, setOpenIndex] = useState<number[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hoveredLink, setHoveredLink] = useState(false);
@@ -235,7 +243,13 @@ export default function BrandingFaq({ onOpenInquiry }: BrandingFaqProps) {
                       }}
                       aria-hidden={!isOpen}
                     >
-                      <div className="pb-5">{faq.answer}</div>
+                      <div className="pb-3">
+                        {faq.question.includes("3-Month and 6-Month plans")
+                          ? isIndianUser
+                            ? "The 3-Month Launch (₹2,65,000 INR) builds your core presence and voice. The 6-Month Authority (₹4,85,000 INR) scales reach with continuous optimization and proactive executive network growth."
+                            : "The 3-Month Launch ($3,000 USD) builds your core presence and voice. The 6-Month Authority ($5,000 USD) scales reach with continuous optimization and proactive executive network growth."
+                          : faq.answer}
+                      </div>
                     </div>
                   </div>
                 );

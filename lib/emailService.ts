@@ -103,10 +103,18 @@ Thank you for your purchase of "${formattedServices}"!
 We have received your payment of ${formattedAmount}.
 Receipt ID / Transaction Reference: ${receiptId}
 
-Your receipt is attached to this email as a PDF.`;
+    Your receipt is attached to this email as a PDF.`;
+
+  const isPersonalBrandingConsultation = purchase.serviceName.toLowerCase().includes("personal branding consultation");
+  const isPersonalBrandingPackage = purchase.serviceName.toLowerCase().includes("brand launch") || 
+                                     purchase.serviceName.toLowerCase().includes("brand authority");
 
   if (includesMockInterview) {
     candidateText += `\n\nSince your purchase includes an AI Mock Interview: if you haven't configured your interview details (uploaded your resume and job description) before payment, please visit the link below to complete the setup. If you have already filled in the details and set up your interview, please ignore this link:\n${setupUrl}`;
+  } else if (isPersonalBrandingConsultation) {
+    candidateText += `\n\nThank you for booking your Executive 1-on-1 Personal Branding Consultation with Juhi Bhatia.\n\nJuhi and our executive team will review your LinkedIn profile, current professional positioning, and industry presence. We will reach out to you directly via WhatsApp and email within 24 hours to schedule your consultation call.\n\nIMPORTANT 100% CREDIT POLICY: Your full consultation fee of ${formattedAmount} will be credited and deducted directly from your package price if you decide to proceed with our 3-Month LinkedIn Brand Launch or 6-Month LinkedIn Brand Authority program.`;
+  } else if (isPersonalBrandingPackage) {
+    candidateText += `\n\nWelcome to our Executive Done-For-You LinkedIn Personal Branding program! Juhi Bhatia and your dedicated account manager will be in touch within 24 hours to schedule your strategic onboarding session and initiate your profile and positioning audit.`;
   } else {
     candidateText += `\n\nOur team will contact you shortly to coordinate the next steps and get started with your service.`;
   }
@@ -159,6 +167,19 @@ Team JB Recruitment Solutions`;
               <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #5a58ab; font-weight: bold;">Set up your AI Mock Interview</h4>
               <p style="margin-bottom: 15px; font-size: 13px; color: #4a5568; line-height: 1.5;">If you haven't configured your interview details (uploaded your resume and job description) before payment, please click below to complete the setup. If you have already filled in the details and set up your interview, please ignore this message.</p>
               <a href="${setupUrl}" style="display: inline-block; background-color: #5a58ab; color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 14px; box-shadow: 0 4px 10px rgba(90, 88, 171, 0.2);">Configure Interview Now</a>
+            </div>
+          ` : isPersonalBrandingConsultation ? `
+            <div style="background-color: #f5f4ff; border: 1px solid #c7d2fe; padding: 18px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #5a58ab; font-weight: bold;">Executive Consultation Confirmed</h4>
+              <p style="margin-bottom: 12px; font-size: 13px; color: #4a5568; line-height: 1.5;">Juhi Bhatia and our executive team will review your profile and reach out within 24 hours to schedule your consultation call.</p>
+              <div style="background-color: #ffffff; border-left: 4px solid #10b981; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #065f46;">
+                <strong>100% Credited Toward Your Plan:</strong> If you enroll in our 3-Month or 6-Month LinkedIn Personal Branding program, your entire consultation fee of <strong>${formattedAmount}</strong> will be deducted directly from your package price.
+              </div>
+            </div>
+          ` : isPersonalBrandingPackage ? `
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 18px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: #15803d; font-weight: bold;">Welcome to Executive Personal Branding!</h4>
+              <p style="margin-bottom: 0; font-size: 13px; color: #166534; line-height: 1.5;">Juhi Bhatia and your dedicated account manager will reach out within 24 hours to coordinate your strategic kickoff session and begin crafting your personal brand roadmap.</p>
             </div>
           ` : `
             <p>Our team will contact you shortly to coordinate the next steps and get started with your service.</p>

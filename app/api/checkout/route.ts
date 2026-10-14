@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getClientIp, isRateLimited } from "@/lib/rate-limiter";
-import { MULTI_CURRENCY_PRICING, type Currency } from "@/lib/rag/system-context";
+import { MULTI_CURRENCY_PRICING } from "@/lib/rag/system-context";
 import { detectCurrencyFromRequest } from "@/lib/geo-utils";
 import { candidateApplicationSafeSelect } from "@/lib/candidate-application-select";
 import { PaymentFactory } from "../../lib/payments/payment-factory";
@@ -18,11 +18,23 @@ const SERVICE_PRICING_USD: Record<string, number> = {
   "Ready-to-Apply Job Pack": 119,
   "Mock Interview": 39,
   "All Career Services Bundle": 480,
+  "Personal Branding Consultation": 300,
+  "LinkedIn Brand Launch": 3000,
+  "LinkedIn Brand Launch (3 Months)": 3000,
+  "LinkedIn Brand Authority": 5000,
+  "LinkedIn Brand Authority (6 Months)": 5000,
 };
 
 const BUNDLE_DISCOUNT_PERCENT = 0.2;
 const BUNDLE_MIN_SERVICE_COUNT = 4;
-const BUNDLE_EXCLUDED_SERVICE_NAMES = new Set(["AI Mock Interview"]);
+const BUNDLE_EXCLUDED_SERVICE_NAMES = new Set([
+  "AI Mock Interview",
+  "Personal Branding Consultation",
+  "LinkedIn Brand Launch",
+  "LinkedIn Brand Launch (3 Months)",
+  "LinkedIn Brand Authority",
+  "LinkedIn Brand Authority (6 Months)",
+]);
 
 export async function POST(request: Request) {
   try {
@@ -171,6 +183,58 @@ export async function POST(request: Request) {
         : 0;
     totalAmount = Math.max(0, totalAmount - bundleDiscount);
 
+    // ── Check for eligible Personal Branding Consultation credit ───────────
+    const isPersonalBrandingPlan = serviceNames.some((name) => {
+      const lower = name.toLowerCase();
+      return (
+        lower.includes("linkedin brand launch") ||
+        lower.includes("linkedin brand authority") ||
+        (lower.includes("personal branding") && !lower.includes("consultation"))
+      );
+    });
+
+    let consultationCredit = 0;
+    let creditedConsultationPurchaseId: string | null = null;
+
+    if (isPersonalBrandingPlan) {
+      const consultationPurchase = await prisma.purchase.findFirst({
+        where: {
+          candidateEmail: {
+            equals: emailClean.toLowerCase(),
+            mode: "insensitive",
+          },
+          serviceName: {
+            contains: "Personal Branding Consultation",
+            mode: "insensitive",
+          },
+          status: "COMPLETED",
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (consultationPurchase) {
+        // Verify this consultation has not already been credited toward another COMPLETED purchase
+        const alreadyCreditedCompleted = await prisma.purchase.findFirst({
+          where: {
+            completionNotes: {
+              contains: `[CONSULTATION_CREDITED:${consultationPurchase.id}]`,
+            },
+            status: "COMPLETED",
+          },
+        });
+
+        if (!alreadyCreditedCompleted) {
+          const consultationPricingRow = MULTI_CURRENCY_PRICING["Personal Branding Consultation"];
+          consultationCredit = consultationPricingRow
+            ? consultationPricingRow[currency]
+            : (consultationPurchase.currency === currency ? consultationPurchase.amount : 300);
+
+          creditedConsultationPurchaseId = consultationPurchase.id;
+          totalAmount = Math.max(0, totalAmount - consultationCredit);
+        }
+      }
+    }
+
     // For DB storage, join multiple names with " + "
     const combinedServiceName = serviceNames.join(" + ");
 
@@ -268,6 +332,10 @@ export async function POST(request: Request) {
           interviewBrief: interviewMetadata.interviewBrief || "",
           linkedInUrl: interviewMetadata.linkedInUrl || "",
         }),
+      ...(creditedConsultationPurchaseId && {
+        consultationCreditApplied: consultationCredit.toString(),
+        creditedConsultationId: creditedConsultationPurchaseId,
+      }),
     };
 
     // Create Order via PaymentFactory
@@ -280,6 +348,10 @@ export async function POST(request: Request) {
       serviceName: combinedServiceName,
       metadata: metadataParams,
     });
+
+    const completionNotesPayload = creditedConsultationPurchaseId
+      ? `[CONSULTATION_CREDITED:${creditedConsultationPurchaseId}] Consultation credit of ${consultationCredit} ${currency} decremented. ${effectiveGateway !== "STRIPE" ? JSON.stringify(metadataParams) : ""}`.trim()
+      : (effectiveGateway !== "STRIPE" ? JSON.stringify(metadataParams) : null);
 
     // Save PENDING purchase record
     const purchase = await prisma.purchase.create({
@@ -294,10 +366,7 @@ export async function POST(request: Request) {
         gatewayTransactionId: orderResult.gatewayTransactionId,
         paymentGateway: effectiveGateway as any,
         status: "PENDING",
-        // Store metadata in completionNotes for non-Stripe gateways (like PayU) to recover checkout context
-        ...(effectiveGateway !== "STRIPE" && {
-          completionNotes: JSON.stringify(metadataParams),
-        }),
+        completionNotes: completionNotesPayload,
       },
     });
 
@@ -313,6 +382,8 @@ export async function POST(request: Request) {
       paymentUrl: orderResult.paymentUrl,
       gatewayMetadata: orderResult.metadata,
       purchaseId: purchase.id,
+      consultationCreditApplied: consultationCredit,
+      totalAmount,
     });
   } catch (error: any) {
     console.error("Error creating Payment Order:", error);
