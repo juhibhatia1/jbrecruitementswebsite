@@ -18,7 +18,7 @@ export default function BrandingHero({ onOpenInquiry }: BrandingHeroProps) {
   const { formatted: igFollowerCount } = useInstagramFollowers();
   const currency = useDetectCurrency();
   const isIndianUser = currency === "INR";
-  const consultationFeeText = isIndianUser ? "₹25,000" : "$300";
+  const consultationFeeText = isIndianUser ? "₹24,999" : "$299";
 
   const scrollToPackages = () => {
     const el = document.getElementById("packages-section");

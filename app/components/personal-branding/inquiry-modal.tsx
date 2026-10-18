@@ -71,7 +71,7 @@ export default function InquiryModal({
     ? (isIndianUser ? 265000 : 3000)
     : is6Month
     ? (isIndianUser ? 485000 : 5000)
-    : (isIndianUser ? 25000 : 300);
+    : (isIndianUser ? 24999 : 299);
 
   // Form Fields
   const [firstName, setFirstName] = useState("");
@@ -164,7 +164,7 @@ export default function InquiryModal({
   if (!isOpen) return null;
 
   const consultationCreditDeduction =
-    isRetainer && creditInfo?.hasCredit ? (isIndianUser ? 25000 : 300) : 0;
+    isRetainer && creditInfo?.hasCredit ? (isIndianUser ? 24999 : 299) : 0;
   const finalPrice = Math.max(0, rawBasePrice - consultationCreditDeduction);
 
   const formatMoney = (amount: number) => {
@@ -422,7 +422,7 @@ export default function InquiryModal({
                       {currency === null ? (
                         <span className="inline-block h-3.5 w-14 bg-emerald-200/60 rounded animate-pulse align-middle" />
                       ) : (
-                        <strong>{formatMoney(isIndianUser ? 25000 : 300)}</strong>
+                        <strong>{formatMoney(isIndianUser ? 24999 : 299)}</strong>
                       )}{" "}
                       has been verified and deducted directly from this invoice.
                     </span>
@@ -440,7 +440,7 @@ export default function InquiryModal({
                       {currency === null ? (
                         <span className="inline-block h-3.5 w-14 bg-gray-200 rounded animate-pulse align-middle" />
                       ) : (
-                        <strong>{formatMoney(isIndianUser ? 25000 : 300)} deduction</strong>
+                        <strong>{formatMoney(isIndianUser ? 24999 : 299)} deduction</strong>
                       )}
                       .
                     </span>

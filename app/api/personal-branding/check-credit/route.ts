@@ -56,8 +56,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       hasCredit: true,
-      creditAmountUSD: 300,
-      creditAmountINR: 25000,
+      creditAmountUSD: 299,
+      creditAmountINR: 24999,
       creditAmountAED: 1100,
       consultationId: consultationPurchase.id,
       purchaseDate: consultationPurchase.createdAt,

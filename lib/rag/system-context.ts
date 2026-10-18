@@ -21,7 +21,7 @@ export const MULTI_CURRENCY_PRICING: Record<string, Record<Currency, number>> = 
   "Mock Interview":             { USD: 39,  AED: 99,   INR: 499   },
   "AI Mock Interview":           { USD: 39,  AED: 99,   INR: 499   },
   "Coach Mock Interview":        { USD: 39,  AED: 99,   INR: 499   },
-  "Personal Branding Consultation":      { USD: 300,  AED: 1100,  INR: 25000 },
+  "Personal Branding Consultation":      { USD: 299,  AED: 1100,  INR: 24999 },
   "LinkedIn Brand Launch":               { USD: 3000, AED: 11000, INR: 265000 },
   "LinkedIn Brand Launch (3 Months)":    { USD: 3000, AED: 11000, INR: 265000 },
   "LinkedIn Brand Authority":            { USD: 5000, AED: 18000, INR: 485000 },
@@ -238,7 +238,7 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   text += `   - Interview Prep: INR 6,999\n`;
   text += `   - Ready-to-Apply Job Pack: INR 8,999\n`;
   text += `   - AI Mock Interview: INR 499\n`;
-  text += `   - Personal Branding Consultation: INR 25,000 (100% credited toward 3 or 6-month plan)\n`;
+  text += `   - Personal Branding Consultation: INR 24,999 (100% credited toward 3 or 6-month plan)\n`;
   text += `   - Personal Branding (3-Month Launch): INR 2,65,000\n`;
   text += `   - Personal Branding (6-Month Authority): INR 4,85,000\n\n`;
   text += `2. UNITED ARAB EMIRATES (AED):\n`;
@@ -262,7 +262,7 @@ export function getSystemContextText(currency: Currency = "USD"): string {
   text += `   - Interview Prep: USD 99\n`;
   text += `   - Ready-to-Apply Job Pack: USD 119\n`;
   text += `   - AI Mock Interview: USD 39\n`;
-  text += `   - Personal Branding Consultation: USD 300 (100% credited toward 3 or 6-month plan)\n`;
+  text += `   - Personal Branding Consultation: USD 299 (100% credited toward 3 or 6-month plan)\n`;
   text += `   - Personal Branding (3-Month Launch): USD 3,000\n`;
   text += `   - Personal Branding (6-Month Authority): USD 5,000\n\n`;
   text += `If a visitor asks about pricing in India, UAE, or International (USD), or requests a currency comparison, quote the exact figures from this regional reference table.\n`;

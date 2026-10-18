@@ -18,7 +18,7 @@ const SERVICE_PRICING_USD: Record<string, number> = {
   "Ready-to-Apply Job Pack": 119,
   "Mock Interview": 39,
   "All Career Services Bundle": 480,
-  "Personal Branding Consultation": 300,
+  "Personal Branding Consultation": 299,
   "LinkedIn Brand Launch": 3000,
   "LinkedIn Brand Launch (3 Months)": 3000,
   "LinkedIn Brand Authority": 5000,
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
           const consultationPricingRow = MULTI_CURRENCY_PRICING["Personal Branding Consultation"];
           consultationCredit = consultationPricingRow
             ? consultationPricingRow[currency]
-            : (consultationPurchase.currency === currency ? consultationPurchase.amount : 300);
+            : (consultationPurchase.currency === currency ? consultationPurchase.amount : 299);
 
           creditedConsultationPurchaseId = consultationPurchase.id;
           totalAmount = Math.max(0, totalAmount - consultationCredit);

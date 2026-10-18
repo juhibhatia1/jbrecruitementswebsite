@@ -42,7 +42,7 @@ const faqs: FAQ[] = [
   {
     question: "How does the initial consultation fee and credit policy work?",
     answer:
-      "A 1-on-1 strategy consultation with Juhi Bhatia is $300 USD (or ₹25,000 INR). If you decide to proceed with either our 3-Month or 6-Month retainer package, your entire consultation fee is credited and decremented directly from your package price.",
+      "A 1-on-1 strategy consultation with Juhi Bhatia is $299 USD (or ₹24,999 INR). If you decide to proceed with either our 3-Month or 6-Month retainer package, your entire consultation fee is credited and decremented directly from your package price.",
   },
   {
     question: "What results can I realistically expect?",

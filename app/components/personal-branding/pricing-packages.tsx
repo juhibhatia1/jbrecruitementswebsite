@@ -74,7 +74,7 @@ export default function PricingPackages({ onOpenInquiry }: PricingPackagesProps)
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">3 Months Retainer</p>
                     <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
-                      <span>✓ Eligible for {isIndianUser ? "₹25,000" : "$300"} consultation credit deduction</span>
+                      <span>✓ Eligible for {isIndianUser ? "₹24,999" : "$299"} consultation credit deduction</span>
                     </div>
                   </div>
                 )}
@@ -190,7 +190,7 @@ export default function PricingPackages({ onOpenInquiry }: PricingPackagesProps)
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">6 Months Retainer</p>
                     <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
-                      <span>✓ Eligible for {isIndianUser ? "₹25,000" : "$300"} consultation credit deduction</span>
+                      <span>✓ Eligible for {isIndianUser ? "₹24,999" : "$299"} consultation credit deduction</span>
                     </div>
                   </div>
                 )}
@@ -261,7 +261,7 @@ export default function PricingPackages({ onOpenInquiry }: PricingPackagesProps)
                 {currency === null ? (
                   <span className="inline-block h-4 w-20 bg-gray-200 rounded animate-pulse align-middle" />
                 ) : (
-                  <strong>{isIndianUser ? "₹25,000 INR" : "$300 USD"}</strong>
+                  <strong>{isIndianUser ? "₹24,999 INR" : "$299 USD"}</strong>
                 )}
                 . If you enroll in the 3 or 6-month plan, your entire consultation fee is decremented directly from your package price.
               </p>
@@ -276,7 +276,7 @@ export default function PricingPackages({ onOpenInquiry }: PricingPackagesProps)
                   <span className="inline-block h-3.5 w-12 bg-white/20 rounded animate-pulse" />
                 </span>
               ) : (
-                <span>Book Consultation ({isIndianUser ? "₹25,000" : "$300"})</span>
+                <span>Book Consultation ({isIndianUser ? "₹24,999" : "$299"})</span>
               )}
               <FaArrowRight className="text-xs" />
             </button>
