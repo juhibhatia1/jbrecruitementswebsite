@@ -81,12 +81,12 @@ export const SYSTEM_SERVICES: SystemService[] = [
     title: "Ask Me Anything",
     amount: 49,
     timeline: "48 hours",
-    description: "Direct, practical guidance over email for real-world career challenges and decisions.",
+    description: "One-time email advisory: ask as many career questions as you need in one go.",
     features: [
-      "Career changes and transitions",
-      "Remote jobs and interviews",
-      "Burnout, layoffs, and clarity",
-      "Resume or LinkedIn direction"
+      "One-time email consultation — ask as many questions as you need in one go",
+      "Comprehensive personalized response addressing every single question",
+      "Career transitions, job hunt strategy & remote work advice",
+      "Salary negotiations, burnout clarity & resume/LinkedIn feedback"
     ]
   },
   {
@@ -164,7 +164,7 @@ A: You will receive an automated email confirmation from contact@jbrecruitments.
 Q: What are the turnaround times?
 A:
 - Resume Review, Cover Letter, LinkedIn Optimization, Superstar Shout-out: 5 days.
-- Ask Me Anything (email career query): 48 hours.
+- Ask Me Anything (one-time email consultation; ask as many questions as you need in one go): 48 hours.
 - Interview Prep answers: Varies, but delivered via email before your interview.
 
 Q: Can I get a discount?

@@ -120,7 +120,7 @@ export default function FounderNote() {
               </p>
 
               <p>
-                With a dedicated account manager and our team taking care of your personal branding, you can focus on your work while we help you show up consistently—with your voice, values, and goals at the centre of everything we do.
+                With a dedicated account manager and our team taking care of your personal branding, you can focus on your work while we help you show up consistently-with your voice, values, and goals at the centre of everything we do.
               </p>
 
               {/* Closing Sign-off */}
@@ -130,7 +130,7 @@ export default function FounderNote() {
                     &ldquo;You&apos;ve already built your expertise. Now, let&apos;s build your visibility.&rdquo;
                   </p>
                   <div className="mt-2.5 flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">— Juhi Bhatia</span>
+                    <span className="text-sm font-bold text-gray-900">- Juhi Bhatia</span>
                     <span className="text-xs text-gray-500 font-medium">• Founder &amp; CEO, JB Recruitment Solutions</span>
                   </div>
                 </div>

@@ -100,7 +100,14 @@ export default function ServiceCard({
           )}
           {displayFeatures.map((feature, index) => (
             <div key={index} className="flex items-start gap-2 rounded-xl px-3">
-              <div className="mt-1 h-1.5 w-1.5 rounded-full bg-[#5a58ab] flex-shrink-0" />
+              <svg
+                className="mt-1.5 h-1.5 w-1.5 shrink-0 text-[#5a58ab]"
+                viewBox="0 0 6 6"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <circle cx="3" cy="3" r="3" />
+              </svg>
               <span className="text-xs sm:text-[13px] leading-snug text-gray-700">
                 {feature}
               </span>

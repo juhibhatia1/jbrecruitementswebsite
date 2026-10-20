@@ -2041,7 +2041,7 @@ export default function AnalyticsDashboard({
 
                 <BarList
                   title="Daily Inquiries (Last 7 Days)"
-                  subtitle="Daily inquiries count total inbound candidate interactions — measuring contact form requests and job applications received each day over the past week to track immediate recruitment acquisition momentum."
+                  subtitle="Daily inquiries count total inbound candidate interactions - measuring contact form requests and job applications received each day over the past week to track immediate recruitment acquisition momentum."
                   info="Day-by-day volume of inbound candidate applications and contact requests over the last 7 calendar days to monitor lead velocity."
                   items={submissionAnalytics.dailyTrend}
                 />

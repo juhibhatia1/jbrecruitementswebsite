@@ -24,7 +24,7 @@ const NOT_FOR_ITEMS = [
   {
     icon: HiOutlineBolt,
     title: "Those expecting instant income",
-    description: "Monetization grows from trust, credibility, and the right opportunities—not shortcuts.",
+    description: "Monetization grows from trust, credibility, and the right opportunities-not shortcuts.",
   },
   {
     icon: HiOutlineXCircle,

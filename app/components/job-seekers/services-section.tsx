@@ -95,10 +95,10 @@ const services = [
     iconPath: "/icons/job-seekers/ask-me-anything.svg",
     timeline: "48 hours",
     features: [
-      "Career changes and transitions",
-      "Remote jobs and interviews",
-      "Burnout, layoffs, and clarity",
-      "Resume or LinkedIn direction",
+      "One-time email service - ask as many questions as you need in one go",
+      "Comprehensive personalized response addressing every single question",
+      "Career transitions, job hunt strategy & remote work advice",
+      "Salary negotiations, burnout clarity & resume/LinkedIn feedback",
     ],
   },
   {
@@ -692,7 +692,14 @@ export default function ServicesSection({
                           key={item}
                           className="inline-flex items-center gap-1.5 rounded-full border border-[#e5ebf8] bg-white px-3 py-1.5 text-xs font-medium text-[#4b5563]"
                         >
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#5a58ab]" />
+                          <svg
+                            className="h-1.5 w-1.5 shrink-0 text-[#5a58ab]"
+                            viewBox="0 0 6 6"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <circle cx="3" cy="3" r="3" />
+                          </svg>
                           {item}
                         </span>
                       ))}

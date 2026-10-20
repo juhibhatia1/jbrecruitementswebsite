@@ -17,7 +17,7 @@ const faqs: FAQ[] = [
   {
     question: "How does the ghostwriting process preserve my authentic voice?",
     answer:
-      "We capture your tone, viewpoints, and vocabulary during a 45-minute kickoff interview. Every post is custom-drafted and approved by you before publishing—never generic automated AI text.",
+      "We capture your tone, viewpoints, and vocabulary during a 45-minute kickoff interview. Every post is custom-drafted and approved by you before publishing-never generic automated AI text.",
   },
   {
     question: "How much of my time is required?",

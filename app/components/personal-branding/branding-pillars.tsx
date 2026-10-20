@@ -34,7 +34,7 @@ const PILLARS = [
     icon: HiOutlinePencilSquare,
     title: "3. Done-for-You Content & Ghostwriting",
     description:
-      "We turn your experiences, ideas, industry insights, and professional knowledge into compelling LinkedIn posts written in your voice. Your content reflects your personality and expertise—not generic, copied content.",
+      "We turn your experiences, ideas, industry insights, and professional knowledge into compelling LinkedIn posts written in your voice. Your content reflects your personality and expertise-not generic, copied content.",
     badge: "Voice & Creation",
   },
   {

@@ -665,7 +665,7 @@ export default function CreateCandidateInterviewModal({ isOpen, onClose }: Props
                                 </div>
                               ) : (
                                 <p className="text-amber-700 font-medium">
-                                  ⚠ No prep document uploaded yet — the AI will still use your resume and JD.
+                                  ⚠ No prep document uploaded yet - the AI will still use your resume and JD.
                                 </p>
                               )}
                             </div>
