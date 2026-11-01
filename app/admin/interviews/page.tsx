@@ -17,6 +17,7 @@ type HumanBookingNotes = {
   interviewBrief?: string;
   auditNotes?: string;
   interviewOutcome?: string;
+  interviewLink?: string;
 };
 
 type PurchaseRow = {
@@ -43,6 +44,7 @@ type RawApplicationRow = {
   id: string;
   candidateEmail: string;
   candidateName: string;
+  purchaseId: string | null;
   interviewPreference: "AI" | "MANUAL";
   status: string;
   scheduledAt: Date | null;
@@ -121,6 +123,7 @@ export default async function AdminInterviewsPage() {
       },
       select: {
         id: true,
+        purchaseId: true,
         candidateEmail: true,
         candidateName: true,
         interviewPreference: true,
@@ -197,16 +200,17 @@ export default async function AdminInterviewsPage() {
 
   const candidateBookings: CandidateInterviewRecord[] = Array.from(candidateMap.values()).map((candidate) => {
     const bookings: CandidateInterviewBooking[] = candidate.purchases.map((purchase) => {
-      const preference = purchase.serviceName.includes("AI") ? "AI" : "MANUAL";
-      const relatedApplications = appByEmail.get(candidate.email.toLowerCase()) ?? [];
+      const preference = purchase.serviceName.includes("Coach") ? "MANUAL" : "AI";
+      const relatedApplications = appByEmail.get(candidate.email.toLowerCase().trim()) ?? [];
       const relatedApplication =
-        relatedApplications
+        relatedApplications.find((app) => app.purchaseId === purchase.id) ??
+        (relatedApplications
           .filter((application) => application.interviewPreference === preference)
           .sort(
             (left, right) =>
               Math.abs(new Date(left.createdAt).getTime() - new Date(purchase.createdAt).getTime()) -
               Math.abs(new Date(right.createdAt).getTime() - new Date(purchase.createdAt).getTime()),
-          )[0] ?? null;
+          )[0] ?? null);
 
       return {
         purchase,

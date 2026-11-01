@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 type Props = { params: Promise<{ token: string }> };
 
 export default async function LiveInterviewPage({ params }: Props) {
-  const { token } = await params;
+  const { token: rawToken } = await params;
+  const token = decodeURIComponent(rawToken || "").trim();
   return <RoomLoader token={token} />;
 }

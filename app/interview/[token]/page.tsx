@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function InterviewLobbyPage({ params }: Props) {
-  const { token } = await params;
+  const { token: rawToken } = await params;
+  const token = decodeURIComponent(rawToken || "").trim();
 
   let tokenHash: string;
   try {
@@ -217,20 +218,42 @@ function ErrorView({ message }: { message: string }) {
       className="flex min-h-screen items-center justify-center bg-[#F9F9FB] px-4"
       style={{ fontFamily: "Raleway, sans-serif" }}
     >
-      <div className="max-w-sm text-center">
+      <div className="max-w-md text-center bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
         <p
-          className="text-xl font-semibold text-[#252e3d] mb-3"
+          className="text-2xl font-semibold text-[#252e3d] mb-3"
           style={{ fontFamily: "Crimson Text, serif" }}
         >
           Link Unavailable
         </p>
-        <p className="text-sm text-gray-600 mb-6">{message}</p>
-        <Link
-          href="/job-seekers"
-          className="inline-block rounded-xl border border-[#e0e0e0] bg-white px-5 py-2.5 text-sm font-semibold text-[#252e3d] transition hover:bg-gray-50"
-        >
-          Back to Job Seekers
-        </Link>
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">{message}</p>
+        <div className="space-y-4">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            If you need assistance or a fresh interview link, our team is available to help immediately. You can reach us via WhatsApp at{" "}
+            <a
+              href="https://wa.me/971585819271"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#5a58ab] font-bold hover:underline"
+            >
+              +971 58 581 9271
+            </a>{" "}
+            or email us at{" "}
+            <a
+              href="mailto:contact@jbrecruitments.com"
+              className="text-[#5a58ab] font-bold hover:underline"
+            >
+              contact@jbrecruitments.com
+            </a>.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/job-seekers"
+              className="inline-block rounded-xl bg-[#5a58ab] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#4a489b]"
+            >
+              Back to Job Seekers
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

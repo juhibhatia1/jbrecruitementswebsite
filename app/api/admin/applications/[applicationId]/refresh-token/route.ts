@@ -5,10 +5,15 @@ import {
   isValidAdminSessionToken,
 } from "@/lib/admin-auth";
 import {
+  EMPLOYEE_SESSION_COOKIE,
+  isValidEmployeeSessionToken,
+} from "@/lib/employee-auth";
+import {
   generateInterviewAccessToken,
   hashInterviewAccessToken,
 } from "@/lib/interview/access-token";
 import { buildAppUrl } from "@/lib/app-url";
+import { sendInterviewInvitationEmail } from "@/lib/emailService";
 
 const TOKEN_EXPIRY_DAYS = 7;
 
@@ -20,12 +25,16 @@ type RouteContext = { params: Promise<{ applicationId: string }> };
  * Regenerates the interview access token for a given candidate application.
  * Resets status back to AI_INVITED so the candidate can retake the interview.
  *
- * Requires a valid admin session cookie.
+ * Requires a valid admin or employee session cookie.
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   // Auth check
-  const sessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (!isValidAdminSessionToken(sessionToken)) {
+  const adminToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  const employeeToken = request.cookies.get(EMPLOYEE_SESSION_COOKIE)?.value;
+  const isAdmin = isValidAdminSessionToken(adminToken);
+  const isEmployee = isValidEmployeeSessionToken(employeeToken);
+
+  if (!isAdmin && !isEmployee) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,16 +45,15 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    const body = await request.json().catch(() => ({}));
+    const { sendEmail = false } = body as { sendEmail?: boolean };
+
     // Verify the application exists
     const application = await prisma.candidateApplication.findUnique({
       where: { id: applicationId },
-      select: {
-        id: true,
-        candidateName: true,
-        candidateEmail: true,
-        interviewPreference: true,
-        status: true,
-        template: { select: { jobRole: true } },
+      include: {
+        template: true,
+        purchase: true,
       },
     });
 
@@ -59,6 +67,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         { status: 400 },
       );
     }
+
+    // Delete any existing sessions so candidate starts fresh
+    await prisma.interviewSession.deleteMany({
+      where: { applicationId },
+    });
 
     // Generate a fresh token
     const newAccessToken = generateInterviewAccessToken();
@@ -79,6 +92,42 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     const interviewLink = buildAppUrl(`/interview/${newAccessToken}`);
 
+    if (application.purchase) {
+      let existingNotes: Record<string, unknown> = {};
+      if (application.purchase.completionNotes) {
+        try {
+          existingNotes = JSON.parse(application.purchase.completionNotes);
+        } catch {
+          // ignore
+        }
+      }
+      await prisma.purchase.update({
+        where: { id: application.purchase.id },
+        data: {
+          mockInterviewStatus: "INVITED",
+          completionNotes: JSON.stringify({ ...existingNotes, interviewLink }),
+        },
+      });
+    }
+
+    let emailSent = false;
+    if (sendEmail) {
+      try {
+        await sendInterviewInvitationEmail({
+          candidateName: application.candidateName,
+          candidateEmail: application.candidateEmail,
+          jobRole: application.template.jobRole,
+          interviewPreference: "AI",
+          interviewLink,
+          interviewDescription: application.template.interviewDescription || undefined,
+          durationMinutes: application.template.durationMinutes || 30,
+        });
+        emailSent = true;
+      } catch (e) {
+        console.error("Failed to email refreshed token to candidate:", e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       applicationId,
@@ -87,6 +136,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       jobRole: application.template.jobRole,
       interviewLink,
       expiresAt: newAccessTokenExpiresAt.toISOString(),
+      emailSent,
       message: `Token refreshed. Status reset to AI_INVITED. New link is valid for ${TOKEN_EXPIRY_DAYS} days.`,
     });
   } catch (err) {

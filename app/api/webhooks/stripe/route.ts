@@ -218,12 +218,18 @@ export async function POST(request: Request) {
 
             const interviewLink = buildAppUrl(`/interview/${accessToken}`);
 
+            let existingNotes: Record<string, unknown> = {};
+            if (purchase.completionNotes) {
+              try {
+                existingNotes = JSON.parse(purchase.completionNotes);
+              } catch {}
+            }
             await prisma.purchase.update({
               where: { id: purchase.id },
               data: {
                 mockInterviewStatus: "INVITED",
                 // Store the interview link so payment/details can return it if it loads after the webhook fires
-                completionNotes: JSON.stringify({ interviewLink }),
+                completionNotes: JSON.stringify({ ...existingNotes, interviewLink }),
               },
             });
 

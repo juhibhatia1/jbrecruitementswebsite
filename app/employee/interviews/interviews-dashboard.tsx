@@ -2,13 +2,26 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { IoArrowForwardOutline, IoChevronDownOutline, IoAddCircleOutline, IoArrowBackOutline } from "react-icons/io5";
+import {
+  IoArrowForwardOutline,
+  IoChevronDownOutline,
+  IoAddCircleOutline,
+  IoArrowBackOutline,
+  IoMailOutline,
+  IoCallOutline,
+  IoGlobeOutline,
+  IoSparklesOutline,
+  IoCloseOutline,
+} from "react-icons/io5";
 import type { CandidateInterviewRecord, CandidateInterviewBooking } from "./page";
 import { PiXCircleDuotone } from "react-icons/pi";
 import { updatePurchaseStatus } from "./actions";
 import CreateCandidateInterviewModal from "@/app/components/admin/create-candidate-interview-modal";
 import InfoTooltip from "@/app/components/ui/info-tooltip";
+import { InterviewLinkCard } from "@/app/components/admin/regenerate-link-modal";
+import { useLenis } from "@/app/providers/lenis-provider";
 
 const OPENAI_REALTIME_VOICES = ["alloy","ash","ballad","cedar","coral","echo","marin","sage","shimmer","verse"] as const;
 type Voice = typeof OPENAI_REALTIME_VOICES[number];
@@ -54,6 +67,7 @@ export function EmployeeInterviewsDashboard({
   candidateBookings: CandidateInterviewRecord[];
   stats: DashboardStats;
 }) {
+  const router = useRouter();
   const pageSize = 10;
   const bookingPageSize = 4;
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,6 +78,22 @@ export function EmployeeInterviewsDashboard({
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
     candidateBookings[0]?.bookings[0]?.purchase.id ?? null,
   );
+
+  const { lenis } = useLenis();
+
+  useEffect(() => {
+    if (isInterviewModalOpen) {
+      lenis?.stop();
+      document.body.style.overflow = "hidden";
+    } else {
+      lenis?.start();
+      document.body.style.overflow = "";
+    }
+    return () => {
+      lenis?.start();
+      document.body.style.overflow = "";
+    };
+  }, [isInterviewModalOpen, lenis]);
 
   const totalPages = Math.max(1, Math.ceil(candidateBookings.length / pageSize));
   const pageStart = (currentPage - 1) * pageSize;
@@ -440,164 +470,287 @@ export function EmployeeInterviewsDashboard({
             </aside>
           </div>
         )}
-      </div>      {isInterviewModalOpen && selectedInterview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-[#252e3d]/50 backdrop-blur-xs" onClick={() => setIsInterviewModalOpen(false)} />
+      </div>
 
-          <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-[#f4f6fb] shadow-2xl" role="dialog" aria-modal="true" aria-label="Selected interview details">
-            <button
-              onClick={() => setIsInterviewModalOpen(false)}
-              className="absolute right-5 top-5 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-md transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 cursor-pointer"
-              title="Close Popup"
-            >
-              <PiXCircleDuotone className="h-6 w-6" />
-            </button>
+      {isInterviewModalOpen && selectedInterview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-hidden"
+          data-lenis-prevent
+        >
+          <div
+            className="fixed inset-0 bg-[#252e3d]/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsInterviewModalOpen(false)}
+          />
 
-            <header className="border-b border-slate-200 bg-white px-6 py-5 pr-16">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Drilldown Analysis</p>
-              <div className="mt-1 flex flex-wrap items-center gap-3">
-                <h1 className="text-xl font-bold text-[#252e3d] sm:text-2xl" style={{ fontFamily: "Crimson Text, serif" }}>
-                  Selected interview
+          <div
+            className="relative w-full max-w-5xl my-auto overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f4f6fb] shadow-2xl z-10 flex flex-col max-h-[90vh]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Selected interview details"
+            data-lenis-prevent
+          >
+            {/* Header */}
+            <header className="shrink-0 border-b border-slate-200/80 bg-white px-6 py-4 pr-16 relative">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5a58ab]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#5a58ab]">
+                    {selectedInterview.preference === "AI" ? "AI Mock Interview" : "Human Interview"}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    ID #{selectedInterview.purchase.id.slice(-6).toUpperCase()}
+                  </span>
+                  {selectedInterview.purchase.gatewayTransactionId && (
+                    <span className="text-[10px] text-slate-400 font-mono hidden sm:inline truncate max-w-[220px]" title={selectedInterview.purchase.gatewayTransactionId}>
+                      · Ref: {selectedInterview.purchase.gatewayTransactionId}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl font-bold text-[#252e3d] sm:text-3xl" style={{ fontFamily: "Crimson Text, serif" }}>
+                  {selectedInterview.purchase.candidateName}
                 </h1>
-                <p className="text-sm text-slate-500">
-                  {selectedInterview.purchase.serviceName} · {selectedInterview.purchase.candidateName}
-                </p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                  <a
+                    href={`mailto:${selectedInterview.purchase.candidateEmail}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-slate-700 transition"
+                    title="Send direct email"
+                  >
+                    <IoMailOutline className="h-3.5 w-3.5 text-slate-500" />
+                    {selectedInterview.purchase.candidateEmail}
+                  </a>
+                  {selectedInterview.purchase.candidatePhone && (
+                    <a
+                      href={`tel:${selectedInterview.purchase.candidatePhone}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-slate-700 transition"
+                      title="Call candidate"
+                    >
+                      <IoCallOutline className="h-3.5 w-3.5 text-slate-500" />
+                      {selectedInterview.purchase.candidatePhone}
+                    </a>
+                  )}
+                  {selectedInterview.purchase.country && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600">
+                      <IoGlobeOutline className="h-3.5 w-3.5 text-slate-500" />
+                      {selectedInterview.purchase.country}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              <button
+                onClick={() => setIsInterviewModalOpen(false)}
+                className="absolute right-5 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 cursor-pointer"
+                title="Close"
+              >
+                <IoCloseOutline className="h-5 w-5" />
+              </button>
             </header>
 
-            <div className="grid gap-4 px-6 py-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Snapshot</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <EditableMiniStat
-                    label="Payment"
-                    value={selectedInterview.purchase.status}
-                    options={["PENDING", "COMPLETED", "FAILED"]}
-                    purchaseId={selectedInterview.purchase.id}
-                    field="status"
-                  />
-                  <EditableMiniStat
-                    label="Interview"
-                    value={
-                      selectedInterview.preference === "AI"
-                        ? (selectedInterview.relatedApplication?.status === "INTERVIEW_COMPLETED"
-                          ? "COMPLETED"
-                          : selectedInterview.relatedApplication?.status === "INTERVIEW_STARTED"
-                          ? "IN_PROGRESS"
-                          : selectedInterview.relatedApplication?.status === "SCHEDULED"
-                          ? "SCHEDULED"
-                          : selectedInterview.relatedApplication?.status === "AI_INVITED"
-                          ? "INVITED"
-                          : selectedInterview.relatedApplication?.status === "CANCELLED"
-                          ? "CANCELLED"
-                          : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE"))
-                        : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE")
-                    }
-                    options={selectedInterview.preference === "MANUAL" ? ["PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"] : undefined}
-                    purchaseId={selectedInterview.purchase.id}
-                    field="mockInterviewStatus"
-                  />
-                  <EditableMiniStat
-                    label="Audit"
-                    value={
-                      selectedInterview.preference === "AI"
-                        ? (selectedInterview.relatedApplication?.session?.finalReport ? "COMPLETED" : "PENDING")
-                        : selectedInterview.purchase.deliveryStatus
-                    }
-                    options={selectedInterview.preference === "MANUAL" ? ["PENDING", "COMPLETED"] : undefined}
-                    purchaseId={selectedInterview.purchase.id}
-                    field="deliveryStatus"
-                  />
-                  <MiniStat
-                    label="Booking"
-                    value={
-                      selectedInterview.purchase.mockInterviewDate
-                        ? formatDate(selectedInterview.purchase.mockInterviewDate)
-                        : selectedInterview.relatedApplication?.scheduledAt
-                        ? formatDate(selectedInterview.relatedApplication.scheduledAt)
-                        : selectedInterview.preference === "AI"
-                        ? "Self-Paced (Instant AI Link)"
-                        : "Not scheduled"
-                    }
-                  />
-                </div>
+            {/* Content Body with visible vertical scrollbar */}
+            <div
+              data-lenis-prevent
+              onWheel={(e) => e.stopPropagation()}
+              className="flex-1 p-4 sm:p-5 space-y-3.5 overflow-x-hidden overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#94a3b8_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-slate-100/50"
+            >
+              {/* Top Status Strip */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 min-w-0">
+                <EditableMiniStat
+                  label="Payment"
+                  value={selectedInterview.purchase.status}
+                  options={["PENDING", "COMPLETED", "FAILED"]}
+                  purchaseId={selectedInterview.purchase.id}
+                  field="status"
+                />
+                <EditableMiniStat
+                  label="Interview"
+                  value={
+                    selectedInterview.preference === "AI"
+                      ? (selectedInterview.relatedApplication?.status === "INTERVIEW_COMPLETED"
+                        ? "COMPLETED"
+                        : selectedInterview.relatedApplication?.status === "INTERVIEW_STARTED"
+                        ? "IN_PROGRESS"
+                        : selectedInterview.relatedApplication?.status === "SCHEDULED"
+                        ? "SCHEDULED"
+                        : selectedInterview.relatedApplication?.status === "AI_INVITED"
+                        ? "INVITED"
+                        : selectedInterview.relatedApplication?.status === "CANCELLED"
+                        ? "CANCELLED"
+                        : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE"))
+                      : (selectedInterview.purchase.mockInterviewStatus || "PENDING_SCHEDULE")
+                  }
+                  options={selectedInterview.preference === "MANUAL" ? ["PENDING_SCHEDULE", "SCHEDULED", "COMPLETED"] : undefined}
+                  purchaseId={selectedInterview.purchase.id}
+                  field="mockInterviewStatus"
+                />
+                <EditableMiniStat
+                  label="Audit / Report"
+                  value={
+                    selectedInterview.preference === "AI"
+                      ? (selectedInterview.relatedApplication?.session?.finalReport ? "COMPLETED" : "PENDING")
+                      : selectedInterview.purchase.deliveryStatus
+                  }
+                  options={selectedInterview.preference === "MANUAL" ? ["PENDING", "COMPLETED"] : undefined}
+                  purchaseId={selectedInterview.purchase.id}
+                  field="deliveryStatus"
+                />
+                <MiniStat
+                  label="Format & Schedule"
+                  value={
+                    selectedInterview.purchase.mockInterviewDate
+                      ? formatDate(selectedInterview.purchase.mockInterviewDate)
+                      : selectedInterview.relatedApplication?.scheduledAt
+                      ? formatDate(selectedInterview.relatedApplication.scheduledAt)
+                      : selectedInterview.preference === "AI"
+                      ? "Self-Paced (Instant AI Link)"
+                      : "Not scheduled"
+                  }
+                />
+              </div>
 
-                <div className="mt-4 rounded-2xl border border-slate-100 bg-[#fbfbfd] p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">What they paid for</p>
-                  <div className="mt-3 space-y-2 text-sm text-slate-600">
-                    <Line label="Service" value={selectedInterview.purchase.serviceName} />
-                    <Line label="Amount" value={`${selectedInterview.purchase.currency.toUpperCase()} ${selectedInterview.purchase.amount.toLocaleString()}`} />
-                    {selectedInterview.preference === "MANUAL" ? (
-                      <>
-                        <Line label="Role" value={selectedInterview.details.jobRole || "Not provided"} />
-                        <Line label="Experience" value={selectedInterview.details.yearsOfExperience || "Not provided"} />
-                      </>
-                    ) : selectedInterview.relatedApplication ? (
-                      <>
-                        <Line label="Target role" value={selectedInterview.relatedApplication.template.jobRole} />
-                        <Line label="Duration" value={`${selectedInterview.relatedApplication.template.durationMinutes} min`} />
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </section>
+              {/* Two Column Grid */}
+              <div className="grid gap-4 lg:grid-cols-[1.25fr_0.95fr] min-w-0">
+                {/* Left Column: Access & Evaluation */}
+                <div className="space-y-3.5 min-w-0">
+                  {selectedInterview.preference === "AI" && (
+                    <InterviewLinkCard
+                      key={selectedInterview.purchase.id}
+                      applicationId={selectedInterview.relatedApplication?.id}
+                      purchaseId={selectedInterview.purchase.id}
+                      candidateEmail={selectedInterview.purchase.candidateEmail}
+                      candidateName={selectedInterview.purchase.candidateName}
+                      initialLink={selectedInterview.details.interviewLink}
+                      onLinkUpdated={() => {
+                        router.refresh();
+                      }}
+                    />
+                  )}
 
-              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Details</p>
-                <div className="mt-4 space-y-4">
-                  <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Candidate</p>
-                    <p className="mt-2 text-sm text-slate-700">{selectedInterview.purchase.candidateEmail}</p>
-                    {selectedInterview.purchase.candidatePhone && <p className="mt-1 text-sm text-slate-600">{selectedInterview.purchase.candidatePhone}</p>}
-                    <p className="mt-1 text-sm text-slate-600">{selectedInterview.purchase.country || "Country not provided"}</p>
-                  </div>
+                  {/* Summary / Report Card */}
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <IoSparklesOutline className="h-4 w-4 text-[#5a58ab]" />
+                        <h4 className="text-xs font-bold uppercase tracking-[0.16em] text-[#252e3d]">
+                          {selectedInterview.preference === "AI" ? "AI Evaluation & Report" : "Interview Outcome"}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {selectedReport?.finalScore !== undefined && (
+                          <span className="rounded-full bg-[#f0efff] px-2.5 py-0.5 text-xs font-bold text-[#5a58ab] border border-[#5a58ab]/20">
+                            Score: {selectedReport.finalScore}/10
+                          </span>
+                        )}
+                        {selectedInterview.relatedApplication?.session?.id && selectedInterview.preference === "AI" && (
+                          <Link
+                            href={`/interview/results/${selectedInterview.relatedApplication.session.id}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#5a58ab] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#4a489b] shadow-2xs cursor-pointer"
+                          >
+                            <span>View Full Report</span>
+                            <IoArrowForwardOutline className="h-3.5 w-3.5" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Summary</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                      {selectedInterview.preference === "AI"
-                        ? selectedReport?.summary || "No report summary yet."
-                        : selectedInterview.details.interviewOutcome || "No human interview outcome logged yet."}
-                    </p>
+                    <div className="mt-2.5">
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        {selectedInterview.preference === "AI"
+                          ? selectedReport?.summary || "No AI report summary generated yet. The candidate has not completed their interview."
+                          : selectedInterview.details.interviewOutcome || "No human interview outcome logged yet."}
+                      </p>
+
+                      {selectedReport?.strengths && selectedReport.strengths.length > 0 && (
+                        <div className="mt-3 pt-2.5 border-t border-slate-100">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1.5">Key Strengths</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedReport.strengths.slice(0, 3).map((s, idx) => (
+                              <span key={idx} className="rounded-md bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {selectedInterview.preference === "MANUAL" && selectedInterview.details.applicationLink && (
-                    <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Application link</p>
-                      <div className="mt-2 flex items-center gap-2">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-2">Application Link</p>
+                      <div className="flex items-center gap-2">
                         <a
                           href={selectedInterview.details.applicationLink}
                           target="_blank"
                           rel="noreferrer"
-                          title={selectedInterview.details.applicationLink}
-                          className="inline-flex max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-[#5a58ab] transition hover:bg-slate-50"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-[#5a58ab] hover:bg-slate-50 transition"
                         >
-                          Open application
-                          <IoArrowForwardOutline className="h-4 w-4 shrink-0" />
+                          <span>Open Application</span>
+                          <IoArrowForwardOutline className="h-4 w-4" />
                         </a>
-                        <span
-                          className="min-w-0 truncate text-[10px] text-slate-400"
-                          title={selectedInterview.details.applicationLink}
-                        >
-                          {new URL(selectedInterview.details.applicationLink).hostname}
-                        </span>
                       </div>
                     </div>
                   )}
                 </div>
-              </section>
-            </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
-              {selectedInterview.relatedApplication?.session?.id && selectedInterview.preference === "AI" && (
-                <Link
-                  href={`/interview/results/${selectedInterview.relatedApplication.session.id}`}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#5a58ab] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4a489b] whitespace-nowrap"
-                >
-                  Report
-                  <IoArrowForwardOutline className="h-4 w-4" />
-                </Link>
-              )}
+                {/* Right Column: Specifications & Candidate Info */}
+                <div className="space-y-3.5 min-w-0">
+                  {/* Specifications Card */}
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-2">
+                      Session Specifications
+                    </p>
+                    <div className="divide-y divide-slate-100 text-sm">
+                      <Line label="Service" value={selectedInterview.purchase.serviceName} />
+                      <Line
+                        label="Amount Paid"
+                        value={`${selectedInterview.purchase.currency.toUpperCase()} ${selectedInterview.purchase.amount.toLocaleString()}`}
+                      />
+                      {selectedInterview.preference === "MANUAL" ? (
+                        <>
+                          <Line label="Target Role" value={selectedInterview.details.jobRole || "Not provided"} />
+                          <Line label="Experience" value={selectedInterview.details.yearsOfExperience || "Not provided"} />
+                        </>
+                      ) : selectedInterview.relatedApplication ? (
+                        <>
+                          <Line label="Target Role" value={selectedInterview.relatedApplication.template.jobRole} />
+                          <Line label="Duration" value={`${selectedInterview.relatedApplication.template.durationMinutes} min`} />
+                          <Line label="Level" value={selectedInterview.relatedApplication.template.experienceLevel || "General"} />
+                        </>
+                      ) : null}
+                      <Line label="Booked On" value={formatDate(selectedInterview.purchase.createdAt)} />
+                    </div>
+                  </div>
+
+                  {/* Candidate Info Card */}
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-2">
+                      Candidate Details
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">Full Name</span>
+                        <span className="font-semibold text-slate-800">{selectedInterview.purchase.candidateName}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">Email</span>
+                        <a href={`mailto:${selectedInterview.purchase.candidateEmail}`} className="font-semibold text-[#5a58ab] hover:underline">
+                          {selectedInterview.purchase.candidateEmail}
+                        </a>
+                      </div>
+                      {selectedInterview.purchase.candidatePhone && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400">Phone</span>
+                          <span className="font-medium text-slate-700">{selectedInterview.purchase.candidatePhone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">Country</span>
+                        <span className="font-medium text-slate-700">{selectedInterview.purchase.country || "Not specified"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -970,14 +1123,64 @@ function StatusBadge({ children, tone }: { children: ReactNode; tone: string }) 
   return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{children}</span>;
 }
 
+function getStatusBadge(val: string) {
+  const upper = String(val).toUpperCase();
+  if (["COMPLETED", "PAID"].includes(upper)) {
+    return {
+      dot: "bg-emerald-500",
+      bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    };
+  }
+  if (["INVITED", "IN_PROGRESS", "SCHEDULED", "AI_INVITED"].includes(upper)) {
+    return {
+      dot: "bg-[#5a58ab]",
+      bg: "bg-indigo-50 text-[#5a58ab] border-indigo-200",
+    };
+  }
+  if (["PENDING", "PENDING_SCHEDULE"].includes(upper)) {
+    return {
+      dot: "bg-amber-500",
+      bg: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }
+  if (["FAILED", "CANCELLED"].includes(upper)) {
+    return {
+      dot: "bg-rose-500",
+      bg: "bg-rose-50 text-rose-700 border-rose-200",
+    };
+  }
+  return {
+    dot: "bg-slate-400",
+    bg: "bg-slate-50 text-slate-700 border-slate-200",
+  };
+}
+
 function MiniStat({ label, value, info }: { label: string; value: number | string; info?: string }) {
+  const isStatus =
+    typeof value === "string" &&
+    ["COMPLETED", "INVITED", "PENDING", "FAILED", "IN_PROGRESS", "SCHEDULED", "CANCELLED"].includes(
+      value.toUpperCase()
+    );
+  const badge = isStatus ? getStatusBadge(String(value)) : null;
+
   return (
-    <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-3 py-2 text-center">
-      <div className="flex items-center justify-center gap-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs flex flex-col justify-between">
+      <div className="flex items-center justify-between gap-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{label}</p>
         {info && <InfoTooltip text={info} title={label} position="top" />}
       </div>
-      <p className="mt-1 text-sm font-semibold text-[#252e3d]">{value}</p>
+      <div className="mt-2 min-w-0">
+        {badge ? (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.bg}`}>
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${badge.dot}`} />
+            <span className="truncate">{value}</span>
+          </span>
+        ) : (
+          <p className="text-xs sm:text-sm font-semibold text-[#252e3d] truncate" title={String(value)}>
+            {value}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -996,9 +1199,26 @@ function EditableMiniStat({
   field: "status" | "mockInterviewStatus" | "deliveryStatus";
 }) {
   const [isPending, startTransition] = useTransition();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = e.target.value;
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (newValue: string) => {
+    setIsOpen(false);
+    if (newValue === value) return;
     startTransition(() => {
       updatePurchaseStatus(purchaseId, field, newValue);
     });
@@ -1008,33 +1228,62 @@ function EditableMiniStat({
     return <MiniStat label={label} value={value} />;
   }
 
+  const badge = getStatusBadge(value);
+
   return (
-    <div className="rounded-2xl border border-slate-100 bg-[#fbfbfd] px-3 py-2 text-center relative flex flex-col justify-center items-center group">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
-      <div className="mt-1 relative w-full flex justify-center">
-        <select
-          value={value}
-          onChange={handleChange}
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs flex flex-col justify-between relative" ref={dropdownRef}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{label}</p>
+      <div className="mt-2 relative">
+        <button
+          type="button"
+          onClick={() => !isPending && setIsOpen(!isOpen)}
           disabled={isPending}
-          className="appearance-none bg-transparent outline-none text-sm font-semibold text-[#252e3d] cursor-pointer text-center group-hover:text-[#5a58ab] transition disabled:opacity-50"
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.bg} w-full justify-between transition hover:border-[#5a58ab]/40 cursor-pointer disabled:opacity-50`}
+          title={`Change ${label} status`}
         >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-          {/* Include current value if it's not in options, so it displays correctly */}
-          {!options.includes(value) && (
-            <option value={value}>{value}</option>
-          )}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400 group-hover:text-[#5a58ab] transition">
-          {isPending ? (
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
-          ) : (
-            <IoChevronDownOutline className="h-3 w-3" />
-          )}
-        </div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${badge.dot}`} />
+            <span className="truncate">{value}</span>
+          </div>
+          <div className="shrink-0 ml-1 text-slate-400">
+            {isPending ? (
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#5a58ab] border-t-transparent" />
+            ) : (
+              <IoChevronDownOutline className={`h-3 w-3 transition-transform duration-150 ${isOpen ? "rotate-180 text-[#5a58ab]" : ""}`} />
+            )}
+          </div>
+        </button>
+
+        {isOpen && (
+          <div className="absolute left-0 top-full mt-1.5 w-full min-w-[130px] z-50 rounded-xl bg-white border border-slate-200 shadow-xl p-1">
+            <div className="space-y-0.5">
+              {options.map((opt) => {
+                const optBadge = getStatusBadge(opt);
+                const isSelected = opt === value;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleSelect(opt)}
+                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
+                      isSelected
+                        ? "bg-slate-100 text-slate-900 font-bold"
+                        : "text-slate-800 hover:bg-[#f0efff] hover:text-[#5a58ab]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${optBadge.dot}`} />
+                      <span className="truncate">{opt}</span>
+                    </div>
+                    {isSelected && (
+                      <span className="text-[#5a58ab] text-xs font-bold shrink-0">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1042,9 +1291,9 @@ function EditableMiniStat({
 
 function Line({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-2 last:border-b-0 last:pb-0">
-      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</span>
-      <span className="min-w-0 flex-1 text-right text-sm font-medium text-slate-700 break-words">{value}</span>
+    <div className="flex items-center justify-between gap-4 py-2.5 border-b border-slate-100 last:border-b-0 last:pb-0">
+      <span className="text-xs font-medium text-slate-500 shrink-0">{label}</span>
+      <span className="min-w-0 text-right text-sm font-semibold text-slate-800 break-normal">{value}</span>
     </div>
   );
 }

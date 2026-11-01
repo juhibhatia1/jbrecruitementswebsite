@@ -96,7 +96,7 @@ export default async function AdminResultDetailPage({ params }: Props) {
 
         {/* Action buttons */}
         {app.session && report && (
-          <ResultActions sessionId={app.session.id} candidateEmail={app.candidateEmail} />
+          <ResultActions sessionId={app.session.id} candidateEmail={app.candidateEmail} applicationId={app.id} candidateName={app.candidateName} />
         )}
 
         {/* Report */}

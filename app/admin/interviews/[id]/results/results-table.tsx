@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { IoSearch, IoClose } from "react-icons/io5";
+import { RegenerateLinkModal } from "@/app/components/admin/regenerate-link-modal";
 
 export interface ResultRowItem {
   id: string;
@@ -31,6 +32,7 @@ export default function ResultsTable({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedAppForLink, setSelectedAppForLink] = useState<ResultRowItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -174,12 +176,24 @@ export default function ResultsTable({
                         {app.dateStr}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <Link
-                          href={`/admin/interviews/${templateId}/results/${app.id}`}
-                          className="rounded-lg bg-[#252e3d] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2d3645] transition"
-                        >
-                          View
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {app.interviewPreference === "AI" && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAppForLink(app)}
+                              className="rounded-lg border border-[#5a58ab]/30 bg-[#f0efff] hover:bg-[#e8e7ff] text-[#5a58ab] px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer"
+                              title="Regenerate & share interview link"
+                            >
+                              ↻ Link
+                            </button>
+                          )}
+                          <Link
+                            href={`/admin/interviews/${templateId}/results/${app.id}`}
+                            className="rounded-lg bg-[#252e3d] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#2d3645] transition"
+                          >
+                            View
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -221,6 +235,16 @@ export default function ResultsTable({
           </div>
         )}
       </div>
+
+      {selectedAppForLink && (
+        <RegenerateLinkModal
+          isOpen={true}
+          onClose={() => setSelectedAppForLink(null)}
+          applicationId={selectedAppForLink.id}
+          candidateEmail={selectedAppForLink.candidateEmail}
+          candidateName={selectedAppForLink.candidateName}
+        />
+      )}
     </div>
   );
 }

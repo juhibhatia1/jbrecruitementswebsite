@@ -7,7 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   try {
-    const { token } = await params;
+    const { token: rawToken } = await params;
+    const token = decodeURIComponent(rawToken || "").trim();
 
     if (!token) {
       return NextResponse.json({ valid: false, reason: "missing_token" }, { status: 400 });

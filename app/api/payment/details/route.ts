@@ -447,6 +447,38 @@ export async function GET(request: Request) {
           data: { accessTokenHash, accessTokenExpiresAt },
           select: candidateApplicationSafeSelect,
         });
+
+        const interviewLink = buildAppUrl(`/interview/${accessToken}`);
+
+        if (purchaseRecord) {
+          let existingNotes: Record<string, unknown> = {};
+          if (purchaseRecord.completionNotes) {
+            try {
+              existingNotes = JSON.parse(purchaseRecord.completionNotes);
+            } catch {}
+          }
+          await prisma.purchase.update({
+            where: { id: purchaseRecord.id },
+            data: {
+              mockInterviewStatus: "INVITED",
+              completionNotes: JSON.stringify({ ...existingNotes, interviewLink }),
+            },
+          });
+        }
+
+        try {
+          await sendInterviewInvitationEmail({
+            candidateName: application.candidateName,
+            candidateEmail: application.candidateEmail,
+            jobRole: template.jobRole,
+            interviewPreference: "AI",
+            interviewLink,
+            interviewDescription: template.interviewDescription,
+            durationMinutes: template.durationMinutes,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send AI notifications in details fallback:", emailErr);
+        }
       } else if (!application) {
         // Self-healing: webhook hasn't fired yet — create application now
         const accessToken = generateInterviewAccessToken();
