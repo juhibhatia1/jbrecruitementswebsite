@@ -43,6 +43,7 @@ export default function InterviewRoom({ token }: { token: string }) {
   const [aiThinkingText, setAiThinkingText] = useState("Thinking…");
   const [isStarting, setIsStarting] = useState(false);
   const [micLocked, setMicLocked] = useState(true);
+  const micLockedRef = useRef(true); // mirrors micLocked for closures that can't track state
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [clockTick, setClockTick] = useState(() => Date.now());
   const [hasStream, setHasStream] = useState(false);
@@ -244,6 +245,7 @@ export default function InterviewRoom({ token }: { token: string }) {
     streamRef.current?.getAudioTracks().forEach((track) => {
       track.enabled = enabled;
     });
+    micLockedRef.current = !enabled;
     setMicLocked(!enabled);
   }, []);
 
@@ -899,7 +901,10 @@ export default function InterviewRoom({ token }: { token: string }) {
         // fake candidate answers ("get the recent data..." hallucination pattern).
         onMuteRequired: (muted) => {
           streamRef.current?.getAudioTracks().forEach((track) => {
-            track.enabled = !muted;
+            // When the transport asks to unmute (muted=false), only re-enable the track
+            // if the user has NOT manually muted it. This prevents the automatic AI-echo
+            // mute/unmute cycle from overriding the candidate's deliberate mic-off state.
+            track.enabled = muted ? false : !micLockedRef.current;
           });
         },
         onMicHealthFailed: () => void handleMicTrackEndedRef.current(),
