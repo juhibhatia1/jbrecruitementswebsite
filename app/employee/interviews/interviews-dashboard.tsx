@@ -244,31 +244,31 @@ export function EmployeeInterviewsDashboard({
                       <th className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <span>Customer</span>
-                          <InfoTooltip text="Candidate full name, contact email, and registered country." title="Candidate" position="top" />
+                          <InfoTooltip text="Candidate full name, contact email, and registered country." title="Candidate" position="bottom" align="start" />
                         </div>
                       </th>
                       <th className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <span>Bookings</span>
-                          <InfoTooltip text="Number of mock interview sessions booked by this candidate." title="Bookings" position="top" />
+                          <InfoTooltip text="Number of mock interview sessions booked by this candidate." title="Bookings" position="bottom" align="start" />
                         </div>
                       </th>
                       <th className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <span>Latest type</span>
-                          <InfoTooltip text="The format of the most recent interview (AI or Human Recruiter)." title="Latest Type" position="top" />
+                          <InfoTooltip text="The format of the most recent interview (AI or Human Recruiter)." title="Latest Type" position="bottom" align="center" />
                         </div>
                       </th>
                       <th className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <span>Latest status</span>
-                          <InfoTooltip text="Current scheduling and evaluation report status for the latest booking." title="Status" position="top" />
+                          <InfoTooltip text="Current scheduling and evaluation report status for the latest booking." title="Status" position="bottom" align="center" />
                         </div>
                       </th>
                       <th className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <span>Last activity</span>
-                          <InfoTooltip text="Date of the most recent purchase or interview session update." title="Last Activity" position="top" />
+                          <InfoTooltip text="Date of the most recent purchase or interview session update." title="Last Activity" position="bottom" align="end" />
                         </div>
                       </th>
                     </tr>

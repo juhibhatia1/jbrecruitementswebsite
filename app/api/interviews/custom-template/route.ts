@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("[CustomJD] Error generating custom template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to generate custom interview template." },
+      { error: "Unable to design your custom interview right now. Please try again in a few moments." },
       { status: 500 }
     );
   }

@@ -474,9 +474,13 @@ export default function CustomJdMockInterviewPage() {
 
       const genData = await genRes.json();
       if (!genRes.ok || !genData.templateId) {
-        toast.error("Interview Generation Failed", {
+        const rawErr = String(genData.error || "");
+        const isTechnical = /401|500|api[ _-]?key|openai|bearer|token|stack|internal/i.test(rawErr);
+        toast.error("Interview Setup Failed", {
           description:
-            genData.error || "Could not design custom interview template.",
+            !rawErr || isTechnical
+              ? "There was an issue creating your custom interview template. Please try again in a few moments."
+              : rawErr,
         });
         setGenerating(false);
         return;
@@ -520,8 +524,13 @@ export default function CustomJdMockInterviewPage() {
           }, 1800);
           return;
         }
+        const rawPayErr = String(payData.error || "");
+        const isTechnicalPayErr = /401|500|api[ _-]?key|stripe|openai|bearer|token|stack/i.test(rawPayErr);
         toast.error("Checkout Setup Failed", {
-          description: payData.error || "Could not initialize payment session.",
+          description:
+            !rawPayErr || isTechnicalPayErr
+              ? "Unable to initialize payment session. Please try again shortly."
+              : rawPayErr,
         });
         setSubmitting(false);
         setGenerating(false);

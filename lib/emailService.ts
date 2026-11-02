@@ -56,8 +56,6 @@ export async function sendPurchaseEmails(purchase: PurchaseData) {
     return { success: false, error: "Mailer credentials missing" };
   }
 
-  const transporter = getMailerTransporter();
-
   // Receipt reference identifier: prioritize payment gateway reference (PayU txnid / Stripe payment_intent), fallback to DB ID
   const receiptId = purchase.gatewayTransactionId || purchase.id;
 
@@ -328,7 +326,6 @@ export async function sendCandidateServiceConfirmationEmail(purchase: PurchaseDa
     return { success: false, error: "Mailer credentials missing" };
   }
 
-  const transporter = getMailerTransporter();
   const candidateName = purchase.candidateName.trim();
 
   // Split services if multiple
@@ -509,8 +506,6 @@ export async function sendInterviewInvitationEmail(data: InterviewInvitationData
     return { success: false, error: "Mailer credentials missing" };
   }
 
-  const transporter = getMailerTransporter();
-
   const isAI = data.interviewPreference === "AI";
 
   const subject = isAI
@@ -644,14 +639,14 @@ Team JB Recruitment Solutions`;
   ];
 
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       from: `"JB Recruitment Solutions" <${user}>`,
       to: data.candidateEmail,
       subject,
       text: textBody,
       html: htmlBody,
       attachments,
-    });
+    }, "interview invitation");
     return { success: true };
   } catch (err) {
     console.error("Error sending interview invitation email:", err);
@@ -677,7 +672,6 @@ export async function sendHumanInterviewScheduleConfirmationEmail(data: HumanInt
     return { success: false, error: "Mailer credentials missing" };
   }
 
-  const transporter = getMailerTransporter();
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -685,7 +679,7 @@ export async function sendHumanInterviewScheduleConfirmationEmail(data: HumanInt
   }).format(data.scheduledAt);
 
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       from: `"JB Recruitment Solutions" <${user}>`,
       to: data.candidateEmail,
       subject: `Your Human Interview Slot is Confirmed — ${escapeHtml(data.jobRole)}`,
@@ -705,7 +699,7 @@ export async function sendHumanInterviewScheduleConfirmationEmail(data: HumanInt
           <p style="margin:8px 0 0;color:#718096;font-size:13px;">Have questions? Reply to this email<br />or contact us via WhatsApp at <a href="https://wa.me/971585819271" style="color: #5a58ab; font-weight: bold; text-decoration: none; white-space: nowrap;">+971 58 581 9271</a>.</p>
         </div>
       `,
-    });
+    }, "human interview schedule confirmation");
 
     return { success: true };
   } catch (err) {
@@ -731,8 +725,6 @@ interface InterviewResultsData {
 export async function sendInterviewResultsToCandidate(data: InterviewResultsData) {
   const user = process.env.NEXT_NODEMAILER_USER;
   if (!user) return { success: false, error: "Mailer credentials missing" };
-
-  const transporter = getMailerTransporter();
 
   let pdfBuffer: Buffer | null = null;
   try {
@@ -816,7 +808,14 @@ Team JB Recruitment Solutions`;
   }
 
   try {
-    await transporter.sendMail({ from: `"JB Recruitment Solutions" <${user}>`, to: data.candidateEmail, subject, text: textBody, html: htmlBody, attachments });
+    await sendMailWithRetry({
+      from: `"JB Recruitment Solutions" <${user}>`,
+      to: data.candidateEmail,
+      subject,
+      text: textBody,
+      html: htmlBody,
+      attachments,
+    }, "interview results");
     return { success: true };
   } catch (err) {
     console.error("Error sending interview results email:", err);
@@ -839,10 +838,8 @@ export async function sendNewApplicationAlertEmail(data: NewApplicationAlertData
   const receiver = process.env.INTERVIEW_REPORT_EMAIL || user;
   if (!user || !receiver) return { success: false, error: "Mailer credentials missing" };
 
-  const transporter = getMailerTransporter();
-
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       from: `"Application Alert" <${user}>`,
       to: receiver,
       subject: `New Booking: ${escapeHtml(data.candidateName)} — ${escapeHtml(data.jobRole)}`,
@@ -862,7 +859,7 @@ export async function sendNewApplicationAlertEmail(data: NewApplicationAlertData
           <p style="font-size: 13px; color: #718096; margin-top: 16px;">Application ID: <code>${escapeHtml(data.applicationId)}</code></p>
         </div>
       `,
-    });
+    }, "new application alert");
     return { success: true };
   } catch (err) {
     console.error("Error sending new application alert email:", err);

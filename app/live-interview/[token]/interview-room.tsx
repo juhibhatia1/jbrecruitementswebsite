@@ -505,17 +505,24 @@ export default function InterviewRoom({ token }: { token: string }) {
         if (phaseRef.current !== "live") setSetupStatus(msg.message);
         break;
 
-       case "error":
-         setErrorMsg(msg.message);
+       case "error": {
+         console.error("[InterviewRoom] AI interviewer error:", msg.message);
+         const rawErr = String(msg.message || "");
+         const isTechnical = /401|500|api[ _-]?key|openai|sdp|bearer|client_secret|rtcpeer/i.test(rawErr);
+         const candidateMsg = isTechnical
+           ? "We encountered a temporary connection issue with the AI interviewer. Please try refreshing the page."
+           : rawErr;
+
+         setErrorMsg(candidateMsg);
          setAiSpeaking(false);
          setIsAiPreparingQuestions(false);
          if (phaseRef.current === "live") {
-           // Bug 3 fix: Surface errors during live phase as a toast, not a phase change
-           toast.error(msg.message);
+           toast.error(candidateMsg);
          } else if (phaseRef.current !== "results") {
            setPhase("error");
          }
          break;
+       }
 
        case "ready":
          if (msg.existingTranscript?.length) {
@@ -952,7 +959,13 @@ export default function InterviewRoom({ token }: { token: string }) {
     } catch (error) {
       console.error("Interview setup failed:", error);
       if (!cancelledRef.current) {
-        setErrorMsg(error instanceof Error ? error.message : "Failed to start interview.");
+        const raw = error instanceof Error ? error.message : "Failed to start interview.";
+        const isTechnical = /401|500|api[ _-]?key|openai|sdp|bearer|client_secret|rtcpeer/i.test(raw);
+        setErrorMsg(
+          isTechnical
+            ? "We encountered a temporary connection issue. Please refresh the page to restart your session."
+            : raw
+        );
         setPhase("error");
       }
     } finally {

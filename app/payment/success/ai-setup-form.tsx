@@ -239,7 +239,13 @@ export function AiSetupForm({ purchaseId, candidateName, candidateEmail, onCompl
 
       const genData = await genRes.json();
       if (!genRes.ok || !genData.templateId) {
-        setFormError(genData.error || "Could not design custom interview template. Please try again.");
+        const rawErr = String(genData.error || "");
+        const isTechnical = /401|500|api[ _-]?key|openai|bearer|token|stack|internal/i.test(rawErr);
+        setFormError(
+          !rawErr || isTechnical
+            ? "We were unable to set up your custom interview right now. Please try again in a few moments."
+            : rawErr
+        );
         setGenerating(false);
         return;
       }
